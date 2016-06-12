@@ -1,0 +1,50 @@
+#container {
+    height: 400px; 
+    min-width: 310px; 
+    max-width: 800px;
+    margin: 0 auto;
+}
+#header {
+    background-color:black;
+    color:white;
+    text-align:center;
+    padding:25px;
+}
+
+#nav {
+    line-height:30px;
+    background-color:#eeeeee;
+    height:90vh;
+    /*height:700px;*/
+ /*   width:300px;*/
+    width:25vw;
+    float:left;
+    padding:5px;          
+}
+#section {
+   /* width:600px;*/
+     width:65vw;
+     height:90vh;
+    /*height:600px;*/
+    float:left;
+    padding:10px;        
+}
+#footer {
+    background-color:black;
+    color:white;
+    clear:both;
+    text-align:center;
+    height:5vh;
+    padding:5px;      
+}
+.button {
+    width: 80%;
+    background-color: black;
+    border: none;
+    color: white;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 20px;
+}
