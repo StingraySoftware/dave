@@ -1,30 +1,27 @@
-Original source: [github.com/crystal95/Timelabs_Project](https://github.com/crystal95/Timelabs_Project)
+# DAVE
 
-# Timelabs_Project
+DAVE stands for Data Analysis of Variable Events, which is a GUI built on top of
+the [Stingray library](https://github.com/StingraySoftware/stingray). It is
+intended to be used by astronomers for time-series analysis in general, and
+analysis of variable sources in particular.
 
+The goal is to enable scientific exploration and flexible analysis flows where
+users can insert their own algorithms to compare the effects of such changes.
 
-This folder contains the source codes for all the prototypes developed till now . All the prototypes use the "Flask" as the framework but different plotting libraries to display graphs . 
+## Get Started
 
+* Clone the project
+* Install a Python virtual env and a compatible version of node: `source src/main/resources/bash/setup_dev_env.bash`
+* Run the application: `src/main/resources/bash/run_gui.bash`
 
-Following is the description of different Files
+You will see that there's plenty left to do!
 
-1) for displaying plots using pygal/matplotlib  use "app_pygal.py" ("templates/layout/index_pygal.html" as the corresponding index file)  
-video :  https://drive.google.com/file/d/0B9GpD3rtbI_6LXZkTVk2NmtEU2s/view?usp=sharing
+## Contribute
 
+Please talk to us! We use Slack to discuss the work. To join our channels, since
+we are using a free plan, we have to send you an invite. Just ask at
+info@timelabtechnologies.com .
 
-2) for displaying 2D plots using  plotly (offline) use "app2D_plotly.py" ("templates/layout/index_2D.html" as the corresponding index file)
+The recorded open issues for DAVE are in [JIRA](https://timelab.atlassian.net/projects/DAVE/issues).
 
-video : https://drive.google.com/file/d/0B9GpD3rtbI_6NFNxNzE3OUcxcGc/view?usp=sharing
-
-
-3) for displaying 3D plots using plotly(offline) use "app3D_plotly.py" ("templates/layout/index_plotly3D.html" as the corresponding index file)  
-video : https://drive.google.com/file/d/0B9GpD3rtbI_6MHVTcWZtX2hTY28/view?usp=sharing
-
-
-4) for displaying 3D plots using plotly on (online) use "app3D_online.py" ("templates/layout/index_3D.html" as the corresponding index file)  
-
-=> To display the plots , just run the command "python app__desired_file_name_.py) " in the terminal 
-
-=> Open the browser for offline display of graphs and go to Url  "http://localhost:5000/" 
-
-=> Type the name of the timeseries file you want to display !! :)
+Fork and pull request away!
