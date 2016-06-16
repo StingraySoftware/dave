@@ -29,6 +29,8 @@ input[type=button], input[type=submit], input[type=reset] {
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"> </script>
 <script src="https://d14fo0winaifog.cloudfront.net/plotly-basic.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 
 <script>
 $(document).ready(function() {
@@ -72,12 +74,12 @@ $(document).ready(function() {
         var graphs = {{graphJSON | safe}};
         var ids = {{ids | safe}};
         for(var i in graphs) {
-           
+            console.log(Plotly.version)
             Plotly.plot("section", // the id of the div, created above
                         graphs[i].data,
                         graphs[i].layout || {});
-        }
 
+        }
 
      
     </script>

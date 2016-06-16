@@ -3,6 +3,7 @@ from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 import json
 import plotly
+import plotly.graph_objs as go
 
 import pandas as pd
 import numpy as np
@@ -14,7 +15,6 @@ def add_numbers():
     data = np.loadtxt(light_curve)
     Time = data[0:len(data),0]
     Rate = data[0:len(data),1]
-    print(Time)
     graphs = [
         dict(
             data=[
@@ -44,20 +44,31 @@ def my_form():
 def my_form_post():
 
     text = request.form['text']
+    if not text:
+      return render_template("welcome.html");
+
     light_curve = pkg_resources.resource_stream(__name__,text)
     data = np.loadtxt(light_curve)
-    Time = data[0:len(data),0]
-    Rate = data[0:len(data),1]
-    graphs = [
-        dict(
-            data=[
-                dict(
-                    x=Time,
-                    y=Rate,
-                    type='scatter'
-                ),
-            ],
-            layout=dict(
+    Time = data[0:100,0]
+    Rate = data[0:100,1]
+    error = np.array(Rate) - np.array(Rate)+50
+    Final_error = np.array(error).tolist();
+    #print(Final_error)
+    graphs = [     
+      dict(     
+          data=[
+              go.Scatter(
+               x=Time,
+               y=Rate,
+               error_y=dict(
+               type='data',
+               array=Final_error,
+               visible=True
+                )
+               
+             )
+         ],
+        layout=dict(
                 title='',
                 xaxis=dict(
                      title='Time',
@@ -77,11 +88,13 @@ def my_form_post():
                  )
                 
             )
-        )
+     )
     ]
-
+    #print("yes")
+    #print(plotly.__version__)
     ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
+    #print(graphJSON)
     return render_template('index.html',
                            ids=ids, 
                            graphJSON=graphJSON)
