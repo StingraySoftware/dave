@@ -8,33 +8,6 @@ import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
 import pkg_resources   
-@app.route('/_add_numbers')
-def add_numbers():
-    filename = request.args.get('filename')
-    light_curve = pkg_resources.resource_stream(__name__,filename)
-    data = np.loadtxt(light_curve)
-    Time = data[0:len(data),0]
-    Rate = data[0:len(data),1]
-    graphs = [
-        dict(
-            data=[
-                dict(
-                    x=Time,
-                    y=Rate,
-                    type='scatter'
-                ),
-            ],
-            layout=dict(
-                title='first graph'
-            )
-        )
-    ]
-    ids = ['graph-{}'.format(i) for i, _ in enumerate(graphs)]
-    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
-    print("danish");
-    return render_template('index.html',
-                           ids=ids,
-                           graphJSON=graphJSON)
 
 @app.route('/')
 def my_form():
@@ -49,8 +22,9 @@ def my_form_post():
 
     light_curve = pkg_resources.resource_stream(__name__,text)
     data = np.loadtxt(light_curve)
-    Time = data[0:100,0]
-    Rate = data[0:100,1]
+    Time = data[0:len(data),0]
+    Rate = data[0:len(data),1]
+    Error= data[0:len(data),2 ]
     error = np.array(Rate) - np.array(Rate)+50
     Final_error = np.array(error).tolist();
     #print(Final_error)
@@ -62,7 +36,7 @@ def my_form_post():
                y=Rate,
                error_y=dict(
                type='data',
-               array=Final_error,
+               array=Error,
                visible=True
                 )
                
@@ -84,8 +58,10 @@ def my_form_post():
                     family='Courier New, monospace',
                     size=18,
                     color='#7f7f7f'
+
                   )
-                 )
+                 ),
+          
                 
             )
      )
