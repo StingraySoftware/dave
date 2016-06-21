@@ -18,7 +18,7 @@ def my_form_post():
     text = request.form['text']
     if not text:
       return render_template("welcome.html");
-
+    text="datasets/"+text
     light_curve = pkg_resources.resource_stream(__name__,text)
     data = np.loadtxt(light_curve)
     Time = data[0:len(data),0]
