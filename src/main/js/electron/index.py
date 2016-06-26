@@ -1,13 +1,21 @@
-
 from flask import Flask, jsonify, render_template, request
 app = Flask(__name__)
 import json
+
 import plotly
 import plotly.offline as plt
+from plotly import session, tools, utils
 
 import pandas as pd
 import numpy as np
 import pkg_resources   
+import sys
+import os
+import uuid
+import json
+import logging 
+
+logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
 
 @app.route('/hello')
 def hello():
@@ -15,7 +23,6 @@ def hello():
 
 @app.route('/', methods=['POST'])
 def my_form_post():
-    print("Hi ")
     text = request.form['text']
     start_time = request.form['from_time']
     end_time =request.form['to_time']
@@ -32,15 +39,7 @@ def my_form_post():
     Rate = data[0:len(data),1]
     Error= data[0:len(data),2]
     
-
-    import sys
-    import os
-    from plotly import session, tools, utils
-    import uuid
-    import json
-
-   
-
+    
     trace1 = dict(
             type = 'scatter',
             x=Time,
@@ -77,9 +76,10 @@ def my_form_post():
                       )
                  )
         )
-    print("Here i am right")
     fig = dict(data = [trace1], layout = layout)
     plt.plot(fig, filename='templates/basic__plot.html',auto_open=False)
+
+    print("\n")
 
     return render_template('index.html')
 
@@ -89,7 +89,7 @@ def my_form_post():
 
 @app.route('/')
 def my_form():
-    print("I am here")
+    logging.debug("I am here")
     return render_template("welcome.html")
 
 
