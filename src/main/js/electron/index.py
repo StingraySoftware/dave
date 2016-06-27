@@ -49,7 +49,6 @@ def upload_file():
     Rate = data[0:len(data),1]
     Error= data[0:len(data),2]
     
-    
     trace1 = dict(
             type = 'scatter',
             x=Time,

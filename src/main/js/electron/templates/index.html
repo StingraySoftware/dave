@@ -11,7 +11,16 @@
 
 </style>
 </head>
+<script>
+$(document).ready(function () {
+    $( '#upload_input' ).on( 'change', function () { 
+var fullfilename=this.value;
+var filename = fullfilename.replace(/^.*[\\\/]/, '')
+document.getElementById("uploadFile").value = filename;
 
+  });
+});
+</script>
 <script>
 $(document).ready(function() {
     $("#clear").bind("click", function(){
@@ -37,6 +46,7 @@ $(document).ready(function() {
 <div class="mainselection">
 <form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
 
+<input id="uploadFile" placeholder="Choose File"  type="text" disabled="disabled" />
 <label class="myLabel">
 <input  id="upload_input" name="file" type="file"/>
     <span>Choose File</span>
