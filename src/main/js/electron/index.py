@@ -14,6 +14,8 @@ import os
 import uuid
 import json
 import logging 
+from werkzeug import secure_filename
+
 
 logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
 
@@ -21,9 +23,17 @@ logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
 def hello():
     return render_template('basic__plot.html')
 
-@app.route('/', methods=['POST'])
-def my_form_post():
-    text = request.form['text']
+
+@app.route('/uploader', methods = ['GET', 'POST'])
+def upload_file():
+    
+    logging.debug("I reached here")
+    f = request.files['file']
+    text=f.filename
+
+    #text = request.form['text']
+    f = request.files['file']
+    logging.debug(secure_filename(f.filename))
     start_time = request.form['from_time']
     end_time =request.form['to_time']
     start_count = request.form['from_count']
