@@ -123,3 +123,4 @@ label.myLabel input[type="file"] {
 .myLabel :valid + span {
     color: black;
 }
+
