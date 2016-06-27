@@ -37,16 +37,23 @@ def my_form_post():
     data = np.loadtxt(light_curve)
     Time = data[0:len(data),0]
     Rate = data[0:len(data),1]
-    Error= data[0:len(data),2]
+    Error_y= data[0:len(data),2]
+    error = np.array(Rate) - np.array(Rate)+0.5
+    Error_x = np.array(error).tolist();
     
     
     trace1 = dict(
             type = 'scatter',
             x=Time,
             y=Rate,
+            error_x=dict(
+               type='data',
+               array=Error_x,
+               visible=True
+                ),
             error_y=dict(
                type='data',
-               array=Error,
+               array=Error_y,
                visible=True
                 )
 
