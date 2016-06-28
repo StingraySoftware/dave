@@ -3,74 +3,44 @@
 <head>
 <script type=text/javascript src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
-<style> 
-input[type=text] {
-    width: 60%;
-    padding: 5px 20px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    background:transparent;
-    border:1px solid #d8d8d8;
-    border-radius: 8px;
 
-}
-input[type=button], input[type=submit], input[type=reset] {
-    width: 80%;
-    background-color: black;
-    border: none;
-    color: white;
-    text-decoration: none;
-    margin: 4px 2px;
-    cursor: pointer;
-    text-align: center;
-    line-height: 20px;
-}
-.mainselection {
-    overflow:hidden;
-    width:30vw;
-    border-radius: 10px;
-    background-image: {{ url_for('static',filename='arrow.png') }};"no-repeat right #ddd;
-
-    /* dropdown_arrow.png is a 31x28 image */
-}
-#select1 {
-    border:0;
-    background:transparent;
-    height:32px;
-    border:1px solid #d8d8d8;
-    border-radius: 8px;
-    width:20vw;
-    font-family: Cursive;
-    font-size: 1.2em;
-    padding: 20px 20px
-
-    -webkit-appearance: none;
-}
-</style>
 </head>
-
+<script>
+$(document).ready(function () {
+//$(document).addEventListener('change','input[type="file"]', function (e) { 
+ //alert("hi")
+ $(document ).on('change','input[type="file"]', function () { 
+var fullfilename=this.value;
+var filename = fullfilename.replace(/^.*[\\\/]/, '')
+document.getElementById("uploadFile").value = filename;
+  });
+});
+</script>
 <div id="nav" >
 <font size="3"><b>Filename<b></font>
 
 <div class="mainselection">
-<form action="/" method="POST">
-    <select id= select1 name='text'>
-      <option value='Input1.txt'>Input1.txt</option>
-      <option value='Input2.txt'>Input2.txt</option>
-      <option value='Input3.txt'>Input3.txt</option>          
-  </select>
+<form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
+
+<input id="uploadFile" placeholder="Choose File"  type="text" disabled="disabled" />
+<label class="myLabel">
+<input  id="upload_input" name="file" type="file"/>
+<span>Choose File</span>
+</label>
 
 <br>
-  <br>
-  <font size="3"><b>Select Time Range<b></font>
-  <br>
+<br>
+
+<font size="3"><b>Select Time Range<b></font>
+<br>
      <input type="text" name="from_time" placeholder="From"><br>
      <input type="text" name="to_time" placeholder="To" ><br>
 <br>
 
-  <font size="3"><b>Select Count Rate Range<b></font>
-  <br>
+<font size="3"><b>Select Count Rate Range<b></font>
+<br>
      <input type="text" name="from_count" placeholder="From"><br>
      <input type="text" name="to_count" placeholder="To" ><br>
 <br>
@@ -79,12 +49,9 @@ input[type=button], input[type=submit], input[type=reset] {
     <input type="submit" name="my-form" value="Load Spectrum">
     </form>
     <button id ="clear" class="button button1">Clear</button>
-
-
 </div>
 
 <div class="hello" id="section" >
-
   
 </div>
 
@@ -94,5 +61,6 @@ TIMELABS
 </div>
 
 
-{% endblock %} 
+{% endblock %}
 
+ 
