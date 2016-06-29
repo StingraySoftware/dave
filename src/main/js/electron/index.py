@@ -17,14 +17,12 @@ import logging
 from werkzeug import secure_filename
 from astropy.io import fits
 
-
-
 logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
 
 @app.route('/hello')
 def hello():
     return render_template('basic__plot.html')
-
+filename, file_extension = os.path.splitext('/path/to/somefile.ext')
 
 @app.route('/uploader', methods = ['GET', 'POST'])
 def upload_file():
@@ -44,24 +42,29 @@ def upload_file():
     if not text:
       return render_template("welcome.html");
 
-    #text="datasets/"+text
-    #if 1==2
-    #light_curve = pkg_resources.resource_stream(__name__,text)
-    #data = np.loadtxt(light_curve)
-    #Time = data[0:len(data),0]
-    #Rate = data[0:len(data),1]
-    #Error= data[0:len(data),2]
-    #else
-    hdulist = fits.open('std1_ao9_01_01.lc')
-    tbdata = hdulist[1].data
-    Time =tbdata.field(0)
-    Rate=tbdata.field(1)
-    Error=tbdata.field(2)
-    logging.debug("Read fits file successfully ")
+    text="datasets/"+text
+
+    filename, file_extension = os.path.splitext(text)
 
 
+    if file_extension == ".txt":
+        light_curve = pkg_resources.resource_stream(__name__,text)
+        data = np.loadtxt(light_curve)
+        Time = data[0:len(data),0]
+        Rate = data[0:len(data),1]
+        Error= data[0:len(data),2]
+        logging.debug(file_extension)
+        logging.debug("Read txt file successfully ")
 
-
+    else:
+        hdulist = fits.open(text)
+        tbdata = hdulist[1].data
+        Time =tbdata.field(0)
+        Rate=tbdata.field(1)
+        Error=tbdata.field(2)
+        logging.debug(file_extension)
+        logging.debug("Read fits file successfully ")
+    
     trace1 = dict(
             type = 'scatter',
             x=Time,
@@ -101,8 +104,6 @@ def upload_file():
     fig = dict(data = [trace1], layout = layout)
     plt.plot(fig, filename='templates/basic__plot.html',auto_open=False)
 
-    print("\n")
-
     return render_template('index.html')
 
 
@@ -118,4 +119,3 @@ def my_form():
 
 if __name__ == '__main__':
     app.run()
-
