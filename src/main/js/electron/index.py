@@ -38,8 +38,7 @@ def my_form_post():
     Time = data[0:len(data),0]
     Rate = data[0:len(data),1]
     Error_y= data[0:len(data),2]
-    error = np.array(Rate) - np.array(Rate)+0.5
-    Error_x = np.array(error).tolist();
+    Error_x = data[0:len(data),3]
     
     
     trace1 = dict(
