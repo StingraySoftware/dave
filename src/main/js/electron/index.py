@@ -47,15 +47,21 @@ def upload_file():
     data = np.loadtxt(light_curve)
     Time = data[0:len(data),0]
     Rate = data[0:len(data),1]
-    Error= data[0:len(data),2]
+    Error_y= data[0:len(data),2]
+    Error_x = data[0:len(data),3]
     
     trace1 = dict(
             type = 'scatter',
             x=Time,
             y=Rate,
+            error_x=dict(
+               type='data',
+               array=Error_x,
+               visible=True
+                ),
             error_y=dict(
                type='data',
-               array=Error,
+               array=Error_y,
                visible=True
                 )
 
