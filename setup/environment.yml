@@ -47,6 +47,7 @@ dependencies:
 - xz=5.0.5=1
 - zlib=1.2.8=0
 - pip:
+  - astropy==1.2.1
   - backports.shutil-get-terminal-size==1.0.0
   - ipython-genutils==0.1.0
   - plotly==1.9.10

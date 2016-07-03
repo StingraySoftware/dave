@@ -7,26 +7,25 @@
 
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
-<style> 
+<style>
 
 </style>
 </head>
 <script>
-$(document).ready(function () {
-    $( '#upload_input' ).on( 'change', function () { 
-var fullfilename=this.value;
-var filename = fullfilename.replace(/^.*[\\\/]/, '')
-document.getElementById("uploadFile").value = filename;
-
+    $(document).ready(function () {
+    $( '#upload_input' ).on( 'change', function () {
+    var fullfilename=this.value;
+    var filename = fullfilename.replace(/^.*[\\\/]/, '')
+    document.getElementById("uploadFile").value = filename;
   });
 });
 </script>
 <script>
 $(document).ready(function() {
     $("#clear").bind("click", function(){
-         $("#section").empty();        
+         $("#section").empty();
         });
-              
+
        $(window).resize(function() {
          var divheight = $("#section").height();
          var divwidth = $("#section").width();
@@ -71,8 +70,6 @@ $(document).ready(function() {
     <input type="submit" name="my-form" value="Load Spectrum">
     </form>
     <button id ="clear" class="button button1">Clear</button>
-
-
 </div>
 
 <div class="hello" id="section" >
@@ -86,6 +83,4 @@ $(document).ready(function() {
 TIMELABS
 </div>
 
-
 {% endblock %}
-

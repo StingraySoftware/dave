@@ -9,14 +9,13 @@
 </head>
 <script>
 $(document).ready(function () {
-//$(document).addEventListener('change','input[type="file"]', function (e) { 
- //alert("hi")
+    //$(document).addEventListener('change','input[type="file"]', function (e) {
+    //alert("hi")
 
- $(document ).on('change','input[type="file"]', function () { 
-var fullfilename=this.value;
-var filename = fullfilename.replace(/^.*[\\\/]/, '')
-document.getElementById("uploadFile").value = filename;
-
+    $(document ).on('change','input[type="file"]', function () {
+    var fullfilename=this.value;
+    var filename = fullfilename.replace(/^.*[\\\/]/, '')
+    document.getElementById("uploadFile").value = filename;
   });
 });
 </script>
@@ -54,7 +53,7 @@ document.getElementById("uploadFile").value = filename;
 </div>
 
 <div class="hello" id="section" >
-  
+
 </div>
 
 <div id="includedContent"></div>
@@ -63,5 +62,4 @@ TIMELABS
 </div>
 
 
-{% endblock %} 
-
+{% endblock %}
