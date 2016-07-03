@@ -1,9 +1,5 @@
 node_modules
 logfile.log
-<<<<<<< HEAD
 output.txt
 Input1.txt	
 std1_ao9_01_01.lc 
-=======
-std1_ao9_01_01.lc
->>>>>>> master
