@@ -65,12 +65,6 @@ def upload_file():
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
-    light_curve = pkg_resources.resource_stream(__name__,text)
-    data = np.loadtxt(light_curve)
-    Time = data[0:len(data),0]
-    Rate = data[0:len(data),1]
-    Error= data[0:len(data),2]
-
     trace1 = dict(
             type = 'scatter',
             x=Time,
