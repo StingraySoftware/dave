@@ -38,9 +38,10 @@
     padding:5px;      
 }
 .button {
-    width: 80%;
+    width: 60%;
     background-color: black;
-    border: none;
+    border:1px solid #d8d8d8;
+     border-radius: 8px;
     color: white;
     text-decoration: none;
     margin: 4px 2px;
@@ -48,3 +49,78 @@
     text-align: center;
     line-height: 20px;
 }
+input[type=text] {
+    width: 60%;
+    padding: 5px 20px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    background:transparent;
+    border:1px solid #d8d8d8;
+    border-radius: 8px;
+
+}
+input[type=button], input[type=submit], input[type=reset] {
+    width: 60%;
+    background-color: black;
+    border:1px solid #d8d8d8;
+     border-radius: 8px;
+
+    color: white;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 20px;
+}
+.mainselection {
+    overflow:hidden;
+    width:30vw;
+    border-radius: 10px;
+    background-image: {{ url_for('static',filename='arrow.png') }};"no-repeat right #ddd;
+
+    /* dropdown_arrow.png is a 31x28 image */
+}
+#select1 {
+    border:0;
+    background:transparent;
+    height:32px;
+    border:1px solid #d8d8d8;
+    border-radius: 8px;
+    width:20vw;
+    font-family: Cursive;
+    font-size: 1.2em;
+    padding: 20px 20px
+
+    -webkit-appearance: none;
+}
+label.myLabel input[type="file"] {
+    position: fixed;
+    top: -1000px;
+}
+
+.myLabel {
+    width:17vw;
+    height:3vh;
+    text-align: center;
+    line-height: 20px;    
+    margin: 4px 2px;
+    border: 2px solid #AAA;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 2px;
+    background: #DDD;
+    display: inline-block;
+}
+.myLabel:hover {
+    background: #CCC;
+}
+.myLabel:active {
+    background: #CCF;
+}
+.myLabel :invalid + span {
+    color: black;
+}
+.myLabel :valid + span {
+    color: black;
+}
+
