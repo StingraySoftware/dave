@@ -46,7 +46,6 @@ def upload_file():
 
     filename, file_extension = os.path.splitext(text)
 
-
     if file_extension == ".txt":
         light_curve = pkg_resources.resource_stream(__name__,text)
         data = np.loadtxt(light_curve)
@@ -69,12 +68,16 @@ def upload_file():
             type = 'scatter',
             x=Time,
             y=Rate,
+            error_x=dict(
+               type='data',
+               array=Error_x,
+               visible=True
+                ),
             error_y=dict(
                type='data',
-               array=Error,
+               array=Error_y,
                visible=True
                 )
-
     )
 
     layout=dict(
