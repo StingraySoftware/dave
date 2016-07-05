@@ -1,59 +1,111 @@
-
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request , send_from_directory
 from flask import Markup
+
 app = Flask(__name__)
 import json
+
 import plotly
 from plotly.offline import plot
 
-import pandas as p
+
+import pandas as pd
 import numpy as np
-import pkg_resources   
+import pkg_resources
+import sys
+import os
+import uuid
+import json
+import logging
+from werkzeug import secure_filename
+from astropy.io import fits
+
+logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 
 @app.route('/hello')
 def hello():
     return render_template('basic__plot.html')
+filename, file_extension = os.path.splitext('/path/to/somefile.ext')
 
-@app.route('/', methods=['POST'])
-def my_form_post():
-    print("Hi ")
-    text = request.form['text']
+@app.route('/uploader', methods = ['GET', 'POST'])
+def upload_file():
+
+    upload = request.files['file']
+    
+    target = os.path.join(APP_ROOT, 'uploadeddataset')
+    
+    if not os.path.isdir(target):
+        os.mkdir(target)
+
+    for upload in request.files.getlist("file"):
+    
+        filename = upload.filename
+        ext = os.path.splitext(filename)[1]
+        
+        if (ext == ".txt") or (ext == ".lc"):
+            logging.debug("File supported moving on...")
+        else:
+            render_template("error.html", message="Files uploaded are not supported...")
+        destination = "/".join([target, filename])
+        
+        upload.save(destination)
+
+
+    logging.debug("I reached here")
+    f = request.files['file']
+    text=f.filename
+
+    #text = request.form['text']
+    f = request.files['file']
+    logging.debug(secure_filename(f.filename))
     start_time = request.form['from_time']
     end_time =request.form['to_time']
     start_count = request.form['from_count']
     end_count =request.form['to_count']
-    
+
     if not text:
       return render_template("welcome.html");
 
-    text="datasets/"+text
-    light_curve = pkg_resources.resource_stream(__name__,text)
-    data = np.loadtxt(light_curve)
-    Time = data[0:len(data),0]
-    Rate = data[0:len(data),1]
-    Error= data[0:len(data),2]
-    
+    text="uploadeddataset/"+text
 
-    import sys
-    import os
-    from plotly import session, tools, utils
-    import uuid
-    import json
+    filename, file_extension = os.path.splitext(text)
 
-   
+    if file_extension == ".txt":
+        light_curve = pkg_resources.resource_stream(__name__,text)
+        data = np.loadtxt(light_curve)
+        Time = data[0:len(data),0]
+        Rate = data[0:len(data),1]
+        Error_y= data[0:len(data),2]
+        Error_x= data[0:len(data),3]
+        logging.debug(file_extension)
+        logging.debug("Read txt file successfully ")
+
+    else:
+        hdulist = fits.open(text)
+        tbdata = hdulist[1].data
+        Time =tbdata.field(0)
+        Rate=tbdata.field(1)
+        Error=tbdata.field(2)
+        logging.debug(file_extension)
+        logging.debug("Read fits file successfully ")
 
     trace1 = dict(
             type = 'scatter',
             x=Time,
             y=Rate,
+            error_x=dict(
+               type='data',
+               array=Error_x,
+               visible=True
+                ),
             error_y=dict(
                type='data',
-               array=Error,
+               array=Error_y,
                visible=True
                 )
-
     )
-    
+
     layout=dict(
                  title='',
                  xaxis=dict(
@@ -69,28 +121,25 @@ def my_form_post():
                  yaxis=dict(
                      title='Count Rate',
                      range=[start_count,end_count],
-                     titlefont=dict(    
+                     titlefont=dict(
                      family='Courier New, monospace',
                      size=18,
                      #range=[int(start), int(end)],
                      #range=[10,20],
-                     color='#7f7f7f'    
+                     color='#7f7f7f'
                       )
                  )
         )
     fig = dict(data = [trace1], layout = layout)
     my_plot_div=plot(fig, output_type='div')
-   # print(my_plot_div)
     return render_template('index.html',
                                div_placeholder= Markup(my_plot_div)
                               )
 
 
-
-
 @app.route('/')
 def my_form():
-    print("I am here")
+    logging.debug("I am here")
     return render_template("welcome.html")
 
 

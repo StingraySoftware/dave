@@ -1,66 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"> </script>
-<script src="https://d14fo0winaifog.cloudfront.net/plotly-basic.js"></script>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
-
-<script src="http://files.codepedia.info/uploads/iScripts/html2canvas.js"></script>
+<script type=text/javascript src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+<script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
+<script type="text/javascript" src="{{ url_for('static',filename='canvas2image.js') }}"></script>
 
-<style> 
-input[type=text] {
-    width: 60%;
-    padding: 5px 20px;
-    margin: 8px 0;
-    box-sizing: border-box;
-    background:transparent;
-    border:1px solid #d8d8d8;
-    border-radius: 8px;
-
-}
-input[type=button], input[type=submit], input[type=reset] {
-    width: 80%;
-    background-color: black;
-    border: none;
-    color: white;
-    text-decoration: none;
-    margin: 4px 2px;
-    cursor: pointer;
-    text-align: center;
-    line-height: 20px;
-}
-.mainselection {
-    overflow:hidden;
-    width:30vw;
-    border-radius: 10px;
-    background-image: {{ url_for('static',filename='arrow.png') }};"no-repeat right #ddd;
-
-    /* dropdown_arrow.png is a 31x28 image */
-}
-#select1 {
-    border:0;
-    background:transparent;
-    height:32px;
-    border:1px solid #d8d8d8;
-    border-radius: 8px;
-    width:20vw;
-    font-family: Cursive;
-    font-size: 1.2em;
-    padding: 20px 20px
-
-    -webkit-appearance: none;
-}
+<style>
 </style>
 </head>
-
-</div>  
-
-
 <script>
 $(document).ready(function() {
          console.log("here")  
@@ -70,30 +20,19 @@ $(document).ready(function() {
         });
               
        
-var element = $("#section"); // global variable
-var getCanvas; // global variable
- 
-    $("#btn-Preview-Image").on('click', function () {
-         html2canvas(element, {
-         onrendered: function (canvas) {
-                $("#previewImage").append(canvas);
-                getCanvas = canvas;
-             }
-         });
+$(function() { 
+    $("#btnSave").click(function() { 
+        html2canvas($("#section"), {
+            onrendered: function(canvas) {
+                theCanvas = canvas;
+                // Convert and download as image 
+                Canvas2Image.saveAsPNG(canvas); 
+                // Clean up 
+                //document.body.removeChild(canvas);
+            }
+        });
     });
-
-  $("#btn-Convert-Html2Image").on('click', function () {
-
-    var imgageData = getCanvas.toDataURL("image/png");
-    // Now browser starts downloading it instead of just showing it
-    var newData = imgageData.replace(/^data:image\/png/, "data:application/octet-stream");
-    $("#btn-Convert-Html2Image").attr("download", "your_pic_name.png").attr("href", newData);
-  });
-
-
-
-
-
+}); 
 
          });
 </script>
@@ -103,21 +42,22 @@ var getCanvas; // global variable
 <font size="3"><b>Filename<b></font>
 
 <div class="mainselection">
-<form action="/" method="POST">
-    <select id= select1 name='text'>
-      <option value='Input1.txt'>Input1.txt</option>
-      <option value='Input2.txt'>Input2.txt</option>
-      <option value='Input3.txt'>Input3.txt</option>          
-  </select>
+<form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
+
+<input id="uploadFile" placeholder="Choose File"  type="text" disabled="disabled" />
+<label class="myLabel">
+<input  id="upload_input" name="file" type="file"/>
+    <span>Choose File</span>
+</label>
+
 
 <br>
-  <br>
-  <font size="3"><b>Select Time Range<b></font>
-  <br>
+<br>
+<font size="3"><b>Select Time Range<b></font>
+<br>
      <input type="text" name="from_time" placeholder="From"><br>
      <input type="text" name="to_time" placeholder="To" ><br>
 <br>
-
 
   <font size="3"><b>Select Count Rate Range<b></font>
   <br>
@@ -125,32 +65,23 @@ var getCanvas; // global variable
      <input type="text" name="to_count" placeholder="To" ><br>
 <br>
 
-
 </div>
-        <input type="submit" name="my-form" value="Load Spectrum">
-
+    <input type="submit" name="my-form" value="Load Spectrum">
     </form>
     <button id ="clear" class="button button1">Clear</button>
-
+    <input type="button" id="btnSave"  value="Save PNG"/>
 
 </div>
 
-
 <div class="hello" id="section" >
-<p>hi</p>
+
   {{div_placeholder| safe}}
 
 </div>
-<input id="btn-Preview-Image" type="button" value="Preview"/>
-    <a id="btn-Convert-Html2Image" href="#">Download</a>
-    <br/>
-    <h3>Preview :</h3>
-    <div id="previewImage">
-    </div>
+
 <div id="includedContent"></div>
 <div id="footer">
 TIMELABS
 </div>
 
-
-{% endblock %} 
+{% endblock %}
