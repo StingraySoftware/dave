@@ -1,14 +1,21 @@
-
 from flask import Flask, jsonify, render_template, request
-from flask import Markup
 app = Flask(__name__)
 import json
-import plotly
-from plotly.offline import plot
 
-import pandas as p
+import plotly
+import plotly.offline as plt
+from plotly import session, tools, utils
+
+import pandas as pd
 import numpy as np
 import pkg_resources   
+import sys
+import os
+import uuid
+import json
+import logging 
+
+logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
 
 @app.route('/hello')
 def hello():
@@ -16,7 +23,6 @@ def hello():
 
 @app.route('/', methods=['POST'])
 def my_form_post():
-    print("Hi ")
     text = request.form['text']
     start_time = request.form['from_time']
     end_time =request.form['to_time']
@@ -33,15 +39,7 @@ def my_form_post():
     Rate = data[0:len(data),1]
     Error= data[0:len(data),2]
     
-
-    import sys
-    import os
-    from plotly import session, tools, utils
-    import uuid
-    import json
-
-   
-
+    
     trace1 = dict(
             type = 'scatter',
             x=Time,
@@ -69,28 +67,29 @@ def my_form_post():
                  yaxis=dict(
                      title='Count Rate',
                      range=[start_count,end_count],
-                     titlefont=dict(    
+                     titlefont=dict(
                      family='Courier New, monospace',
                      size=18,
                      #range=[int(start), int(end)],
                      #range=[10,20],
-                     color='#7f7f7f'    
+                     color='#7f7f7f'
                       )
                  )
         )
     fig = dict(data = [trace1], layout = layout)
-    my_plot_div=plot(fig, output_type='div')
-   # print(my_plot_div)
-    return render_template('index.html',
-                               div_placeholder= Markup(my_plot_div)
-                              )
+    plt.plot(fig, filename='templates/basic__plot.html',auto_open=False)
+
+    print("\n")
+
+    return render_template('index.html')
+
 
 
 
 
 @app.route('/')
 def my_form():
-    print("I am here")
+    logging.debug("I am here")
     return render_template("welcome.html")
 
 

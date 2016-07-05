@@ -1,7 +1,10 @@
 {% extends "layout.html" %}
 {% block body %}
 <head>
+<script type=text/javascript src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+<script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
+
 <style> 
 input[type=text] {
     width: 60%;
@@ -48,13 +51,23 @@ input[type=button], input[type=submit], input[type=reset] {
 </style>
 </head>
 
-</div>  
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"> </script>
-<script src="https://d14fo0winaifog.cloudfront.net/plotly-basic.js"></script>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
+<script>
+$(document).ready(function() {
+    $("#clear").bind("click", function(){
+         $("#section").empty();        
+        });
+              
+       $(window).resize(function() {
+         var divheight = $("#section").height();
+         var divwidth = $("#section").width();
+         var update = {
+                  width:divwidth,  // or any new width
+                  height:divheight // " "
+                };
+        Plotly.relayout('section', update);
+            }).resize();
+         });
+</script>
 
 
 <div id="nav" >
@@ -63,43 +76,38 @@ input[type=button], input[type=submit], input[type=reset] {
 <div class="mainselection">
 <form action="/" method="POST">
     <select id= select1 name='text'>
-      <option value='Input1.txt'>Input1.txt</option>
-      <option value='Input2.txt'>Input2.txt</option>
-      <option value='Input3.txt'>Input3.txt</option>          
+    <option value='Input1.txt'>Input1.txt</option>
+    <option value='Input2.txt'>Input2.txt</option>
+    <option value='Input3.txt'>Input3.txt</option>          
   </select>
 
-<br>
+  <br>
+
   <br>
   <font size="3"><b>Select Time Range<b></font>
   <br>
      <input type="text" name="from_time" placeholder="From"><br>
      <input type="text" name="to_time" placeholder="To" ><br>
-<br>
-
+  <br>
 
   <font size="3"><b>Select Count Rate Range<b></font>
   <br>
      <input type="text" name="from_count" placeholder="From"><br>
      <input type="text" name="to_count" placeholder="To" ><br>
-<br>
-
+  <br>
 
 </div>
-        <input type="submit" name="my-form" value="Load Spectrum">
+    <input type="submit" name="my-form" value="Load Spectrum">
 
     </form>
     <button id ="clear" class="button button1">Clear</button>
 
-
 </div>
-
-
-
-
 
 <div class="hello" id="section" >
 
-  
+   <object type="text/html" data="/hello" style="width:100%; height:100%; margin:1%; " autosize=True>
+    </object>
 </div>
 
 <div id="includedContent"></div>
@@ -108,4 +116,5 @@ TIMELABS
 </div>
 
 
-{% endblock %} 
+{% endblock %}
+
