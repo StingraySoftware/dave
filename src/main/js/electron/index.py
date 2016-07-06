@@ -84,7 +84,8 @@ def upload_file():
         tbdata = hdulist[1].data
         Time =tbdata.field(0)
         Rate=tbdata.field(1)
-        Error=tbdata.field(2)
+        Error_x=None
+        Error_y=tbdata.field(2)
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
