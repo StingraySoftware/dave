@@ -68,14 +68,21 @@ def upload_file():
     text="uploadeddataset/"+text
 
     filename, file_extension = os.path.splitext(text)
+    
+
+    if file_extension != ".txt" and  file_extension != ".lc":
+        return render_template("error.html");
+
 
     if file_extension == ".txt":
+        
+        logging.debug("Read txt file successfully ")
         light_curve = pkg_resources.resource_stream(__name__,text)
         data = np.loadtxt(light_curve)
         Time = data[0:len(data),0]
         Rate = data[0:len(data),1]
         Error_y= data[0:len(data),2]
-        Error_x= data[0:len(data),3]
+        Error_x =data[0:len(data),3]
         logging.debug(file_extension)
         logging.debug("Read txt file successfully ")
 
@@ -84,8 +91,8 @@ def upload_file():
         tbdata = hdulist[1].data
         Time =tbdata.field(0)
         Rate=tbdata.field(1)
-        Error_x=None
         Error_y=tbdata.field(2)
+        Error_x=tbdata.field(3)
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
