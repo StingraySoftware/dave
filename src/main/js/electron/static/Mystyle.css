@@ -110,6 +110,8 @@ label.myLabel input[type="file"] {
     margin: 2px;
     background: #DDD;
     display: inline-block;
+    cursor: pointer;
+
 }
 .myLabel:hover {
     background: #CCC;
