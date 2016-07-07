@@ -33,6 +33,8 @@ def upload_file():
 
     #text = request.form['text']
     f = request.files['file']
+    mode= request.form['select_mode']
+    logging.debug("select")
     logging.debug(secure_filename(f.filename))
     start_time = request.form['from_time']
     end_time =request.form['to_time']
@@ -51,7 +53,8 @@ def upload_file():
         data = np.loadtxt(light_curve)
         Time = data[0:len(data),0]
         Rate = data[0:len(data),1]
-        Error= data[0:len(data),2]
+        Error_y= data[0:len(data),2]
+        Error_x= data[0:len(data),3]
         logging.debug(file_extension)
         logging.debug("Read txt file successfully ")
 
@@ -64,46 +67,66 @@ def upload_file():
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
-    trace1 = dict(
-            type = 'scatter',
-            x=Time,
-            y=Rate,
-            error_x=dict(
-               type='data',
-               array=Error_x,
-               visible=True
-                ),
-            error_y=dict(
-               type='data',
-               array=Error_y,
-               visible=True
-                )
-    )
+    mode="Deselect"
+    start_time=20
+    end_time = 60
+    start_count= 3600
+    end_count =3650
 
-    layout=dict(
-                 title='',
-                 xaxis=dict(
-                     title='Time',
-                     range=[start_time,end_time],
-                     rangeslider=dict(),
-                     titlefont=dict(
-                     family='Courier New, monospace',
-                     size=18,
-                     color='#7f7f7f'
-                        )
-                 ),
-                 yaxis=dict(
-                     title='Count Rate',
-                     range=[start_count,end_count],
-                     titlefont=dict(
-                     family='Courier New, monospace',
-                     size=18,
-                     #range=[int(start), int(end)],
-                     #range=[10,20],
-                     color='#7f7f7f'
-                      )
-                 )
+    if(mode=="Deselect"):
+        newTime=[]
+        newRate=[]
+        newError_y=[]
+        newError_x=[]
+        
+        for i in range(len(Time)):
+          if (Time[i] <= (start_time) or Time[i] >= (end_time)) :
+            newTime.append(Time[i])
+            newRate.append(Rate[i])
+            newError_y.append(Error_y[i])
+            newError_x.append(Error_x[i])
+
+
+        trace1 = dict(
+                type = 'scatter',
+                x=newTime,
+                y=newRate,
+                error_x=dict(
+                   type='data',
+                   array=newError_x,
+                   visible=True
+                    ),
+                error_y=dict(
+                   type='data',
+                   array=newError_y,
+                   visible=True
+                    )
         )
+
+        layout=dict(
+                     title='',
+                     xaxis=dict(
+                         title='Time',
+                         rangeslider=dict(),
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         color='#7f7f7f'
+                            )
+                     ),
+                     yaxis=dict(
+                         title='Count Rate',
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         #range=[int(start), int(end)],
+                         #range=[10,20],
+                         color='#7f7f7f'
+                          )
+                     )
+            )
+
+   
     fig = dict(data = [trace1], layout = layout)
     plt.plot(fig, filename='templates/basic__plot.html',auto_open=False)
 
