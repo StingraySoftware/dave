@@ -67,20 +67,35 @@ def upload_file():
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
-    mode="Deselect"
-    start_time=20
-    end_time = 60
-    start_count= 3600
-    end_count =3650
+   ## mode="Deselect"
+
 
     if(mode=="Deselect"):
+
+        if (not start_time) and (not end_time):
+          start_time_int = max(Time)
+          end_time_int = min(Time)
+        else:
+          start_time_int=int(start_time)
+          end_time_int=int(end_time)
+
+
+        if (not start_count) and (not end_count):
+          start_count_int = max(Rate)
+          end_count_int = min(Rate)
+        else:
+          start_count_int=int(start_count)
+          end_count_int=int(end_count)
+
+        
+        
         newTime=[]
         newRate=[]
         newError_y=[]
         newError_x=[]
         
         for i in range(len(Time)):
-          if (Time[i] <= (start_time) or Time[i] >= (end_time)) :
+          if (Time[i] <= (start_time_int) or Time[i] >= (end_time_int)) and (Rate[i] <= (start_count_int) or Rate[i] >= (end_count_int)) :
             newTime.append(Time[i])
             newRate.append(Rate[i])
             newError_y.append(Error_y[i])
@@ -126,7 +141,48 @@ def upload_file():
                      )
             )
 
-   
+    else:
+        
+        trace1 = dict(
+                type = 'scatter',
+                x=Time,
+                y=Rate,
+                error_x=dict(
+                   type='data',
+                   array=Error_x,
+                   visible=True
+                    ),
+                error_y=dict(
+                   type='data',
+                   array=Error_y,
+                   visible=True
+                    )
+        )
+
+        layout=dict(
+                     title='',
+                     xaxis=dict(
+                         title='Time',
+                         range=[start_time,end_time],
+                         rangeslider=dict(),
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         color='#7f7f7f'
+                            )
+                     ),
+                     yaxis=dict(
+                         title='Count Rate',
+                         range=[start_count,end_count],
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         #range=[int(start), int(end)],
+                         #range=[10,20],
+                         color='#7f7f7f'
+                          )
+                     )
+            )   
     fig = dict(data = [trace1], layout = layout)
     plt.plot(fig, filename='templates/basic__plot.html',auto_open=False)
 
