@@ -114,7 +114,7 @@ def upload_file():
                 )
     )
 
-    )
+    
     
     layout=dict(
                  title='',
