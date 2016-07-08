@@ -67,9 +67,6 @@ def upload_file():
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
-   ## mode="Deselect"
-
-
     if(mode=="Deselect"):
 
         if (not start_time) and (not end_time):
@@ -79,15 +76,12 @@ def upload_file():
           start_time_int=int(start_time)
           end_time_int=int(end_time)
 
-
         if (not start_count) and (not end_count):
           start_count_int = max(Rate)
           end_count_int = min(Rate)
         else:
           start_count_int=int(start_count)
           end_count_int=int(end_count)
-
-        
         
         newTime=[]
         newRate=[]
@@ -177,8 +171,6 @@ def upload_file():
                          titlefont=dict(
                          family='Courier New, monospace',
                          size=18,
-                         #range=[int(start), int(end)],
-                         #range=[10,20],
                          color='#7f7f7f'
                           )
                      )
@@ -194,7 +186,6 @@ def upload_file():
 def my_form():
     logging.debug("I am here")
     return render_template("welcome.html")
-
 
 
 if __name__ == '__main__':
