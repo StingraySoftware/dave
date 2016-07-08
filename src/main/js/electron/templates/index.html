@@ -8,18 +8,39 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
 <script type="text/javascript" src="{{ url_for('static',filename='canvas2image.js') }}"></script>
 
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
+
 <style>
+
 </style>
 </head>
+<script>
+    $(document).ready(function () {
+    $( '#upload_input' ).on( 'change', function () {
+    var fullfilename=this.value;
+    var filename = fullfilename.replace(/^.*[\\\/]/, '')
+    document.getElementById("uploadFile").value = filename;
+  });
+});
+</script>
 <script>
 $(document).ready(function() {
          console.log("here")  
 
     $("#clear").bind("click", function(){
-         $("#section").empty();        
+         $("#section").empty();
         });
               
-       
+     $(window).resize(function() {
+         var divheight = $("#section").height();
+         var divwidth = $("#section").width();
+         var update = {
+                  width:divwidth,  // or any new width
+                  height:divheight // " "
+                };
+        Plotly.relayout('section', update);
+            }).resize();
+         });  
 $(function() { 
     $("#btnSave").click(function() { 
         html2canvas($("#section"), {
@@ -67,6 +88,7 @@ $(function() {
 
 </div>
     <input type="submit" name="my-form" value="Load Spectrum">
+
     </form>
     <button id ="clear" class="button button1">Clear</button>
     <input type="button" id="btnSave"  value="Save PNG"/>
@@ -84,4 +106,6 @@ $(function() {
 TIMELABS
 </div>
 
+
 {% endblock %}
+

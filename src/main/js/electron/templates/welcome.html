@@ -6,11 +6,14 @@
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
+
+
 </head>
 <script>
 $(document).ready(function () {
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
+
     $(document ).on('change','input[type="file"]', function () {
     var fullfilename=this.value;
     var filename = fullfilename.replace(/^.*[\\\/]/, '')
@@ -31,16 +34,15 @@ $(document).ready(function () {
 </label>
 
 <br>
-<br>
-
-<font size="3"><b>Select Time Range<b></font>
-<br>
+  <br>
+  <font size="3"><b>Select Time Range<b></font>
+  <br>
      <input type="text" name="from_time" placeholder="From"><br>
      <input type="text" name="to_time" placeholder="To" ><br>
 <br>
 
-<font size="3"><b>Select Count Rate Range<b></font>
-<br>
+  <font size="3"><b>Select Count Rate Range<b></font>
+  <br>
      <input type="text" name="from_count" placeholder="From"><br>
      <input type="text" name="to_count" placeholder="To" ><br>
 <br>
@@ -49,10 +51,13 @@ $(document).ready(function () {
     <input type="submit" name="my-form" value="Load Spectrum">
     </form>
     <button id ="clear" class="button button1">Clear</button>
+
+
 </div>
 
 <div class="hello" id="section" >
 
+  
 </div>
 
 <div id="includedContent"></div>
@@ -61,4 +66,5 @@ TIMELABS
 </div>
 
 
-{% endblock %}
+{% endblock %} 
+
