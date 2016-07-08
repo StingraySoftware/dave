@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request , send_from_directory
 app = Flask(__name__)
 import json
 
@@ -18,6 +18,8 @@ from werkzeug import secure_filename
 from astropy.io import fits
 
 logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 
 @app.route('/hello')
 def hello():
@@ -26,6 +28,27 @@ filename, file_extension = os.path.splitext('/path/to/somefile.ext')
 
 @app.route('/uploader', methods = ['GET', 'POST'])
 def upload_file():
+
+    upload = request.files['file']
+    
+    target = os.path.join(APP_ROOT, 'uploadeddataset')
+    
+    if not os.path.isdir(target):
+        os.mkdir(target)
+
+    for upload in request.files.getlist("file"):
+    
+        filename = upload.filename
+        ext = os.path.splitext(filename)[1]
+        
+        if (ext == ".txt") or (ext == ".lc"):
+            logging.debug("File supported moving on...")
+        else:
+            render_template("error.html", message="Files uploaded are not supported...")
+        destination = "/".join([target, filename])
+        
+        upload.save(destination)
+
 
     logging.debug("I reached here")
     f = request.files['file']
@@ -44,17 +67,25 @@ def upload_file():
     if not text:
       return render_template("welcome.html");
 
-    text="datasets/"+text
+    text="uploadeddataset/"+text
 
     filename, file_extension = os.path.splitext(text)
+    
+
+    if file_extension != ".txt" and  file_extension != ".lc":
+        return render_template("error.html");
+
 
     if file_extension == ".txt":
+        
+        logging.debug("Read txt file successfully ")
         light_curve = pkg_resources.resource_stream(__name__,text)
         data = np.loadtxt(light_curve)
         Time = data[0:len(data),0]
         Rate = data[0:len(data),1]
         Error_y= data[0:len(data),2]
         Error_x= data[0:len(data),3]
+
         logging.debug(file_extension)
         logging.debug("Read txt file successfully ")
 
@@ -63,7 +94,8 @@ def upload_file():
         tbdata = hdulist[1].data
         Time =tbdata.field(0)
         Rate=tbdata.field(1)
-        Error=tbdata.field(2)
+        Error_y=tbdata.field(2)
+        Error_x=tbdata.field(3)
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
