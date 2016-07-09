@@ -121,7 +121,7 @@ def upload_file():
                  xaxis=dict(
                      title='Time',
                      range=[start_time,end_time],
-                     rangeslider=dict(),
+                     #rangeslider=dict(),
                      titlefont=dict(
                      family='Courier New, monospace',
                      size=18,

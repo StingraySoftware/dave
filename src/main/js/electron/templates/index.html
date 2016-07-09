@@ -34,6 +34,19 @@ $(function() {
         });
     });
 
+    $(window).resize(function() {
+    var divheight = $("#section").height();
+         var divwidth = $("#section").width();
+         var update = {
+                  width:divwidth,  // or any new width
+                  height:divheight // " "
+                };
+     var a = $("#section").find("*").toArray();
+        console.log(a[2].getAttribute("id"));
+        Plotly.relayout(a[2].getAttribute("id"), update);
+            }).resize();
+}); 
+
 
 });
 </script>
