@@ -29,9 +29,7 @@ def hello():
 filename, file_extension = os.path.splitext('/path/to/somefile.ext')
 
 @app.route('/uploader', methods = ['GET', 'POST'])
-def upload_file():
-
-    upload = request.files['file']
+def upload_file():    
     
     target = os.path.join(APP_ROOT, 'uploadeddataset')
     
@@ -41,6 +39,8 @@ def upload_file():
     for upload in request.files.getlist("file"):
     
         filename = upload.filename
+        if not filename:
+          return render_template("welcome.html");
         ext = os.path.splitext(filename)[1]
         
         if (ext == ".txt") or (ext == ".lc"):
