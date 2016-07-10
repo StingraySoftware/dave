@@ -29,40 +29,48 @@ def hello():
 filename, file_extension = os.path.splitext('/path/to/somefile.ext')
 
 @app.route('/uploader', methods = ['GET', 'POST'])
-def upload_file():    
-    
+def request_upload_file():
+
+    files_to_load = request.files.getlist("file")
+    f = request.files['file']
+    start_time = request.form['from_time']
+    end_time = request.form['to_time']
+    start_count = request.form['from_count']
+    end_count = request.form['to_count']
+
+    plot_div = upload_file(files_to_load, f, start_time, end_time, start_count, end_count)
+
+    return render_template('index.html',
+        div_placeholder= Markup(plot_div)
+    )
+
+def upload_file(files_to_load, f, start_time, end_time, start_count, end_count):
+
     target = os.path.join(APP_ROOT, 'uploadeddataset')
-    
     if not os.path.isdir(target):
         os.mkdir(target)
 
-    for upload in request.files.getlist("file"):
-    
+    for upload in files_to_load:
+
         filename = upload.filename
         if not filename:
           return render_template("welcome.html");
         ext = os.path.splitext(filename)[1]
-        
+
         if (ext == ".txt") or (ext == ".lc"):
             logging.debug("File supported moving on...")
         else:
             render_template("error.html", message="Files uploaded are not supported...")
         destination = "/".join([target, filename])
-        
+
         upload.save(destination)
 
 
     logging.debug("I reached here")
-    f = request.files['file']
     text=f.filename
 
     #text = request.form['text']
-    f = request.files['file']
     logging.debug(secure_filename(f.filename))
-    start_time = request.form['from_time']
-    end_time =request.form['to_time']
-    start_count = request.form['from_count']
-    end_count =request.form['to_count']
 
     if not text:
       return render_template("welcome.html");
@@ -70,14 +78,12 @@ def upload_file():
     text="uploadeddataset/"+text
 
     filename, file_extension = os.path.splitext(text)
-    
 
     if file_extension != ".txt" and  file_extension != ".lc":
         return render_template("error.html");
 
-
     if file_extension == ".txt":
-        
+
         logging.debug("Read txt file successfully ")
         light_curve = pkg_resources.resource_stream(__name__,text)
         data = np.loadtxt(light_curve)
@@ -99,53 +105,45 @@ def upload_file():
         logging.debug("Read fits file successfully ")
 
     trace1 = dict(
-            type = 'scatter',
-            x=Time,
-            y=Rate,
-            error_x=dict(
-               type='data',
-               array=Error_x,
-               visible=True
-                ),
-            error_y=dict(
-               type='data',
-               array=Error_y,
-               visible=True
-                )
+        type = 'scatter',
+        x = Time,
+        y = Rate,
+        error_x = dict(
+           type = 'data',
+           array = Error_x,
+           visible = True
+        ),
+        error_y = dict(
+           type = 'data',
+           array = Error_y,
+           visible = True
+        )
     )
 
-    
-    
-    layout=dict(
-                 title='',
-                 xaxis=dict(
-                     title='Time',
-                     range=[start_time,end_time],
-                     #rangeslider=dict(),
-                     titlefont=dict(
-                     family='Courier New, monospace',
-                     size=18,
-                     color='#7f7f7f'
-                        )
-                 ),
-                 yaxis=dict(
-                     title='Count Rate',
-                     range=[start_count,end_count],
-                     titlefont=dict(
-                     family='Courier New, monospace',
-                     size=18,
-                     #range=[int(start), int(end)],
-                     #range=[10,20],
-                     color='#7f7f7f'
-                      )
-                 )
-        )
+    layout = dict(
+         title = '',
+         xaxis = dict(
+             title = 'Time',
+             range = [start_time,end_time],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+            )
+         ),
+         yaxis=dict(
+             title='Count Rate',
+             range=[start_count,end_count],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+             )
+         )
+    )
     fig = dict(data = [trace1], layout = layout)
-    my_plot_div=plot(fig, output_type='div')
-    return render_template('index.html',
-                               div_placeholder= Markup(my_plot_div)
-                              )
-
+    my_plot_div = plot(fig, output_type='div')
+    return my_plot_div
 
 @app.route('/')
 def my_form():
