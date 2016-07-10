@@ -14,21 +14,21 @@
 </head>
 <script>
 $(document).ready(function() {
-         console.log("here")  
+         console.log("here")
 
     $("#clear").bind("click", function(){
-         $("#section").empty();        
+         $("#section").empty();
         });
-              
-       
-$(function() { 
-    $("#btnSave").click(function() { 
+
+
+$(function() {
+    $("#btnSave").click(function() {
         html2canvas($("#section"), {
             onrendered: function(canvas) {
                 theCanvas = canvas;
-                // Convert and download as image 
-                Canvas2Image.saveAsPNG(canvas); 
-                // Clean up 
+                // Convert and download as image
+                Canvas2Image.saveAsPNG(canvas);
+                // Clean up
                 //document.body.removeChild(canvas);
             }
         });
@@ -36,16 +36,16 @@ $(function() {
 
     $(window).resize(function() {
     var divheight = $("#section").height();
-         var divwidth = $("#section").width();
-         var update = {
-                  width:divwidth,  // or any new width
-                  height:divheight // " "
-                };
+    var divwidth = $("#section").width();
+    var update = {
+      width:divwidth,  // or any new width
+      height:divheight // " "
+    };
      var a = $("#section").find("*").toArray();
         console.log(a[2].getAttribute("id"));
         Plotly.relayout(a[2].getAttribute("id"), update);
             }).resize();
-}); 
+});
 
 
 });
@@ -101,4 +101,3 @@ TIMELABS
 
 
 {% endblock %}
-
