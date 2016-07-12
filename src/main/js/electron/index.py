@@ -36,6 +36,10 @@ def request_upload_file():
     start_count = request.form['from_count']
     end_count = request.form['to_count']
 
+    filename = f.filename
+    if not filename:
+      return render_template("welcome.html");
+
     fig = upload_file(f, start_time, end_time, start_count, end_count)
     
     plot_div1 = plot(fig[0], output_type='div')
@@ -62,8 +66,6 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
 
     upload = f
     filename = upload.filename
-    if not filename:
-      return render_template("welcome.html");
     ext = os.path.splitext(filename)[1]
 
     if (ext == ".txt") or (ext == ".lc"):
