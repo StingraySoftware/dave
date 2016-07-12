@@ -15,9 +15,11 @@
 $(document).ready(function() {
          console.log("here")
     $("#clear").bind("click", function(){
-         $("#section").empty();
+         $("#section1").empty();
+         $("#section2").empty();
         });
 $(function() {
+
     $("#btnSave").click(function() {
         html2canvas($("#section"), {
             onrendered: function(canvas) {
@@ -30,15 +32,16 @@ $(function() {
         });
     });
     $(window).resize(function() {
-    var divheight = $("#section").height();
-    var divwidth = $("#section").width();
+    var divheight = $("#section1").height();
+    var divwidth = $("#section1").width();
     var update = {
-      width:divwidth,  // or any new width
-      height:divheight // " "
+      width:divwidth, 
+      height:divheight
     };
-     var a = $("#section").find("*").toArray();
-        console.log(a[2].getAttribute("id"));
-        Plotly.relayout(a[2].getAttribute("id"), update);
+     var plot1 = $("#section1").find("*").toArray();
+     var plot2 = $("#section2").find("*").toArray();
+        Plotly.relayout(plot1[2].getAttribute("id"), update);
+        Plotly.relayout(plot2[2].getAttribute("id"), update);
             }).resize();
 });
 });
