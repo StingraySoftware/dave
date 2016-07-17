@@ -6,6 +6,8 @@
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
+
+
 </head>
 <script>
 $(document).ready(function () {
@@ -25,23 +27,22 @@ $(document).ready(function () {
 <div class="mainselection">
 <form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
 
-<input id="uploadFile" placeholder="Choose File"  type="text" disabled="disabled" />
+<input id="uploadFile" placeholder="Choose File"  type="text" name="display_text" disabled="disabled" />
 <label class="myLabel">
 <input  id="upload_input" name="file" type="file"/>
 <span>Choose File</span>
 </label>
 
 <br>
-<br>
-
-<font size="3"><b>Select Time Range<b></font>
-<br>
+  <br>
+  <font size="3"><b>Select Time Range<b></font>
+  <br>
      <input type="text" name="from_time" placeholder="From"><br>
      <input type="text" name="to_time" placeholder="To" ><br>
 <br>
 
-<font size="3"><b>Select Count Rate Range<b></font>
-<br>
+  <font size="3"><b>Select Count Rate Range<b></font>
+  <br>
      <input type="text" name="from_count" placeholder="From"><br>
      <input type="text" name="to_count" placeholder="To" ><br>
 <br>
@@ -50,15 +51,18 @@ $(document).ready(function () {
     <input type="submit" name="my-form" value="Load Spectrum">
     </form>
     <button id ="clear" class="button button1">Clear</button>
+
+
 </div>
 
 <div class="hello" id="section" >
+
 
 </div>
 
 <div id="includedContent"></div>
 <div id="footer">
-TIMELABS
+DAVE
 </div>
 
 

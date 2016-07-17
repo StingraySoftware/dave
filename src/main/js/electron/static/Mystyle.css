@@ -1,6 +1,6 @@
 #container {
-    height: 400px;
-    min-width: 310px;
+    height: 400px; 
+    min-width: 310px; 
     max-width: 800px;
     margin: 0 auto;
 }
@@ -19,7 +19,7 @@
  /*   width:300px;*/
     width:25vw;
     float:left;
-    padding:5px;
+    padding:5px;          
 }
 #section {
    /* width:600px;*/
@@ -27,7 +27,7 @@
      height:90vh;
     /*height:600px;*/
     float:left;
-    padding:10px;
+    padding:10px;        
 }
 #footer {
     background-color:black;
@@ -35,7 +35,7 @@
     clear:both;
     text-align:center;
     height:5vh;
-    padding:5px;
+    padding:5px;      
 }
 .button {
     width: 60%;
@@ -102,7 +102,7 @@ label.myLabel input[type="file"] {
     width:17vw;
     height:3vh;
     text-align: center;
-    line-height: 20px;
+    line-height: 20px;    
     margin: 4px 2px;
     border: 2px solid #AAA;
     border-radius: 4px;
@@ -110,8 +110,6 @@ label.myLabel input[type="file"] {
     margin: 2px;
     background: #DDD;
     display: inline-block;
-    cursor: pointer;
-
 }
 .myLabel:hover {
     background: #CCC;
@@ -125,3 +123,4 @@ label.myLabel input[type="file"] {
 .myLabel :valid + span {
     color: black;
 }
+
