@@ -56,6 +56,8 @@ def upload_file():
 
     #text = request.form['text']
     f = request.files['file']
+    mode= request.form['select_mode']
+    logging.debug("select")
     logging.debug(secure_filename(f.filename))
     start_time = request.form['from_time']
     end_time =request.form['to_time']
@@ -82,7 +84,8 @@ def upload_file():
         Time = data[0:len(data),0]
         Rate = data[0:len(data),1]
         Error_y= data[0:len(data),2]
-        Error_x =data[0:len(data),3]
+        Error_x= data[0:len(data),3]
+
         logging.debug(file_extension)
         logging.debug("Read txt file successfully ")
 
@@ -96,46 +99,114 @@ def upload_file():
         logging.debug(file_extension)
         logging.debug("Read fits file successfully ")
 
-    trace1 = dict(
-            type = 'scatter',
-            x=Time,
-            y=Rate,
-            error_x=dict(
-               type='data',
-               array=Error_x,
-               visible=True
-                ),
-            error_y=dict(
-               type='data',
-               array=Error_y,
-               visible=True
-                )
-    )
+    if(mode=="Deselect"):
 
-    layout=dict(
-                 title='',
-                 xaxis=dict(
-                     title='Time',
-                     range=[start_time,end_time],
-                     rangeslider=dict(),
-                     titlefont=dict(
-                     family='Courier New, monospace',
-                     size=18,
-                     color='#7f7f7f'
-                        )
-                 ),
-                 yaxis=dict(
-                     title='Count Rate',
-                     range=[start_count,end_count],
-                     titlefont=dict(
-                     family='Courier New, monospace',
-                     size=18,
-                     #range=[int(start), int(end)],
-                     #range=[10,20],
-                     color='#7f7f7f'
-                      )
-                 )
+        if (not start_time) and (not end_time):
+          start_time_int = max(Time)
+          end_time_int = min(Time)
+        else:
+          start_time_int=int(start_time)
+          end_time_int=int(end_time)
+
+        if (not start_count) and (not end_count):
+          start_count_int = max(Rate)
+          end_count_int = min(Rate)
+        else:
+          start_count_int=int(start_count)
+          end_count_int=int(end_count)
+        
+        newTime=[]
+        newRate=[]
+        newError_y=[]
+        newError_x=[]
+        
+        for i in range(len(Time)):
+          if (Time[i] <= (start_time_int) or Time[i] >= (end_time_int)) and (Rate[i] <= (start_count_int) or Rate[i] >= (end_count_int)) :
+            newTime.append(Time[i])
+            newRate.append(Rate[i])
+            newError_y.append(Error_y[i])
+            newError_x.append(Error_x[i])
+
+
+        trace1 = dict(
+                type = 'scatter',
+                x=newTime,
+                y=newRate,
+                error_x=dict(
+                   type='data',
+                   array=newError_x,
+                   visible=True
+                    ),
+                error_y=dict(
+                   type='data',
+                   array=newError_y,
+                   visible=True
+                    )
         )
+
+        layout=dict(
+                     title='',
+                     xaxis=dict(
+                         title='Time',
+                         rangeslider=dict(),
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         color='#7f7f7f'
+                            )
+                     ),
+                     yaxis=dict(
+                         title='Count Rate',
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         #range=[int(start), int(end)],
+                         #range=[10,20],
+                         color='#7f7f7f'
+                          )
+                     )
+            )
+
+    else:
+        
+        trace1 = dict(
+                type = 'scatter',
+                x=Time,
+                y=Rate,
+                error_x=dict(
+                   type='data',
+                   array=Error_x,
+                   visible=True
+                    ),
+                error_y=dict(
+                   type='data',
+                   array=Error_y,
+                   visible=True
+                    )
+        )
+
+        layout=dict(
+                     title='',
+                     xaxis=dict(
+                         title='Time',
+                         range=[start_time,end_time],
+                         rangeslider=dict(),
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         color='#7f7f7f'
+                            )
+                     ),
+                     yaxis=dict(
+                         title='Count Rate',
+                         range=[start_count,end_count],
+                         titlefont=dict(
+                         family='Courier New, monospace',
+                         size=18,
+                         color='#7f7f7f'
+                          )
+                     )
+            )   
     fig = dict(data = [trace1], layout = layout)
     plt.plot(fig, filename='templates/basic__plot.html',auto_open=False)
 
@@ -147,7 +218,6 @@ def upload_file():
 def my_form():
     logging.debug("I am here")
     return render_template("welcome.html")
-
 
 
 if __name__ == '__main__':

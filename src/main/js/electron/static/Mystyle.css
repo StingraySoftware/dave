@@ -86,7 +86,7 @@ input[type=button], input[type=submit], input[type=reset] {
     height:32px;
     border:1px solid #d8d8d8;
     border-radius: 8px;
-    width:20vw;
+    width: 60%;
     font-family: Cursive;
     font-size: 1.2em;
     padding: 20px 20px
