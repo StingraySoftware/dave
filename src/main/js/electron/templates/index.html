@@ -11,7 +11,17 @@
 <style>
 </style>
 </head>
-
+<script>
+$(document).ready(function () {
+    //$(document).addEventListener('change','input[type="file"]', function (e) {
+    //alert("hi")
+    $(document ).on('change','input[type="file"]', function () {
+    var fullfilename=this.value;
+    var filename = fullfilename.replace(/^.*[\\\/]/, '')
+    document.getElementById("uploadFile").value = filename;
+  });
+});
+</script>
 <script>
 $(document).ready(function() {
          console.log("here")
