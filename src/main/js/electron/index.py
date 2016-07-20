@@ -157,7 +157,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
           end_color2_int=int(end_color2)
           
     for i in range(len(Time)):
-          if ((Time[i] >= (start_time_int) and Time[i] <= (end_time_int)) and (Rate[i] >= (start_count_int) and Rate[i] <= (end_count_int)) and (color1[i] >= (start_color1_int) and color1[i] <= (end_color1_int)) and (color1[i] >= (start_color1_int) and color1[i] <= (end_color1_int)) ) :
+          if ((Time[i] >= (start_time_int) and Time[i] <= (end_time_int)) and (Rate[i] >= (start_count_int) and Rate[i] <= (end_count_int)) and (color1[i] >= (start_color1_int) and color1[i] <= (end_color1_int)) and (color2[i] >= (start_color2_int) and color2[i] <= (end_color2_int)) ) :
             newTime.append(Time[i])
             newRate.append(Rate[i])
             newError_time.append(Error_time[i])
