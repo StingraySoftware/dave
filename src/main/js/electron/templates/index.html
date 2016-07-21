@@ -1,43 +1,143 @@
 {% extends "layout.html" %}
 {% block body %}
 <head>
-<script type=text/javascript src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
+<script type="text/javascript" src="{{ url_for('static',filename='canvas2image.js') }}"></script>
 
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='jquery-ui.css') }}">
+<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
 <style>
-
 </style>
 </head>
 <script>
-    $(document).ready(function () {
-    $( '#upload_input' ).on( 'change', function () {
+$(document).ready(function () {
+    //$(document).addEventListener('change','input[type="file"]', function (e) {
+    //alert("hi")
+    $(document ).on('change','input[type="file"]', function () {
     var fullfilename=this.value;
     var filename = fullfilename.replace(/^.*[\\\/]/, '')
     document.getElementById("uploadFile").value = filename;
   });
 });
-</script>
-<script>
 $(document).ready(function() {
+         console.log("here")
     $("#clear").bind("click", function(){
-         $("#section").empty();
+         $("#section1").empty();
+         $("#section2").empty();
         });
+$(function() {
 
-       $(window).resize(function() {
-         var divheight = $("#section").height();
-         var divwidth = $("#section").width();
-         var update = {
-                  width:divwidth,  // or any new width
-                  height:divheight // " "
-                };
-        Plotly.relayout('section', update);
+    $("#btnSave1").click(function() {
+        html2canvas($("#section1"), {
+            onrendered: function(canvas) {
+                theCanvas = canvas;
+                // Convert and download as image
+                Canvas2Image.saveAsPNG(canvas);
+                // Clean up
+                //document.body.removeChild(canvas);
+            }
+        });
+    });
+    $("#btnSave2").click(function() {
+        html2canvas($("#section2"), {
+            onrendered: function(canvas) {
+                theCanvas = canvas;
+                // Convert and download as image
+                Canvas2Image.saveAsPNG(canvas);
+                // Clean up
+                //document.body.removeChild(canvas);
+            }
+        });
+    });
+    $(window).resize(function() {
+    var divheight = $("#section1").height();
+    var divwidth = $("#section1").width();
+    var update = {
+      width:divwidth, 
+      height:divheight
+    };
+     var plot1 = $("#section1").find("*").toArray();
+     var plot2 = $("#section2").find("*").toArray();
+        Plotly.relayout(plot1[2].getAttribute("id"), update);
+        Plotly.relayout(plot2[2].getAttribute("id"), update);
+           
             }).resize();
-         });
+
+});
+});
 </script>
 
+<script>
+          //For time
+         $(function() {
+            $( "#slider-time" ).slider({
+               range:true,
+               min: 0,
+               max:10000,
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_time" ).val( ui.values[ 0 ]);
+                  $( "#to_time" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_time" ).val($( "#slider-time" ).slider( "values", 0 )  );
+         //$( "#to_time" ).val($( "#slider-time" ).slider( "values", 1 ) )
+         });
+
+         //For rate/count
+        $(function() {
+            $( "#slider-count" ).slider({
+               range:true,
+               min: 0,
+               max:10000,
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_count" ).val( ui.values[ 0 ]);
+                  $( "#to_count" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_count" ).val($( "#slider-count" ).slider( "values", 0 )  );
+        // $( "#to_count" ).val($( "#slider-count" ).slider( "values", 1 ) )
+         });
+
+         //For color1
+         $(function() {
+            $( "#slider-color1" ).slider({
+               range:true,
+               min: 0,
+               max: 10000,
+               //values: [0, 0 ],
+               slide: function( event, ui ) {
+                  $( "#from_color1" ).val( ui.values[ 0 ]);
+                  $( "#to_color1" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_color1" ).val($( "#slider-color1" ).slider( "values", 0 )  );
+        // $( "#to_color1" ).val($( "#slider-color1" ).slider( "values", 1 ) )
+         }); 
+
+         //For color2
+          $(function() {
+            $( "#slider-color2" ).slider({
+               range:true,
+               min: 0,
+               max: 2000,
+               //values: [0, 0],
+               slide: function( event, ui ) {
+                  $( "#from_color2" ).val( ui.values[ 0 ]);
+                  $( "#to_color2" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_color2" ).val($( "#slider-color2" ).slider( "values", 0 ) );
+        // $( "#to_color2" ).val($( "#slider-color2" ).slider( "values", 1 ) )
+         });              
+      </script>
 
 <div id="nav" >
 <font size="3"><b>Filename<b></font>
@@ -45,46 +145,63 @@ $(document).ready(function() {
 <div class="mainselection">
 <form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
 
-<input id="uploadFile" placeholder="Choose File"  type="text" disabled="disabled" />
+<input id="uploadFile" placeholder="Choose File"  type="text" name="display_text" disabled="disabled" />
 <label class="myLabel">
 <input  id="upload_input" name="file" type="file"/>
-    <span>Choose File</span>
+<span>Choose File</span>
 </label>
 
 <br>
-<br>
-<font size="3"><b>Choose Select/Deselect<b></font>
 
-<select id= select1 name='select_mode'>
-    <option value='Select'>Select</option>
-    <option value='Deselect'>Deselect</option>
-  </select>
-<br>
-<br>
-<font size="3"><b>Select Time Range<b></font>
-<br>
-     <input type="text" name="from_time" placeholder="From"><br>
-     <input type="text" name="to_time" placeholder="To" ><br>
+  <font size="3"><b>Select Time Range<b></font><br> 
+     <input id="from_time" type="text" name="from_time" placeholder="From">
+     <input id="to_time" type="text" name="to_time" placeholder="To" ><br>
+    <div id="slider-time" style="width:18.5vw;"></div>
+
 <br>
 
   <font size="3"><b>Select Count Rate Range<b></font>
   <br>
-     <input type="text" name="from_count" placeholder="From"><br>
-     <input type="text" name="to_count" placeholder="To" ><br>
+     <input id="from_count" type="text" name="from_count" placeholder="From">
+     <input id="to_count" type="text" name="to_count" placeholder="To" ><br>
+     <div id="slider-count" style="width:18.5vw;"></div>
+
 <br>
 
+<font size="3"><b>Select Color1 Range<b></font>
+  <br>
+      <input id="from_color1" type="text" name="from_color1" placeholder="From">
+     <input id="to_color1" type="text" name="to_color1" placeholder="To" ><br>
+     <div id="slider-color1" style="width:18.5vw;"></div>
+<br>
+
+  <font size="3"><b>Select Color2 Range<b></font>
+  <br>
+     <input id="from_color2" type="text" name="from_color2" placeholder="From">
+     <input id="to_color2" type="text" name="to_color2" placeholder="To" ><br>
+     <div id="slider-color2" style="width:18.5vw;"></div>
+<br>
 </div>
     <input type="submit" name="my-form" value="Load Spectrum">
+
     </form>
     <button id ="clear" class="button button1">Clear</button>
+    <br><input type="button" id="btnSave1"  value="Save Left"/>
+    <input type="button" id="btnSave2"  value="Save Right"/>
+
+
 </div>
+<div class="hello" id="section1" >
 
-<div class="hello" id="section" >
+  {{div_placeholder_fig1| safe}}
 
-   <object type="text/html" data="/hello" style="width:100%; height:100%; margin:1%; " autosize=True>
-    </object>
+
+
 </div>
+<div class="hello" id="section2" >
 
+  {{div_placeholder_fig2| safe}}
+</div>
 <div id="includedContent"></div>
 <div id="footer">
 TIMELABS

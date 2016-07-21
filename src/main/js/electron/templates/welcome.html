@@ -6,67 +6,148 @@
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='jquery-ui.css') }}">
+<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
 </head>
 <script>
 $(document).ready(function () {
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
-
     $(document ).on('change','input[type="file"]', function () {
     var fullfilename=this.value;
     var filename = fullfilename.replace(/^.*[\\\/]/, '')
     document.getElementById("uploadFile").value = filename;
   });
 });
+
 </script>
+<script>
+          //For time
+         $(function() {
+            $( "#slider-time" ).slider({
+               range:true,
+               min: 0,
+               max:10000,
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_time" ).val( ui.values[ 0 ]);
+                  $( "#to_time" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_time" ).val($( "#slider-time" ).slider( "values", 0 )  );
+         //$( "#to_time" ).val($( "#slider-time" ).slider( "values", 1 ) )
+         });
+
+         //For rate/count
+        $(function() {
+            $( "#slider-count" ).slider({
+               range:true,
+               min: 0,
+               max:10000,
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_count" ).val( ui.values[ 0 ]);
+                  $( "#to_count" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_count" ).val($( "#slider-count" ).slider( "values", 0 )  );
+        // $( "#to_count" ).val($( "#slider-count" ).slider( "values", 1 ) )
+         });
+
+         //For color1
+         $(function() {
+            $( "#slider-color1" ).slider({
+               range:true,
+               min: 0,
+               max:2000,
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_color1" ).val( ui.values[ 0 ]);
+                  $( "#to_color1" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_count" ).val($( "#slider-count" ).slider( "values", 0 )  );
+        // $( "#to_count" ).val($( "#slider-count" ).slider( "values", 1 ) )
+         });
+
+
+         //For color2
+          $(function() {
+            $( "#slider-color2" ).slider({
+               range:true,
+               min: 2000,
+               max: 3000,
+               //values: [0, 0],
+               slide: function( event, ui ) {
+                  $( "#from_color2" ).val( ui.values[ 0 ]);
+                  $( "#to_color2" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_color2" ).val($( "#slider-color2" ).slider( "values", 0 ) );
+        // $( "#to_color2" ).val($( "#slider-color2" ).slider( "values", 1 ) )
+         });              
+      </script>
 <div id="nav" >
 <font size="3"><b>Filename<b></font>
 
 <div class="mainselection">
 <form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
 
-<input id="uploadFile" placeholder="Choose File"  type="text" disabled="disabled" />
+<input id="uploadFile" placeholder="Choose File"  type="text" name="display_text" disabled="disabled" />
 <label class="myLabel">
 <input  id="upload_input" name="file" type="file"/>
 <span>Choose File</span>
 </label>
 
 <br>
-<br>
-<font size="3"><b>Choose Select/Deselect<b></font>
 
-<select id= select1 name='select_mode'>
-    <option value='Select'>Select</option>
-    <option value='Deselect'>Deselect</option>
-  </select>
-<br>
+  <font size="3"><b>Select Time Range<b></font><br> 
+     <input id="from_time" type="text" name="from_time" placeholder="From">
+     <input id="to_time" type="text" name="to_time" placeholder="To" ><br>
+    <div id="slider-time" style="width:18.5vw;"></div>
+
 <br>
 
-<font size="3"><b>Select Time Range<b></font>
-<br>
-     <input type="text" name="from_time" placeholder="From"><br>
-     <input type="text" name="to_time" placeholder="To" ><br>
+  <font size="3"><b>Select Count Rate Range<b></font>
+  <br>
+     <input id="from_count" type="text" name="from_count" placeholder="From">
+     <input id="to_count" type="text" name="to_count" placeholder="To" ><br>
+     <div id="slider-count" style="width:18.5vw;"></div>
+
 <br>
 
-<font size="3"><b>Select Count Rate Range<b></font>
+<font size="3"><b>Select Color1 Range<b></font>
+  <br>
+    <input id="from_color1" type="text" name="from_color1" placeholder="From">
+     <input id="to_color1" type="text" name="to_color1" placeholder="To" ><br>
+     <div id="slider-color1" style="width:18.5vw;"></div>
+
 <br>
-     <input type="text" name="from_count" placeholder="From"><br>
-     <input type="text" name="to_count" placeholder="To" ><br>
+
+  <font size="3"><b>Select Color2 Range<b></font>
+  <br>
+     <input id="from_color2" type="text" name="from_color2" placeholder="From">
+     <input id="to_color2" type="text" name="to_color2" placeholder="To" ><br>
+     <div id="slider-color2" style="width:18.5vw;"></div>
 <br>
 
 </div>
     <input type="submit" name="my-form" value="Load Spectrum">
     </form>
     <button id ="clear" class="button button1">Clear</button>
-</div>
 
+</div>
+<br>
 <div class="hello" id="section" >
+
 
 </div>
 
 <div id="includedContent"></div>
 <div id="footer">
-TIMELABS
+DAVE
 </div>
 
 
