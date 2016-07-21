@@ -190,7 +190,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          title = '',
          xaxis = dict(
              title = 'Time',
-             range = [start_time, end_time],
+             #range = [start_time, end_time],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
@@ -199,7 +199,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          ),
          yaxis=dict(
              title='Count Rate',
-             range=[start_count, end_count],
+             #range=[start_count, end_count],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
@@ -227,7 +227,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          title = '',
          xaxis = dict(
              title = 'Color1',
-             range = [start_color1, end_color1],
+             #range = [start_color1, end_color1],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
@@ -236,7 +236,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          ),
          yaxis=dict(
              title='Color2',
-             range=[start_color2, end_color2],
+             #range=[start_color2, end_color2],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
