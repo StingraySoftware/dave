@@ -75,9 +75,14 @@ var d3 = Plotly.d3;
 var formatter = d3.format('.2f');
 
 
-    document.getElementById(plotx[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+  document.getElementById(plotx[2].getAttribute("id")).on('plotly_selected', (eventData) => {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
+  
+  Plotly.relayout(plotx[2].getAttribute("id"), 'title',
+`x range: [${xRange.map(formatter).join(', ')}]<br>
+y range: [${yRange.map(formatter).join(', ')}]`
+  );
  
 });
 
