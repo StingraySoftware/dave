@@ -1,8 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 <head>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -68,6 +67,19 @@ $(function() {
         Plotly.relayout(plot2[2].getAttribute("id"), update);
            
             }).resize();
+
+var plotx = $("#section1").find("*").toArray();
+var myDiv = document.getElementById(plotx[2].getAttribute("id"));
+console.log(plotx[2].getAttribute("id"))
+var d3 = Plotly.d3;
+var formatter = d3.format('.2f');
+
+
+    document.getElementById(plotx[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+  var xRange = eventData.range.x;
+  var yRange = eventData.range.y;
+ 
+});
 
 });
 });
@@ -183,7 +195,6 @@ $(function() {
 <br>
 </div>
     <input type="submit" name="my-form" value="Load Spectrum">
-
     </form>
     <button id ="clear" class="button button1">Clear</button>
     <br><input type="button" id="btnSave1"  value="Save Left"/>
@@ -194,10 +205,8 @@ $(function() {
 <div class="hello" id="section1" >
 
   {{div_placeholder_fig1| safe}}
-
-
-
 </div>
+
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
