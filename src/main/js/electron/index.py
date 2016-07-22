@@ -244,7 +244,8 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
                  size = 18,
                  color = '#7f7f7f'
              )
-         )
+         ),
+         dragmode='select'
     )
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)

@@ -1,19 +1,22 @@
 {% extends "layout.html" %}
 {% block body %}
 <head>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='html2canvas.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static',filename='canvas2image.js') }}"></script>
 
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='jquery-ui.css') }}">
-<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
-<script src="http://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-1.10.2.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-ui.js') }}"></script>
+
 <style>
 </style>
 </head>
+
 <script>
 $(document).ready(function () {
     //$(document).addEventListener('change','input[type="file"]', function (e) {
@@ -68,24 +71,42 @@ $(function() {
            
             }).resize();
 
-var plotx = $("#section1").find("*").toArray();
-var myDiv = document.getElementById(plotx[2].getAttribute("id"));
-console.log(plotx[2].getAttribute("id"))
+var plotleft = $("#section1").find("*").toArray();
+var plotright = $("#section2").find("*").toArray();
+
+console.log(plotleft[2].getAttribute("id"))
+console.log(plotright[2].getAttribute("id"))
+
 var d3 = Plotly.d3;
 var formatter = d3.format('.2f');
 
 
-  document.getElementById(plotx[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+  document.getElementById(plotleft[2].getAttribute("id")).on('plotly_selected', (eventData) => {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
-  
-  Plotly.relayout(plotx[2].getAttribute("id"), 'title',
+  $( "#from_time" ).val( xRange[ 0 ]);
+  $( "#to_time" ).val(xRange[ 1 ] );
+  $( "#from_count" ).val( yRange[ 0 ]);
+  $( "#to_count" ).val(yRange[ 1 ] );
+  Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
 `x range: [${xRange.map(formatter).join(', ')}]<br>
 y range: [${yRange.map(formatter).join(', ')}]`
   );
+  });
  
-});
+ document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+  var xRange = eventData.range.x;
+  var yRange = eventData.range.y;
+  $( "#from_color1" ).val( xRange[ 0 ]);
+  $( "#to_color1" ).val(xRange[ 1 ] );
+  $( "#from_color2" ).val( yRange[ 0 ]);
+  $( "#to_color2" ).val(yRange[ 1 ] );
+  Plotly.relayout(plotright[2].getAttribute("id"), 'title',
+`x range: [${xRange.map(formatter).join(', ')}]<br>
+y range: [${yRange.map(formatter).join(', ')}]`
+  );
 
+});
 });
 });
 </script>
