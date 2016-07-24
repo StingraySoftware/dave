@@ -9,6 +9,7 @@
 <script type="text/javascript" src="{{ url_for('static',filename='canvas2image.js') }}"></script>
 
 <style>
+
 </style>
 </head>
 <script>
@@ -21,6 +22,7 @@ $(document).ready(function () {
     document.getElementById("uploadFile").value = filename;
   });
 });
+
 $(document).ready(function() {
          console.log("here")
     $("#clear").bind("click", function(){
@@ -81,7 +83,15 @@ $(function() {
 </label>
 
 <br>
+<br>
+<font size="3"><b>Choose Select/Deselect<b></font>
 
+<select id= select1 name='select_mode'>
+    <option value='Select'>Select</option>
+    <option value='Deselect'>Deselect</option>
+  </select>
+<br>
+<br>
 <font size="3"><b>Select Time Range<b></font>
 <br>
      <input type="text" name="from_time" placeholder="From">

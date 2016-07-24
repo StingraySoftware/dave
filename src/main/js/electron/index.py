@@ -66,6 +66,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
     logging.debug("file: %s - %s" % (type(f), f))
 
     target = os.path.join(APP_ROOT, 'uploadeddataset')
+    
     if not os.path.isdir(target):
         os.mkdir(target)
 
@@ -91,6 +92,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
 
     if file_extension != ".txt" and  file_extension != ".lc":
         return render_template("error.html");
+
 
     if file_extension == ".txt":
             logging.debug("Read txt file successfully for time")
@@ -168,7 +170,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
             newError_color2.append(Error_color2[i])
 
 
-
+     
 
     trace1 = dict(
         type = 'scatter',
