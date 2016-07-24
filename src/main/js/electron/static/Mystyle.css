@@ -1,6 +1,6 @@
 #container {
-    height: 400px;
-    min-width: 310px;
+    height: 400px; 
+    min-width: 310px; 
     max-width: 800px;
     margin: 0 auto;
 }
@@ -19,15 +19,23 @@
  /*   width:300px;*/
     width:25vw;
     float:left;
-    padding:5px;
+    padding:5px;          
 }
-#section {
+#section1 {
    /* width:600px;*/
-     width:65vw;
+     width:32vw;
      height:90vh;
     /*height:600px;*/
     float:left;
-    padding:10px;
+    padding:10px;        
+}
+#section2 {
+   /* width:600px;*/
+     width:32vw;
+     height:90vh;
+    /*height:600px;*/
+    float:left;
+    padding:10px;        
 }
 #footer {
     background-color:black;
@@ -35,7 +43,7 @@
     clear:both;
     text-align:center;
     height:5vh;
-    padding:5px;
+    padding:5px;      
 }
 .button {
     width: 60%;
@@ -50,7 +58,7 @@
     line-height: 20px;
 }
 input[type=text] {
-    width: 60%;
+    width: 30%;
     padding: 5px 20px;
     margin: 8px 0;
     box-sizing: border-box;
@@ -63,8 +71,7 @@ input[type=button], input[type=submit], input[type=reset] {
     width: 60%;
     background-color: black;
     border:1px solid #d8d8d8;
-     border-radius: 8px;
-
+    border-radius: 8px;
     color: white;
     text-decoration: none;
     margin: 4px 2px;
@@ -80,6 +87,21 @@ input[type=button], input[type=submit], input[type=reset] {
 
     /* dropdown_arrow.png is a 31x28 image */
 }
+#btnSave1,#btnSave2
+{ 
+    width: 30%;
+    background-color: black;
+    border:1px solid #d8d8d8;
+     border-radius: 8px;
+
+    color: white;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 20px;
+}
+
 #select1 {
     border:0;
     background:transparent;
@@ -99,10 +121,10 @@ label.myLabel input[type="file"] {
 }
 
 .myLabel {
-    width:17vw;
+    width:8vw;
     height:3vh;
     text-align: center;
-    line-height: 20px;
+    line-height: 20px;    
     margin: 4px 2px;
     border: 2px solid #AAA;
     border-radius: 4px;
@@ -110,8 +132,6 @@ label.myLabel input[type="file"] {
     margin: 2px;
     background: #DDD;
     display: inline-block;
-    cursor: pointer;
-
 }
 .myLabel:hover {
     background: #CCC;
@@ -125,3 +145,4 @@ label.myLabel input[type="file"] {
 .myLabel :valid + span {
     color: black;
 }
+
