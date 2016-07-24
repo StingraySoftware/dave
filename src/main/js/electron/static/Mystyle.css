@@ -11,10 +11,20 @@
     padding:25px;
 }
 
-#nav {
+#nav_welcome {
     line-height:30px;
     background-color:#eeeeee;
-    height:90vh;
+    height:95vh;
+    /*height:700px;*/
+ /*   width:300px;*/
+    width:25vw;
+    float:left;
+    padding:5px;          
+}
+#nav_index {
+    line-height:30px;
+    background-color:#eeeeee;
+    height:105vh;
     /*height:700px;*/
  /*   width:300px;*/
     width:25vw;

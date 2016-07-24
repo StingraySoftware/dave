@@ -14,6 +14,36 @@
 <script type="text/javascript" src="{{ url_for('static', filename='jquery-ui.js') }}"></script>
 
 <style>
+#new {
+    width:17.5vw;
+    height:3vh;
+    line-height: 20px;    
+    margin: 4px 2px;
+    border: 2px solid #AAA;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 2px;
+    background: #DDD;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+
+}
+#new:hover {
+    background: #CCC;
+}
+#new:active {
+    background: #CCF;
+}
+#new :invalid + span {
+    color: black;
+}
+#new :valid + span {
+    color: black;
+}
+
+
 </style>
 </head>
 
@@ -177,19 +207,15 @@ y range: [${yRange.map(formatter).join(', ')}]`
          });              
       </script>
 
-<div id="nav" >
-<font size="3"><b>Filename<b></font>
+<div id="nav_index" >
+<font size="3"><b>Current Filename<b></font>
 
 <div class="mainselection">
-<form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
+<form action = "http://localhost:5000/uploader_index" method = "POST" enctype = "multipart/form-data">
 
-<input id="uploadFile" placeholder="Choose File"  type="text" name="display_text" disabled="disabled" />
-<label class="myLabel">
-<input  id="upload_input" name="file" type="file"/>
-<span>Choose File</span>
+<input id="uploadFile" placeholder="Choose File"  style="width:18.5vw" type="text" name="display_text" disabled="disabled" />
+<p> <a href="/" id="new">New File</a> </p>
 </label>
-
-<br>
 
   <font size="3"><b>Select Time Range<b></font><br> 
      <input id="from_time" type="text" name="from_time" placeholder="From">
@@ -231,6 +257,10 @@ y range: [${yRange.map(formatter).join(', ')}]`
 <div class="hello" id="section1" >
 
   {{div_placeholder_fig1| safe}}
+  <script>
+  var filename=  {{filename| safe}};
+  document.getElementById("uploadFile").value = filename;
+  </script>
 </div>
 
 <div class="hello" id="section2" >
@@ -238,8 +268,9 @@ y range: [${yRange.map(formatter).join(', ')}]`
   {{div_placeholder_fig2| safe}}
 </div>
 <div id="includedContent"></div>
+
 <div id="footer">
-TIMELABS
+DAVE
 </div>
 
 {% endblock %}
