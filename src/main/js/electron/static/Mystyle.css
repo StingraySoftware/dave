@@ -58,7 +58,7 @@
     line-height: 20px;
 }
 input[type=text] {
-    width: 60%;
+    width: 30%;
     padding: 5px 20px;
     margin: 8px 0;
     box-sizing: border-box;
@@ -71,8 +71,7 @@ input[type=button], input[type=submit], input[type=reset] {
     width: 60%;
     background-color: black;
     border:1px solid #d8d8d8;
-     border-radius: 8px;
-
+    border-radius: 8px;
     color: white;
     text-decoration: none;
     margin: 4px 2px;
@@ -88,6 +87,21 @@ input[type=button], input[type=submit], input[type=reset] {
 
     /* dropdown_arrow.png is a 31x28 image */
 }
+#btnSave1,#btnSave2
+{ 
+    width: 30%;
+    background-color: black;
+    border:1px solid #d8d8d8;
+     border-radius: 8px;
+
+    color: white;
+    text-decoration: none;
+    margin: 4px 2px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 20px;
+}
+
 #select1 {
     border:0;
     background:transparent;
@@ -107,7 +121,7 @@ label.myLabel input[type="file"] {
 }
 
 .myLabel {
-    width:17vw;
+    width:8vw;
     height:3vh;
     text-align: center;
     line-height: 20px;    

@@ -21,19 +21,28 @@ $(document).ready(function () {
     document.getElementById("uploadFile").value = filename;
   });
 });
-</script>
-<script>
+
 $(document).ready(function() {
          console.log("here")
     $("#clear").bind("click", function(){
          $("#section1").empty();
          $("#section2").empty();
         });
-
 $(function() {
 
-    $("#btnSave").click(function() {
-        html2canvas($("#section"), {
+    $("#btnSave1").click(function() {
+        html2canvas($("#section1"), {
+            onrendered: function(canvas) {
+                theCanvas = canvas;
+                // Convert and download as image
+                Canvas2Image.saveAsPNG(canvas);
+                // Clean up
+                //document.body.removeChild(canvas);
+            }
+        });
+    });
+    $("#btnSave2").click(function() {
+        html2canvas($("#section2"), {
             onrendered: function(canvas) {
                 theCanvas = canvas;
                 // Convert and download as image
@@ -84,25 +93,36 @@ $(function() {
 <br>
 <font size="3"><b>Select Time Range<b></font>
 <br>
-     <input type="text" name="from_time" placeholder="From"><br>
+     <input type="text" name="from_time" placeholder="From">
      <input type="text" name="to_time" placeholder="To" ><br>
 <br>
 
   <font size="3"><b>Select Count Rate Range<b></font>
   <br>
-     <input type="text" name="from_count" placeholder="From"><br>
+     <input type="text" name="from_count" placeholder="From">
      <input type="text" name="to_count" placeholder="To" ><br>
 <br>
+<font size="3"><b>Select Color1 Range<b></font>
+  <br>
+     <input type="text" name="from_color1" placeholder="From">
+     <input type="text" name="to_color1" placeholder="To" ><br>
+<br>
 
+  <font size="3"><b>Select Color2 Range<b></font>
+  <br>
+     <input type="text" name="from_color2" placeholder="From">
+     <input type="text" name="to_color2" placeholder="To" ><br>
+<br>
 </div>
     <input type="submit" name="my-form" value="Load Spectrum">
 
     </form>
     <button id ="clear" class="button button1">Clear</button>
-    <input type="button" id="btnSave"  value="Save PNG"/>
+    <br><input type="button" id="btnSave1"  value="Save Left"/>
+    <input type="button" id="btnSave2"  value="Save Right"/>
+
 
 </div>
-
 <div class="hello" id="section1" >
 
   {{div_placeholder_fig1| safe}}
@@ -112,10 +132,7 @@ $(function() {
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
-
-
 </div>
-
 <div id="includedContent"></div>
 <div id="footer">
 TIMELABS
