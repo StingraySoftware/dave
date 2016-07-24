@@ -66,6 +66,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
     logging.debug("file: %s - %s" % (type(f), f))
 
     target = os.path.join(APP_ROOT, 'uploadeddataset')
+    
     if not os.path.isdir(target):
         os.mkdir(target)
 
@@ -92,17 +93,21 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
     if file_extension != ".txt" and  file_extension != ".lc":
         return render_template("error.html");
 
+
     if file_extension == ".txt":
             logging.debug("Read txt file successfully for time")
             data = np.loadtxt(destination)
+
             Time = data[0:len(data),0]
-            Rate = data[0:len(data),1]
-            Error_y = data[0:len(data),2]
-            Error_x =data[0:len(data),3]
+            Error_time =data[0:len(data),1]
+            Rate = data[0:len(data),2]
+            Error_rate = data[0:len(data),3]
+            
             color1 = data[0:len(data),4]
-            color2= data[0:len(data),5]
-            Error_color2 = data[0:len(data),6]
-            Error_color1 =data[0:len(data),7]
+            Error_color1 =data[0:len(data),5]
+            color2= data[0:len(data),6]
+            Error_color2 = data[0:len(data),7]
+
             logging.debug(file_extension)
             logging.debug("Read txt file successfully for time ")
             
@@ -116,18 +121,69 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
             logging.debug(file_extension)
             logging.debug("Read fits file successfully ")
 
+    newTime=[]
+    newRate=[]
+    newError_time=[]
+    newError_rate=[] 
+    newcolor1=[];
+    newcolor2=[];
+    newError_color1=[];
+    newError_color2=[];       
+
+    if (not start_time) and (not end_time):
+          start_time_int = min(Time)
+          end_time_int = max(Time)
+    else:
+          start_time_int=int(start_time)
+          end_time_int=int(end_time)
+
+    if (not start_count) and (not end_count):
+          start_count_int = min(Rate)
+          end_count_int = max(Rate)
+    else:
+          start_count_int=int(start_count)
+          end_count_int=int(end_count)
+
+    if (not start_color1) and (not end_color1):
+          start_color1_int = min(color1)
+          end_color1_int = max(color1)
+    else:
+          start_color1_int=int(start_color1)
+          end_color1_int=int(end_color1)
+
+    if (not start_color2) and (not end_color2):
+          start_color2_int = min(color2)
+          end_color2_int = max(color2)
+    else:
+          start_color2_int=int(start_color2)
+          end_color2_int=int(end_color2)
+          
+    for i in range(len(Time)):
+          if ((Time[i] >= (start_time_int) and Time[i] <= (end_time_int)) and (Rate[i] >= (start_count_int) and Rate[i] <= (end_count_int)) and (color1[i] >= (start_color1_int) and color1[i] <= (end_color1_int)) and (color2[i] >= (start_color2_int) and color2[i] <= (end_color2_int)) ) :
+            newTime.append(Time[i])
+            newRate.append(Rate[i])
+            newError_time.append(Error_time[i])
+            newError_rate.append(Error_rate[i])
+            newcolor1.append(color1[i])
+            newcolor2.append(color2[i])
+            newError_color1.append(Error_color1[i])
+            newError_color2.append(Error_color2[i])
+
+
+     
+
     trace1 = dict(
         type = 'scatter',
-        x = Time,
-        y = Rate,
+        x = newTime,
+        y = newRate,
         error_x = dict(
            type = 'data',
-           array = Error_x,
+           array = newError_time,
            visible = True
         ),
         error_y = dict(
            type = 'data',
-           array = Error_y,
+           array = newError_rate,
            visible = True
         )
     )
@@ -136,7 +192,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          title = '',
          xaxis = dict(
              title = 'Time',
-             range = [start_time, end_time],
+             #range = [start_time, end_time],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
@@ -145,7 +201,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          ),
          yaxis=dict(
              title='Count Rate',
-             range=[start_count, end_count],
+             #range=[start_count, end_count],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
@@ -155,16 +211,16 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
     )
     trace2 = dict(
         type = 'scatter',
-        x = color1,
-        y = color2,
+        x = newcolor1,
+        y = newcolor2,
         error_x = dict(
            type = 'data',
-           array = Error_color1,
+           array = newError_color1,
            visible = True
         ),
         error_y = dict(
            type = 'data',
-           array = Error_color2,
+           array = newError_color2,
            visible = True
         )
     )
@@ -173,7 +229,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          title = '',
          xaxis = dict(
              title = 'Color1',
-             range = [start_color1, end_color1],
+             #range = [start_color1, end_color1],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
@@ -182,7 +238,7 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
          ),
          yaxis=dict(
              title='Color2',
-             range=[start_color2, end_color2],
+             #range=[start_color2, end_color2],
              titlefont = dict(
                  family = 'Courier New, monospace',
                  size = 18,
