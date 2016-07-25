@@ -49,56 +49,44 @@ def request_upload_file_welcome():
     if not filename:
       return render_template("welcome.html");
 
-    fig = upload_file(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
+    fig = upload_file_from_welcome(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
     
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
 
     filename_json=json.dumps(filename)
-
+    start_time_slider_json = json.dumps(int(fig[2]))
+    end_time_slider_json = json.dumps(int(fig[3]))
+    start_count_slider_json = json.dumps(int(fig[4]))
+    end_count_slider_json = json.dumps(int(fig[5]))
+    start_color1_slider_json = json.dumps(int(fig[6]))
+    end_color1_slider_json = json.dumps(int(fig[7]))
+    start_color2_slider_json = json.dumps(int(fig[8]))
+    end_color2_slider_json = json.dumps(int(fig[9]))  
+    print("crossed")
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
-        filename=filename_json
-    )
-@app.route('/uploader_index', methods = ['GET', 'POST'])
-def request_upload_file_index():
-
-    if 'user' in session:
-     filename=session['user']
-
-    start_time = request.form['from_time']
-    end_time = request.form['to_time']
-    start_count = request.form['from_count']
-    end_count = request.form['to_count']
-
-    start_color1 = request.form['from_color1']
-    end_color1 = request.form['to_color1']
-    start_color2 = request.form['from_color2']
-    end_color2 = request.form['to_color2']
-
-    if not filename:
-      return render_template("welcome.html");
-
-    fig = upload_file2(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
-    
-    plot_div1 = plot(fig[0], output_type='div')
-    plot_div2 = plot(fig[1], output_type='div')
-
-    filename_json=json.dumps(filename)
-    return render_template('index.html',
-        div_placeholder_fig1= Markup(plot_div1),
-        div_placeholder_fig2= Markup(plot_div2),
-        filename=filename_json
+        filename=filename_json,
+        start_time_slider = start_time_slider_json,
+        end_time_slider = end_time_slider_json,
+        start_count_slider = start_count_slider_json,
+        end_count_slider = end_count_slider_json,
+        start_color1_slider = start_color1_slider_json,
+        end_color1_slider = end_color1_slider_json,
+        start_color2_slider = start_color2_slider_json,
+        end_color2_slider = end_color2_slider_json,
     )    
 
-# upload_file: Upload a data file to the Flask server and generate a DIV with
+
+
+# upload_file_from_welcome: Upload a data file to the Flask server and generate a DIV with
 # the plot inside
 #
 # @param: files_to_load: List of werkzeug.datastructures.FileStorage
 #
 
-def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=None,start_color1=None,end_color1=None,start_color2=None,end_color2=None):
+def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None, end_count=None,start_color1=None,end_color1=None,start_color2=None,end_color2=None):
 
     logging.debug("file: %s - %s" % (type(f), f))
 
@@ -282,19 +270,83 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
                  color = '#7f7f7f'
              )
          ),
-         dragmode='select'
+         dragmode='select',
     )
+    start_time_int = min(Time)
+    end_time_int = max(Time) +1
+    start_count_int = min(Rate)
+    end_count_int = max(Rate) +1
+    start_color1_int = min(color1)
+    end_color1_int = max(color1) +1
+    start_color2_int = min(color2)
+    end_color2_int = max(color2) +1
+
+    
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
     fig.append(fig1);
     fig.append(fig2);
-
+    fig.append(start_time_int);
+    fig.append(end_time_int);
+    fig.append(start_count_int);
+    fig.append(end_count_int);
+    fig.append(start_color1_int);
+    fig.append(end_color1_int);
+    fig.append(start_color2_int);
+    fig.append(end_color2_int);
+   
     return fig
 
+@app.route('/uploader_index', methods = ['GET', 'POST'])
+def request_upload_file_index():
 
+    if 'user' in session:
+     filename=session['user']
 
-def upload_file2(filename=None, start_time=None, end_time=None, start_count=None, end_count=None,start_color1=None,end_color1=None,start_color2=None,end_color2=None):
+    start_time = request.form['from_time']
+    end_time = request.form['to_time']
+    start_count = request.form['from_count']
+    end_count = request.form['to_count']
+
+    start_color1 = request.form['from_color1']
+    end_color1 = request.form['to_color1']
+    start_color2 = request.form['from_color2']
+    end_color2 = request.form['to_color2']
+
+    if not filename:
+      return render_template("welcome.html");
+
+    print("1")  
+    fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
+    
+    plot_div1 = plot(fig[0], output_type='div')
+    plot_div2 = plot(fig[1], output_type='div')
+    filename_json=json.dumps(filename)
+    start_time_slider_json = json.dumps(int(fig[2]))
+    end_time_slider_json = json.dumps(int(fig[3]))
+    start_count_slider_json = json.dumps(int(fig[4]))
+    end_count_slider_json = json.dumps(int(fig[5]))
+    start_color1_slider_json = json.dumps(int(fig[6]))
+    end_color1_slider_json = json.dumps(int(fig[7]))
+    start_color2_slider_json = json.dumps(int(fig[8]))
+    end_color2_slider_json = json.dumps(int(fig[9]))  
+
+    return render_template('index.html',
+        div_placeholder_fig1= Markup(plot_div1),
+        div_placeholder_fig2= Markup(plot_div2),
+        filename=filename_json,
+        start_time_slider = start_time_slider_json,
+        end_time_slider = end_time_slider_json,
+        start_count_slider = start_count_slider_json,
+        end_count_slider = end_count_slider_json,
+        start_color1_slider = start_color1_slider_json,
+        end_color1_slider = end_color1_slider_json,
+        start_color2_slider = start_color2_slider_json,
+        end_color2_slider = end_color2_slider_json,
+    )    
+
+def upload_file_from_index(filename=None, start_time=None, end_time=None, start_count=None, end_count=None,start_color1=None,end_color1=None,start_color2=None,end_color2=None):
 
 
     target = os.path.join(APP_ROOT, 'uploadeddataset')
@@ -474,13 +526,33 @@ def upload_file2(filename=None, start_time=None, end_time=None, start_count=None
          ),
          dragmode='select'
     )
+
+    start_time_int = min(Time)
+    end_time_int = max(Time)+1
+    start_count_int = min(Rate)
+    end_count_int = max(Rate)+1
+    start_color1_int = min(color1)
+    end_color1_int = max(color1)+1
+    start_color2_int = min(color2)
+    end_color2_int = max(color2)+1
+
+    
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
     fig.append(fig1);
     fig.append(fig2);
+    fig.append(start_time_int);
+    fig.append(end_time_int);
+    fig.append(start_count_int);
+    fig.append(end_count_int);
+    fig.append(start_color1_int);
+    fig.append(end_color1_int);
+    fig.append(start_color2_int);
+    fig.append(end_color2_int);
 
     return fig
+
 @app.route('/')
 def my_form():
     logging.debug("I am here")

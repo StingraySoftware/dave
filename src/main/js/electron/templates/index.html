@@ -49,6 +49,9 @@
 
 <script>
 $(document).ready(function () {
+  $( "#section1" ).dblclick(function() {
+  alert( "Handler for .dblclick() called." );
+});
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
     $(document ).on('change','input[type="file"]', function () {
@@ -118,10 +121,10 @@ var formatter = d3.format('.2f');
   $( "#to_time" ).val(xRange[ 1 ] );
   $( "#from_count" ).val( yRange[ 0 ]);
   $( "#to_count" ).val(yRange[ 1 ] );
-  Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
+  /*Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
 `x range: [${xRange.map(formatter).join(', ')}]<br>
 y range: [${yRange.map(formatter).join(', ')}]`
-  );
+  );*/
   });
  
  document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => {
@@ -131,14 +134,16 @@ y range: [${yRange.map(formatter).join(', ')}]`
   $( "#to_color1" ).val(xRange[ 1 ] );
   $( "#from_color2" ).val( yRange[ 0 ]);
   $( "#to_color2" ).val(yRange[ 1 ] );
-  Plotly.relayout(plotright[2].getAttribute("id"), 'title',
+ /*Plotly.relayout(plotright[2].getAttribute("id"), 'title',
 `x range: [${xRange.map(formatter).join(', ')}]<br>
 y range: [${yRange.map(formatter).join(', ')}]`
-  );
+  );*/
 
 });
 });
 });
+
+
 </script>
 
 <script>
@@ -146,8 +151,8 @@ y range: [${yRange.map(formatter).join(', ')}]`
          $(function() {
             $( "#slider-time" ).slider({
                range:true,
-               min: 0,
-               max:10000,
+               min: {{start_time_slider| safe}},
+               max:{{end_time_slider| safe}},
                //values: [0,0 ],
                slide: function( event, ui ) {
                   $( "#from_time" ).val( ui.values[ 0 ]);
@@ -162,8 +167,8 @@ y range: [${yRange.map(formatter).join(', ')}]`
         $(function() {
             $( "#slider-count" ).slider({
                range:true,
-               min: 0,
-               max:10000,
+               min: {{start_count_slider| safe}},
+               max:{{end_count_slider| safe}},
                //values: [0,0 ],
                slide: function( event, ui ) {
                   $( "#from_count" ).val( ui.values[ 0 ]);
@@ -178,8 +183,8 @@ y range: [${yRange.map(formatter).join(', ')}]`
          $(function() {
             $( "#slider-color1" ).slider({
                range:true,
-               min: 0,
-               max: 10000,
+               min: {{start_color1_slider| safe}},
+               max: {{end_color1_slider| safe}},
                //values: [0, 0 ],
                slide: function( event, ui ) {
                   $( "#from_color1" ).val( ui.values[ 0 ]);
@@ -194,8 +199,8 @@ y range: [${yRange.map(formatter).join(', ')}]`
           $(function() {
             $( "#slider-color2" ).slider({
                range:true,
-               min: 0,
-               max: 2000,
+               min: {{start_color2_slider| safe}},
+               max: {{end_color2_slider| safe}},
                //values: [0, 0],
                slide: function( event, ui ) {
                   $( "#from_color2" ).val( ui.values[ 0 ]);
@@ -214,7 +219,7 @@ y range: [${yRange.map(formatter).join(', ')}]`
 <form action = "http://localhost:5000/uploader_index" method = "POST" enctype = "multipart/form-data">
 
 <input id="uploadFile" placeholder="Choose File"  style="width:18.5vw" type="text" name="display_text" disabled="disabled" />
-<p> <a href="/" id="new">New File</a> </p>
+<p> <a href="/" id="new">Change File</a> </p>
 </label>
 
   <font size="3"><b>Select Time Range<b></font><br> 

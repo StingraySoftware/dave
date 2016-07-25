@@ -21,72 +21,7 @@ $(document).ready(function () {
 });
 
 </script>
-<script>
-          //For time
-         $(function() {
-            $( "#slider-time" ).slider({
-               range:true,
-               min: 0,
-               max:10000,
-               //values: [0,0 ],
-               slide: function( event, ui ) {
-                  $( "#from_time" ).val( ui.values[ 0 ]);
-                  $( "#to_time" ).val( ui.values[ 1 ] );
-               }
-           });
-        // $( "#from_time" ).val($( "#slider-time" ).slider( "values", 0 )  );
-         //$( "#to_time" ).val($( "#slider-time" ).slider( "values", 1 ) )
-         });
 
-         //For rate/count
-        $(function() {
-            $( "#slider-count" ).slider({
-               range:true,
-               min: 0,
-               max:10000,
-               //values: [0,0 ],
-               slide: function( event, ui ) {
-                  $( "#from_count" ).val( ui.values[ 0 ]);
-                  $( "#to_count" ).val( ui.values[ 1 ] );
-               }
-           });
-        // $( "#from_count" ).val($( "#slider-count" ).slider( "values", 0 )  );
-        // $( "#to_count" ).val($( "#slider-count" ).slider( "values", 1 ) )
-         });
-
-         //For color1
-         $(function() {
-            $( "#slider-color1" ).slider({
-               range:true,
-               min: 0,
-               max:2000,
-               //values: [0,0 ],
-               slide: function( event, ui ) {
-                  $( "#from_color1" ).val( ui.values[ 0 ]);
-                  $( "#to_color1" ).val( ui.values[ 1 ] );
-               }
-           });
-        // $( "#from_count" ).val($( "#slider-count" ).slider( "values", 0 )  );
-        // $( "#to_count" ).val($( "#slider-count" ).slider( "values", 1 ) )
-         });
-
-
-         //For color2
-          $(function() {
-            $( "#slider-color2" ).slider({
-               range:true,
-               min: 2000,
-               max: 3000,
-               //values: [0, 0],
-               slide: function( event, ui ) {
-                  $( "#from_color2" ).val( ui.values[ 0 ]);
-                  $( "#to_color2" ).val( ui.values[ 1 ] );
-               }
-           });
-        // $( "#from_color2" ).val($( "#slider-color2" ).slider( "values", 0 ) );
-        // $( "#to_color2" ).val($( "#slider-color2" ).slider( "values", 1 ) )
-         });              
-      </script>
 <div id="nav_welcome" >
 <font size="3"><b>Filename<b></font>
 
@@ -138,9 +73,8 @@ $(document).ready(function () {
 
 </div>
 <br>
+
 <div class="hello" id="section" >
-
-
 </div>
 
 <div id="includedContent"></div>
