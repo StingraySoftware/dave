@@ -91,6 +91,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     logging.debug("file: %s - %s" % (type(f), f))
 
     target = os.path.join(APP_ROOT, 'uploadeddataset')
+    
     if not os.path.isdir(target):
         os.mkdir(target)
 
@@ -117,6 +118,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     if file_extension != ".txt" and  file_extension != ".lc":
         return render_template("error.html");
 
+
     if file_extension == ".txt":
             logging.debug("Read txt file successfully for time")
             data = np.loadtxt(destination)
@@ -139,8 +141,8 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
             tbdata = hdulist[1].data
             Time = tbdata.field(0)
             Rate = tbdata.field(1)
-            Error_y = tbdata.field(2)
-            Error_x = tbdata.field(3)
+            Error_rate = tbdata.field(2)
+            Error_time = tbdata.field(3)
             logging.debug(file_extension)
             logging.debug("Read fits file successfully ")
 
@@ -193,7 +195,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
             newError_color2.append(Error_color2[i])
 
 
-
+     
 
     trace1 = dict(
         type = 'scatter',
