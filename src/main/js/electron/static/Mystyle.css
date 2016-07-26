@@ -11,10 +11,20 @@
     padding:25px;
 }
 
-#nav {
+#nav_welcome {
     line-height:30px;
     background-color:#eeeeee;
-    height:90vh;
+    height:95vh;
+    /*height:700px;*/
+ /*   width:300px;*/
+    width:25vw;
+    float:left;
+    padding:5px;          
+}
+#nav_index {
+    line-height:30px;
+    background-color:#eeeeee;
+    height:105vh;
     /*height:700px;*/
  /*   width:300px;*/
     width:25vw;
@@ -108,7 +118,7 @@ input[type=button], input[type=submit], input[type=reset] {
     height:32px;
     border:1px solid #d8d8d8;
     border-radius: 8px;
-    width: 60%;
+    width:20vw;
     font-family: Cursive;
     font-size: 1.2em;
     padding: 20px 20px
@@ -132,6 +142,8 @@ label.myLabel input[type="file"] {
     margin: 2px;
     background: #DDD;
     display: inline-block;
+    cursor: pointer;
+
 }
 .myLabel:hover {
     background: #CCC;
