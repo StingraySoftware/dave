@@ -63,8 +63,6 @@ $(document).ready(function () {
 $(document).ready(function() {
          console.log("here")
     $("#clear").bind("click", function(){
-         $("#section1").empty();
-         $("#section2").empty();
         });
 $(function() {
 
@@ -115,6 +113,8 @@ var formatter = d3.format('.2f');
 
 
   document.getElementById(plotleft[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+ 
+    if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
   $( "#from_time" ).val( xRange[ 0 ]);
@@ -125,21 +125,39 @@ var formatter = d3.format('.2f');
 `x range: [${xRange.map(formatter).join(', ')}]<br>
 y range: [${yRange.map(formatter).join(', ')}]`
   );*/
+}
+ else {
+    Plotly.relayout(plotleft[2].getAttribute("id") , 'title', '');
+    $( "#from_time" ).val("");
+    $( "#to_time" ).val("");
+    $( "#from_count" ).val("");
+    $( "#to_count" ).val("");
+  }
   });
  
- document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+ document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => { 
+  if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
   $( "#from_color1" ).val( xRange[ 0 ]);
   $( "#to_color1" ).val(xRange[ 1 ] );
   $( "#from_color2" ).val( yRange[ 0 ]);
   $( "#to_color2" ).val(yRange[ 1 ] );
- /*Plotly.relayout(plotright[2].getAttribute("id"), 'title',
+  /*Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
 `x range: [${xRange.map(formatter).join(', ')}]<br>
 y range: [${yRange.map(formatter).join(', ')}]`
   );*/
+}
+ else {
+    Plotly.relayout(plotleft[2].getAttribute("id") , 'title', '');
+    $( "#from_color1" ).val("");
+    $( "#to_color1" ).val("");
+    $( "#from_color2" ).val("");
+    $( "#to_color2" ).val("");
+  }
 
 });
+
 });
 });
 
