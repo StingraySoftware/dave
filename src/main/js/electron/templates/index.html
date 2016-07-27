@@ -49,6 +49,9 @@
 
 <script>
 $(document).ready(function () {
+  $( "#section1" ).dblclick(function() {
+  alert( "Handler for .dblclick() called." );
+});
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
     $(document ).on('change','input[type="file"]', function () {
@@ -151,10 +154,6 @@ y range: [${yRange.map(formatter).join(', ')}]`
   $( "#to_color1" ).val(xRange[ 1 ] );
   $( "#from_color2" ).val( yRange[ 0 ]);
   $( "#to_color2" ).val(yRange[ 1 ] );
-  /*Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
-`x range: [${xRange.map(formatter).join(', ')}]<br>
-y range: [${yRange.map(formatter).join(', ')}]`
-  );*/
 }
  else {
     Plotly.relayout(plotleft[2].getAttribute("id") , 'title', '');
