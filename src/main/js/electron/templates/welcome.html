@@ -3,11 +3,12 @@
 <head>
 <script type=text/javascript src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
-
-
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='jquery-ui.css') }}">
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-1.10.2.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-ui.js') }}"></script>
 </head>
 <script>
 $(document).ready(function () {
@@ -20,12 +21,14 @@ $(document).ready(function () {
     document.getElementById("uploadFile").value = filename;
   });
 });
+
 </script>
-<div id="nav" >
+
+<div id="nav_welcome" >
 <font size="3"><b>Filename<b></font>
 
 <div class="mainselection">
-<form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
+<form action = "http://localhost:5000/uploader_welcome" method = "POST" enctype = "multipart/form-data">
 
 <input id="uploadFile" placeholder="Choose File"  type="text" name="display_text" disabled="disabled" />
 <label class="myLabel">
@@ -34,37 +37,35 @@ $(document).ready(function () {
 </label>
 
 <br>
-<br>
-<font size="3"><b>Choose Select/Deselect<b></font>
-
-<select id= select1 name='select_mode'>
-    <option value='Select'>Select</option>
-    <option value='Deselect'>Deselect</option>
-  </select>
-<br>
-<br>
 
   <font size="3"><b>Select Time Range<b></font><br> 
-     <input type="text" name="from_time" placeholder="From">
-     <input type="text" name="to_time" placeholder="To" ><br>
+     <input id="from_time" type="text" name="from_time" placeholder="From">
+     <input id="to_time" type="text" name="to_time" placeholder="To" ><br>
+    <div id="slider-time" style="width:18.5vw;"></div>
+
 <br>
 
   <font size="3"><b>Select Count Rate Range<b></font>
   <br>
-     <input type="text" name="from_count" placeholder="From">
-     <input type="text" name="to_count" placeholder="To" ><br>
+     <input id="from_count" type="text" name="from_count" placeholder="From">
+     <input id="to_count" type="text" name="to_count" placeholder="To" ><br>
+     <div id="slider-count" style="width:18.5vw;"></div>
+
 <br>
 
 <font size="3"><b>Select Color1 Range<b></font>
   <br>
-     <input type="text" name="from_color1" placeholder="From">
-     <input type="text" name="to_color1" placeholder="To" ><br>
+    <input id="from_color1" type="text" name="from_color1" placeholder="From">
+     <input id="to_color1" type="text" name="to_color1" placeholder="To" ><br>
+     <div id="slider-color1" style="width:18.5vw;"></div>
+
 <br>
 
   <font size="3"><b>Select Color2 Range<b></font>
   <br>
-     <input type="text" name="from_color2" placeholder="From">
-     <input type="text" name="to_color2" placeholder="To" ><br>
+     <input id="from_color2" type="text" name="from_color2" placeholder="From">
+     <input id="to_color2" type="text" name="to_color2" placeholder="To" ><br>
+     <div id="slider-color2" style="width:18.5vw;"></div>
 <br>
 
 </div>
@@ -73,6 +74,7 @@ $(document).ready(function () {
     <button id ="clear" class="button button1">Clear</button>
 
 </div>
+<br>
 
 <div class="hello" id="section" >
 

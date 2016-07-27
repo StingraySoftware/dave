@@ -1,18 +1,57 @@
 {% extends "layout.html" %}
 {% block body %}
 <head>
-<script type=text/javascript src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='html2canvas.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static',filename='canvas2image.js') }}"></script>
 
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='jquery-ui.css') }}">
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-1.10.2.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='jquery-ui.js') }}"></script>
+
 <style>
+#new {
+    width:17.5vw;
+    height:3vh;
+    line-height: 20px;    
+    margin: 4px 2px;
+    border: 2px solid #AAA;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 2px;
+    background: #DDD;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+
+}
+#new:hover {
+    background: #CCC;
+}
+#new:active {
+    background: #CCF;
+}
+#new :invalid + span {
+    color: black;
+}
+#new :valid + span {
+    color: black;
+}
+
+
 </style>
 </head>
+
 <script>
 $(document).ready(function () {
+  $( "#section1" ).dblclick(function() {
+  alert( "Handler for .dblclick() called." );
+});
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
     $(document ).on('change','input[type="file"]', function () {
@@ -21,7 +60,6 @@ $(document).ready(function () {
     document.getElementById("uploadFile").value = filename;
   });
 });
-
 $(document).ready(function() {
          console.log("here")
     $("#clear").bind("click", function(){
@@ -63,56 +101,156 @@ $(function() {
      var plot2 = $("#section2").find("*").toArray();
         Plotly.relayout(plot1[2].getAttribute("id"), update);
         Plotly.relayout(plot2[2].getAttribute("id"), update);
+           
             }).resize();
+
+var plotleft = $("#section1").find("*").toArray();
+var plotright = $("#section2").find("*").toArray();
+
+console.log(plotleft[2].getAttribute("id"))
+console.log(plotright[2].getAttribute("id"))
+
+var d3 = Plotly.d3;
+var formatter = d3.format('.2f');
+
+
+  document.getElementById(plotleft[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+  var xRange = eventData.range.x;
+  var yRange = eventData.range.y;
+  $( "#from_time" ).val( xRange[ 0 ]);
+  $( "#to_time" ).val(xRange[ 1 ] );
+  $( "#from_count" ).val( yRange[ 0 ]);
+  $( "#to_count" ).val(yRange[ 1 ] );
+  /*Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
+`x range: [${xRange.map(formatter).join(', ')}]<br>
+y range: [${yRange.map(formatter).join(', ')}]`
+  );*/
+  });
+ 
+ document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => {
+  var xRange = eventData.range.x;
+  var yRange = eventData.range.y;
+  $( "#from_color1" ).val( xRange[ 0 ]);
+  $( "#to_color1" ).val(xRange[ 1 ] );
+  $( "#from_color2" ).val( yRange[ 0 ]);
+  $( "#to_color2" ).val(yRange[ 1 ] );
+ /*Plotly.relayout(plotright[2].getAttribute("id"), 'title',
+`x range: [${xRange.map(formatter).join(', ')}]<br>
+y range: [${yRange.map(formatter).join(', ')}]`
+  );*/
+
 });
 });
+});
+
+
 </script>
 
+<script>
+          //For time
+         $(function() {
+            $( "#slider-time" ).slider({
+               range:true,
+               min: {{start_time_slider| safe}},
+               max:{{end_time_slider| safe}},
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_time" ).val( ui.values[ 0 ]);
+                  $( "#to_time" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_time" ).val($( "#slider-time" ).slider( "values", 0 )  );
+         //$( "#to_time" ).val($( "#slider-time" ).slider( "values", 1 ) )
+         });
 
-<div id="nav" >
-<font size="3"><b>Filename<b></font>
+         //For rate/count
+        $(function() {
+            $( "#slider-count" ).slider({
+               range:true,
+               min: {{start_count_slider| safe}},
+               max:{{end_count_slider| safe}},
+               //values: [0,0 ],
+               slide: function( event, ui ) {
+                  $( "#from_count" ).val( ui.values[ 0 ]);
+                  $( "#to_count" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_count" ).val($( "#slider-count" ).slider( "values", 0 )  );
+        // $( "#to_count" ).val($( "#slider-count" ).slider( "values", 1 ) )
+         });
+
+         //For color1
+         $(function() {
+            $( "#slider-color1" ).slider({
+               range:true,
+               min: {{start_color1_slider| safe}},
+               max: {{end_color1_slider| safe}},
+               //values: [0, 0 ],
+               slide: function( event, ui ) {
+                  $( "#from_color1" ).val( ui.values[ 0 ]);
+                  $( "#to_color1" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_color1" ).val($( "#slider-color1" ).slider( "values", 0 )  );
+        // $( "#to_color1" ).val($( "#slider-color1" ).slider( "values", 1 ) )
+         }); 
+
+         //For color2
+          $(function() {
+            $( "#slider-color2" ).slider({
+               range:true,
+               min: {{start_color2_slider| safe}},
+               max: {{end_color2_slider| safe}},
+               //values: [0, 0],
+               slide: function( event, ui ) {
+                  $( "#from_color2" ).val( ui.values[ 0 ]);
+                  $( "#to_color2" ).val( ui.values[ 1 ] );
+               }
+           });
+        // $( "#from_color2" ).val($( "#slider-color2" ).slider( "values", 0 ) );
+        // $( "#to_color2" ).val($( "#slider-color2" ).slider( "values", 1 ) )
+         });              
+      </script>
+
+<div id="nav_index" >
+<font size="3"><b>Current Filename<b></font>
 
 <div class="mainselection">
-<form action = "http://localhost:5000/uploader" method = "POST" enctype = "multipart/form-data">
+<form action = "http://localhost:5000/uploader_index" method = "POST" enctype = "multipart/form-data">
 
-<input id="uploadFile" placeholder="Choose File" name="display_text" type="text" disabled="disabled" />
-<label class="myLabel">
-<input  id="upload_input" name="file" type="file"/>
-    <span>Choose File</span>
+<input id="uploadFile" placeholder="Choose File"  style="width:18.5vw" type="text" name="display_text" disabled="disabled" />
+<p> <a href="/" id="new">Change File</a> </p>
 </label>
 
-<br>
-<br>
-<font size="3"><b>Choose Select/Deselect<b></font>
+  <font size="3"><b>Select Time Range<b></font><br> 
+     <input id="from_time" type="text" name="from_time" placeholder="From">
+     <input id="to_time" type="text" name="to_time" placeholder="To" ><br>
+    <div id="slider-time" style="width:18.5vw;"></div>
 
-<select id= select1 name='select_mode'>
-    <option value='Select'>Select</option>
-    <option value='Deselect'>Deselect</option>
-  </select>
-<br>
-<br>
-<font size="3"><b>Select Time Range<b></font>
-<br>
-     <input type="text" name="from_time" placeholder="From">
-     <input type="text" name="to_time" placeholder="To" ><br>
 <br>
 
   <font size="3"><b>Select Count Rate Range<b></font>
   <br>
-     <input type="text" name="from_count" placeholder="From">
-     <input type="text" name="to_count" placeholder="To" ><br>
+     <input id="from_count" type="text" name="from_count" placeholder="From">
+     <input id="to_count" type="text" name="to_count" placeholder="To" ><br>
+     <div id="slider-count" style="width:18.5vw;"></div>
+
 <br>
+
 <font size="3"><b>Select Color1 Range<b></font>
   <br>
-     <input type="text" name="from_color1" placeholder="From">
-     <input type="text" name="to_color1" placeholder="To" ><br>
+      <input id="from_color1" type="text" name="from_color1" placeholder="From">
+     <input id="to_color1" type="text" name="to_color1" placeholder="To" ><br>
+     <div id="slider-color1" style="width:18.5vw;"></div>
 <br>
 
   <font size="3"><b>Select Color2 Range<b></font>
   <br>
-     <input type="text" name="from_color2" placeholder="From">
-     <input type="text" name="to_color2" placeholder="To" ><br>
+     <input id="from_color2" type="text" name="from_color2" placeholder="From">
+     <input id="to_color2" type="text" name="to_color2" placeholder="To" ><br>
+     <div id="slider-color2" style="width:18.5vw;"></div>
 <br>
+
 </div>
     <input type="submit" name="my-form" value="Load Spectrum">
 
@@ -126,16 +264,21 @@ $(function() {
 <div class="hello" id="section1" >
 
   {{div_placeholder_fig1| safe}}
-
-
+  <script>
+  var filename=  {{filename| safe}};
+  document.getElementById("uploadFile").value = filename;
+  </script>
 </div>
+
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
 </div>
 <div id="includedContent"></div>
+
+
 <div id="footer">
-TIMELABS
+DAVE
 </div>
 
 
