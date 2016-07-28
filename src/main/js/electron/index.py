@@ -140,8 +140,8 @@ def upload_file(f, start_time=None, end_time=None, start_count=None, end_count=N
              )
          )
     )
-    fig = dict(data = [trace1], layout = layout)
 
+    fig = dict(data = [trace1], layout = layout)
     return fig
 
 @app.route('/')
