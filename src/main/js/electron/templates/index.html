@@ -2,7 +2,8 @@
 {% block body %}
 <head>
 
-<script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
@@ -49,9 +50,6 @@
 
 <script>
 $(document).ready(function () {
-  $( "#section1" ).dblclick(function() {
-  alert( "Handler for .dblclick() called." );
-});
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
     $(document ).on('change','input[type="file"]', function () {
@@ -125,7 +123,7 @@ var formatter = d3.format('.2f');
 
   document.getElementById(plotleft[2].getAttribute("id")).on('plotly_selected', (eventData) => {
  
-    if(eventData) {
+  if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
   $( "#from_time" ).val( xRange[ 0 ]);
@@ -154,6 +152,10 @@ y range: [${yRange.map(formatter).join(', ')}]`
   $( "#to_color1" ).val(xRange[ 1 ] );
   $( "#from_color2" ).val( yRange[ 0 ]);
   $( "#to_color2" ).val(yRange[ 1 ] );
+  /*Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
+`x range: [${xRange.map(formatter).join(', ')}]<br>
+y range: [${yRange.map(formatter).join(', ')}]`
+  );*/
 }
  else {
     Plotly.relayout(plotleft[2].getAttribute("id") , 'title', '');
@@ -165,11 +167,34 @@ y range: [${yRange.map(formatter).join(', ')}]`
 
 });
 
+
+//For Left Plot
+var  hoverInfo = document.getElementById('hoverinfo');
+var plotleft = $("#section1").find("*").toArray();
+document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', function(data){
+      var infotext = data.points.map(function(d){
+      return (d.data.name+': x= '+d.x+', y= '+d.y.toPrecision(3));
+    });
+
+    hoverInfo.innerHTML = infotext.join('');
+  hoverInfo.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+
+}).on('plotly_unhover', function(data){
+    hoverInfo.innerHTML = '';
+
+});
+
+
 });
 });
 
 
 </script>
+
+<script> 
+
+</script>
+
 
 <script>
           //For time
@@ -293,12 +318,17 @@ y range: [${yRange.map(formatter).join(', ')}]`
   var filename=  {{filename| safe}};
   document.getElementById("uploadFile").value = filename;
   </script>
+  <div id="hoverinfo" style="text-align:center;color:#1F77B4"></div>
+
 </div>
 
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
+    <div id="hoverinforight" style="text-align:center;color:#1F77B4"></div>
+
 </div>
+
 <div id="includedContent"></div>
 
 

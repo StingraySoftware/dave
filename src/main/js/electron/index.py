@@ -63,7 +63,6 @@ def request_upload_file_welcome():
     end_color1_slider_json = json.dumps(int(fig[7]))
     start_color2_slider_json = json.dumps(int(fig[8]))
     end_color2_slider_json = json.dumps(int(fig[9]))  
-    print("crossed")
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
@@ -319,7 +318,6 @@ def request_upload_file_index():
     if not filename:
       return render_template("welcome.html");
 
-    print("1")  
     fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
     
     plot_div1 = plot(fig[0], output_type='div')
@@ -464,7 +462,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_rate,
            visible = True
-        )
+        ),
     )
 
     layout1 = dict(
@@ -503,7 +501,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_color2,
            visible = True
-        )
+        ), 
     )
 
     layout2 = dict(
