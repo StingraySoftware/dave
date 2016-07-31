@@ -20,7 +20,9 @@ from astropy.io import fits
 
 scriptdir = os.path.dirname(sys.argv[0])
 logging.info("Dir is", scriptdir)
-app = Flask("dave_srv", template_folder=scriptdir + "/../resources/templates")
+app = Flask("dave_srv", \
+    template_folder=scriptdir + "/../resources/templates", \
+    static_folder=scriptdir + "/../resources/static")
 
 
 logging.basicConfig(filename='flaskserver.log', level=logging.DEBUG)
