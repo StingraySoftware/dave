@@ -2,7 +2,7 @@
 {% block body %}
 <head>
 
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
 
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
@@ -18,7 +18,7 @@
 #new {
     width:17.5vw;
     height:3vh;
-    line-height: 20px;    
+    line-height: 20px;
     margin: 4px 2px;
     border: 2px solid #AAA;
     border-radius: 4px;
@@ -101,14 +101,14 @@ $(function() {
     var divheight = $("#section1").height();
     var divwidth = $("#section1").width();
     var update = {
-      width:divwidth, 
+      width:divwidth,
       height:divheight
     };
      var plot1 = $("#section1").find("*").toArray();
      var plot2 = $("#section2").find("*").toArray();
         Plotly.relayout(plot1[2].getAttribute("id"), update);
         Plotly.relayout(plot2[2].getAttribute("id"), update);
-           
+
             }).resize();
 
 var plotleft = $("#section1").find("*").toArray();
@@ -122,7 +122,7 @@ var formatter = d3.format('.2f');
 
 
   document.getElementById(plotleft[2].getAttribute("id")).on('plotly_selected', (eventData) => {
- 
+
   if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
@@ -143,8 +143,8 @@ y range: [${yRange.map(formatter).join(', ')}]`
     $( "#to_count" ).val("");
   }
   });
- 
- document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => { 
+
+ document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => {
   if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
@@ -183,7 +183,7 @@ document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', funct
      var pt = data.points[0];
      var ptNumber = pt.pointNumber;
      var trace = pt.data;
-      
+
      error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
      error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
 
@@ -214,7 +214,7 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
      var pt = data.points[0];
      var ptNumber = pt.pointNumber;
      var trace = pt.data;
-      
+
      error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
      error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
 
@@ -235,11 +235,6 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
 
 
 </script>
-
-<script> 
-
-</script>
-
 
 <script>
           //For time
@@ -288,7 +283,7 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
            });
         // $( "#from_color1" ).val($( "#slider-color1" ).slider( "values", 0 )  );
         // $( "#to_color1" ).val($( "#slider-color1" ).slider( "values", 1 ) )
-         }); 
+         });
 
          //For color2
           $(function() {
@@ -304,7 +299,7 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
            });
         // $( "#from_color2" ).val($( "#slider-color2" ).slider( "values", 0 ) );
         // $( "#to_color2" ).val($( "#slider-color2" ).slider( "values", 1 ) )
-         });              
+         });
       </script>
 
 <div id="nav_index" >
@@ -317,7 +312,7 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
 <p> <a href="/" id="new">Change File</a> </p>
 </label>
 
-  <font size="3"><b>Select Time Range<b></font><br> 
+  <font size="3"><b>Select Time Range<b></font><br>
      <input id="from_time" type="text" name="from_time" placeholder="From">
      <input id="to_time" type="text" name="to_time" placeholder="To" ><br>
     <div id="slider-time" style="width:18.5vw;"></div>
