@@ -198,6 +198,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     trace1 = dict(
         type = 'scatter',
+        hoverinfo = 'none',
         x = newTime,
         y = newRate,
         error_x = dict(
@@ -214,6 +215,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     layout1 = dict(
          title = '',
+         hovermode= 'closest', 
          xaxis = dict(
              title = 'Time',
              #range = [start_time, end_time],
@@ -237,6 +239,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     )
     trace2 = dict(
         type = 'scatter',
+        hoverinfo = 'none',
         x = newcolor1,
         y = newcolor2,
         error_x = dict(
@@ -253,6 +256,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     layout2 = dict(
          title = '',
+         hovermode= 'closest',
          xaxis = dict(
              title = 'Color1',
              #range = [start_color1, end_color1],
@@ -451,6 +455,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
 
     trace1 = dict(
         type = 'scatter',
+        hoverinfo = 'none',
         x = newTime,
         y = newRate,
         error_x = dict(
@@ -467,6 +472,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
 
     layout1 = dict(
          title = '',
+         hovermode= 'closest',
          xaxis = dict(
              title = 'Time',
              #range = [start_time, end_time],
@@ -490,6 +496,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     )
     trace2 = dict(
         type = 'scatter',
+        hoverinfo = 'none',
         x = newcolor1,
         y = newcolor2,
         error_x = dict(
@@ -506,6 +513,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
 
     layout2 = dict(
          title = '',
+         hovermode= 'closest',
          xaxis = dict(
              title = 'Color1',
              #range = [start_color1, end_color1],

@@ -184,8 +184,9 @@ document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', funct
      var ptNumber = pt.pointNumber;
      var trace = pt.data;
       
-     error_x_string=  (trace.error_x.array[ptNumber]).toString();
-     error_y_string=  (trace.error_y.array[ptNumber]).toString();
+     error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
+
 
      var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
      var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
@@ -214,11 +215,11 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
      var ptNumber = pt.pointNumber;
      var trace = pt.data;
       
-     error_x_string=  (trace.error_x.array[ptNumber]).toString();
-     error_y_string=  (trace.error_y.array[ptNumber]).toString();
+     error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
 
-     var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
-     var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+     var spacesup=  '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+     var spacesdown='\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
 
 
      hoverInforight.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
