@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, render_template, request, send_from_directory,session
 from flask import Markup
 
-app = Flask(__name__)
 import json
 
 import plotly
@@ -19,7 +18,12 @@ import logging
 from werkzeug import secure_filename
 from astropy.io import fits
 
-logging.basicConfig(filename='logfile.log', level=logging.DEBUG)
+scriptdir = os.path.dirname(sys.argv[0])
+logging.info("Dir is", scriptdir)
+app = Flask("dave_srv", template_folder=scriptdir + "/../resources/templates")
+
+
+logging.basicConfig(filename='flaskserver.log', level=logging.DEBUG)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app.secret_key=os.urandom(24)
@@ -50,7 +54,7 @@ def request_upload_file_welcome():
       return render_template("welcome.html");
 
     fig = upload_file_from_welcome(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
-    
+
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
 
@@ -62,7 +66,7 @@ def request_upload_file_welcome():
     start_color1_slider_json = json.dumps(int(fig[6]))
     end_color1_slider_json = json.dumps(int(fig[7]))
     start_color2_slider_json = json.dumps(int(fig[8]))
-    end_color2_slider_json = json.dumps(int(fig[9]))  
+    end_color2_slider_json = json.dumps(int(fig[9]))
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
@@ -75,7 +79,7 @@ def request_upload_file_welcome():
         end_color1_slider = end_color1_slider_json,
         start_color2_slider = start_color2_slider_json,
         end_color2_slider = end_color2_slider_json,
-    )    
+    )
 
 
 
@@ -90,7 +94,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     logging.debug("file: %s - %s" % (type(f), f))
 
     target = os.path.join(APP_ROOT, 'uploadeddataset')
-    
+
     if not os.path.isdir(target):
         os.mkdir(target)
 
@@ -126,7 +130,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
             Error_time =data[0:len(data),1]
             Rate = data[0:len(data),2]
             Error_rate = data[0:len(data),3]
-            
+
             color1 = data[0:len(data),4]
             Error_color1 =data[0:len(data),5]
             color2= data[0:len(data),6]
@@ -134,7 +138,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
             logging.debug(file_extension)
             logging.debug("Read txt file successfully for time ")
-            
+
     else :
             hdulist = fits.open(destination)
             tbdata = hdulist[1].data
@@ -148,11 +152,11 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     newTime=[]
     newRate=[]
     newError_time=[]
-    newError_rate=[] 
+    newError_rate=[]
     newcolor1=[];
     newcolor2=[];
     newError_color1=[];
-    newError_color2=[];       
+    newError_color2=[];
 
     if (not start_time) and (not end_time):
           start_time_float = min(Time)
@@ -181,7 +185,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     else:
           start_color2_float=float(start_color2)
           end_color2_float=float(end_color2)
-          
+
     for i in range(len(Time)):
           if ((Time[i] >= (start_time_float) and Time[i] <= (end_time_float)) and (Rate[i] >= (start_count_float) and Rate[i] <= (end_count_float)) and (color1[i] >= (start_color1_float) and color1[i] <= (end_color1_float)) and (color2[i] >= (start_color2_float) and color2[i] <= (end_color2_float)) ) :
             newTime.append(Time[i])
@@ -194,7 +198,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
             newError_color2.append(Error_color2[i])
 
 
-     
+
 
     trace1 = dict(
         type = 'scatter',
@@ -215,7 +219,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     layout1 = dict(
          title = '',
-         hovermode= 'closest', 
+         hovermode= 'closest',
          xaxis = dict(
              title = 'Time',
              #range = [start_time, end_time],
@@ -286,7 +290,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     start_color2_int = min(color2)
     end_color2_int = max(color2) +1
 
-    
+
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
@@ -300,7 +304,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     fig.append(end_color1_int);
     fig.append(start_color2_int);
     fig.append(end_color2_int);
-   
+
     return fig
 
 @app.route('/uploader_index', methods = ['GET', 'POST'])
@@ -323,7 +327,7 @@ def request_upload_file_index():
       return render_template("welcome.html");
 
     fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
-    
+
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
     filename_json=json.dumps(filename)
@@ -334,7 +338,7 @@ def request_upload_file_index():
     start_color1_slider_json = json.dumps(int(fig[6]))
     end_color1_slider_json = json.dumps(int(fig[7]))
     start_color2_slider_json = json.dumps(int(fig[8]))
-    end_color2_slider_json = json.dumps(int(fig[9]))  
+    end_color2_slider_json = json.dumps(int(fig[9]))
 
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
@@ -348,7 +352,7 @@ def request_upload_file_index():
         end_color1_slider = end_color1_slider_json,
         start_color2_slider = start_color2_slider_json,
         end_color2_slider = end_color2_slider_json,
-    )    
+    )
 
 def upload_file_from_index(filename=None, start_time=None, end_time=None, start_count=None, end_count=None,start_color1=None,end_color1=None,start_color2=None,end_color2=None):
 
@@ -383,7 +387,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
             Error_time =data[0:len(data),1]
             Rate = data[0:len(data),2]
             Error_rate = data[0:len(data),3]
-            
+
             color1 = data[0:len(data),4]
             Error_color1 =data[0:len(data),5]
             color2= data[0:len(data),6]
@@ -391,7 +395,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
 
             logging.debug(file_extension)
             logging.debug("Read txt file successfully for time ")
-            
+
     else :
             hdulist = fits.open(destination)
             tbdata = hdulist[1].data
@@ -405,11 +409,11 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     newTime=[]
     newRate=[]
     newError_time=[]
-    newError_rate=[] 
+    newError_rate=[]
     newcolor1=[];
     newcolor2=[];
     newError_color1=[];
-    newError_color2=[];       
+    newError_color2=[];
 
     if (not start_time) and (not end_time):
           start_time_float = min(Time)
@@ -438,7 +442,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     else:
           start_color2_float=float(start_color2)
           end_color2_float=float(end_color2)
-          
+
     for i in range(len(Time)):
           if ((Time[i] >= (start_time_float) and Time[i] <= (end_time_float)) and (Rate[i] >= (start_count_float) and Rate[i] <= (end_count_float)) and (color1[i] >= (start_color1_float) and color1[i] <= (end_color1_float)) and (color2[i] >= (start_color2_float) and color2[i] <= (end_color2_float)) ) :
             newTime.append(Time[i])
@@ -508,7 +512,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_color2,
            visible = True
-        ), 
+        ),
     )
 
     layout2 = dict(
@@ -544,7 +548,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     start_color2_int = min(color2)
     end_color2_int = max(color2)+1
 
-    
+
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
