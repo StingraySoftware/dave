@@ -18,14 +18,19 @@ import logging
 from werkzeug import secure_filename
 from astropy.io import fits
 
+logging.basicConfig(filename='flaskserver.log', level=logging.DEBUG)
+
 scriptdir = os.path.dirname(sys.argv[0])
-logging.info("Dir is", scriptdir)
+if scriptdir == "":
+    scriptdir = "."
+
+logging.info("Templates dir is " + scriptdir + "/../resources/templates")
+
 app = Flask("dave_srv", \
     template_folder=scriptdir + "/../resources/templates", \
     static_folder=scriptdir + "/../resources/static")
 
 
-logging.basicConfig(filename='flaskserver.log', level=logging.DEBUG)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app.secret_key=os.urandom(24)
