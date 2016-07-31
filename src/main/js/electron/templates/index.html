@@ -169,7 +169,7 @@ y range: [${yRange.map(formatter).join(', ')}]`
 
 
 //For Left Plot
-var  hoverInfo = document.getElementById('hoverinfo');
+var  hoverInfoleft = document.getElementById('hoverinfoleft');
 var plotleft = $("#section1").find("*").toArray();
 document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', function(data){
      var infotextforx = data.points.map(function(d){
@@ -191,10 +191,40 @@ document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', funct
      var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
 
 
-     hoverInfo.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+     hoverInfoleft.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
 
 }).on('plotly_unhover', function(data){
-    hoverInfo.innerHTML = '';
+    hoverInfoleft.innerHTML = '';
+
+});
+
+//For Right Plot
+var  hoverInforight = document.getElementById('hoverinforight');
+var plotleft = $("#section2").find("*").toArray();
+document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', function(data){
+     var infotextforx = data.points.map(function(d){
+      return ('x : '+d.x);
+    });
+
+     var infotextfory = data.points.map(function(d){
+      return ('y : '+d.y.toPrecision(6));
+    });
+
+     var pt = data.points[0];
+     var ptNumber = pt.pointNumber;
+     var trace = pt.data;
+      
+     error_x_string=  (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  (trace.error_y.array[ptNumber]).toString();
+
+     var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+     var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+
+
+     hoverInforight.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+
+}).on('plotly_unhover', function(data){
+    hoverInforight.innerHTML = '';
 
 });
 
@@ -332,7 +362,7 @@ document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', funct
   var filename=  {{filename| safe}};
   document.getElementById("uploadFile").value = filename;
   </script>
-  <div id="hoverinfo" style="text-align:center;color:#1F77B4"></div>
+  <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"></div>
 
 </div>
 
