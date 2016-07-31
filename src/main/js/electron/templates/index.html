@@ -172,12 +172,26 @@ y range: [${yRange.map(formatter).join(', ')}]`
 var  hoverInfo = document.getElementById('hoverinfo');
 var plotleft = $("#section1").find("*").toArray();
 document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', function(data){
-      var infotext = data.points.map(function(d){
-      return (d.data.name+': x= '+d.x+', y= '+d.y.toPrecision(3));
+     var infotextforx = data.points.map(function(d){
+      return ('x : '+d.x);
     });
 
-    hoverInfo.innerHTML = infotext.join('');
-  hoverInfo.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+     var infotextfory = data.points.map(function(d){
+      return ('y : '+d.y.toPrecision(6));
+    });
+
+     var pt = data.points[0];
+     var ptNumber = pt.pointNumber;
+     var trace = pt.data;
+      
+     error_x_string=  (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  (trace.error_y.array[ptNumber]).toString();
+
+     var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+     var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+
+
+     hoverInfo.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
 
 }).on('plotly_unhover', function(data){
     hoverInfo.innerHTML = '';
