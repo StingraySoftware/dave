@@ -10,9 +10,9 @@ users can insert their own algorithms to compare the effects of such changes.
 
 ## Get Started
 
-* Clone the project
-* Install a Python virtual env and a compatible version of node: `source src/main/resources/bash/setup_dev_env.bash`
-* Run the application: `src/main/resources/bash/run_gui.bash`
+* Clone the project `$ git clone https://github.com/StingraySoftware/dave`
+* Install a Python virtual env and a compatible version of node: `$ source src/main/resources/bash/setup_dev_env.bash`
+* Run the application: `$ src/main/resources/bash/run_gui.bash`
 
 You will see that there's plenty left to do!
 
