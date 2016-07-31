@@ -3,6 +3,7 @@
 <head>
 
 <script type="text/javascript" src="{{ url_for('static', filename='plotly-latest.min.js') }}"></script>
+
 <script type=text/javascript src="{{ url_for('static', filename='jquery-3.0.0.min.js') }}"></script>
 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='Mystyle.css') }}">
 
@@ -17,7 +18,7 @@
 #new {
     width:17.5vw;
     height:3vh;
-    line-height: 20px;    
+    line-height: 20px;
     margin: 4px 2px;
     border: 2px solid #AAA;
     border-radius: 4px;
@@ -49,9 +50,6 @@
 
 <script>
 $(document).ready(function () {
-  $( "#section1" ).dblclick(function() {
-  alert( "Handler for .dblclick() called." );
-});
     //$(document).addEventListener('change','input[type="file"]', function (e) {
     //alert("hi")
     $(document ).on('change','input[type="file"]', function () {
@@ -103,14 +101,14 @@ $(function() {
     var divheight = $("#section1").height();
     var divwidth = $("#section1").width();
     var update = {
-      width:divwidth, 
+      width:divwidth,
       height:divheight
     };
      var plot1 = $("#section1").find("*").toArray();
      var plot2 = $("#section2").find("*").toArray();
         Plotly.relayout(plot1[2].getAttribute("id"), update);
         Plotly.relayout(plot2[2].getAttribute("id"), update);
-           
+
             }).resize();
 
 var plotleft = $("#section1").find("*").toArray();
@@ -124,8 +122,8 @@ var formatter = d3.format('.2f');
 
 
   document.getElementById(plotleft[2].getAttribute("id")).on('plotly_selected', (eventData) => {
- 
-    if(eventData) {
+
+  if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
   $( "#from_time" ).val( xRange[ 0 ]);
@@ -145,8 +143,8 @@ y range: [${yRange.map(formatter).join(', ')}]`
     $( "#to_count" ).val("");
   }
   });
- 
- document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => { 
+
+ document.getElementById(plotright[2].getAttribute("id")).on('plotly_selected', (eventData) => {
   if(eventData) {
   var xRange = eventData.range.x;
   var yRange = eventData.range.y;
@@ -154,6 +152,10 @@ y range: [${yRange.map(formatter).join(', ')}]`
   $( "#to_color1" ).val(xRange[ 1 ] );
   $( "#from_color2" ).val( yRange[ 0 ]);
   $( "#to_color2" ).val(yRange[ 1 ] );
+  /*Plotly.relayout(plotleft[2].getAttribute("id"), 'title',
+`x range: [${xRange.map(formatter).join(', ')}]<br>
+y range: [${yRange.map(formatter).join(', ')}]`
+  );*/
 }
  else {
     Plotly.relayout(plotleft[2].getAttribute("id") , 'title', '');
@@ -164,6 +166,69 @@ y range: [${yRange.map(formatter).join(', ')}]`
   }
 
 });
+
+
+//For Left Plot
+var  hoverInfoleft = document.getElementById('hoverinfoleft');
+var plotleft = $("#section1").find("*").toArray();
+document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', function(data){
+     var infotextforx = data.points.map(function(d){
+      return ('x : '+d.x);
+    });
+
+     var infotextfory = data.points.map(function(d){
+      return ('y : '+d.y.toPrecision(6));
+    });
+
+     var pt = data.points[0];
+     var ptNumber = pt.pointNumber;
+     var trace = pt.data;
+
+     error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
+
+
+     var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+     var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+
+
+     hoverInfoleft.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+
+}).on('plotly_unhover', function(data){
+    hoverInfoleft.innerHTML = '';
+
+});
+
+//For Right Plot
+var  hoverInforight = document.getElementById('hoverinforight');
+var plotleft = $("#section2").find("*").toArray();
+document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', function(data){
+     var infotextforx = data.points.map(function(d){
+      return ('x : '+d.x);
+    });
+
+     var infotextfory = data.points.map(function(d){
+      return ('y : '+d.y.toPrecision(6));
+    });
+
+     var pt = data.points[0];
+     var ptNumber = pt.pointNumber;
+     var trace = pt.data;
+
+     error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
+
+     var spacesup=  '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+     var spacesdown='\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+
+
+     hoverInforight.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+
+}).on('plotly_unhover', function(data){
+    hoverInforight.innerHTML = '';
+
+});
+
 
 });
 });
@@ -218,7 +283,7 @@ y range: [${yRange.map(formatter).join(', ')}]`
            });
         // $( "#from_color1" ).val($( "#slider-color1" ).slider( "values", 0 )  );
         // $( "#to_color1" ).val($( "#slider-color1" ).slider( "values", 1 ) )
-         }); 
+         });
 
          //For color2
           $(function() {
@@ -234,7 +299,7 @@ y range: [${yRange.map(formatter).join(', ')}]`
            });
         // $( "#from_color2" ).val($( "#slider-color2" ).slider( "values", 0 ) );
         // $( "#to_color2" ).val($( "#slider-color2" ).slider( "values", 1 ) )
-         });              
+         });
       </script>
 
 <div id="nav_index" >
@@ -247,7 +312,7 @@ y range: [${yRange.map(formatter).join(', ')}]`
 <p> <a href="/" id="new">Change File</a> </p>
 </label>
 
-  <font size="3"><b>Select Time Range<b></font><br> 
+  <font size="3"><b>Select Time Range<b></font><br>
      <input id="from_time" type="text" name="from_time" placeholder="From">
      <input id="to_time" type="text" name="to_time" placeholder="To" ><br>
     <div id="slider-time" style="width:18.5vw;"></div>
@@ -293,12 +358,17 @@ y range: [${yRange.map(formatter).join(', ')}]`
   var filename=  {{filename| safe}};
   document.getElementById("uploadFile").value = filename;
   </script>
+  <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"></div>
+
 </div>
 
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
+    <div id="hoverinforight" style="text-align:center;color:#1F77B4"></div>
+
 </div>
+
 <div id="includedContent"></div>
 
 
