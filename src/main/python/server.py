@@ -299,6 +299,21 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     y=newRate,
     z=newAmplitude,
     mode='markers',
+    error_x = dict(
+           type = 'data',
+           array = newError_time,
+           visible = True
+        ),
+    error_y = dict(
+           type = 'data',
+           array = newError_rate,
+           visible = True
+        ),
+    error_z = dict(
+           type = 'data',
+           array = error,
+           visible = True
+        ),
     marker=dict(
         size=5,
         opacity=0.8
@@ -308,7 +323,8 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     data3 = [trace3]
 
     layout3 = go.Layout(
-        title="Dynamic Spectrum",     # more about "layout's" "title": /python/reference/#layout-title        
+        title="Dynamic Spectrum",     # more about "layout's" "title": /python/reference/#layout-title
+           
     )
 
 
@@ -584,6 +600,21 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     y=newRate,
     z=newAmplitude,
     mode='markers',
+    error_x = dict(
+           type = 'data',
+           array = newError_time,
+           visible = True
+        ),
+    error_y = dict(
+           type = 'data',
+           array = newError_rate,
+           visible = True
+        ),
+    error_z = dict(
+           type = 'data',
+           array = error,
+           visible = True
+        ),
     marker=dict(
         size=5,
         opacity=0.8
@@ -594,24 +625,6 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
 
     layout3 = go.Layout(
         title= "Dymanic Spectrutm",
-        xaxis = dict(
-             title = 'Time',
-             #range = [start_color1, end_color1],
-             titlefont = dict(
-                 family = 'Courier New, monospace',
-                 size = 18,
-                 color = '#7f7f7f'
-            )
-         ),
-        yaxis=dict(
-             title='Frequency',
-             #range=[start_color2, end_color2],
-             titlefont = dict(
-                 family = 'Courier New, monospace',
-                 size = 18,
-                 color = '#7f7f7f'
-             )
-         )
     )
     start_time_int = min(Time)
     end_time_int = max(Time)+1
