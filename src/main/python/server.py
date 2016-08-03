@@ -316,6 +316,9 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
         ),
     marker=dict(
         size=5,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map'),
         opacity=0.8
         )
     )
@@ -324,7 +327,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     layout3 = go.Layout(
         title="Dynamic Spectrum",     # more about "layout's" "title": /python/reference/#layout-title
-           
+          
     )
 
 
@@ -617,6 +620,9 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
         ),
     marker=dict(
         size=5,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map'),
         opacity=0.8
         )
     )
@@ -624,7 +630,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     data3 = [trace3]
 
     layout3 = go.Layout(
-        title= "Dymanic Spectrutm",
+      title="Dynamic Spectrum", 
     )
     start_time_int = min(Time)
     end_time_int = max(Time)+1
