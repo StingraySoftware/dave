@@ -65,7 +65,9 @@ def request_upload_file_welcome():
     fig = upload_file_from_welcome(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
 
     plot_div1 = plot(fig[0], output_type='div')
-    plot_div2 = plot(fig[10], output_type='div')
+    plot_div2 = plot(fig[1], output_type='div')
+    plot_div3 = plot(fig[10], output_type='div')
+    plot_div4 = plot(fig[0], output_type='div')
 
     filename_json=json.dumps(filename)
     start_time_slider_json = json.dumps(int(fig[2]))
@@ -79,6 +81,8 @@ def request_upload_file_welcome():
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
+        div_placeholder_fig3= Markup(plot_div3),
+        div_placeholder_fig4= Markup(plot_div4),
         filename=filename_json,
         start_time_slider = start_time_slider_json,
         end_time_slider = end_time_slider_json,
@@ -224,7 +228,8 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
            type = 'data',
            array = newError_rate,
            visible = True
-        )
+        ),
+        
     )
 
     layout1 = dict(
@@ -318,7 +323,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
         size=5,
         color=newAmplitude,                # set color to an array/list of desired values
         colorscale='Viridis',   # choose a colorscale
-        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=0.5),
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
         opacity=0.8
         )
     )
@@ -384,8 +389,10 @@ def request_upload_file_index():
     fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
 
     plot_div1 = plot(fig[0], output_type='div')
-    plot_div2 = plot(fig[10], output_type='div')
-    
+    plot_div2 = plot(fig[1], output_type='div')
+    plot_div3 = plot(fig[10], output_type='div')
+    plot_div4 = plot(fig[0], output_type='div')
+
     filename_json=json.dumps(filename)
     start_time_slider_json = json.dumps(int(fig[2]))
     end_time_slider_json = json.dumps(int(fig[3]))
@@ -399,6 +406,8 @@ def request_upload_file_index():
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
+        div_placeholder_fig3= Markup(plot_div3),
+        div_placeholder_fig4= Markup(plot_div4),
         filename=filename_json,
         start_time_slider = start_time_slider_json,
         end_time_slider = end_time_slider_json,
@@ -528,7 +537,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_rate,
            visible = True
-        ),
+        )
     )
 
     layout1 = dict(
@@ -570,6 +579,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            array = newError_color2,
            visible = True
         ),
+
     )
 
     layout2 = dict(
@@ -622,7 +632,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
         size=5,
         color=newAmplitude,                # set color to an array/list of desired values
         colorscale='Viridis',   # choose a colorscale
-        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=0.5),
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
         opacity=0.8
         )
     )
