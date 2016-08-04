@@ -219,6 +219,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
         hoverinfo = 'none',
         x = newTime,
         y = newRate,
+        mode="markers",
         error_x = dict(
            type = 'data',
            array = newError_time,
@@ -229,7 +230,13 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
            array = newError_rate,
            visible = True
         ),
-        
+        marker=dict(
+        size=5,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
     )
 
     layout1 = dict(
@@ -528,6 +535,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
         hoverinfo = 'none',
         x = newTime,
         y = newRate,
+        mode="markers",
         error_x = dict(
            type = 'data',
            array = newError_time,
@@ -537,6 +545,13 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_rate,
            visible = True
+        ),
+        marker=dict(
+        size=5,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
         )
     )
 

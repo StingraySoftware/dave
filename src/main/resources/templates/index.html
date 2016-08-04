@@ -63,6 +63,8 @@ $(document).ready(function() {
     $("#clear").bind("click", function(){
          $("#section1").empty();
          $("#section2").empty();
+         $("#section3").empty();
+         $("#section4").empty();
          $( "#from_time" ).val("");
          $( "#to_time" ).val("");
          $( "#from_count" ).val("");
@@ -106,8 +108,12 @@ $(function() {
     };
      var plot1 = $("#section1").find("*").toArray();
      var plot2 = $("#section2").find("*").toArray();
+     var plot3 = $("#section3").find("*").toArray();
+     var plot4 = $("#section4").find("*").toArray();
         Plotly.relayout(plot1[2].getAttribute("id"), update);
         Plotly.relayout(plot2[2].getAttribute("id"), update);
+        Plotly.relayout(plot3[2].getAttribute("id"), update);
+        Plotly.relayout(plot4[2].getAttribute("id"), update);
 
             }).resize();
 
@@ -365,6 +371,18 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
+    <div id="hoverinforight" style="text-align:center;color:#1F77B4"></div>
+
+</div>
+<div class="hello" id="section3" >
+
+  {{div_placeholder_fig3| safe}}
+    <div id="hoverinforight" style="text-align:center;color:#1F77B4"></div>
+
+</div>
+<div class="hello" id="section4" >
+
+  {{div_placeholder_fig4| safe}}
     <div id="hoverinforight" style="text-align:center;color:#1F77B4"></div>
 
 </div>
