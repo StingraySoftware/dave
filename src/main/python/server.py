@@ -67,7 +67,7 @@ def request_upload_file_welcome():
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
     plot_div3 = plot(fig[10], output_type='div')
-    plot_div4 = plot(fig[0], output_type='div')
+    plot_div4 = plot(fig[11], output_type='div')
 
     filename_json=json.dumps(filename)
     start_time_slider_json = json.dumps(int(fig[2]))
@@ -219,7 +219,6 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
         hoverinfo = 'none',
         x = newTime,
         y = newRate,
-        mode="markers",
         error_x = dict(
            type = 'data',
            array = newError_time,
@@ -229,13 +228,6 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
            type = 'data',
            array = newError_rate,
            visible = True
-        ),
-        marker=dict(
-        size=5,
-        color=newAmplitude,                # set color to an array/list of desired values
-        colorscale='Viridis',   # choose a colorscale
-        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
-        opacity=0.8
         )
     )
 
@@ -341,6 +333,42 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
         title="Dynamic Spectrum",     # more about "layout's" "title": /python/reference/#layout-title
           
     )
+    trace4 = dict(
+        type = 'scatter',
+        x = newTime,
+        y = newRate,
+        mode="markers",
+        marker=dict(
+        size=6,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
+    )
+
+    layout4 = dict(
+         title = '',
+         hovermode= 'closest',
+         xaxis = dict(
+             title = 'Time',
+             #range = [start_time, end_time],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+            )
+         ),
+         yaxis=dict(
+             title='Frequency',
+             #range=[start_count, end_count],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+             )
+         ),
+    )
 
 
     start_time_int = min(Time)
@@ -357,6 +385,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
     fig3 = go.Figure(data=data3, layout=layout3)
+    fig4 = dict(data = [trace4], layout = layout4)
 
     fig.append(fig1);
     fig.append(fig2);
@@ -371,6 +400,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     fig.append(start_color2_int);
     fig.append(end_color2_int);
     fig.append(fig3);
+    fig.append(fig4);
 
     return fig
 
@@ -398,7 +428,7 @@ def request_upload_file_index():
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
     plot_div3 = plot(fig[10], output_type='div')
-    plot_div4 = plot(fig[0], output_type='div')
+    plot_div4 = plot(fig[11], output_type='div')
 
     filename_json=json.dumps(filename)
     start_time_slider_json = json.dumps(int(fig[2]))
@@ -535,7 +565,6 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
         hoverinfo = 'none',
         x = newTime,
         y = newRate,
-        mode="markers",
         error_x = dict(
            type = 'data',
            array = newError_time,
@@ -545,14 +574,8 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_rate,
            visible = True
-        ),
-        marker=dict(
-        size=5,
-        color=newAmplitude,                # set color to an array/list of desired values
-        colorscale='Viridis',   # choose a colorscale
-        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
-        opacity=0.8
         )
+      
     )
 
     layout1 = dict(
@@ -657,6 +680,45 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     layout3 = go.Layout(
         title= "Dymanic Spectrutm",
     )
+
+
+    trace4 = dict(
+        type = 'scatter',
+        x = newTime,
+        y = newRate,
+        mode="markers",
+        marker=dict(
+        size=6,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
+    )
+
+    layout4 = dict(
+         title = '',
+         hovermode= 'closest',
+         xaxis = dict(
+             title = 'Time',
+             #range = [start_time, end_time],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+            )
+         ),
+         yaxis=dict(
+             title='Frequency',
+             #range=[start_count, end_count],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+             )
+         ),
+    )
+
     start_time_int = min(Time)
     end_time_int = max(Time)+1
     start_count_int = min(Rate)
@@ -671,6 +733,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
     fig3 = go.Figure(data=data3, layout=layout3)
+    fig4 = dict(data = [trace4], layout = layout4)
 
     fig.append(fig1);
     fig.append(fig2);
@@ -683,6 +746,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     fig.append(start_color2_int);
     fig.append(end_color2_int);
     fig.append(fig3);
+    fig.append(fig4);
 
     return fig
 
