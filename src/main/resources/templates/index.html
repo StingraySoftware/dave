@@ -58,11 +58,42 @@ $(document).ready(function () {
     document.getElementById("uploadFile").value = filename;
   });
 });
+
+
+$(document).ready(function() {  
+    var plot1 = $("#section1").find("*").toArray();
+    var plot2 = $("#section2").find("*").toArray();
+    var plot3 = $("#section3").find("*").toArray();
+    var plot4 = $("#section4").find("*").toArray();
+
+
+
+    $("#hide1").bind("click", function(){
+        $("#section1").hide();
+     });
+    
+    $("#hide2").bind("click", function(){
+        $("#section2").hide();
+     });
+   
+    $("#hide3").bind("click", function(){
+        $("#section3").hide();
+     });
+
+    $("#hide4").bind("click", function(){
+        $("#section4").hide();
+     });
+   
+
+});
+
 $(document).ready(function() {
          console.log("here")
     $("#clear").bind("click", function(){
          $("#section1").empty();
          $("#section2").empty();
+         $("#section3").empty();
+         $("#section4").empty();
          $( "#from_time" ).val("");
          $( "#to_time" ).val("");
          $( "#from_count" ).val("");
@@ -102,12 +133,16 @@ $(function() {
     var divwidth = $("#section1").width();
     var update = {
       width:divwidth,
-      height:divheight
+      height:divheight-20
     };
      var plot1 = $("#section1").find("*").toArray();
      var plot2 = $("#section2").find("*").toArray();
+     var plot3 = $("#section3").find("*").toArray();
+     var plot4 = $("#section4").find("*").toArray();
         Plotly.relayout(plot1[2].getAttribute("id"), update);
         Plotly.relayout(plot2[2].getAttribute("id"), update);
+        Plotly.relayout(plot3[2].getAttribute("id"), update);
+        Plotly.relayout(plot4[2].getAttribute("id"), update);
 
             }).resize();
 
@@ -184,15 +219,15 @@ document.getElementById(plotleft[2].getAttribute("id")).on('plotly_hover', funct
      var ptNumber = pt.pointNumber;
      var trace = pt.data;
 
-     error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
-     error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
+     error_x_string= (trace.error_x.array[ptNumber]).toString();
+     error_y_string= (trace.error_y.array[ptNumber]).toString();
 
 
      var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
      var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
 
 
-     hoverInfoleft.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+     hoverInfoleft.innerHTML = infotextforx +"+/-"  + error_x_string + spacesup + infotextfory + "+/-" + error_y_string;//+ "<br />";
 
 }).on('plotly_unhover', function(data){
     hoverInfoleft.innerHTML = '';
@@ -215,14 +250,14 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
      var ptNumber = pt.pointNumber;
      var trace = pt.data;
 
-     error_x_string= 'error_x : ' + (trace.error_x.array[ptNumber]).toString();
-     error_y_string=  'error_y : ' + (trace.error_y.array[ptNumber]).toString();
+     error_x_string= (trace.error_x.array[ptNumber]).toString();
+     error_y_string=  (trace.error_y.array[ptNumber]).toString();
 
      var spacesup=  '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
      var spacesdown='\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
 
 
-     hoverInforight.innerHTML = infotextforx +spacesup  + error_x_string + " <br /> " + infotextfory + spacesdown + error_y_string+ "<br />";
+      hoverInforight.innerHTML = infotextforx +"+/-"  + error_x_string + spacesup + infotextfory + "+/-" + error_y_string;
 
 }).on('plotly_unhover', function(data){
     hoverInforight.innerHTML = '';
@@ -348,24 +383,87 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
     <button id ="clear" class="button button1">Clear</button>
     <br><input type="button" id="btnSave1"  value="Save Left"/>
     <input type="button" id="btnSave2"  value="Save Right"/>
-
-
 </div>
+
+
 <div class="hello" id="section1" >
 
   {{div_placeholder_fig1| safe}}
+
+<div style="float:right">
+<button id="hide1">Hide</button>
+</div>
+
   <script>
   var filename=  {{filename| safe}};
   document.getElementById("uploadFile").value = filename;
   </script>
-  <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"></div>
+
+<div>
+<div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+</div>
 
 </div>
+
 
 <div class="hello" id="section2" >
 
   {{div_placeholder_fig2| safe}}
-    <div id="hoverinforight" style="text-align:center;color:#1F77B4"></div>
+
+<div style="float:right">
+<button id="hide2">Hide</button>
+</div>
+
+  <script>
+  var filename=  {{filename| safe}};
+  document.getElementById("uploadFile").value = filename;
+  </script>
+
+<div>
+<div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+</div>
+
+</div>
+
+
+
+
+<div class="hello" id="section3" >
+
+  {{div_placeholder_fig3| safe}}
+
+<div style="float:right">
+<button id="hide3">Hide</button>
+</div>
+
+  <script>
+  var filename=  {{filename| safe}};
+  document.getElementById("uploadFile").value = filename;
+  </script>
+
+<div>
+<div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+</div>
+
+</div>
+
+
+<div class="hello" id="section4" >
+
+  {{div_placeholder_fig4| safe}}
+
+<div style="float:right">
+<button id="hide4">Hide</button>
+</div>
+
+  <script>
+  var filename=  {{filename| safe}};
+  document.getElementById("uploadFile").value = filename;
+  </script>
+
+<div>
+<div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+</div>
 
 </div>
 

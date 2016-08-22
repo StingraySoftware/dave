@@ -5,6 +5,7 @@ import json
 
 import plotly
 from plotly.offline import plot
+import plotly.graph_objs as go
 
 import pandas as pd
 import numpy as np
@@ -13,6 +14,7 @@ import sys
 import os
 import uuid
 import json
+import numpy
 
 import logging
 from werkzeug import secure_filename
@@ -64,6 +66,8 @@ def request_upload_file_welcome():
 
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
+    plot_div3 = plot(fig[10], output_type='div')
+    plot_div4 = plot(fig[11], output_type='div')
 
     filename_json=json.dumps(filename)
     start_time_slider_json = json.dumps(int(fig[2]))
@@ -77,6 +81,8 @@ def request_upload_file_welcome():
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
+        div_placeholder_fig3= Markup(plot_div3),
+        div_placeholder_fig4= Markup(plot_div4),
         filename=filename_json,
         start_time_slider = start_time_slider_json,
         end_time_slider = end_time_slider_json,
@@ -142,6 +148,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
             Error_color1 =data[0:len(data),5]
             color2= data[0:len(data),6]
             Error_color2 = data[0:len(data),7]
+            Amplitude = numpy.random.uniform(-1, 1, size=len(data))
 
             logging.debug(file_extension)
             logging.debug("Read txt file successfully for time ")
@@ -205,7 +212,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
             newError_color2.append(Error_color2[i])
 
 
-
+    newAmplitude = numpy.random.uniform(-5, 5, size=len(newTime))
 
     trace1 = dict(
         type = 'scatter',
@@ -288,6 +295,82 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
          ),
          dragmode='select',
     )
+
+    error = numpy.random.uniform(-8,8 , size=len(Time))
+
+    trace3 = go.Scatter3d(
+    x=newTime,
+    y=newRate,
+    z=newAmplitude,
+    mode='markers',
+    error_x = dict(
+           type = 'data',
+           array = newError_time,
+           visible = True
+        ),
+    error_y = dict(
+           type = 'data',
+           array = newError_rate,
+           visible = True
+        ),
+    error_z = dict(
+           type = 'data',
+           array = error,
+           visible = True
+        ),
+    marker=dict(
+        size=5,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
+    )
+
+    data3 = [trace3]
+
+    layout3 = go.Layout(
+        title="Dynamic Spectrum",     # more about "layout's" "title": /python/reference/#layout-title
+          
+    )
+    trace4 = dict(
+        type = 'scatter',
+        x = newTime,
+        y = newRate,
+        mode="markers",
+        marker=dict(
+        size=6,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
+    )
+
+    layout4 = dict(
+         title = '',
+         hovermode= 'closest',
+         xaxis = dict(
+             title = 'Time',
+             #range = [start_time, end_time],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+            )
+         ),
+         yaxis=dict(
+             title='Frequency',
+             #range=[start_count, end_count],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+             )
+         ),
+    )
+
+
     start_time_int = min(Time)
     end_time_int = max(Time) +1
     start_count_int = min(Rate)
@@ -301,8 +384,13 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
+    fig3 = go.Figure(data=data3, layout=layout3)
+    fig4 = dict(data = [trace4], layout = layout4)
+
     fig.append(fig1);
     fig.append(fig2);
+    
+
     fig.append(start_time_int);
     fig.append(end_time_int);
     fig.append(start_count_int);
@@ -311,6 +399,8 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     fig.append(end_color1_int);
     fig.append(start_color2_int);
     fig.append(end_color2_int);
+    fig.append(fig3);
+    fig.append(fig4);
 
     return fig
 
@@ -337,6 +427,9 @@ def request_upload_file_index():
 
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
+    plot_div3 = plot(fig[10], output_type='div')
+    plot_div4 = plot(fig[11], output_type='div')
+
     filename_json=json.dumps(filename)
     start_time_slider_json = json.dumps(int(fig[2]))
     end_time_slider_json = json.dumps(int(fig[3]))
@@ -350,6 +443,8 @@ def request_upload_file_index():
     return render_template('index.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
+        div_placeholder_fig3= Markup(plot_div3),
+        div_placeholder_fig4= Markup(plot_div4),
         filename=filename_json,
         start_time_slider = start_time_slider_json,
         end_time_slider = end_time_slider_json,
@@ -400,6 +495,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
             color2= data[0:len(data),6]
             Error_color2 = data[0:len(data),7]
 
+            Amplitude = numpy.random.uniform(-1, 1, size=len(data))
             logging.debug(file_extension)
             logging.debug("Read txt file successfully for time ")
 
@@ -462,7 +558,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
             newError_color2.append(Error_color2[i])
 
 
-
+    newAmplitude = numpy.random.uniform(-1, 1, size=len(newTime))
 
     trace1 = dict(
         type = 'scatter',
@@ -478,7 +574,8 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            type = 'data',
            array = newError_rate,
            visible = True
-        ),
+        )
+      
     )
 
     layout1 = dict(
@@ -520,6 +617,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            array = newError_color2,
            visible = True
         ),
+
     )
 
     layout2 = dict(
@@ -546,6 +644,81 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
          dragmode='select'
     )
 
+    error = numpy.random.uniform(-8,8 , size=len(Time))
+
+    trace3 = go.Scatter3d(
+    x=newTime,
+    y=newRate,
+    z=newAmplitude,
+    mode='markers',
+    error_x = dict(
+           type = 'data',
+           array = newError_time,
+           visible = True
+        ),
+    error_y = dict(
+           type = 'data',
+           array = newError_rate,
+           visible = True
+        ),
+    error_z = dict(
+           type = 'data',
+           array = error,
+           visible = True
+        ),
+    marker=dict(
+        size=5,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
+    )
+
+    data3 = [trace3]
+
+    layout3 = go.Layout(
+        title= "Dymanic Spectrutm",
+    )
+
+
+    trace4 = dict(
+        type = 'scatter',
+        x = newTime,
+        y = newRate,
+        mode="markers",
+        marker=dict(
+        size=6,
+        color=newAmplitude,                # set color to an array/list of desired values
+        colorscale='Viridis',   # choose a colorscale
+        colorbar = dict(title = 'Amplitude<br>Map',thickness=20,len=1),
+        opacity=0.8
+        )
+    )
+
+    layout4 = dict(
+         title = '',
+         hovermode= 'closest',
+         xaxis = dict(
+             title = 'Time',
+             #range = [start_time, end_time],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+            )
+         ),
+         yaxis=dict(
+             title='Frequency',
+             #range=[start_count, end_count],
+             titlefont = dict(
+                 family = 'Courier New, monospace',
+                 size = 18,
+                 color = '#7f7f7f'
+             )
+         ),
+    )
+
     start_time_int = min(Time)
     end_time_int = max(Time)+1
     start_count_int = min(Rate)
@@ -559,6 +732,9 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     fig=[]
     fig1 = dict(data = [trace1], layout = layout1)
     fig2 = dict(data = [trace2], layout = layout2)
+    fig3 = go.Figure(data=data3, layout=layout3)
+    fig4 = dict(data = [trace4], layout = layout4)
+
     fig.append(fig1);
     fig.append(fig2);
     fig.append(start_time_int);
@@ -569,6 +745,8 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     fig.append(end_color1_int);
     fig.append(start_color2_int);
     fig.append(end_color2_int);
+    fig.append(fig3);
+    fig.append(fig4);
 
     return fig
 

@@ -24,7 +24,7 @@
 #nav_index {
     line-height:30px;
     background-color:#eeeeee;
-    height:105vh;
+    height:140vh;
     /*height:700px;*/
  /*   width:300px;*/
     width:25vw;
@@ -34,7 +34,7 @@
 #section1 {
    /* width:600px;*/
      width:32vw;
-     height:90vh;
+     height:70vh;
     /*height:600px;*/
     float:left;
     padding:10px;        
@@ -42,7 +42,23 @@
 #section2 {
    /* width:600px;*/
      width:32vw;
-     height:90vh;
+     height:70vh;
+    /*height:600px;*/
+    float:left;
+    padding:10px;        
+}
+#section3 {
+   /* width:600px;*/
+     width:32vw;
+     height:70vh;
+    /*height:600px;*/
+    float:left;
+    padding:10px;        
+}
+#section4 {
+   /* width:600px;*/
+     width:32vw;
+     height:70vh;
     /*height:600px;*/
     float:left;
     padding:10px;        
@@ -112,19 +128,7 @@ input[type=button], input[type=submit], input[type=reset] {
     line-height: 20px;
 }
 
-#select1 {
-    border:0;
-    background:transparent;
-    height:32px;
-    border:1px solid #d8d8d8;
-    border-radius: 8px;
-    width:20vw;
-    font-family: Cursive;
-    font-size: 1.2em;
-    padding: 20px 20px
 
-    -webkit-appearance: none;
-}
 label.myLabel input[type="file"] {
     position: fixed;
     top: -1000px;
