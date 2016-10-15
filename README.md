@@ -22,6 +22,6 @@ Please talk to us! We use Slack to discuss the work. To join our channels, since
 we are using a free plan, we have to send you an invite. Just ask at
 info@timelabtechnologies.com .
 
-The recorded open issues for DAVE are in [JIRA](https://timelabdev.com/jira/projects/DAVE).
+The recorded open issues for DAVE are in [JIRA](https://timelabdev.com/jira/projects/DAVE). More information about communication in the project can be found in [Confluence](https://timelabdev.com/wiki/display/DAVE/Source+code+and+communication).
 
 Fork and pull request away!
