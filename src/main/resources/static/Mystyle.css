@@ -1,9 +1,10 @@
 #container {
-    height: 400px; 
-    min-width: 310px; 
+    height: 400px;
+    min-width: 310px;
     max-width: 800px;
     margin: 0 auto;
 }
+
 #header {
     background-color:black;
     color:white;
@@ -19,8 +20,9 @@
  /*   width:300px;*/
     width:25vw;
     float:left;
-    padding:5px;          
+    padding:5px;
 }
+
 #nav_index {
     line-height:30px;
     background-color:#eeeeee;
@@ -29,48 +31,54 @@
  /*   width:300px;*/
     width:25vw;
     float:left;
-    padding:5px;          
+    padding:5px;
 }
+
 #section1 {
    /* width:600px;*/
      width:32vw;
      height:70vh;
     /*height:600px;*/
     float:left;
-    padding:10px;        
+    padding:10px;
 }
+
 #section2 {
    /* width:600px;*/
      width:32vw;
      height:70vh;
     /*height:600px;*/
     float:left;
-    padding:10px;        
+    padding:10px;
 }
+
 #section3 {
    /* width:600px;*/
      width:32vw;
      height:70vh;
     /*height:600px;*/
     float:left;
-    padding:10px;        
+    padding:10px;
 }
+
 #section4 {
    /* width:600px;*/
      width:32vw;
      height:70vh;
     /*height:600px;*/
     float:left;
-    padding:10px;        
+    padding:10px;
 }
+
 #footer {
     background-color:black;
     color:white;
     clear:both;
     text-align:center;
     height:5vh;
-    padding:5px;      
+    padding:5px;
 }
+
 .button {
     width: 60%;
     background-color: black;
@@ -83,6 +91,7 @@
     text-align: center;
     line-height: 20px;
 }
+
 input[type=text] {
     width: 30%;
     padding: 5px 20px;
@@ -93,6 +102,7 @@ input[type=text] {
     border-radius: 8px;
 
 }
+
 input[type=button], input[type=submit], input[type=reset] {
     width: 60%;
     background-color: black;
@@ -105,6 +115,7 @@ input[type=button], input[type=submit], input[type=reset] {
     text-align: center;
     line-height: 20px;
 }
+
 .mainselection {
     overflow:hidden;
     width:30vw;
@@ -113,8 +124,8 @@ input[type=button], input[type=submit], input[type=reset] {
 
     /* dropdown_arrow.png is a 31x28 image */
 }
-#btnSave1,#btnSave2
-{ 
+
+#btnSave1,#btnSave2 {
     width: 30%;
     background-color: black;
     border:1px solid #d8d8d8;
@@ -128,7 +139,6 @@ input[type=button], input[type=submit], input[type=reset] {
     line-height: 20px;
 }
 
-
 label.myLabel input[type="file"] {
     position: fixed;
     top: -1000px;
@@ -138,7 +148,7 @@ label.myLabel input[type="file"] {
     width:8vw;
     height:3vh;
     text-align: center;
-    line-height: 20px;    
+    line-height: 20px;
     margin: 4px 2px;
     border: 2px solid #AAA;
     border-radius: 4px;
@@ -147,7 +157,6 @@ label.myLabel input[type="file"] {
     background: #DDD;
     display: inline-block;
     cursor: pointer;
-
 }
 .myLabel:hover {
     background: #CCC;
@@ -161,4 +170,3 @@ label.myLabel input[type="file"] {
 .myLabel :valid + span {
     color: black;
 }
-

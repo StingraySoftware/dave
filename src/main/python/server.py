@@ -331,7 +331,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     layout3 = go.Layout(
         title="Dynamic Spectrum",     # more about "layout's" "title": /python/reference/#layout-title
-          
+
     )
     trace4 = dict(
         type = 'scatter',
@@ -389,7 +389,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
 
     fig.append(fig1);
     fig.append(fig2);
-    
+
 
     fig.append(start_time_int);
     fig.append(end_time_int);
@@ -575,7 +575,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
            array = newError_rate,
            visible = True
         )
-      
+
     )
 
     layout1 = dict(
