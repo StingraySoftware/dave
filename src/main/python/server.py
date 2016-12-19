@@ -37,6 +37,7 @@ APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 app.secret_key=os.urandom(24)
 
+#Setting routes
 @app.route('/hello')
 def hello():
     return render_template('basic__plot.html')
@@ -60,7 +61,7 @@ def request_upload_file_welcome():
 
     filename = f.filename
     if not filename:
-      return render_template("welcome.html");
+      return render_template("master_page.html");
 
     fig = upload_file_from_welcome(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
 
@@ -78,7 +79,7 @@ def request_upload_file_welcome():
     end_color1_slider_json = json.dumps(int(fig[7]))
     start_color2_slider_json = json.dumps(int(fig[8]))
     end_color2_slider_json = json.dumps(int(fig[9]))
-    return render_template('index.html',
+    return render_template('master_page.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
         div_placeholder_fig3= Markup(plot_div3),
@@ -127,7 +128,7 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     logging.debug("destination filename: %s" % destination)
 
     if not destination:
-      return render_template("welcome.html");
+      return render_template("master_page.html");
 
     filename, file_extension = os.path.splitext(destination)
 
@@ -421,7 +422,7 @@ def request_upload_file_index():
     end_color2 = request.form['to_color2']
 
     if not filename:
-      return render_template("welcome.html");
+      return render_template("master_page.html");
 
     fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
 
@@ -440,7 +441,7 @@ def request_upload_file_index():
     start_color2_slider_json = json.dumps(int(fig[8]))
     end_color2_slider_json = json.dumps(int(fig[9]))
 
-    return render_template('index.html',
+    return render_template('master_page.html',
         div_placeholder_fig1= Markup(plot_div1),
         div_placeholder_fig2= Markup(plot_div2),
         div_placeholder_fig3= Markup(plot_div3),
@@ -474,7 +475,7 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     logging.debug("destination filename: %s" % destination)
 
     if not destination:
-      return render_template("welcome.html");
+      return render_template("master_page.html");
 
     filename, file_extension = os.path.splitext(destination)
 
@@ -751,11 +752,16 @@ def upload_file_from_index(filename=None, start_time=None, end_time=None, start_
     return fig
 
 @app.route('/')
-def my_form():
-    logging.debug("I am here")
-    return render_template("welcome.html")
+def root():
+    logging.debug("Root page requested!")
+    return render_template("master_page.html")
 
+#Setting error handler
+def http_error_handler(error):
+    return render_template("error.html", error=error ), error.code
 
+for error in (400, 401, 403, 404, 500): # or with other http code you consider as error
+    app.error_handler_spec[None][error] = http_error_handler
 
 if __name__ == '__main__':
     app.run()

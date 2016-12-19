@@ -1,0 +1,21 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/home/timelab/TimeLab/dave/work/node-v4.4.4-linux-x64/bin/node',
+1 verbose cli   '/home/timelab/TimeLab/dave/work/node-v4.4.4-linux-x64/bin/npm',
+1 verbose cli   'start' ]
+2 info using npm@2.15.1
+3 info using node@v4.4.4
+4 verbose stack Error: ENOENT: no such file or directory, open '/home/timelab/TimeLab/dave/package.json'
+4 verbose stack     at Error (native)
+5 verbose cwd /home/timelab/TimeLab/dave
+6 error Linux 4.8.0-22-generic
+7 error argv "/home/timelab/TimeLab/dave/work/node-v4.4.4-linux-x64/bin/node" "/home/timelab/TimeLab/dave/work/node-v4.4.4-linux-x64/bin/npm" "start"
+8 error node v4.4.4
+9 error npm  v2.15.1
+10 error path /home/timelab/TimeLab/dave/package.json
+11 error code ENOENT
+12 error errno -2
+13 error syscall open
+14 error enoent ENOENT: no such file or directory, open '/home/timelab/TimeLab/dave/package.json'
+14 error enoent This is most likely not a problem with npm itself
+14 error enoent and is related to npm not being able to find a file.
+15 verbose exit [ -2, true ]

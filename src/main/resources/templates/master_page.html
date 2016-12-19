@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+
+  <head>
+
+    <title>DAVE</title>
+
+    <!-- Insert CSS below here for better page render performance -->
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/jquery-ui-1.12.1.min.css') }}">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/bootstrap-3.3.7.min.css') }}">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/bootstrap-theme-3.3.7.min.css') }}">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/master_page.css') }}">
+
+    <!-- Insert this line above script imports for solve Electron import issues -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+    <script type=text/javascript src="{{ url_for('static', filename='scripts/jquery-3.1.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/jquery-ui-1.12.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/bootstrap-3.3.7.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/master_page.js') }}"></script>
+
+    <script type="text/javascript">
+    //var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+      var filename = "";
+      {% if filename %}
+        filename = {{filename| safe}};
+      {% endif %}
+
+    </script>
+
+    <!-- Insert this line after script imports for solve Electron import issues -->
+    <script>if (window.module) module = window.module;</script>
+
+  </head>
+
+  <body>
+
+    <!-- Page Content -->
+        <div class="container daveContainer">
+          <!-- Projects Row -->
+          <div class="row fill">
+            <div class="wrapper">
+              <div class="wfSelectorContainer col-md-1 columnDivider">
+                  <h3>
+                      <a href="#">Load</a>
+                  </h3>
+                  <h3>
+                      <a href="#">Filter</a>
+                  </h3>
+                  <h3>
+                      <a href="#">Analyze</a>
+                  </h3>
+                  <h3>
+                      <a href="#">Style</a>
+                  </h3>
+              </div>
+              <div class="toolPanelContainer col-md-3 columnDivider">
+                  {% include 'toolpanel.html' %}
+              </div>
+              <div class="outputPanelContainer col-md-8">
+                  {% include 'outputpanel.html' %}
+              </div>
+            </div>
+          </div>
+          <!-- /.row -->
+      </div>
+
+  </body>
+
+</html>
