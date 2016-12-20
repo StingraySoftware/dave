@@ -1,26 +1,36 @@
 
 $(document).ready(function () {
 
-    $("#uploadFile").value = filename;
+    var theToolPanel = $(".toolPanel");
 
-    $(document).on('change','input[type="file"]', function () {
-      var fullfilename=this.value;
-      var newFilename = fullfilename.replace(/^.*[\\\/]/, '');
-      $("#uploadFile").value = newFilename;
-    });
+    var theFileSelector = fileSelector("theFileSelector", filename);
+    theToolPanel.append(theFileSelector.$html);
 
-    $("#clear").bind("click", function() {
+    var theTimeSelector = sliderSelector("time", "Select Time Range", "From", "To", start_time_slider, end_time_slider);
+    theToolPanel.append(theTimeSelector.$html);
+
+    var theCountRateSelector = sliderSelector("count", "Select Count Rate Range", "From", "To", start_count_slider, end_count_slider);
+    theToolPanel.append(theCountRateSelector.$html);
+
+    var theColor1Selector = sliderSelector("color1", "Select Color1 Range", "From", "To", start_color1_slider, end_color1_slider);
+    theToolPanel.append(theColor1Selector.$html);
+
+    var theColor2Selector = sliderSelector("color2", "Select Color2 Range", "From", "To", start_color2_slider, end_color2_slider);
+    theToolPanel.append(theColor2Selector.$html);
+
+    theToolPanel.find("#clear").bind("click", function() {
         toolPanel_Clear();
     });
 
-    $("#btnSave1").click(function() {
+    theToolPanel.find("#btnSave1").click(function() {
         toolPanel_saveAsPNG($("#section1"));
     });
 
-    $("#btnSave2").click(function() {
+    theToolPanel.find("#btnSave2").click(function() {
         toolPanel_saveAsPNG($("#section2"));
     });
 
+    log("ToolPanel ready!");
 });
 
 function toolPanel_Clear(){

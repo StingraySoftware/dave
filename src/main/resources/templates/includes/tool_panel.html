@@ -1,0 +1,24 @@
+<form action = "http://localhost:5000/uploader_welcome" method = "POST" enctype = "multipart/form-data">
+  <div class="toolPanel">
+
+      <!---Selector are appended with JS here -->
+
+  </div>
+  <div>
+    <input type="submit" name="my-form" value="Load Spectrum">
+    <br>
+    <button id ="clear" class="button button1">Clear</button>
+    <br>
+    <input type="button" id="btnSave1"  value="Save Left"/>
+    <input type="button" id="btnSave2"  value="Save Right"/>
+
+  </div>
+</form>
+
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/html2canvas.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static',filename='scripts/canvas2image.js') }}"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/fileSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/sliderSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/toolpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
