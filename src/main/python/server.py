@@ -43,11 +43,19 @@ def hello():
     return render_template('basic__plot.html')
 filename, file_extension = os.path.splitext('/path/to/somefile.ext')
 
-@app.route('/uploader_welcome', methods = ['GET', 'POST'])
-def request_upload_file_welcome():
+@app.route('/upload', methods = ['GET', 'POST'])
+def request_upload_file():
 
+    upload_requiered = False
     f = request.files['file']
-    session['user']=f.filename
+    if f.filename:
+        upload_requiered = True
+        session['uploaded_filename']=f.filename
+
+    if 'uploaded_filename' in session:
+        filename=session['uploaded_filename']
+    else:
+        return render_template("master_page.html");
 
     start_time = request.form['from_time']
     end_time = request.form['to_time']
@@ -59,43 +67,33 @@ def request_upload_file_welcome():
     start_color2 = request.form['from_color2']
     end_color2 = request.form['to_color2']
 
-    filename = f.filename
-    if not filename:
-      return render_template("master_page.html");
+    fig = []
 
-    fig = upload_file_from_welcome(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
+    if upload_requiered:
+        fig = upload_file_from_welcome(f, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
+    else:
+        fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
 
     plot_div1 = plot(fig[0], output_type='div')
     plot_div2 = plot(fig[1], output_type='div')
     plot_div3 = plot(fig[10], output_type='div')
     plot_div4 = plot(fig[11], output_type='div')
 
-    filename_json=json.dumps(filename)
-    start_time_slider_json = json.dumps(int(fig[2]))
-    end_time_slider_json = json.dumps(int(fig[3]))
-    start_count_slider_json = json.dumps(int(fig[4]))
-    end_count_slider_json = json.dumps(int(fig[5]))
-    start_color1_slider_json = json.dumps(int(fig[6]))
-    end_color1_slider_json = json.dumps(int(fig[7]))
-    start_color2_slider_json = json.dumps(int(fig[8]))
-    end_color2_slider_json = json.dumps(int(fig[9]))
     return render_template('master_page.html',
-        div_placeholder_fig1= Markup(plot_div1),
-        div_placeholder_fig2= Markup(plot_div2),
-        div_placeholder_fig3= Markup(plot_div3),
-        div_placeholder_fig4= Markup(plot_div4),
-        filename=filename_json,
-        start_time_slider = start_time_slider_json,
-        end_time_slider = end_time_slider_json,
-        start_count_slider = start_count_slider_json,
-        end_count_slider = end_count_slider_json,
-        start_color1_slider = start_color1_slider_json,
-        end_color1_slider = end_color1_slider_json,
-        start_color2_slider = start_color2_slider_json,
-        end_color2_slider = end_color2_slider_json,
+        div_placeholder_fig1 = Markup(plot_div1),
+        div_placeholder_fig2 = Markup(plot_div2),
+        div_placeholder_fig3 = Markup(plot_div3),
+        div_placeholder_fig4 = Markup(plot_div4),
+        filename = json.dumps(filename),
+        start_time_slider = json.dumps(int(fig[2])),
+        end_time_slider = json.dumps(int(fig[3])),
+        start_count_slider = json.dumps(int(fig[4])),
+        end_count_slider = json.dumps(int(fig[5])),
+        start_color1_slider = json.dumps(int(fig[6])),
+        end_color1_slider = json.dumps(int(fig[7])),
+        start_color2_slider = json.dumps(int(fig[8])),
+        end_color2_slider = json.dumps(int(fig[9])),
     )
-
-
 
 # upload_file_from_welcome: Upload a data file to the Flask server and generate a DIV with
 # the plot inside
@@ -404,58 +402,6 @@ def upload_file_from_welcome(f, start_time=None, end_time=None, start_count=None
     fig.append(fig4);
 
     return fig
-
-@app.route('/uploader_index', methods = ['GET', 'POST'])
-def request_upload_file_index():
-
-    if 'user' in session:
-     filename=session['user']
-
-    start_time = request.form['from_time']
-    end_time = request.form['to_time']
-    start_count = request.form['from_count']
-    end_count = request.form['to_count']
-
-    start_color1 = request.form['from_color1']
-    end_color1 = request.form['to_color1']
-    start_color2 = request.form['from_color2']
-    end_color2 = request.form['to_color2']
-
-    if not filename:
-      return render_template("master_page.html");
-
-    fig = upload_file_from_index(filename, start_time, end_time, start_count, end_count,start_color1,end_color1,start_color2,end_color2)
-
-    plot_div1 = plot(fig[0], output_type='div')
-    plot_div2 = plot(fig[1], output_type='div')
-    plot_div3 = plot(fig[10], output_type='div')
-    plot_div4 = plot(fig[11], output_type='div')
-
-    filename_json=json.dumps(filename)
-    start_time_slider_json = json.dumps(int(fig[2]))
-    end_time_slider_json = json.dumps(int(fig[3]))
-    start_count_slider_json = json.dumps(int(fig[4]))
-    end_count_slider_json = json.dumps(int(fig[5]))
-    start_color1_slider_json = json.dumps(int(fig[6]))
-    end_color1_slider_json = json.dumps(int(fig[7]))
-    start_color2_slider_json = json.dumps(int(fig[8]))
-    end_color2_slider_json = json.dumps(int(fig[9]))
-
-    return render_template('master_page.html',
-        div_placeholder_fig1= Markup(plot_div1),
-        div_placeholder_fig2= Markup(plot_div2),
-        div_placeholder_fig3= Markup(plot_div3),
-        div_placeholder_fig4= Markup(plot_div4),
-        filename=filename_json,
-        start_time_slider = start_time_slider_json,
-        end_time_slider = end_time_slider_json,
-        start_count_slider = start_count_slider_json,
-        end_count_slider = end_count_slider_json,
-        start_color1_slider = start_color1_slider_json,
-        end_color1_slider = end_color1_slider_json,
-        start_color2_slider = start_color2_slider_json,
-        end_color2_slider = end_color2_slider_json,
-    )
 
 def upload_file_from_index(filename=None, start_time=None, end_time=None, start_count=None, end_count=None,start_color1=None,end_color1=None,start_color2=None,end_color2=None):
 

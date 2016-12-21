@@ -21,7 +21,7 @@ $(document).ready(function () {
          var plot = $(this).find("*").toArray();
          Plotly.relayout(plot[2].getAttribute("id"), update);
        } catch (ex) {
-         console.log("Resize plot error: " + ex);
+         log("Resize plot error: " + ex);
        }
      });
 

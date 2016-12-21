@@ -6,7 +6,7 @@ function fileSelector(id, fileName) {
   this.$html = $('<div class="fileSelector ' + id + '">' +
                    '<h3>Filename</h3>' +
                    '<input id="uploadFile" placeholder="Choose File" type="text" value="' + fileName + '" name="display_text" disabled="disabled" />' +
-                   '<label class="myLabel">' +
+                   '<label class="fileBtn">' +
                       '<input id="upload_input" name="file" type="file"/>' +
                    '</label>' +
                  '</div>');

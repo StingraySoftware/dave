@@ -3,19 +3,23 @@ $(document).ready(function () {
 
     var theToolPanel = $(".toolPanel");
 
-    var theFileSelector = fileSelector("theFileSelector", filename);
+    //Sets correct POST method to Flask, just temporary
+    theToolPanel.parent().attr("action", DOMAIN_URL + "/upload");
+    //Temporary, jut while using POST method
+
+    var theFileSelector = new fileSelector("theFileSelector", filename);
     theToolPanel.append(theFileSelector.$html);
 
-    var theTimeSelector = sliderSelector("time", "Select Time Range", "From", "To", start_time_slider, end_time_slider);
+    var theTimeSelector = new sliderSelector("time", "Select Time Range", "From", "To", start_time_slider, end_time_slider);
     theToolPanel.append(theTimeSelector.$html);
 
-    var theCountRateSelector = sliderSelector("count", "Select Count Rate Range", "From", "To", start_count_slider, end_count_slider);
+    var theCountRateSelector = new sliderSelector("count", "Select Count Rate Range", "From", "To", start_count_slider, end_count_slider);
     theToolPanel.append(theCountRateSelector.$html);
 
-    var theColor1Selector = sliderSelector("color1", "Select Color1 Range", "From", "To", start_color1_slider, end_color1_slider);
+    var theColor1Selector = new sliderSelector("color1", "Select Color1 Range", "From", "To", start_color1_slider, end_color1_slider);
     theToolPanel.append(theColor1Selector.$html);
 
-    var theColor2Selector = sliderSelector("color2", "Select Color2 Range", "From", "To", start_color2_slider, end_color2_slider);
+    var theColor2Selector = new sliderSelector("color2", "Select Color2 Range", "From", "To", start_color2_slider, end_color2_slider);
     theToolPanel.append(theColor2Selector.$html);
 
     theToolPanel.find("#clear").bind("click", function() {
