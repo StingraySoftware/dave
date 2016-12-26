@@ -73,3 +73,24 @@ h3
   border: 1px solid #afafaf;
   background-color: #ffffff;
 }
+
+.sliderSelector .switch-wrapper {
+  display: inline-block;
+  position: relative;
+  float: right;
+  top: 3px;
+}
+
+.sliderSelector .selectorFrom, .sliderSelector .selectorTo {
+  float: left;
+  width: 80px;
+  margin-top: -30px;
+}
+
+.sliderSelector .selectorTo {
+  float: right;
+}
+
+.sliderSelector .selectorSlider {
+  margin-top: 35px;
+}

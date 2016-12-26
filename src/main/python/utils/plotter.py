@@ -90,7 +90,7 @@ def get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_values
     return plot(fig, output_type='div')
 
 
-def get_plotdiv_dotted(x_values, y_values, color_array, x_label, y_label):
+def get_plotdiv_scatter(x_values, y_values, color_array, x_label, y_label):
 
     trace = dict(
         type = 'scatter',

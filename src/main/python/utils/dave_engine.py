@@ -8,6 +8,16 @@ from astropy.io import fits
 import utils.dave_reader as DaveReader
 import utils.plotter as Plotter
 
+# get_dataset_schema: Returns the schema of a dataset of given file
+# the plot inside with a given file destination
+#
+# @param: destination: file destination
+#
+def get_dataset_schema(destination):
+    dataset = DaveReader.get_file_dataset(destination)
+    return dataset.get_schema()
+
+
 # get_plotdivs: Generate a DIVs with
 # the plot inside with a given file destination
 #
@@ -19,7 +29,7 @@ def get_plotdivs(destination,
     start_color1=None, end_color1=None,
     start_color2=None, end_color2=None):
 
-    schema = DaveReader.get_file_schema(destination)
+    schema = DaveReader.get_file_dataset(destination)
 
     newTime=[]
     newRate=[]
@@ -83,7 +93,7 @@ def get_plotdivs(destination,
     fig["plot1"] = Plotter.get_plotdiv_xy(newTime, newRate, newError_time, newError_rate, 'Time', 'Count Rate')
     fig["plot2"] = Plotter.get_plotdiv_xy(newcolor1, newcolor2, newError_color1, newError_color2, 'Color1', 'Color2')
     fig["plot3"] = Plotter.get_plotdiv_xyz(newTime, newRate, newAmplitude, newError_time, newError_rate, error, "Dynamic Spectrum", "Amplitude<br>Map", newAmplitude)
-    fig["plot4"] = Plotter.get_plotdiv_dotted(newTime, newRate, newAmplitude, 'Time', 'Frequency')
+    fig["plot4"] = Plotter.get_plotdiv_scatter(newTime, newRate, newAmplitude, 'Time', 'Frequency')
 
     fig["start_time_int"] = min(schema["Time"])
     fig["end_time_int"] = max(schema["Time"]) +1
