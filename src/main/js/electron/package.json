@@ -7,7 +7,6 @@
   },
   "dependencies": {
     "request-promise": "*",
-    "electron-prebuilt": "*",
-    "sleep": "*"
+    "electron-prebuilt": "*"
   }
 }
