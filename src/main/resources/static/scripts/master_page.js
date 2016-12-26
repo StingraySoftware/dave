@@ -2,6 +2,7 @@
 var DOMAIN_URL = "http://localhost:5000";
 
 var theToolPanel = null;
+var theOutputPanel = null;
 var filename = "";
 
 $(document).ready(function () {
@@ -10,6 +11,7 @@ $(document).ready(function () {
   log("App started!! ->" + DOMAIN_URL);
 
   theToolPanel = new ToolPanel (".toolPanel");
+  theOutputPanel = new OutputPanel (".outputPanelContainer");
 
   log("App Ready!! ->" + DOMAIN_URL);
 
@@ -22,7 +24,9 @@ function onDatasetChanged ( filename ){
   .done(function( schema ) {
 
     log("onDatasetChanged:" + schema);
-    theToolPanel.onDatasetSchemaChanged(JSON.parse(schema));
+    var jsonSchema = JSON.parse(schema);
+    theToolPanel.onDatasetSchemaChanged(jsonSchema);
+    theOutputPanel.onDatasetValuesChanged(filename, [ { table:"table_txt", column:"Time", from: 0, to: 1000 } ]);
 
   });
 

@@ -13,3 +13,8 @@ class Column:
         schema["max_value"] = max(self.values)
         schema["count"] = len(self.values)
         return schema
+
+    def clone_empty (self):
+        column = Column(self.id)
+        column.values = self.values.copy()
+        return column

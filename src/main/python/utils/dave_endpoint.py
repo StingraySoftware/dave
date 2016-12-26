@@ -3,6 +3,7 @@ from flask import Markup
 
 import json
 import logging
+import urllib
 
 import utils.file_utils as FileUtils
 import utils.dave_engine as DaveEngine
@@ -44,6 +45,24 @@ def get_dataset_schema (filename, target):
 def common_error (error):
     return json.dumps( dict( error = error ) )
 
+
+def get_plot_html (filename, target, filters, styles, axis):
+    if not filename:
+        return "No filename setted"
+
+    if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
+        return "Filename not uploaded"
+
+    destination = FileUtils.get_destination(target, filename)
+    if not destination:
+        return "Error opening file"
+
+    plot_html = DaveEngine.get_plot_html(destination,
+                                        json.loads(urllib.parse.unquote(filters)),
+                                        json.loads(urllib.parse.unquote(styles)),
+                                        json.loads(urllib.parse.unquote(axis)))
+
+    return Markup(plot_html)
 
 
 def get_file_dataset_shema (file):

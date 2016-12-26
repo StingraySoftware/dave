@@ -33,6 +33,10 @@ def request_upload_file():
 def get_dataset_schema():
     return DaveEndpoint.get_dataset_schema (request.args['filename'], UPLOADS_TARGET)
 
+@app.route('/get_plot_html', methods = ['GET'])
+def get_plot_html():
+    return DaveEndpoint.get_plot_html (request.args['filename'], UPLOADS_TARGET,
+            request.args['filters'], request.args['styles'], request.args['axis'])
 
 @app.route('/')
 def root():
