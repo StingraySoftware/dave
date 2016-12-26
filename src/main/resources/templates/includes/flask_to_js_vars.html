@@ -1,0 +1,51 @@
+<script type="text/javascript">
+
+  var $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+  var filename = "";
+  {% if filename %}
+    filename = {{filename| safe}};
+  {% endif %}
+
+
+  var start_time_slider = 0;
+  {% if start_time_slider %}
+    start_time_slider = {{start_time_slider| safe}};
+  {% endif %}
+
+  var end_time_slider = 0;
+  {% if end_time_slider %}
+    end_time_slider = {{end_time_slider| safe}};
+  {% endif %}
+
+
+  var start_count_slider = 0;
+  {% if start_count_slider %}
+    start_count_slider = {{start_count_slider| safe}};
+  {% endif %}
+  var end_count_slider = 0;
+  {% if end_count_slider %}
+    end_count_slider = {{end_count_slider| safe}};
+  {% endif %}
+
+
+  var start_color1_slider = 0;
+  {% if start_color1_slider %}
+    start_color1_slider = {{start_color1_slider| safe}};
+  {% endif %}
+  var end_color1_slider = 0;
+  {% if end_color1_slider %}
+    end_color1_slider = {{end_color1_slider| safe}};
+  {% endif %}
+
+
+  var start_color2_slider = 0;
+  {% if start_color2_slider %}
+    start_color2_slider = {{start_color2_slider| safe}};
+  {% endif %}
+  var end_color2_slider = 0;
+  {% if end_color2_slider %}
+    end_color2_slider = {{end_color2_slider| safe}};
+  {% endif %}
+
+</script>

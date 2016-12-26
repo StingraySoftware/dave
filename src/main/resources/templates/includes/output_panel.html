@@ -1,0 +1,50 @@
+
+<div class="row">
+
+    <div class="plotContainer col-md-6" id="section1" >
+      {{div_placeholder_fig1| safe}}
+      <div style="float:right">
+        <button id="hide1" class="btnHidePlot">Hide</button>
+      </div>
+      <div>
+        <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+      </div>
+    </div>
+
+    <div class="plotContainer col-md-6" id="section2" >
+      {{div_placeholder_fig2| safe}}
+      <div style="float:right">
+        <button id="hide2" class="btnHidePlot">Hide</button>
+      </div>
+      <div>
+        <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+      </div>
+    </div>
+
+</div>
+
+<div class="row">
+
+  <div class="plotContainer col-md-6" id="section3" >
+    {{div_placeholder_fig3| safe}}
+    <div style="float:right">
+      <button id="hide3" class="btnHidePlot">Hide</button>
+    </div>
+    <div>
+      <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+    </div>
+  </div>
+
+  <div class="plotContainer col-md-6" id="section4" >
+    {{div_placeholder_fig4| safe}}
+    <div style="float:right">
+      <button id="hide4" class="btnHidePlot">Hide</button>
+    </div>
+    <div>
+      <div id="hoverinfoleft" style="text-align:center;color:#1F77B4"> </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/outputpanel.js') }}?v={{ range (1, 9999) | random }}"></script>

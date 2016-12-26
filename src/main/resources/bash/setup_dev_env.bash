@@ -3,7 +3,7 @@
 GIT_DIR=$(git rev-parse --git-dir 2> /dev/null)
 if [ ! -e $GIT_DIR ] ; then
 	echo Source this script from directory inside the git repo.
-	exit 1
+	return 1
 fi
 
 # install in directory work in the top-level dir in the project
@@ -26,6 +26,12 @@ MINICONDA=$DIR/miniconda.sh
 if [ ! -e $MINICONDA ] ; then
     echo Downloading miniconda
     wget --quiet https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $MINICONDA
+		wgetRetVal=$?
+		if [[ wgetRetVal -ne 0 ]] ; then
+			rm $MINICONDA
+			echo "Can't download MINICONDA.!!!"
+			return 1
+		fi
     chmod u+x $MINICONDA
 fi
 
@@ -43,6 +49,12 @@ URL=https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar
 if [ ! -e $NODE_TAR ]; then
 	echo Downloading node
 	wget --quiet $URL -O $NODE_TAR
+	wgetRetVal=$?
+	if [[ wgetRetVal -ne 0 ]] ; then
+		rm $NODE_TAR
+		echo "Can't download NODE.!!!"
+		return 1
+	fi
 fi
 tar xf $NODE_TAR -C $DIR
 export PATH=$DIR/node-v${NODE_VERSION}-linux-x64/bin:${PATH}
@@ -53,11 +65,12 @@ conda env create -f setup/environment.yml
 source activate dave
 
 # Installing node modules
-#echo Installing node modules
-#npm config set prefix $DIR
-#npm install -g electron
-#npm install -g electron-prebuilt
-#npm install -g request-promise
+echo Installing node modules
+cd src/main/js/electron
+npm install electron
+npm install electron-prebuilt
+npm install request-promise
+cd -
 
 # Test
 echo "Using node $(node --version)"

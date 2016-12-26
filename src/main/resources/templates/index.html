@@ -60,7 +60,7 @@ $(document).ready(function () {
 });
 
 
-$(document).ready(function() {  
+$(document).ready(function() {
     var plot1 = $("#section1").find("*").toArray();
     var plot2 = $("#section2").find("*").toArray();
     var plot3 = $("#section3").find("*").toArray();
@@ -71,11 +71,11 @@ $(document).ready(function() {
     $("#hide1").bind("click", function(){
         $("#section1").hide();
      });
-    
+
     $("#hide2").bind("click", function(){
         $("#section2").hide();
      });
-   
+
     $("#hide3").bind("click", function(){
         $("#section3").hide();
      });
@@ -83,7 +83,7 @@ $(document).ready(function() {
     $("#hide4").bind("click", function(){
         $("#section4").hide();
      });
-   
+
 
 });
 
@@ -344,7 +344,7 @@ document.getElementById(plotright[2].getAttribute("id")).on('plotly_hover', func
 <form action = "http://localhost:5000/uploader_index" method = "POST" enctype = "multipart/form-data">
 
 <input id="uploadFile" placeholder="Choose File"  style="width:18.5vw" type="text" name="display_text" disabled="disabled" />
-<p> <a href="/" id="new">Change File</a> </p>
+<p> <a href="/" id="new">Set File</a> </p>
 </label>
 
   <font size="3"><b>Select Time Range<b></font><br>
