@@ -2,3 +2,4 @@
 work
 __pycache__
 flaskserver.log
+*.log
