@@ -57,10 +57,12 @@ def get_plot_html (filename, target, filters, styles, axis):
     if not destination:
         return "Error opening file"
 
-    plot_html = DaveEngine.get_plot_html(destination,
-                                        json.loads(urllib.parse.unquote(filters)),
-                                        json.loads(urllib.parse.unquote(styles)),
-                                        json.loads(urllib.parse.unquote(axis)))
+    logging.debug("get_plot_html: %s" % filename)
+    logging.debug("get_plot_html: filters %s" % filters)
+    logging.debug("get_plot_html: styles %s" % styles)
+    logging.debug("get_plot_html: axis %s" % axis)
+
+    plot_html = DaveEngine.get_plot_html(destination, filters, styles, axis)
 
     return Markup(plot_html)
 

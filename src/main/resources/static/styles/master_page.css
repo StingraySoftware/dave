@@ -60,6 +60,8 @@ h3
 
 .outputPanelContainer
 {
+  margin: 0;
+  padding: 0;
   background-color: #efefef;
 }
 
@@ -70,8 +72,13 @@ h3
 
 .plotContainer
 {
+  float:left;
+  width: 50%;
+  height: 300px;
   border: 1px solid #afafaf;
   background-color: #ffffff;
+  margin: 0;
+  padding: 0;
 }
 
 .sliderSelector .switch-wrapper {

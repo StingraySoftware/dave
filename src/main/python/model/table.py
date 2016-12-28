@@ -1,4 +1,5 @@
 from model.column import Column
+import logging
 
 class Table:
     id = ""
@@ -26,26 +27,29 @@ class Table:
 
         return table
 
-    def apply_filter(filter):
-        filtered_table = Table(self.id)
-        for column_name in self.columns:
-            filtered_table.columns[column_name] = Column(column_name)
-
+    def apply_filter(self, filter):
         column_name = filter["column"]
-        if filtered_table.columns[column_name]:
-            column = filtered_table.columns[column_name]
-            for i in range(len(column.values)):
-                  if (column.values[i] >= filter["from"]) and (column.values[i] <= filter["to"]):
-                      filtered_table.add_row(self.get_row(i))
+        if not column_name in self.columns:
+            logging.error("table.apply_filter wrong column_name: %s" % column_name)
+            return self
+
+        filtered_table = Table(self.id)
+        for tmp_column_name in self.columns:
+            filtered_table.columns[tmp_column_name] = Column(tmp_column_name)
+
+        column = self.columns[column_name]
+        for i in range(len(column.values)):
+              if (column.values[i] >= filter["from"]) and (column.values[i] <= filter["to"]):
+                  filtered_table.add_row(self.get_row(i))
 
         return filtered_table
 
-    def get_row (index):
+    def get_row (self, index):
         row = dict()
         for column_name in self.columns:
-            row[column_name] = self.columns[column_name].values[index]
+            row[column_name] = self.columns[column_name].get_value(index)
         return row
 
-    def add_row (row):
+    def add_row (self, row):
         for column_name in row:
-            self.columns[column_name].values.append(row[column_name])
+            self.columns[column_name].add_value(row[column_name])

@@ -30,12 +30,17 @@ def get_dataset_schema(destination):
 def get_plot_html(destination, filters, styles, axis):
 
     dataset = DaveReader.get_file_dataset(destination)
+
+    logging.debug("get_plot_html apply_filters: %d" % len(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values))
+
     filtered_dataset = dataset.apply_filters(filters)
 
-    if not styles["type"]:
+    logging.debug("get_plot_html res apply_filters: %d" % len(filtered_dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values))
+
+    if not "type" in styles:
         return "No plot type specified on styles";
 
-    if not styles["labels"]:
+    if not "labels" in styles:
         return "No plot labels specified on styles";
 
     if len(styles["labels"]) < 2:
@@ -45,10 +50,10 @@ def get_plot_html(destination, filters, styles, axis):
         return "Wrong number of axis";
 
 
-    x_values = filtered_dataset.tables[axis[0]["table"]].columns[axis[0]["column"]]
-    y_values = filtered_dataset.tables[axis[1]["table"]].columns[axis[1]["column"]]
-    x_error_values = filtered_dataset.tables[axis[2]["table"]].columns[axis[2]["column"]]
-    y_error_values = filtered_dataset.tables[axis[3]["table"]].columns[axis[3]["column"]]
+    x_values = filtered_dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values
+    y_values = filtered_dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values
+    x_error_values = filtered_dataset.tables[axis[2]["table"]].columns[axis[2]["column"]].values
+    y_error_values = filtered_dataset.tables[axis[3]["table"]].columns[axis[3]["column"]].values
 
     if styles["type"] == "2d":
         return Plotter.get_plotdiv_xy(x_values, y_values,
@@ -63,7 +68,7 @@ def get_plot_html(destination, filters, styles, axis):
         if len(axis) < 3:
             return "Wrong number of axis";
 
-        z_values = filtered_dataset.tables[axis[4]["table"]].columns[axis[4]["column"]]
+        z_values = filtered_dataset.tables[axis[4]["table"]].columns[axis[4]["column"]].values
         #z_error_values = filtered_dataset.tables[axis[5]["table"]].columns[axis[5]["column"]]
         colorArray = np.random.uniform(-5, 5, size=len(x_values))
         error = np.random.uniform(-8,8 , size=len(x_values))

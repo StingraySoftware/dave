@@ -1,10 +1,13 @@
 
-function fileSelector(id, fileName) {
+function fileSelector(id, fileName, uploadFn, onFileChangedFn) {
 
   var currentObj = this;
 
   this.id = id;
   this.fileName = fileName;
+  this.uploadFn = uploadFn;
+  this.onFileChangedFn = onFileChangedFn;
+
   this.$html = $('<div class="fileSelector ' + id + '">' +
                    '<h3>Filename</h3>' +
                    '<input id="uploadFile" placeholder="Choose File" type="text" value="' + fileName + '" name="display_text" disabled="disabled" />' +
@@ -24,42 +27,22 @@ function fileSelector(id, fileName) {
      var fullfilename= this.value;
      var newFilename = fullfilename.replace(/^.*[\\\/]/, '');
      currentObj.$inputFile.value = newFilename;
-
-     var formData = new FormData($('form')[0]);
-     $.ajax({
-        url: DOMAIN_URL + "/upload",  //Server script to process data
-        type: 'POST',
-        /*xhr: function() {  // Custom XMLHttpRequest
-            var myXhr = $.ajaxSettings.xhr();
-            if(myXhr.upload){ // Check if upload property exists
-                myXhr.upload.addEventListener('progress', function (progress) { log("progress:" + progress) }, false); // For handling the progress of the upload
-            }
-            return myXhr;
-        },*/
-        //Ajax events
-        beforeSend: function () { log("beforeSend") },
-        success: function (response) {
-                                        var jsonRes = JSON.parse(response);
-                                        if (jsonRes.error != undefined) {
-                                          currentObj.onUploadError(jsonRes.error);
-                                        } else {
-                                          onDatasetChanged(jsonRes.filename);
-                                        }
-                                    },
-        error: currentObj.onUploadError(),
-        // Form data
-        data: formData,
-        //Options to tell jQuery not to process data or worry about content-type.
-        cache: false,
-        contentType: false,
-        processData: false
-    });
+     
+     currentObj.uploadFn(function (response) {
+                                     var jsonRes = JSON.parse(response);
+                                     if (jsonRes.error != undefined) {
+                                       currentObj.onUploadError(jsonRes.error);
+                                     } else {
+                                       currentObj.onFileChangedFn(jsonRes.filename);
+                                     };
+                                 },
+                         currentObj.onUploadError);
    });
 
    this.onUploadError = function ( error ) {
      if (error != undefined) {
        log("onUploadError:" + JSON.stringify(error));
-       this.$inputFile.value = "";
+       currentObj.$inputFile.value = "";
      }
    }
 

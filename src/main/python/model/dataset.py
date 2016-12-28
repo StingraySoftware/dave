@@ -1,4 +1,5 @@
 from model.table import Table
+import logging
 
 class DataSet:
     id = ""
@@ -19,7 +20,7 @@ class DataSet:
         return schema
 
     def clone (self):
-        dataset = Dataset(self.id)
+        dataset = DataSet(self.id)
 
         for table_id in self.tables:
             table = self.tables[table_id].clone()
@@ -27,16 +28,20 @@ class DataSet:
 
         return dataset
 
-    def apply_filters(filters):
+    def apply_filters(self, filters):
 
         if not filters or not len(filters):
+            logging.error("dataset.apply_filters wrong filters!!")
+            logging.error(filters)
             return self
 
         filtered_dataset = self.clone()
 
         for filter in filters:
             table_id = filter["table"]
-            if filtered_dataset.tables[table_id]:
+            if table_id in filtered_dataset.tables:
                 filtered_dataset.tables[table_id] = filtered_dataset.tables[table_id].apply_filter(filter)
+            else:
+                logging.error("dataset.apply_filters wrong table_id: %s" % table_id)
 
         return filtered_dataset

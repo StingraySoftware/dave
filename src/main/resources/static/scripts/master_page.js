@@ -3,6 +3,7 @@ var DOMAIN_URL = "http://localhost:5000";
 
 var theToolPanel = null;
 var theOutputPanel = null;
+var theService = null;
 var filename = "";
 
 $(document).ready(function () {
@@ -10,23 +11,25 @@ $(document).ready(function () {
   Logger.show();
   log("App started!! ->" + DOMAIN_URL);
 
-  theToolPanel = new ToolPanel (".toolPanel");
-  theOutputPanel = new OutputPanel (".outputPanelContainer");
+  theService = new Service (DOMAIN_URL);
+  theToolPanel = new ToolPanel (".toolPanel", theService);
+  theOutputPanel = new OutputPanel (".outputPanelContainer", theService);
 
   log("App Ready!! ->" + DOMAIN_URL);
 
 });
 
-function onDatasetChanged ( filename ){
+function onDatasetChanged ( filename ) {
   log("onDatasetChanged:" + filename);
 
-  $.get( DOMAIN_URL + "/get_dataset_schema", { filename: filename } )
-  .done(function( schema ) {
+  theOutputPanel.onDatasetChanged(filename);
+
+  theService.get_dataset_schema(filename, function( schema ) {
 
     log("onDatasetChanged:" + schema);
     var jsonSchema = JSON.parse(schema);
     theToolPanel.onDatasetSchemaChanged(jsonSchema);
-    theOutputPanel.onDatasetValuesChanged(filename, [ { table:"table_txt", column:"Time", from: 0, to: 1000 } ]);
+    theOutputPanel.onDatasetValuesChanged(filename, [ { table:"txt_table", column:"Time", from: 0, to: 1000 } ]);
 
   });
 

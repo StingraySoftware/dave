@@ -1,12 +1,12 @@
 
-function ToolPanel (classSelector) {
+function ToolPanel (classSelector, service) {
 
   var currentObj = this;
 
   this.classSelector = classSelector;
   this.$html = $(this.classSelector);
 
-  var theFileSelector = new fileSelector("theFileSelector", filename);
+  var theFileSelector = new fileSelector("theFileSelector", filename, service.upload_form_data, onDatasetChanged);
   this.$html.append(theFileSelector.$html);
 
   this.$html.find(".button").button();

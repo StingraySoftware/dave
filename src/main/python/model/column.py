@@ -1,3 +1,4 @@
+import numpy as np
 
 class Column:
     id = ""
@@ -5,6 +6,7 @@ class Column:
 
     def __init__(self, id):
         self.id = id
+        self.values = np.array([])
 
     def get_schema (self):
         schema = dict()
@@ -14,7 +16,13 @@ class Column:
         schema["count"] = len(self.values)
         return schema
 
-    def clone_empty (self):
+    def clone (self):
         column = Column(self.id)
-        column.values = self.values.copy()
+        column.values = np.copy(self.values)
         return column
+
+    def get_value (self, index):
+        return self.values[index].copy()
+
+    def add_value (self, value):
+        self.values = np.append(self.values, [ value ])
