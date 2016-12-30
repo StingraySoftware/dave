@@ -10,7 +10,7 @@ import utils.dave_engine as DaveEngine
 
 
 #UPLOADS THE FILE AND STORES IT ON SESSION
-def upload_and_store_file(file, target):
+def upload(file, target):
     if not file.filename:
         return common_error("No sent file")
 
@@ -65,39 +65,3 @@ def get_plot_html (filename, target, filters, styles, axis):
     plot_html = DaveEngine.get_plot_html(destination, filters, styles, axis)
 
     return Markup(plot_html)
-
-
-def get_file_dataset_shema (file):
-    start_time = request.form['from_time']
-    end_time = request.form['to_time']
-    start_count = request.form['from_count']
-    end_count = request.form['to_count']
-
-    start_color1 = request.form['from_color1']
-    end_color1 = request.form['to_color1']
-    start_color2 = request.form['from_color2']
-    end_color2 = request.form['to_color2']
-
-    destination = FileUtils.get_destination(target, filename)
-
-    fig = DaveEngine.get_plotdivs(destination,
-        start_time, end_time,
-        start_count, end_count,
-        start_color1, end_color1,
-        start_color2, end_color2)
-
-    return render_template('master_page.html',
-        div_placeholder_fig1 = Markup(fig["plot1"]),
-        div_placeholder_fig2 = Markup(fig["plot2"]),
-        div_placeholder_fig3 = Markup(fig["plot3"]),
-        div_placeholder_fig4 = Markup(fig["plot4"]),
-        filename = json.dumps(filename),
-        start_time_slider = json.dumps(int(fig["start_time_int"])),
-        end_time_slider = json.dumps(int(fig["end_time_int"])),
-        start_count_slider = json.dumps(int(fig["start_count_int"])),
-        end_count_slider = json.dumps(int(fig["end_count_int"])),
-        start_color1_slider = json.dumps(int(fig["start_color1_int"])),
-        end_color1_slider = json.dumps(int(fig["end_color1_int"])),
-        start_color2_slider = json.dumps(int(fig["start_color2_int"])),
-        end_color2_slider = json.dumps(int(fig["end_color2_int"])),
-    )

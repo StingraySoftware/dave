@@ -25,9 +25,10 @@ UPLOADS_TARGET = os.path.join(APP_ROOT, 'uploadeddataset')
 app.secret_key=os.urandom(24)
 
 
+#Routes methods
 @app.route('/upload', methods = ['GET', 'POST'])
-def request_upload_file():
-    return DaveEndpoint.upload_and_store_file (request.files['file'], UPLOADS_TARGET)
+def upload():
+    return DaveEndpoint.upload (request.files['file'], UPLOADS_TARGET)
 
 @app.route('/get_dataset_schema', methods = ['GET'])
 def get_dataset_schema():
