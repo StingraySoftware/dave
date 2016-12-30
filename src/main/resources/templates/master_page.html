@@ -18,10 +18,8 @@
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/jquery-ui-1.12.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/bootstrap-3.3.7.min.js') }}"></script>
     <script type=text/javascript src="{{ url_for('static', filename='scripts/logger-1.15.min.js') }}"></script>
-
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/service.js') }}?v={{ range (1, 9999) | random }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/master_page.js') }}?v={{ range (1, 9999) | random }}"></script>
-
-    {% include 'includes/flask_to_js_vars.html' %}
 
     <!-- Insert this line after script imports for solve Electron import issues -->
     <script>if (window.module) module = window.module;</script>
@@ -31,7 +29,7 @@
   <body>
 
     <!-- Page Content -->
-        <div class="container daveContainer">
+        <div class="container fluid daveContainer">
           <!-- Projects Row -->
           <div class="row fill">
             <div class="wrapper">
@@ -52,9 +50,7 @@
               <div class="toolPanelContainer col-md-3 columnDivider">
                   {% include 'includes/tool_panel.html' %}
               </div>
-              <div class="outputPanelContainer col-md-8">
-                  {% include 'includes/output_panel.html' %}
-              </div>
+              {% include 'includes/output_panel.html' %}
             </div>
           </div>
           <!-- /.row -->
