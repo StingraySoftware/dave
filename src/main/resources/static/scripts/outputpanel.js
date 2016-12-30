@@ -1,9 +1,13 @@
-function OutputPanel (classSelector, service) {
+function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedFromPlotFn) {
 
   var currentObj = this;
 
   this.classSelector = classSelector;
+  this.toolBarSelector = toolBarSelector;
+  this.service = service;
+  this.onFiltersChangedFromPlot = onFiltersChangedFromPlotFn;
   this.$html = $(this.classSelector);
+  this.$toolBar = $(this.toolBarSelector);
   this.plots = [];
 
   this.initPlots = function(filename) {
@@ -19,7 +23,9 @@ function OutputPanel (classSelector, service) {
                             { table:"txt_table", column:"Error_time" } ,
                             { table:"txt_table", column:"Error_rate" } ]
                   },
-                  service
+                  this.service,
+                  this.onFiltersChangedFromPlot,
+                  this.$toolBar
                 ),
 
                 new Plot(
@@ -32,11 +38,46 @@ function OutputPanel (classSelector, service) {
                             { table:"txt_table", column:"Error_color1" } ,
                             { table:"txt_table", column:"Error_color2" } ]
                   },
-                  service
+                  this.service,
+                  this.onFiltersChangedFromPlot,
+                  this.$toolBar
+                ),
+
+                new Plot(
+                  "Time_Rate_Amplitude_" + filename,
+                  {
+                    filename: filename,
+                    styles: { type: "3d", labels: ["Time", "Rate", "Amplitude"] },
+                    axis: [ { table:"txt_table", column:"Time" } ,
+                            { table:"txt_table", column:"Rate" } ,
+                            { table:"txt_table", column:"Error_time" } ,
+                            { table:"txt_table", column:"Error_rate" } ,
+                            { table:"txt_table", column:"Amplitude" } ,
+                            { table:"txt_table", column:"error" } ]
+                  },
+                  this.service,
+                  this.onFiltersChangedFromPlot,
+                  this.$toolBar
+                ),
+
+                new Plot(
+                  "Time_Rate_Amplitude_" + filename,
+                  {
+                    filename: filename,
+                    styles: { type: "scatter", labels: ["Time", "Frequency"] },
+                    axis: [ { table:"txt_table", column:"Time" } ,
+                            { table:"txt_table", column:"Rate" } ,
+                            { table:"txt_table", column:"Error_time" } ,
+                            { table:"txt_table", column:"Error_rate" } ]
+                  },
+                  this.service,
+                  this.onFiltersChangedFromPlot,
+                  this.$toolBar
                 )
               ];
 
     //ADDS PLOTS TO PANEL
+    this.$html.html("");
     for (i in this.plots) { this.$html.append(this.plots[i].$html); };
     this.forceResize();
   };

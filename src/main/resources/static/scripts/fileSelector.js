@@ -1,22 +1,21 @@
 
-function fileSelector(id, fileName, uploadFn, onFileChangedFn) {
+function fileSelector(id, filename, uploadFn, onFileChangedFn) {
 
   var currentObj = this;
 
   this.id = id;
-  this.fileName = fileName;
   this.uploadFn = uploadFn;
   this.onFileChangedFn = onFileChangedFn;
 
   this.$html = $('<div class="fileSelector ' + id + '">' +
-                   '<h3>Filename</h3>' +
-                   '<input id="uploadFile" placeholder="Choose File" type="text" value="' + fileName + '" name="display_text" disabled="disabled" />' +
-                   '<label class="fileBtn">' +
-                      '<input id="upload_input" name="file" type="file"/>' +
-                   '</label>' +
+                    '<form action="" method="POST" enctype="multipart/form-data">' +
+                      '<h3>Filename</h3>' +
+                      '<label class="fileBtn">' +
+                        '<input id="upload_input" name="file" type="file"/>' +
+                      '</label>' +
+                   '</form>' +
                  '</div>');
 
-  this.$inputFile = this.$html.find("#uploadFile");
   this.$html.find("#upload_input").on('change', function () {
 
      var file = this.files[0];
@@ -26,8 +25,7 @@ function fileSelector(id, fileName, uploadFn, onFileChangedFn) {
 
      var fullfilename= this.value;
      var newFilename = fullfilename.replace(/^.*[\\\/]/, '');
-     currentObj.$inputFile.value = newFilename;
-     
+
      currentObj.uploadFn(function (response) {
                                      var jsonRes = JSON.parse(response);
                                      if (jsonRes.error != undefined) {
@@ -42,7 +40,7 @@ function fileSelector(id, fileName, uploadFn, onFileChangedFn) {
    this.onUploadError = function ( error ) {
      if (error != undefined) {
        log("onUploadError:" + JSON.stringify(error));
-       currentObj.$inputFile.value = "";
+       currentObj.$html.find("#upload_input").val("");
      }
    }
 

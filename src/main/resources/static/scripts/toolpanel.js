@@ -1,76 +1,70 @@
 
-function ToolPanel (classSelector, service) {
+function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChangedFn) {
 
   var currentObj = this;
 
   this.classSelector = classSelector;
   this.$html = $(this.classSelector);
+  this.buttonsContainer = this.$html.find(".buttonsContainer");
+  this.clearBtn = this.$html.find(".btnClear");
 
-  var theFileSelector = new fileSelector("theFileSelector", filename, service.upload_form_data, onDatasetChanged);
-  this.$html.append(theFileSelector.$html);
+  this.onDatasetChanged = onDatasetChangedFn;
+  this.onFiltersChanged = onFiltersChangedFn;
 
-  this.$html.find(".button").button();
+  this.lastTimeoutId = null;
 
-  this.$html.find(".btnClear").bind("click", function( event ) {
+  this.buttonsContainer.hide();
+
+  var theFileSelector = new fileSelector("theFileSelector", theFilename, service.upload_form_data, this.onDatasetChanged);
+  this.$html.prepend(theFileSelector.$html);
+
+  this.clearBtn.button().bind("click", function( event ) {
       event.preventDefault();
-      currentObj.clear();
+      sliderSelectors_clear();
+      currentObj.onSelectorValuesChanged();
   });
-
-  this.$html.find(".btnSave1").click(function( event ) {
-      event.preventDefault();
-      currentObj.saveAsPNG($("#section1"));
-  });
-
-  this.$html.find(".btnSave2").click(function( event ) {
-      event.preventDefault();
-      currentObj.saveAsPNG($("#section2"));
-  });
-
-  this.clear = function (){
-
-       $("#section1").empty();
-       $("#section2").empty();
-       $("#section3").empty();
-       $("#section4").empty();
-       $( "#from_time" ).val("");
-       $( "#to_time" ).val("");
-       $( "#from_count" ).val("");
-       $( "#to_count" ).val("");
-       $( "#from_color1" ).val("");
-       $( "#to_color1" ).val("");
-       $( "#from_color2" ).val("");
-       $( "#to_color2" ).val("");
-  }
-
-  this.saveAsPNG = function (section) {
-
-    html2canvas(section, {
-        onrendered: function(canvas) {
-            theCanvas = canvas;
-            // Convert and download as image
-            Canvas2Image.saveAsPNG(canvas);
-            // Clean up
-            //document.body.removeChild(canvas);
-        }
-    });
-  }
 
   this.onDatasetSchemaChanged = function ( schema ) {
 
-    clear_sliderSelectors();
+    sliderSelectors_remove();
 
     for (tableName in schema) {
       var table = schema[tableName];
 
       for (columnName in table) {
 
-        var column = table[columnName];
-        var selector = new sliderSelector(columnName, columnName + ":", "From", "To", column.min_value, column.max_value);
-        this.$html.append(selector.$html);
+        if (!columnName.toUpperCase().includes("ERROR")){
 
+          var column = table[columnName];
+          var filterData = { table:tableName, column:columnName };
+          var selector = new sliderSelector(columnName,
+                                            columnName + ":",
+                                            filterData,
+                                            "From", "To",
+                                            column.min_value, column.max_value,
+                                            this.onSelectorValuesChanged);
+          this.$html.find(".selectorsContainer").append(selector.$html);
+        }
       }
+
+      this.buttonsContainer.fadeIn();
     }
 
+  }
+
+  this.applyFilters = function (filters) {
+    sliderSelectors_applyFilters(filters);
+  }
+
+  this.onSelectorValuesChanged = function ( ) {
+
+    if (this.lastTimeoutId != null) {
+      clearTimeout(this.lastTimeoutId);
+    }
+
+    this.lastTimeoutId = setTimeout( function () {
+      theToolPanel.onFiltersChanged(theFilename, sliderSelectors_getFilters ());
+    }, 650);
   }
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

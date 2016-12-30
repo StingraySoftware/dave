@@ -74,11 +74,26 @@ h3
 {
   float:left;
   width: 50%;
+  min-width: 300px;
   height: 300px;
   border: 1px solid #afafaf;
   background-color: #ffffff;
   margin: 0;
+  margin-bottom: 24px;
   padding: 0;
+}
+
+.plotContainer .btnHidePlot
+{
+  top: 0;
+}
+
+.plotContainer .hoverinfo
+{
+  margin-right: 24px;
+  margin-top: 4px;
+  float:left;
+  font-size: 0.7em;
 }
 
 .sliderSelector .switch-wrapper {
