@@ -1,67 +1,71 @@
 
-$(document).ready(function () {
+function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChangedFn) {
 
-    var theToolPanel = $(".toolPanel");
+  var currentObj = this;
 
-    //Sets correct POST method to Flask, just temporary
-    theToolPanel.parent().attr("action", DOMAIN_URL + "/upload");
-    //Temporary, jut while using POST method
+  this.classSelector = classSelector;
+  this.$html = $(this.classSelector);
+  this.buttonsContainer = this.$html.find(".buttonsContainer");
+  this.clearBtn = this.$html.find(".btnClear");
 
-    var theFileSelector = new fileSelector("theFileSelector", filename);
-    theToolPanel.append(theFileSelector.$html);
+  this.onDatasetChanged = onDatasetChangedFn;
+  this.onFiltersChanged = onFiltersChangedFn;
 
-    var theTimeSelector = new sliderSelector("time", "Select Time Range", "From", "To", start_time_slider, end_time_slider);
-    theToolPanel.append(theTimeSelector.$html);
+  this.lastTimeoutId = null;
 
-    var theCountRateSelector = new sliderSelector("count", "Select Count Rate Range", "From", "To", start_count_slider, end_count_slider);
-    theToolPanel.append(theCountRateSelector.$html);
+  this.buttonsContainer.hide();
 
-    var theColor1Selector = new sliderSelector("color1", "Select Color1 Range", "From", "To", start_color1_slider, end_color1_slider);
-    theToolPanel.append(theColor1Selector.$html);
+  var theFileSelector = new fileSelector("theFileSelector", theFilename, service.upload_form_data, this.onDatasetChanged);
+  this.$html.prepend(theFileSelector.$html);
 
-    var theColor2Selector = new sliderSelector("color2", "Select Color2 Range", "From", "To", start_color2_slider, end_color2_slider);
-    theToolPanel.append(theColor2Selector.$html);
-
-    theToolPanel.find("#clear").bind("click", function() {
-        toolPanel_Clear();
-    });
-
-    theToolPanel.find("#btnSave1").click(function() {
-        toolPanel_saveAsPNG($("#section1"));
-    });
-
-    theToolPanel.find("#btnSave2").click(function() {
-        toolPanel_saveAsPNG($("#section2"));
-    });
-
-    log("ToolPanel ready!");
-});
-
-function toolPanel_Clear(){
-
-     $("#section1").empty();
-     $("#section2").empty();
-     $("#section3").empty();
-     $("#section4").empty();
-     $( "#from_time" ).val("");
-     $( "#to_time" ).val("");
-     $( "#from_count" ).val("");
-     $( "#to_count" ).val("");
-     $( "#from_color1" ).val("");
-     $( "#to_color1" ).val("");
-     $( "#from_color2" ).val("");
-     $( "#to_color2" ).val("");
-}
-
-function toolPanel_saveAsPNG (section) {
-
-  html2canvas(section, {
-      onrendered: function(canvas) {
-          theCanvas = canvas;
-          // Convert and download as image
-          Canvas2Image.saveAsPNG(canvas);
-          // Clean up
-          //document.body.removeChild(canvas);
-      }
+  this.clearBtn.button().bind("click", function( event ) {
+      event.preventDefault();
+      sliderSelectors_clear();
+      currentObj.onSelectorValuesChanged();
   });
+
+  this.onDatasetSchemaChanged = function ( schema ) {
+
+    sliderSelectors_remove();
+
+    for (tableName in schema) {
+      var table = schema[tableName];
+
+      for (columnName in table) {
+
+        if (!columnName.toUpperCase().includes("ERROR")){
+
+          var column = table[columnName];
+          var filterData = { table:tableName, column:columnName };
+          var selector = new sliderSelector(columnName,
+                                            columnName + ":",
+                                            filterData,
+                                            "From", "To",
+                                            column.min_value, column.max_value,
+                                            this.onSelectorValuesChanged);
+          this.$html.find(".selectorsContainer").append(selector.$html);
+        }
+      }
+
+      this.buttonsContainer.fadeIn();
+    }
+
+  }
+
+  this.applyFilters = function (filters) {
+    sliderSelectors_applyFilters(filters);
+  }
+
+  this.onSelectorValuesChanged = function ( ) {
+
+    if (this.lastTimeoutId != null) {
+      clearTimeout(this.lastTimeoutId);
+    }
+
+    this.lastTimeoutId = setTimeout( function () {
+      theToolPanel.onFiltersChanged(theFilename, sliderSelectors_getFilters ());
+    }, 650);
+  }
+
+  log("ToolPanel ready! classSelector: " + this.classSelector);
 }
