@@ -9,13 +9,13 @@ def get_destination (target, filename):
 
 def is_valid_file (filename):
     if not filename:
-        return false
+        return False
 
     ext = os.path.splitext(filename)[1]
     return (ext == ".txt") or (ext == ".lc")
 
 
-# upload_file_to_server: Upload a data file to the Flask server path
+# save_file: Upload a data file to the Flask server path
 #
 # @param: file: file to upload
 # @param: target: folder name for upload destination

@@ -46,6 +46,7 @@ dependencies:
 - wheel=0.29.0=py35_0
 - xz=5.0.5=1
 - zlib=1.2.8=0
+- pytest==3.0.5
 - pip:
   - astropy==1.2.1
   - backports.shutil-get-terminal-size==1.0.0
@@ -53,3 +54,4 @@ dependencies:
   - plotly==1.9.10
   - requests==2.10.0
   - flask-session==0.3.0
+  - hypothesis==3.4.2

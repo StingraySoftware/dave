@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 class Column:
     id = ""
@@ -22,7 +23,7 @@ class Column:
         return column
 
     def get_value (self, index):
-        return self.values[index].copy()
+        return copy.copy(self.values[index])
 
     def add_value (self, value):
         self.values = np.append(self.values, [ value ])
