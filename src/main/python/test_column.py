@@ -41,5 +41,5 @@ def test_clone(s, v):
     column1.add_value(v)
     schema1 = column1.get_schema()
     column2 = column1.clone()
-    schema2 = column1.get_schema()
+    schema2 = column2.get_schema()
     assert schema1 == schema2

@@ -31,8 +31,8 @@ class DataSet:
     def apply_filters(self, filters):
 
         if not filters or not len(filters):
-            logging.error("dataset.apply_filters wrong filters!!")
-            logging.error(filters)
+            logging.debug("dataset.apply_filters wrong filters!!")
+            logging.debug(filters)
             return self
 
         filtered_dataset = self.clone()

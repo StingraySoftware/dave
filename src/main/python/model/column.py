@@ -12,9 +12,13 @@ class Column:
     def get_schema (self):
         schema = dict()
         schema["id"] = self.id
-        schema["min_value"] = min(self.values)
-        schema["max_value"] = max(self.values)
         schema["count"] = len(self.values)
+        if (schema["count"] > 0):
+            schema["min_value"] = min(self.values)
+            schema["max_value"] = max(self.values)
+        else:
+            schema["min_value"] = 0
+            schema["max_value"] = 0
         return schema
 
     def clone (self):
@@ -23,7 +27,10 @@ class Column:
         return column
 
     def get_value (self, index):
-        return copy.copy(self.values[index])
+        if index >= 0 and index < len(self.values):
+            return copy.copy(self.values[index])
+        else:
+            return None
 
     def add_value (self, value):
         self.values = np.append(self.values, [ value ])
