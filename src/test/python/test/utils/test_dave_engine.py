@@ -18,4 +18,4 @@ def test_get_dataset_schema(s):
     if destination:
         schema = DaveEngine.get_dataset_schema(destination)
 
-    assert not os.path.isfile(destination) or schema != None
+    assert not os.path.isfile(destination) or schema is not None
