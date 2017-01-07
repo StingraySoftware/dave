@@ -66,7 +66,7 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
 
  this.clear = function (){
    if (this.$plot){
-     $(this.$plot).remove();
+     $(this.$plot).parent().remove();
    }
  }
 
