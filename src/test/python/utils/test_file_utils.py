@@ -1,11 +1,9 @@
-import utils.file_utils as FileUtils
-
-import sys, os
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath + '/../')
+from python.test_fixture import *
 
 from hypothesis import given
 from hypothesis.strategies import text
+
+import utils.file_utils as FileUtils
 
 
 @given(text())

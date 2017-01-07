@@ -1,12 +1,9 @@
-from model.column import Column
-
-import sys, os
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath + '/../')
+from python.test_fixture import *
 
 from hypothesis import given
 import hypothesis.strategies as st
 
+from model.column import Column
 
 @given(st.text())
 def test_init(s):
