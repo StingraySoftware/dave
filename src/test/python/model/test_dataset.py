@@ -1,12 +1,9 @@
-from model.dataset import DataSet
-
-import sys, os
-myPath = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, myPath + '/../')
+from python.test_fixture import *
 
 from hypothesis import given
 import hypothesis.strategies as st
 
+from model.dataset import DataSet
 
 @given(st.text(min_size=1))
 def test_init(s):
