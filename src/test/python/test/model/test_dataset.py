@@ -5,6 +5,7 @@ import hypothesis.strategies as st
 
 from model.dataset import DataSet
 
+
 @given(st.text(min_size=1))
 def test_init(s):
     dataset = DataSet(s)
@@ -47,12 +48,12 @@ def test_apply_filters(s, t, c, list, min_value, max_value):
         dataset1.tables[t].columns[c].add_value(v)
 
     filter = dict()
-    filter ["table"] = t
-    filter ["column"] = c
-    filter ["from"] = min_value
-    filter ["to"] = max_value
+    filter["table"] = t
+    filter["column"] = c
+    filter["from"] = min_value
+    filter["to"] = max_value
 
-    filtered_dataset = dataset1.apply_filters( [ filter, filter ] )
+    filtered_dataset = dataset1.apply_filters([filter, filter])
     schema = filtered_dataset.get_schema()
 
     table_and_column_in_schema = t in schema and schema[t] and c in schema[t]

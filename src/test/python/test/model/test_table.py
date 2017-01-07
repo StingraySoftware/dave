@@ -51,12 +51,12 @@ def test_apply_filter(s, c, list, min_value, max_value):
         table.columns[c].add_value(v)
 
     filter = dict()
-    filter ["table"] = s
-    filter ["column"] = c
-    filter ["from"] = min_value
-    filter ["to"] = max_value
+    filter["table"] = s
+    filter["column"] = c
+    filter["from"] = min_value
+    filter["to"] = max_value
 
-    filtered_table = table.apply_filter( filter )
+    filtered_table = table.apply_filter(filter)
     schema = filtered_table.get_schema()
 
     column_in_schema = c in schema

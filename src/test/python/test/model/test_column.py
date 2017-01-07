@@ -5,6 +5,7 @@ import hypothesis.strategies as st
 
 from model.column import Column
 
+
 @given(st.text())
 def test_init(s):
     column = Column(s)
@@ -31,6 +32,7 @@ def test_get_shema(s, v):
     column.add_value(v)
     schema = column.get_schema()
     assert "id" in schema and schema["id"] == s and "count" in schema and schema["count"] == 1 and "min_value" in schema and schema["min_value"] == v and "max_value" in schema and schema["max_value"] == v
+
 
 @given(st.text(), st.integers())
 def test_clone(s, v):
