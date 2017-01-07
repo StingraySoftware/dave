@@ -1,10 +1,6 @@
 from test.fixture import *
-
-print("Syspath: %s" % sys.path)
-
 from hypothesis import given
 import hypothesis.strategies as st
-
 from model import table
 from model.table import Table
 
