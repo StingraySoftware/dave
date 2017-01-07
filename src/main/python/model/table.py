@@ -33,6 +33,10 @@ class Table:
             logging.error("table.apply_filter wrong column_name: %s" % column_name)
             return self
 
+        if filter["from"] > filter["to"]:
+            logging.error("table.apply_filter wrong from - to values: %s" % column_name)
+            return self
+
         filtered_table = Table(self.id)
         for tmp_column_name in self.columns:
             filtered_table.columns[tmp_column_name] = Column(tmp_column_name)

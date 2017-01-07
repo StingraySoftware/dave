@@ -14,7 +14,10 @@ import utils.plotter as Plotter
 #
 def get_dataset_schema(destination):
     dataset = DaveReader.get_file_dataset(destination)
-    return dataset.get_schema()
+    if dataset:
+        return dataset.get_schema()
+    else:
+        return None
 
 # get_plot_html: Returns the html for a plot
 #

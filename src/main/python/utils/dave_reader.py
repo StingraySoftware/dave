@@ -9,7 +9,7 @@ from astropy.io import fits
 def get_file_dataset(destination):
 
     if not destination:
-        return DataSet("")
+        return None
 
     filename, file_extension = os.path.splitext(destination)
 
@@ -34,7 +34,7 @@ def get_file_dataset(destination):
         return dataset
 
     else:
-        return DataSet("")
+        return None
 
 
 def get_txt_dataset(destination, table_id, header_names):
