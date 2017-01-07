@@ -1,4 +1,4 @@
-from python.test_fixture import *
+from test.fixture import *
 
 from hypothesis import given
 from hypothesis import example

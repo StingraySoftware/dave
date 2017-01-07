@@ -1,8 +1,12 @@
-from python.test_fixture import *
+from test.fixture import *
 
-from model.table import Table
+print("Syspath: %s" % sys.path)
+
 from hypothesis import given
 import hypothesis.strategies as st
+
+from model import table
+from model.table import Table
 
 
 @given(st.text(min_size=1))
