@@ -1,2 +1,4 @@
-ignore:  # Errors and warnings to ignore
-    - E501  # Line too long
+pycodestyle:
+   ignore:  # Errors and warnings to ignore
+     - E501  # Line too long
+
