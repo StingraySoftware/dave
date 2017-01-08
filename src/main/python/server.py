@@ -15,8 +15,8 @@ if scriptdir == "":
 
 logging.info("Templates dir is " + scriptdir + "/../resources/templates")
 
-app = Flask("dave_srv", \
-    template_folder=scriptdir + "/../resources/templates", \
+app = Flask("dave_srv",
+    template_folder=scriptdir + "/../resources/templates",
     static_folder=scriptdir + "/../resources/static")
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -44,7 +44,7 @@ def root():
     logging.debug("Root page requested!")
     return render_template("master_page.html")
 
-#Setting error handler
+# Setting error handler
 def http_error_handler(error):
     return render_template("error.html", error=error ), error
 
