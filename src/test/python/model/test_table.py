@@ -19,7 +19,12 @@ def test_add_columns(s, c):
     assert len(table.columns) == 1
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.integers(), st.floats(allow_nan=False, allow_infinity=False))
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
 def test_get_shema(s, c, v, e):
     table = Table(s)
     table.add_columns([c])
@@ -32,7 +37,12 @@ def test_get_shema(s, c, v, e):
     assert schema[c]["count"] == 1
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.integers(), st.floats(allow_nan=False, allow_infinity=False))
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
 def test_clone(s, c, v, e):
     table1 = Table(s)
     table1.add_columns([c])
@@ -43,7 +53,13 @@ def test_clone(s, c, v, e):
     assert schema1 == schema2
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.lists(st.integers()), st.integers(), st.integers())
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.lists(st.integers()),
+    st.integers(),
+    st.integers()
+)
 def test_apply_filter(s, c, list, min_value, max_value):
     table = Table(s)
     table.add_columns([c])
@@ -51,12 +67,12 @@ def test_apply_filter(s, c, list, min_value, max_value):
         table.columns[c].add_value(v, v)
 
     filter = dict()
-    filter ["table"] = s
-    filter ["column"] = c
-    filter ["from"] = min_value
-    filter ["to"] = max_value
+    filter["table"] = s
+    filter["column"] = c
+    filter["from"] = min_value
+    filter["to"] = max_value
 
-    filtered_table = table.apply_filter( filter )
+    filtered_table = table.apply_filter(filter)
     schema = filtered_table.get_schema()
 
     assert c in schema
@@ -66,13 +82,20 @@ def test_apply_filter(s, c, list, min_value, max_value):
     if filteredItemsCount > 0 and min_value <= max_value:
         assert schema[c]["min_value"] >= min_value
         assert schema[c]["max_value"] <= max_value
+
     elif filteredItemsCount == 0:
         assert schema[c]["count"] == 0
+
     else:
         assert schema[c]["count"] == len(list)
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.lists(st.integers()), st.integers())
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.lists(st.integers()),
+    st.integers()
+)
 def test_get_row(s, c, list, index):
     table = Table(s)
     table.add_columns([c])
@@ -86,13 +109,20 @@ def test_get_row(s, c, list, index):
         assert row
         assert c in row
         assert len(row) == 1
+
     elif len(list) == 0:
         assert len(table.columns[c].values) == 0
+
     else:
         assert index >= len(table.columns[c].values) or index < 0
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.integers(), st.floats(allow_nan=False, allow_infinity=False))
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
 def test_add_row(s, c, v, e):
     table = Table(s)
     table.add_columns([c])

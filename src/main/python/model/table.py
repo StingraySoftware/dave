@@ -1,6 +1,7 @@
 from model.column import Column
 import logging
 
+
 class Table:
     id = ""
     columns = dict()
@@ -9,17 +10,17 @@ class Table:
         self.id = id
         self.columns = dict()
 
-    def add_columns(self, column_names ):
+    def add_columns(self, column_names):
         for i in range(len(column_names)):
             self.columns[column_names[i]] = Column (column_names[i])
 
-    def get_schema (self):
+    def get_schema(self):
         schema = dict()
         for column_name in self.columns:
             schema[column_name] = self.columns[column_name].get_schema()
         return schema
 
-    def clone (self):
+    def clone(self):
         table = Table(self.id)
 
         for column_name in self.columns:
@@ -29,12 +30,12 @@ class Table:
 
     def apply_filter(self, filter):
         column_name = filter["column"]
-        if not column_name in self.columns:
-            logging.error("table.apply_filter wrong column_name: %s" % column_name)
+        if column_name not in self.columns:
+            logging.error("table.apply_filter wrong column: %s" % column_name)
             return self
 
         if filter["from"] > filter["to"]:
-            logging.error("table.apply_filter wrong from - to values: %s" % column_name)
+            logging.error("table.apply_filter wrong from-to: %s" % column_name)
             return self
 
         filtered_table = Table(self.id)
@@ -43,19 +44,23 @@ class Table:
 
         column = self.columns[column_name]
         for i in range(len(column.values)):
-              if (column.values[i] >= filter["from"]) and (column.values[i] <= filter["to"]):
-                  filtered_table.add_row(self.get_row(i))
+            value = column.values[i]
+            if (value >= filter["from"]) and (value <= filter["to"]):
+                filtered_table.add_row(self.get_row(i))
 
         return filtered_table
 
-    def get_row (self, index):
+    def get_row(self, index):
         row = dict()
         for column_name in self.columns:
+            column = self.columns[column_name]
             row[column_name] = dict()
-            row[column_name]["value"] = self.columns[column_name].get_value(index)
-            row[column_name]["error_value"] = self.columns[column_name].get_error_value(index)
+            row[column_name]["value"] = column.get_value(index)
+            row[column_name]["error_value"] = column.get_error_value(index)
         return row
 
-    def add_row (self, row):
+    def add_row(self, row):
         for column_name in row:
-            self.columns[column_name].add_value(row[column_name]["value"], row[column_name]["error_value"])
+            value = row[column_name]["value"]
+            error = row[column_name]["error_value"]
+            self.columns[column_name].add_value(value, error)
