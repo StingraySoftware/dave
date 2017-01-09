@@ -51,9 +51,11 @@ class Table:
     def get_row (self, index):
         row = dict()
         for column_name in self.columns:
-            row[column_name] = self.columns[column_name].get_value(index)
+            row[column_name] = dict()
+            row[column_name]["value"] = self.columns[column_name].get_value(index)
+            row[column_name]["error_value"] = self.columns[column_name].get_error_value(index)
         return row
 
     def add_row (self, row):
         for column_name in row:
-            self.columns[column_name].add_value(row[column_name])
+            self.columns[column_name].add_value(row[column_name]["value"], row[column_name]["error_value"])

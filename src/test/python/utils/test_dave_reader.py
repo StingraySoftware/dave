@@ -11,7 +11,7 @@ import utils.file_utils as FileUtils
 def test_get_txt_dataset(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_1.txt")
     table_id = "txt_table"
-    header_names = [ "Time", "Error_time", "Rate", "Error_rate", "color1", "Error_color1", "color2", "Error_color2" ]
+    header_names = [ "Time", "Rate", "color1", "color2" ]
     dataset = DaveReader.get_txt_dataset(destination, table_id, header_names)
     num_rows = 10
     assert dataset and (len(dataset.tables) == 1) and (table_id in dataset.tables) and (len(dataset.tables[table_id].columns) == len(header_names)) and (len(dataset.tables[table_id].columns[header_names[0]].values) == num_rows)

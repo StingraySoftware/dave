@@ -8,7 +8,8 @@ import hypothesis.strategies as st
 @given(st.text(min_size=1))
 def test_init(s):
     table = Table(s)
-    assert table and table.id == s
+    assert table
+    assert table.id == s
 
 
 @given(st.text(min_size=1), st.text(min_size=1))
@@ -18,21 +19,24 @@ def test_add_columns(s, c):
     assert len(table.columns) == 1
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.integers())
-def test_get_shema(s, c, v):
+@given(st.text(min_size=1), st.text(min_size=1), st.integers(), st.floats(allow_nan=False, allow_infinity=False))
+def test_get_shema(s, c, v, e):
     table = Table(s)
     table.add_columns([c])
-    table.columns[c].add_value(v)
+    table.columns[c].add_value(v, e)
     schema = table.get_schema()
 
-    assert c in schema and schema[c]["id"] == c and "count" in schema[c] and schema[c]["count"] == 1
+    assert c in schema
+    assert schema[c]["id"] == c
+    assert "count" in schema[c]
+    assert schema[c]["count"] == 1
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.integers())
-def test_clone(s, c, v):
+@given(st.text(min_size=1), st.text(min_size=1), st.integers(), st.floats(allow_nan=False, allow_infinity=False))
+def test_clone(s, c, v, e):
     table1 = Table(s)
     table1.add_columns([c])
-    table1.columns[c].add_value(v)
+    table1.columns[c].add_value(v, e)
     schema1 = table1.get_schema()
     table2 = table1.clone()
     schema2 = table2.get_schema()
@@ -44,7 +48,7 @@ def test_apply_filter(s, c, list, min_value, max_value):
     table = Table(s)
     table.add_columns([c])
     for v in list:
-        table.columns[c].add_value(v)
+        table.columns[c].add_value(v, v)
 
     filter = dict()
     filter ["table"] = s
@@ -55,12 +59,17 @@ def test_apply_filter(s, c, list, min_value, max_value):
     filtered_table = table.apply_filter( filter )
     schema = filtered_table.get_schema()
 
-    column_in_schema = c in schema
-    column_has_values_inside_range = (schema[c]["count"] > 0 and schema[c]["min_value"] >= min_value and schema[c]["max_value"] <= max_value)
-    column_is_empty = (schema[c]["count"] == 0)
-    wrong_filter_range = min_value > max_value
+    assert c in schema
+    assert "count" in schema[c]
 
-    assert column_in_schema and (column_has_values_inside_range or column_is_empty or wrong_filter_range)
+    filteredItemsCount = schema[c]["count"]
+    if filteredItemsCount > 0 and min_value <= max_value:
+        assert schema[c]["min_value"] >= min_value
+        assert schema[c]["max_value"] <= max_value
+    elif filteredItemsCount == 0:
+        assert schema[c]["count"] == 0
+    else:
+        assert schema[c]["count"] == len(list)
 
 
 @given(st.text(min_size=1), st.text(min_size=1), st.lists(st.integers()), st.integers())
@@ -68,24 +77,30 @@ def test_get_row(s, c, list, index):
     table = Table(s)
     table.add_columns([c])
     for v in list:
-        table.columns[c].add_value(v)
+        table.columns[c].add_value(v, v)
 
     row = table.get_row(index)
 
-    has_row = (index < len(table.columns[c].values) and row and (c in row) and len(row) == 1)
-    empty_table = len(table.columns[c].values) == 0
-    inValid_index = len(table.columns[c].values) <= index
+    if index >= 0 and index < len(list):
+        assert index < len(table.columns[c].values)
+        assert row
+        assert c in row
+        assert len(row) == 1
+    elif len(list) == 0:
+        assert len(table.columns[c].values) == 0
+    else:
+        assert index >= len(table.columns[c].values) or index < 0
 
-    assert has_row or empty_table or inValid_index
 
-
-@given(st.text(min_size=1), st.text(min_size=1), st.integers())
-def test_add_row(s, c, v):
+@given(st.text(min_size=1), st.text(min_size=1), st.integers(), st.floats(allow_nan=False, allow_infinity=False))
+def test_add_row(s, c, v, e):
     table = Table(s)
     table.add_columns([c])
 
     row = dict()
-    row[c] = v
+    row[c] = dict()
+    row[c]["value"] = v
+    row[c]["error_value"] = v
 
     table.add_row(row)
 

@@ -16,7 +16,7 @@ def get_file_dataset(destination):
     if file_extension == ".txt":
 
         table_id = "txt_table"
-        header_names = [ "Time", "Error_time", "Rate", "Error_rate", "color1", "Error_color1", "color2", "Error_color2" ]
+        header_names = [ "Time", "Rate", "color1", "color2" ]
         dataset = get_txt_dataset(destination, table_id, header_names);
 
         dataset.tables[table_id].add_columns(["Amplitude"])
@@ -28,7 +28,6 @@ def get_file_dataset(destination):
     elif file_extension == ".lc":
 
         table_id = "lc_table"
-        #header_names = [ "Time", "Rate", "Error_rate", "Error_time" ]
         dataset = get_fits_dataset(destination, table_id);
 
         return dataset
@@ -46,7 +45,8 @@ def get_txt_dataset(destination, table_id, header_names):
 
     for i in range(len(header_names)):
         header_name = header_names[i]
-        dataset.tables[table_id].columns[header_name].values = data[0:len(data),i]
+        dataset.tables[table_id].columns[header_name].values = data[0:len(data), i * 2]
+        dataset.tables[table_id].columns[header_name].error_values = data[0:len(data), (i * 2) + 1]
 
     logging.debug("Read txt file successfully: %s" % destination)
 

@@ -33,18 +33,15 @@ function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChanged
 
       for (columnName in table) {
 
-        if (!columnName.toUpperCase().includes("ERROR")){
-
-          var column = table[columnName];
-          var filterData = { table:tableName, column:columnName };
-          var selector = new sliderSelector(columnName,
-                                            columnName + ":",
-                                            filterData,
-                                            "From", "To",
-                                            column.min_value, column.max_value,
-                                            this.onSelectorValuesChanged);
-          this.$html.find(".selectorsContainer").append(selector.$html);
-        }
+        var column = table[columnName];
+        var filterData = { table:tableName, column:columnName };
+        var selector = new sliderSelector(columnName,
+                                          columnName + ":",
+                                          filterData,
+                                          "From", "To",
+                                          column.min_value, column.max_value,
+                                          this.onSelectorValuesChanged);
+        this.$html.find(".selectorsContainer").append(selector.$html);
       }
 
       this.buttonsContainer.fadeIn();

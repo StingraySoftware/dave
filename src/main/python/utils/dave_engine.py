@@ -52,10 +52,12 @@ def get_plot_html(destination, filters, styles, axis):
         return "Wrong number of axis";
 
 
-    x_values = filtered_dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values
-    y_values = filtered_dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values
-    x_error_values = filtered_dataset.tables[axis[2]["table"]].columns[axis[2]["column"]].values
-    y_error_values = filtered_dataset.tables[axis[3]["table"]].columns[axis[3]["column"]].values
+    x_column = filtered_dataset.tables[axis[0]["table"]].columns[axis[0]["column"]]
+    y_column = filtered_dataset.tables[axis[1]["table"]].columns[axis[1]["column"]]
+    x_values = x_column.values
+    y_values = y_column.values
+    x_error_values = x_column.error_values
+    y_error_values = y_column.error_values
 
     if styles["type"] == "2d":
         return Plotter.get_plotdiv_xy(x_values, y_values,
@@ -70,7 +72,7 @@ def get_plot_html(destination, filters, styles, axis):
         if len(axis) < 3:
             return "Wrong number of axis";
 
-        z_values = filtered_dataset.tables[axis[4]["table"]].columns[axis[4]["column"]].values
+        z_values = filtered_dataset.tables[axis[2]["table"]].columns[axis[2]["column"]].values
         #z_error_values = filtered_dataset.tables[axis[5]["table"]].columns[axis[5]["column"]]
         colorArray = np.random.uniform(-5, 5, size=len(x_values))
         error = np.random.uniform(-8,8 , size=len(x_values))
