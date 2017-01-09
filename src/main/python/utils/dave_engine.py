@@ -20,6 +20,7 @@ def get_dataset_schema(destination):
     else:
         return None
 
+
 # get_plot_html: Returns the html for a plot
 #
 # @param: destination: file destination
@@ -36,10 +37,10 @@ def get_plot_html(destination, filters, styles, axis):
     dataset = DaveReader.get_file_dataset(destination)
     filtered_ds = dataset.apply_filters(filters)
 
-    if not "type" in styles:
+    if "type" not in styles:
         return "No plot type specified on styles"
 
-    if not "labels" in styles:
+    if "labels" not in styles:
         return "No plot labels specified on styles"
 
     if len(styles["labels"]) < 2:
@@ -70,14 +71,15 @@ def get_plot_html(destination, filters, styles, axis):
         if len(axis) < 3:
             return "Wrong number of axis"
 
-        z_values = filtered_ds.tables[axis[2]["table"]].columns[axis[2]["column"]].values
-        # z_error_values = filtered_dataset.tables[axis[5]["table"]].columns[axis[5]["column"]]
+        z_axis_table = filtered_ds.tables[axis[2]["table"]]
+        z_values = z_axis_table.columns[axis[2]["column"]].values
+        # z_error_values = z_axis_table.columns[axis[2]["column"]].error_values
         colorArray = np.random.uniform(-5, 5, size=len(x_values))
-        error = np.random.uniform(-8, 8, size=len(x_values))
+        z_error_values = np.random.uniform(-8, 8, size=len(x_values))
 
         return Plotter.get_plotdiv_xyz(
             x_values, y_values, z_values,
-            x_error_values, y_error_values, error, #  z_error_values
+            x_error_values, y_error_values, z_error_values,
             styles["labels"][0], styles["labels"][1],
             colorArray
         )

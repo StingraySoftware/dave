@@ -31,7 +31,7 @@ def get_file_dataset(destination):
     elif file_extension == ".lc":
 
         table_id = "lc_table"
-        dataset = get_fits_dataset(destination, table_id);
+        dataset = get_fits_dataset(destination, table_id)
 
         return dataset
 

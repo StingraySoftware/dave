@@ -73,12 +73,12 @@ def test_apply_filters(s, t, c, list, min_value, max_value):
         dataset1.tables[t].columns[c].add_value(v, v)
 
     filter = dict()
-    filter ["table"] = t
-    filter ["column"] = c
-    filter ["from"] = min_value
-    filter ["to"] = max_value
+    filter["table"] = t
+    filter["column"] = c
+    filter["from"] = min_value
+    filter["to"] = max_value
 
-    filtered_dataset = dataset1.apply_filters( [ filter, filter ] )
+    filtered_dataset = dataset1.apply_filters([filter, filter])
     schema = filtered_dataset.get_schema()
 
     assert t in schema
@@ -93,6 +93,6 @@ def test_apply_filters(s, t, c, list, min_value, max_value):
 
     elif filteredItemsCount == 0:
         assert schema[t][c]["count"] == 0
-        
+
     else:
         assert schema[t][c]["count"] == len(list)

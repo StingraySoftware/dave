@@ -12,7 +12,7 @@ class Table:
 
     def add_columns(self, column_names):
         for i in range(len(column_names)):
-            self.columns[column_names[i]] = Column (column_names[i])
+            self.columns[column_names[i]] = Column(column_names[i])
 
     def get_schema(self):
         schema = dict()
