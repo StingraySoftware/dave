@@ -1,12 +1,5 @@
-
-import os
-import logging
-
-import numpy as np
-
 import utils.dave_reader as DaveReader
 import utils.plotter as Plotter
-
 
 # get_dataset_schema: Returns the schema of a dataset of given file
 # the plot inside with a given file destination
@@ -21,7 +14,7 @@ def get_dataset_schema(destination):
         return None
 
 
-# get_plot_html: Returns the html for a plot
+# get_plot_data: Returns the data for a plot
 #
 # @param: destination: file destination
 # @param: filters: array with the filters to apply
@@ -32,11 +25,12 @@ def get_dataset_schema(destination):
 #           [{ table = "txt_table", column = "Time" },
 #            { table = "txt_table", column = "Rate" } ... ]
 #
-def get_plot_html(destination, filters, styles, axis):
+def get_plot_data(destination, filters, styles, axis):
 
     dataset = DaveReader.get_file_dataset(destination)
     filtered_ds = dataset.apply_filters(filters)
 
+    # Config checking
     if "type" not in styles:
         return "No plot type specified on styles"
 
@@ -49,19 +43,9 @@ def get_plot_html(destination, filters, styles, axis):
     if len(axis) < 2:
         return "Wrong number of axis"
 
-    x_column = filtered_ds.tables[axis[0]["table"]].columns[axis[0]["column"]]
-    y_column = filtered_ds.tables[axis[1]["table"]].columns[axis[1]["column"]]
-    x_values = x_column.values
-    y_values = y_column.values
-    x_error_values = x_column.error_values
-    y_error_values = y_column.error_values
-
+    # Plot type mode
     if styles["type"] == "2d":
-        return Plotter.get_plotdiv_xy(
-            x_values, y_values,
-            x_error_values, y_error_values,
-            styles["labels"][0], styles["labels"][1]
-        )
+        return Plotter.get_plotdiv_xy(filtered_ds, axis)
 
     elif styles["type"] == "3d":
 
@@ -71,27 +55,10 @@ def get_plot_html(destination, filters, styles, axis):
         if len(axis) < 3:
             return "Wrong number of axis"
 
-        z_axis_table = filtered_ds.tables[axis[2]["table"]]
-        z_values = z_axis_table.columns[axis[2]["column"]].values
-        # z_error_values = z_axis_table.columns[axis[2]["column"]].error_values
-        colorArray = np.random.uniform(-5, 5, size=len(x_values))
-        z_error_values = np.random.uniform(-8, 8, size=len(x_values))
-
-        return Plotter.get_plotdiv_xyz(
-            x_values, y_values, z_values,
-            x_error_values, y_error_values, z_error_values,
-            styles["labels"][0], styles["labels"][1],
-            colorArray
-        )
+        return Plotter.get_plotdiv_xyz(filtered_ds, axis)
 
     elif styles["type"] == "scatter":
-
-        newAmplitude = np.random.uniform(-5, 5, size=len(x_values))
-
-        return Plotter.get_plotdiv_scatter(
-            x_values, y_values, newAmplitude,
-            styles["labels"][0], styles["labels"][1]
-        )
+        return Plotter.get_plotdiv_scatter(filtered_ds, axis)
 
     else:
         return "Wrong plot type specified on styles"

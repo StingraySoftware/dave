@@ -3,12 +3,14 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
 
   var currentObj = this;
   this.id = id;
+  this.plotId = "plot_" + id;
   this.plotConfig = plotConfig;
   this.service = service;
   this.onFiltersChanged = onFiltersChangedFn;
   this.isVisible = true;
 
   this.$html = $('<div class="plotContainer ' + this.id + '">' +
+                  '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div style="float:right">' +
                   ' <div class="hoverinfo"></div>' +
                   ' <button class="btnHidePlot">Hide</button>' +
@@ -22,7 +24,8 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
 
  this.btnHide = this.$html.find(".btnHidePlot");
  this.btnSave = this.$html.find(".btnSave");
- this.$plot = null;
+ this.plotElem = null;
+ this.$hoverinfo = this.$html.find(".hoverinfo");
 
  this.btnShow.click(function(event){
     currentObj.isVisible = true;
@@ -51,22 +54,46 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
  };
 
  this.refreshData = function () {
-   currentObj.service.request_plot( currentObj.plotConfig, currentObj.onPlotReceived );
+   currentObj.service.request_plot_data( currentObj.plotConfig, currentObj.onPlotDataReceived );
  }
 
- this.onPlotReceived = function ( plot_html ) {
-   currentObj.clear();
+ this.onPlotDataReceived = function ( data ) {
 
-   currentObj.$html.prepend(plot_html);
-   currentObj.$plot = currentObj.$html.find("div")[1];
-   currentObj.registerPlotEvents()
-   currentObj.resize();
-   log("onPlotReceived plot " + currentObj.id);
- }
+   var plotlyConfig = null;
 
- this.clear = function (){
-   if (this.$plot){
-     $(this.$plot).parent().remove();
+   data = JSON.parse(data);
+
+   if (currentObj.plotConfig.styles.type == "2d") {
+      plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,
+                                    data[0].error_values, data[1].error_values,
+                                    currentObj.plotConfig.styles.labels[0],
+                                    currentObj.plotConfig.styles.labels[1])
+
+   } else if (currentObj.plotConfig.styles.type == "3d") {
+      plotlyConfig = get_plotdiv_xyz(data[0].values, data[1].values, data[2].values,
+                                    data[0].error_values, data[1].error_values, data[2].error_values,
+                                    currentObj.plotConfig.styles.labels[0],
+                                    currentObj.plotConfig.styles.labels[1],
+                                    data[3].values);
+
+   } else if (currentObj.plotConfig.styles.type == "scatter") {
+      plotlyConfig = get_plotdiv_scatter(data[0].values, data[1].values,
+                                        data[2].values,
+                                        currentObj.plotConfig.styles.labels[0],
+                                        currentObj.plotConfig.styles.labels[1],
+                                        'Amplitude<br>Map');
+   }
+
+   if (plotlyConfig != null) {
+     Plotly.newPlot(currentObj.plotId, plotlyConfig.data, plotlyConfig.layout);
+     currentObj.plotElem = currentObj.$html.find(".plot")[0];
+     currentObj.registerPlotEvents()
+     currentObj.resize();
+     log("onPlotReceived plot " + currentObj.id);
+
+   } else {
+
+     log("onPlotReceived ERROR: WRONG PLOT CONFIG! plot " + currentObj.id);
    }
  }
 
@@ -74,11 +101,11 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
    try {
 
      var update = {
-       width: currentObj.$html.width(),
-       height: currentObj.$html.height()
+       width: $(currentObj.plotElem).width(),
+       height: $(currentObj.plotElem).height()
      };
 
-     Plotly.relayout(currentObj.$plot.getAttribute("id"), update);
+     Plotly.relayout(currentObj.plotId, update);
 
    } catch (ex) {
      log("Resize plot " + currentObj.id + " error: " + ex);
@@ -89,21 +116,21 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
 
    if(this.plotConfig.styles.type == "2d") {
 
-     this.$plot.on('plotly_selected', (eventData) => {
+     this.plotElem.on('plotly_selected', (eventData) => {
 
        if (eventData) {
          var xRange = eventData.range.x;
          var yRange = eventData.range.y;
-         var xFilter = $.extend({ from: xRange[0], to: xRange[1] },
+         var xFilter = $.extend({ from: Math.floor(xRange[0]), to: Math.ceil(xRange[1]) },
                                   this.plotConfig.axis[0]);
-         var yFilter = $.extend({ from: yRange[0], to: yRange[1] },
+         var yFilter = $.extend({ from: Math.floor(yRange[0]), to: Math.ceil(yRange[1]) },
                                   this.plotConfig.axis[1]);
          currentObj.onFiltersChanged ( [ xFilter, yFilter ]);
       }
 
      });
 
-     this.$plot.on('plotly_hover', function(data){
+     this.plotElem.on('plotly_hover', function(data){
           var infotextforx = data.points.map(function(d){
             return ('x : '+d.x);
           });
@@ -122,16 +149,16 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
           var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
           var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
 
-          currentObj.$html.find(".hoverinfo").html(infotextforx +"+/-"  + error_x_string + spacesup + infotextfory + "+/-" + error_y_string);
+          currentObj.$hoverinfo.html(infotextforx +"+/-"  + error_x_string + spacesup + infotextfory + "+/-" + error_y_string);
 
      }).on('plotly_unhover', function(data){
-         currentObj.$html.find(".hoverinfo").html("");
+         currentObj.$hoverinfo.html("");
      });
    }
 
    this.saveAsPNG = function () {
 
-     html2canvas(this.$plot, {
+     html2canvas(this.plotElem, {
          onrendered: function(canvas) {
              theCanvas = canvas;
              // Convert and download as image

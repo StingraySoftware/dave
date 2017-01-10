@@ -54,7 +54,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                 ),
 
                 new Plot(
-                  "Time_Rate_Amplitude_" + filename,
+                  "Time_Frecuency_" + filename,
                   {
                     filename: filename,
                     styles: { type: "scatter", labels: ["Time", "Frequency"] },

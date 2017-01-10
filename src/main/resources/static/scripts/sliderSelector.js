@@ -38,6 +38,13 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.toInput = this.$html.find("#to_" + this.id);
   this.slider = this.$html.find("#slider-" + this.id);
 
+  this.inputChanged = function ( event ) {
+    currentObj.setValues( currentObj.fromInput.val(), currentObj.toInput.val() );
+    currentObj.onSelectorValuesChanged();
+  };
+  this.fromInput.on('input', this.inputChanged);
+  this.toInput.on('input', this.inputChanged);
+
   //Prepares switchBox
   this.switchBox.click( function ( event ) {
     var switchId = event.target.id.replace("switch_", "");
@@ -60,8 +67,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    //Set values method
    this.setValues = function (from, to, source) {
-     this.fromValue = from;
-     this.toValue = to;
+     this.fromValue = Math.floor(from);
+     this.toValue = Math.ceil(to);
      this.fromInput.val( this.fromValue );
      this.toInput.val( this.toValue );
      if (source != "slider") {
