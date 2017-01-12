@@ -12,32 +12,72 @@ def test_init(s):
     assert column and column.id == s
 
 
-@given(st.text(), st.integers())
-def test_add_value(s, v):
+@given(
+    st.text(),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_add_value(s, v, e):
     column = Column(s)
-    column.add_value(v)
+    column.add_value(v, e)
     assert len(column.values) == 1
 
 
-@given(st.text(), st.integers())
-def test_get_value(s, v):
+@given(
+    st.text(),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_get_value(s, v, e):
     column = Column(s)
-    column.add_value(v)
+    column.add_value(v, e)
     assert column.get_value(0) == v
 
 
-@given(st.text(), st.integers())
-def test_get_shema(s, v):
+@given(
+    st.text(),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_get_error_value(s, v, e):
     column = Column(s)
-    column.add_value(v)
+    column.add_value(v, e)
+    assert column.get_error_value(0) == e
+
+
+@given(
+    st.text(),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_get_shema(s, v, e):
+    column = Column(s)
+    column.add_value(v, e)
     schema = column.get_schema()
-    assert "id" in schema and schema["id"] == s and "count" in schema and schema["count"] == 1 and "min_value" in schema and schema["min_value"] == v and "max_value" in schema and schema["max_value"] == v
+    assert "id" in schema
+    assert schema["id"] == s
+    assert "count" in schema
+    assert schema["count"] == 1
+    assert "min_value" in schema
+    assert schema["min_value"] == v
+    assert "max_value" in schema
+    assert schema["max_value"] == v
+    assert "error_count" in schema
+    assert schema["error_count"] == 1
+    assert "error_min_value" in schema
+    assert schema["error_min_value"] == e
+    assert "error_max_value" in schema
+    assert schema["error_max_value"] == e
 
 
-@given(st.text(), st.integers())
-def test_clone(s, v):
+@given(
+    st.text(),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_clone(s, v, e):
     column1 = Column(s)
-    column1.add_value(v)
+    column1.add_value(v, e)
     schema1 = column1.get_schema()
     column2 = column1.clone()
     schema2 = column2.get_schema()

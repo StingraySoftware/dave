@@ -13,8 +13,6 @@ function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChanged
 
   this.lastTimeoutId = null;
 
-  this.buttonsContainer.hide();
-
   var theFileSelector = new fileSelector("theFileSelector", theFilename, service.upload_form_data, this.onDatasetChanged);
   this.$html.prepend(theFileSelector.$html);
 
@@ -33,23 +31,20 @@ function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChanged
 
       for (columnName in table) {
 
-        if (!columnName.toUpperCase().includes("ERROR")){
-
-          var column = table[columnName];
-          var filterData = { table:tableName, column:columnName };
-          var selector = new sliderSelector(columnName,
-                                            columnName + ":",
-                                            filterData,
-                                            "From", "To",
-                                            column.min_value, column.max_value,
-                                            this.onSelectorValuesChanged);
-          this.$html.find(".selectorsContainer").append(selector.$html);
-        }
+        var column = table[columnName];
+        var filterData = { table:tableName, column:columnName };
+        var selector = new sliderSelector(columnName,
+                                          columnName + ":",
+                                          filterData,
+                                          "From", "To",
+                                          column.min_value, column.max_value,
+                                          this.onSelectorValuesChanged);
+        this.$html.find(".selectorsContainer").append(selector.$html);
       }
 
+      this.buttonsContainer.removeClass("hidden");
       this.buttonsContainer.fadeIn();
     }
-
   }
 
   this.applyFilters = function (filters) {
@@ -64,7 +59,7 @@ function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChanged
 
     this.lastTimeoutId = setTimeout( function () {
       theToolPanel.onFiltersChanged(theFilename, sliderSelectors_getFilters ());
-    }, 650);
+    }, 850);
   }
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

@@ -26,11 +26,11 @@ function Service (base_url) {
     $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } ).done(fn);
   };
 
-  this.request_plot = function (plot_data, fn) {
-    log("request_plot plot " + JSON.stringify(plot_data));
+  this.request_plot_data = function (plot_data, fn) {
+    log("request_plot_data plot " + JSON.stringify(plot_data));
     $.ajax({
        type : "POST",
-       url : thisService.base_url + "/get_plot_html",
+       url : thisService.base_url + "/get_plot_data",
        data: JSON.stringify(plot_data, null, '\t'),
        contentType: 'application/json;charset=UTF-8',
        success: fn

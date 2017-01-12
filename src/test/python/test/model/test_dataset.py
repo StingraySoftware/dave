@@ -7,7 +7,8 @@ from model.dataset import DataSet
 @given(st.text(min_size=1))
 def test_init(s):
     dataset = DataSet(s)
-    assert dataset and dataset.id == s
+    assert dataset
+    assert dataset.id == s
 
 
 @given(st.text(min_size=1), st.text(min_size=1), st.text(min_size=1))
@@ -17,33 +18,57 @@ def test_add_table(s, t, c):
     assert len(dataset.tables) == 1
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.text(min_size=1), st.integers())
-def test_get_shema(s, t, c, v):
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_get_shema(s, t, c, v, e):
     dataset = DataSet(s)
     dataset.add_table(t, [c])
-    dataset.tables[t].columns[c].add_value(v)
+    dataset.tables[t].columns[c].add_value(v, e)
     schema = dataset.get_schema()
 
-    assert t in schema and schema[t] and c in schema[t] and schema[t][c]["id"] == c and "count" in schema[t][c] and schema[t][c]["count"] == 1
+    assert t in schema
+    assert schema[t]
+    assert c in schema[t]
+    assert schema[t][c]["id"] == c
+    assert "count" in schema[t][c]
+    assert schema[t][c]["count"] == 1
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.text(min_size=1), st.integers())
-def test_clone(s, t, c, v):
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_clone(s, t, c, v, e):
     dataset1 = DataSet(s)
     dataset1.add_table(t, [c])
-    dataset1.tables[t].columns[c].add_value(v)
+    dataset1.tables[t].columns[c].add_value(v, e)
     schema1 = dataset1.get_schema()
     dataset2 = dataset1.clone()
     schema2 = dataset2.get_schema()
     assert schema1 == schema2
 
 
-@given(st.text(min_size=1), st.text(min_size=1), st.text(min_size=1), st.lists(st.integers()), st.integers(), st.integers())
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.lists(st.integers()),
+    st.integers(),
+    st.integers()
+)
 def test_apply_filters(s, t, c, list, min_value, max_value):
     dataset1 = DataSet(s)
     dataset1.add_table(t, [c])
     for v in list:
-        dataset1.tables[t].columns[c].add_value(v)
+        dataset1.tables[t].columns[c].add_value(v, v)
 
     filter = dict()
     filter["table"] = t
@@ -54,9 +79,18 @@ def test_apply_filters(s, t, c, list, min_value, max_value):
     filtered_dataset = dataset1.apply_filters([filter, filter])
     schema = filtered_dataset.get_schema()
 
-    table_and_column_in_schema = t in schema and schema[t] and c in schema[t]
-    column_has_values_inside_range = (schema[t][c]["count"] > 0 and schema[t][c]["min_value"] >= min_value and schema[t][c]["max_value"] <= max_value)
-    column_is_empty = schema[t][c]["count"] == 0
-    wrong_filter_range = min_value > max_value
+    assert t in schema
+    assert schema[t]
+    assert c in schema[t]
+    assert "count" in schema[t][c]
 
-    assert table_and_column_in_schema and (column_has_values_inside_range or column_is_empty or wrong_filter_range)
+    filteredItemsCount = schema[t][c]["count"]
+    if filteredItemsCount > 0 and min_value <= max_value:
+        assert schema[t][c]["min_value"] >= min_value
+        assert schema[t][c]["max_value"] <= max_value
+
+    elif filteredItemsCount == 0:
+        assert schema[t][c]["count"] == 0
+
+    else:
+        assert schema[t][c]["count"] == len(list)

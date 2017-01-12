@@ -19,9 +19,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                     filename: filename,
                     styles: { type: "2d", labels: ["Time", "Rate"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
-                            { table:"txt_table", column:"Rate" } ,
-                            { table:"txt_table", column:"Error_time" } ,
-                            { table:"txt_table", column:"Error_rate" } ]
+                            { table:"txt_table", column:"Rate" } ]
                   },
                   this.service,
                   this.onFiltersChangedFromPlot,
@@ -34,9 +32,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                     filename: filename,
                     styles: { type: "2d", labels: ["color1", "color2"] },
                     axis: [ { table:"txt_table", column:"color1" } ,
-                            { table:"txt_table", column:"color2" } ,
-                            { table:"txt_table", column:"Error_color1" } ,
-                            { table:"txt_table", column:"Error_color2" } ]
+                            { table:"txt_table", column:"color2" } ]
                   },
                   this.service,
                   this.onFiltersChangedFromPlot,
@@ -50,10 +46,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                     styles: { type: "3d", labels: ["Time", "Rate", "Amplitude"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
                             { table:"txt_table", column:"Rate" } ,
-                            { table:"txt_table", column:"Error_time" } ,
-                            { table:"txt_table", column:"Error_rate" } ,
-                            { table:"txt_table", column:"Amplitude" } ,
-                            { table:"txt_table", column:"error" } ]
+                            { table:"txt_table", column:"Amplitude" } ]
                   },
                   this.service,
                   this.onFiltersChangedFromPlot,
@@ -61,14 +54,12 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                 ),
 
                 new Plot(
-                  "Time_Rate_Amplitude_" + filename,
+                  "Time_Frecuency_" + filename,
                   {
                     filename: filename,
                     styles: { type: "scatter", labels: ["Time", "Frequency"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
-                            { table:"txt_table", column:"Rate" } ,
-                            { table:"txt_table", column:"Error_time" } ,
-                            { table:"txt_table", column:"Error_rate" } ]
+                            { table:"txt_table", column:"Rate" } ]
                   },
                   this.service,
                   this.onFiltersChangedFromPlot,

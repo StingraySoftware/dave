@@ -1,5 +1,5 @@
 
-var DOMAIN_URL = "http://localhost:5000";
+var DOMAIN_URL = "http://localhost:5000"; //Set as Dave Server Ip:Port
 
 var theToolPanel = null;
 var theOutputPanel = null;
