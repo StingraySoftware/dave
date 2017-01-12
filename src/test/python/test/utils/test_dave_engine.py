@@ -1,4 +1,4 @@
-from python.test_fixture import *
+from test.fixture import *
 
 from hypothesis import given
 from hypothesis import example
@@ -6,6 +6,7 @@ from hypothesis.strategies import text
 
 import utils.dave_engine as DaveEngine
 import utils.file_utils as FileUtils
+
 
 @given(text(min_size=1))
 @example("Test_Input_1.txt")
@@ -17,4 +18,4 @@ def test_get_dataset_schema(s):
     if destination:
         schema = DaveEngine.get_dataset_schema(destination)
 
-    assert not os.path.isfile(destination) or schema != None
+    assert not os.path.isfile(destination) or schema is not None
