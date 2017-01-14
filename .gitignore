@@ -1,5 +1,6 @@
 *~
 work
+build
 __pycache__
 flaskserver.log
 *.log

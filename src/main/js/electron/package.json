@@ -1,12 +1,19 @@
 {
-  "name": "your-app",
+  "name": "DAVE",
+  "description": "Data Analysis for Variable Events",
+  "author": "TimeLab Technologies",
   "version": "0.2.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-packager . DAVEApp --platform=linux --arch=x64 --overwrite --out ../../../../build"
   },
   "dependencies": {
-    "request-promise": "*",
-    "electron-prebuilt": "*"
+    "config-js": "^1.1.9",
+    "electron-packager": "^8.5.0",
+    "request-promise": "*"
+  },
+  "devDependencies": {
+    "electron": "*"
   }
 }

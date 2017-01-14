@@ -11,8 +11,9 @@ users can insert their own algorithms to compare the effects of such changes.
 ## Get Started
 
 * Clone the project `$ git clone https://github.com/StingraySoftware/dave`
-* Install a Python virtual env and a compatible version of node: `$ source src/main/resources/bash/setup_dev_env.bash`
-* Run the application: `$ src/main/resources/bash/run_gui.bash`
+* Install a Python virtual env and a compatible version of node: `$ source setup/setup.bash`
+* Run the application for development: `$ setup/run_gui.bash`
+* Or run the build script for Linux_X64 `$ setup/build_linux-x64.bash` for getting the distributable at DAVE build folder.
 
 You will see that there's plenty left to do!
 
