@@ -29,10 +29,6 @@ if [ ! -e $ENVDIR ]; then
 	exit 1
 fi
 
-# Install Python dependencies
-# echo Creating Python environment
-# conda env create -f $DIR/../setup/environment.yml
-
 echo Activating Python environment
 ACTIVATE_CMD="$DIR/work/miniconda/bin/activate dave"
 . $ACTIVATE_CMD

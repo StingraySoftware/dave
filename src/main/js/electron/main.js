@@ -17,52 +17,57 @@ var connected = false;
 var subpy = null;
 var processRunning = true; //If false could cause fail of first connectToServer call
 
-var envEnabled = false;
-var envScriptPath = "";
-
-var pythonEnabled = false;
-var pythonPath = "";
-var pythonUrl = "";
-
 var logMessage = "";
 var logDebugMode = false;
 
+var PYTHON_URL = "";
+
 app.on('ready', function() {
   createWindow();
-  if (loadConfig()) {
 
-    if (!pythonEnabled && !envEnabled) {
+  var config = loadConfig();
+  console.log('config: ' + JSON.stringify(config));
+
+  if (config.error == null) {
+
+    logDebugMode = config.logDebugMode;
+
+    if (!config.pythonEnabled && !config.envEnabled) {
       log('All server modes are disabled on configuration. Connecting anyways...');
-    } else if (pythonEnabled) {
-      launchProcess ("python", pythonPath, "Python");
-    } else if (envEnabled) {
-      launchProcess ("/bin/bash", envScriptPath, "Env&Python");
+    } else if (config.pythonEnabled) {
+      launchProcess ("python", config.pythonPath, "Python");
+    } else if (config.envEnabled) {
+      launchProcess ("/bin/bash", config.envScriptPath, "Env&Python");
     }
 
-    console.log('Connecting to server... URL: ' + pythonUrl);
+    PYTHON_URL = config.pythonUrl;
+    console.log('Connecting to server... URL: ' + PYTHON_URL);
     connectToServer ();
+
+  } else {
+
+    log('Error loading DAVE configuration: </br> ERROR: ' + config.error +  '</br> CWD: ' + __dirname);
   }
 });
 
 function loadConfig(){
   try {
       var config = new Config(__dirname + '/config.js')
+      var configObj = { "error" : null };
 
-      envEnabled = config.get('environment.enabled') == "true";
-      envScriptPath = __dirname + "/" + config.get('environment.path');
+      configObj.envEnabled = config.get('environment.enabled') == "true";
+      configObj.envScriptPath = __dirname + "/" + config.get('environment.path');
 
-      pythonEnabled = config.get('python.enabled') == "true";
-      pythonPath = __dirname + "/" + config.get('python.path');
-      pythonUrl = config.get('python.url');
+      configObj.pythonEnabled = config.get('python.enabled') == "true";
+      configObj.pythonPath = __dirname + "/" + config.get('python.path');
+      configObj.pythonUrl = config.get('python.url');
 
-      logDebugMode = config.get('logDebugMode') == "true";
+      configObj.logDebugMode = config.get('logDebugMode') == "true";
 
-      return true;
+      return configObj;
 
     } catch (ex) {
-
-      log('Error loading DAVE configuration: </br> ERROR: ' + ex +  '</br> CWD: ' + __dirname);
-      return false;
+      return { "error" : ex };
     }
 }
 
@@ -101,6 +106,7 @@ function launchProcess(process, argument, processName) {
 }
 
 function connectToServer (){
+
   if (!connected && processRunning) {
 
     if (retries % 10 == 0){
@@ -108,12 +114,12 @@ function connectToServer (){
       log('Connecting to server..... ' + Math.ceil(seconds) + 's');
     }
 
-    rq(pythonUrl)
+    rq(PYTHON_URL)
       .then(function(htmlString){
 
         connected = true;
         console.log('server started!');
-        loadDaveContents();
+        loadDaveContents(PYTHON_URL);
       })
       .catch(function(err){
 
@@ -132,8 +138,8 @@ function createWindow (){
   mainWindow.on('closed', function() { stop(); });
 }
 
-function loadDaveContents (){
-  mainWindow.loadURL(pythonUrl);
+function loadDaveContents (url){
+  mainWindow.loadURL(url);
   mainWindow.webContents.session.clearCache(function(){})
   // mainWindow.webContents.openDevTools();
 }
@@ -153,15 +159,6 @@ function logToWindow (msg){
 app.on('window-all-closed', function() {
     stop();
 });
-
-// Quit when all windows are closed.
-app.on('window-all-closed', function() {
-    // On OS X it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        stop();
-    }
-})
 
 function stop (){
   if (mainWindow != null){
