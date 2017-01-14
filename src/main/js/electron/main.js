@@ -151,9 +151,11 @@ function log (msg){
 }
 
 function logToWindow (msg){
-  var style = '<style>.myclass {position: absolute;top: 50%;width:95%;text-align:center}</style>'
-  var html = '<div class="myclass">' + msg + '</div>'
-  mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(style + html));
+  if (mainWindow != null) {
+    var style = '<style>.myclass {position: absolute;top: 50%;width:95%;text-align:center}</style>'
+    var html = '<div class="myclass">' + msg + '</div>'
+    mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(style + html));
+  }
 }
 
 app.on('window-all-closed', function() {
@@ -166,7 +168,7 @@ function stop (){
     if (subpy != null) {
       console.log('Stopping server!');
       subpy.kill('SIGINT');
-      app.quit();
+      setTimeout (function(){ app.quit(); }, retryInterval);
     }
   }
 }

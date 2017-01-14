@@ -16,28 +16,26 @@ else
     exit 1
 fi
 
-RES_DIR=$_SCRIPT_FOLDER/../..
+DIR=$_SCRIPT_FOLDER/../../../..
 OLD_PWD=$(pwd)
-cd $RES_DIR
-RES_DIR=$(pwd)
+cd $DIR
+DIR=$(pwd)
 cd -
 
-ENVDIR=${RES_DIR}/work
+ENVDIR=${DIR}/work
 
-echo Installing Python environment
 if [ ! -e $ENVDIR ]; then
-	SETUP_CMD="$RES_DIR/resources/bash/create_env.bash"
-	. $SETUP_CMD > setup.log
+	echo "Please run ( source src/main/resources/bash/setup_dev_env.bash ) first to setup and install DAVE environment before continue."
+	exit 1
 fi
 
 echo Activating Python environment
-ACTIVATE_CMD="$ENVDIR/miniconda/bin/activate"
-source $ACTIVATE_CMD dave
+ACTIVATE_CMD="$DIR/work/miniconda/bin/activate dave"
+. $ACTIVATE_CMD
 
 # LAUNCH PYTHON SERVER
 echo Launching Python Server
-which python
-python $RES_DIR/python/server.py &
+python $DIR/src/main/python/server.py &
 python_pid=$!
 
 wait
