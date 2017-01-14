@@ -25,10 +25,7 @@ var pythonPath = "";
 var pythonUrl = "";
 
 var logMessage = "";
-
-app.on('window-all-closed', function() {
-    app.quit();
-});
+var logDebugMode = false;
 
 app.on('ready', function() {
   createWindow();
@@ -39,22 +36,13 @@ app.on('ready', function() {
     } else if (pythonEnabled) {
       launchProcess ("python", pythonPath, "Python");
     } else if (envEnabled) {
-      launchProcess ("/bin/sh", envScriptPath, "Env&Python");
+      launchProcess ("/bin/bash", envScriptPath, "Env&Python");
     }
 
     console.log('Connecting to server... URL: ' + pythonUrl);
     connectToServer ();
   }
 });
-
-// Quit when all windows are closed.
-app.on('window-all-closed', function() {
-    // On OS X it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-})
 
 function loadConfig(){
   try {
@@ -67,6 +55,8 @@ function loadConfig(){
       pythonPath = __dirname + "/" + config.get('python.path');
       pythonUrl = config.get('python.url');
 
+      logDebugMode = config.get('logDebugMode') == "true";
+
       return true;
 
     } catch (ex) {
@@ -78,15 +68,20 @@ function loadConfig(){
 
 function launchProcess(process, argument, processName) {
   try {
-    log('Launching ' + processName + '... </br> CMD: ' + process + " " + argument + '</br> CWD: ' + __dirname );
+    if (logDebugMode) {
+      log('Launching ' + processName + '... </br> CMD: ' + process + " " + argument + '</br> CWD: ' + __dirname );
+    }
+
     subpy = cp.spawn(process, [argument]);
 
     subpy.stdout.on('data', (data) => {
-      log(processName +  ' stdout: ' + data);
+      log(processName +  ': ' + data);
     });
 
     subpy.stderr.on('data', (data) => {
-      log(processName +  ' stderr: ' + data);
+      if (logDebugMode) {
+        log(processName + ' Error: ' + data);
+      }
     });
 
     subpy.on('close', (code) => {
@@ -94,9 +89,10 @@ function launchProcess(process, argument, processName) {
       if (code == 0) {
         log(processName + ' server stopped!');
       } else {
-        log(processName + ' process exited with code: ' + code);
+        log(processName + ' server stopped with code: ' + code);
       }
     });
+
   } catch (ex) {
 
     log('Error on launchProcess </br> ERROR: ' + ex +  '</br> CWD: ' + __dirname);
@@ -105,12 +101,11 @@ function launchProcess(process, argument, processName) {
 }
 
 function connectToServer (){
-
   if (!connected && processRunning) {
 
     if (retries % 10 == 0){
       var seconds = (retries  * (retryInterval/1000));
-      log('checking server..... ' + Math.ceil(seconds) + 's');
+      log('Connecting to server..... ' + Math.ceil(seconds) + 's');
     }
 
     rq(pythonUrl)
@@ -134,24 +129,16 @@ function connectToServer (){
 
 function createWindow (){
   mainWindow = new BrowserWindow(windowParams);
-  mainWindow.on('closed', function() {
-                                        mainWindow = null;
-                                        if (subpy != null) {
-                                          subpy.kill('SIGINT');
-                                        }
-                                      });
+  mainWindow.on('closed', function() { stop(); });
 }
 
 function loadDaveContents (){
-
   mainWindow.loadURL(pythonUrl);
   mainWindow.webContents.session.clearCache(function(){})
   // mainWindow.webContents.openDevTools();
-
 }
 
 function log (msg){
-
   logMessage = msg + "</br>" + logMessage;
   console.log(logMessage);
   logToWindow(logMessage);
@@ -161,4 +148,28 @@ function logToWindow (msg){
   var style = '<style>.myclass {position: absolute;top: 50%;width:95%;text-align:center}</style>'
   var html = '<div class="myclass">' + msg + '</div>'
   mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(style + html));
+}
+
+app.on('window-all-closed', function() {
+    stop();
+});
+
+// Quit when all windows are closed.
+app.on('window-all-closed', function() {
+    // On OS X it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
+    if (process.platform !== 'darwin') {
+        stop();
+    }
+})
+
+function stop (){
+  if (mainWindow != null){
+    mainWindow = null;
+    if (subpy != null) {
+      console.log('Stopping server!');
+      subpy.kill('SIGINT');
+      app.quit();
+    }
+  }
 }

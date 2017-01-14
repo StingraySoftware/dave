@@ -7,5 +7,6 @@ module.exports = {
     enabled : 'false',
     path : '../../../../src/main/python/server.py',
     url : 'http://localhost:5000'
-  }
+  },
+  logDebugMode : 'false'
 };
