@@ -118,7 +118,7 @@ function connectToServer (){
       .then(function(htmlString){
 
         connected = true;
-        console.log('server started!');
+        console.log('Server started!');
         loadDaveContents(PYTHON_URL);
       })
       .catch(function(err){
@@ -146,7 +146,7 @@ function loadDaveContents (url){
 
 function log (msg){
   logMessage = msg + "</br>" + logMessage;
-  console.log(logMessage);
+  console.log(msg);
   logToWindow(logMessage);
 }
 

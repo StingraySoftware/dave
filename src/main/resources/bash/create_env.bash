@@ -1,10 +1,5 @@
 #!/bin/bash
 
-function stopSetup {
-	exit 0
-}
-trap stopSetup SIGHUP SIGINT SIGTERM SIGKILL
-
 # Determine the directory containing this script
 if [[ -n $BASH_VERSION ]]; then
 		_SCRIPT_FOLDER=$(dirname "${BASH_SOURCE[0]}")
