@@ -112,7 +112,7 @@ NODE_FILENAME="node-v$NODE_VERSION"
 
 # Test node
 NODE_VERSION_INSTALLED=$(node --version)
-if [[ "$NODE_VERSION_INSTALLED" == "$NODE_VERSION" ]]; then
+if [[ "$NODE_VERSION_INSTALLED" == v"$NODE_VERSION" ]]; then
   echo "Using node $NODE_VERSION"
 else
   echo "Failure to install node, check the log."
