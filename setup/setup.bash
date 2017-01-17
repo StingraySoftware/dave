@@ -27,19 +27,19 @@ if [ ! -e $MINICONDA ] ; then
 
 		if [[ "$OSTYPE" == "linux-gnu" ]]; then
 			#Linux
-			echo Downloading miniconda for Linux-x86_64
+			echo "Downloading miniconda for Linux-x86_64"
 			MINICONDA_URL_LINUX=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 			wget --quiet $MINICONDA_URL_LINUX -O $MINICONDA
 
 		elif [[ "$OSTYPE" == "darwin"* ]]; then
       # Mac OSX
-			echo Downloading miniconda for MacOSX-x86_64
+			echo "Downloading miniconda for MacOSX-x86_64"
 			MINICONDA_URL_MACOS=https://repo.continuum.io/miniconda/Miniconda2-4.2.12-MacOSX-x86_64.sh
 			curl $MINICONDA_URL_MACOS -o "$MINICONDA"
 
 		else
       # Unknown.
-			echo Downloading miniconda: Unsupported OS Platform
+			echo "Downloading miniconda: Unsupported OS Platform"
 			return 1
 		fi
 fi
@@ -122,7 +122,7 @@ source activate dave
 # Installing node modules
 echo Installing node modules
 cd src/main/js/electron
-sudo npm install
+npm install
 cd -
 
 echo "Success!!"
