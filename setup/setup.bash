@@ -48,7 +48,7 @@ fi
 retVal=$?
 if [[ retVal -ne 0 ]] ; then
 	rm $MINICONDA
-	echo "Can't download MINICONDA.!!!"
+	echo "Can't download miniconda!"
 	return 1
 fi
 chmod u+x $MINICONDA
@@ -83,7 +83,7 @@ NODE_FILENAME="node-v$NODE_VERSION"
 		fi
 
 		tar xf $NODE_TAR -C $DIR
-		export PATH=$DIR/$NODE_FILENAME/bin:${PATH}
+		export PATH=$DIR/$NODE_FILENAME-linux-x64/bin:${PATH}
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 
@@ -111,7 +111,14 @@ NODE_FILENAME="node-v$NODE_VERSION"
 	fi
 
 # Test node
-echo "Using node $(node --version)"
+NODE_VERSION_INSTALLED=$(node --version)
+if [[ "$NODE_VERSION_INSTALLED" == v"$NODE_VERSION" ]]; then
+  echo "Using node $NODE_VERSION"
+else
+  echo "Failure to install node, check the log."
+  return 1
+fi
+
 echo "Using npm $(npm --version)"
 
 # Install Python dependencies
@@ -123,6 +130,12 @@ source activate dave
 echo Installing node modules
 cd src/main/js/electron
 npm install
+NPM_INSTALL_STATUS=$?
 cd -
 
-echo "Success!!"
+if [ $NPM_INSTALL_STATUS -ne 0 ]; then
+  echo "Failed to install node modules using npm install. Check the log."
+  return 1
+else
+  echo "Success!"
+fi
