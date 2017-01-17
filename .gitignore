@@ -1,6 +1,7 @@
 *~
 work
 build
+stingray
 __pycache__
 flaskserver.log
 *.log

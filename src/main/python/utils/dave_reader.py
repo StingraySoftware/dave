@@ -28,9 +28,9 @@ def get_file_dataset(destination):
 
         return dataset
 
-    elif file_extension == ".lc":
+    elif file_extension == ".lc" or file_extension == ".evt":
 
-        table_id = "lc_table"
+        table_id = "fits_table"
         dataset = get_fits_dataset(destination, table_id)
 
         return dataset

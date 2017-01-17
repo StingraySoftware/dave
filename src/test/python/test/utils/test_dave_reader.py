@@ -25,7 +25,7 @@ def test_get_txt_dataset(s):
 
 
 @given(text())
-def test_get_fits_dataset(s):
+def test_get_fits_dataset_lc(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_2.lc")
     table_id = "lc_table"
     dataset = DaveReader.get_fits_dataset(destination, table_id)
@@ -34,6 +34,15 @@ def test_get_fits_dataset(s):
     assert table_id in dataset.tables
     assert len(dataset.tables[table_id].columns) == 4
 
+@given(text())
+def test_get_fits_dataset_evt(s):
+    destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
+    table_id = "lc_table"
+    dataset = DaveReader.get_fits_dataset(destination, table_id)
+    assert dataset
+    assert len(dataset.tables) == 1
+    assert table_id in dataset.tables
+    assert len(dataset.tables[table_id].columns) == 2
 
 @given(text())
 def test_get_file_dataset(s):

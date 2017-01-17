@@ -114,10 +114,28 @@ NODE_FILENAME="node-v$NODE_VERSION"
 echo "Using node $(node --version)"
 echo "Using npm $(npm --version)"
 
+
 # Install Python dependencies
 echo Creating Python environment
 conda env create -f setup/environment.yml
 source activate dave
+
+
+#Installing Stingray
+STINGRAY_FOLDER=src/main/python/stingray
+STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
+
+if [ ! -e $STINGRAY_FOLDER ]; then
+
+	echo Installing Stingray
+	git clone --recursive $STINGRAY_URL $STINGRAY_FOLDER
+
+	cd $STINGRAY_FOLDER
+	pip install -r requirements.txt
+	python setup.py install
+	cd -
+fi
+
 
 # Installing node modules
 echo Installing node modules
