@@ -6,13 +6,12 @@ function stopServer {
 	kill -s 9 $python_pid
 	exit 0
 }
-trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 
 # Determine the directory containing this script
 if [[ -n $BASH_VERSION ]]; then
 		_SCRIPT_FOLDER=$(dirname "${BASH_SOURCE[0]}")
 else
-    echo "Only bash supported .."
+    echo "Only bash supported."
     exit 1
 fi
 
@@ -24,20 +23,20 @@ cd -
 
 ENVDIR=${RES_DIR}/work
 
-echo Installing Python environment
 if [ ! -e $ENVDIR ]; then
+	echo "Installing Python environmen"
 	SETUP_CMD="$RES_DIR/resources/bash/create_env.bash"
-	. $SETUP_CMD > setup.log
+	. $SETUP_CMD
 fi
 
-echo Activating Python environment
+echo "Activating Python environment"
 ACTIVATE_CMD="$ENVDIR/miniconda/bin/activate"
 source $ACTIVATE_CMD dave
 
-# LAUNCH PYTHON SERVER
-echo Launching Python Server
-which python
+# LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
+echo "Launching Python Server"
 python $RES_DIR/python/server.py &
 python_pid=$!
+trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 
 wait

@@ -17,6 +17,7 @@ var connected = false;
 var subpy = null;
 var processRunning = true; //If false could cause fail of first connectToServer call
 
+var statusMsg = "";
 var logMessage = "";
 var logDebugMode = false;
 
@@ -80,7 +81,7 @@ function launchProcess(process, argument, processName) {
     subpy = cp.spawn(process, [argument]);
 
     subpy.stdout.on('data', (data) => {
-      log(processName +  ': ' + data);
+      log(processName + ' stdout: ' + data);
     });
 
     subpy.stderr.on('data', (data) => {
@@ -118,7 +119,7 @@ function connectToServer (){
       .then(function(htmlString){
 
         connected = true;
-        console.log('server started!');
+        console.log('Server started!');
         loadDaveContents(PYTHON_URL);
       })
       .catch(function(err){
@@ -136,24 +137,24 @@ function connectToServer (){
 function createWindow (){
   mainWindow = new BrowserWindow(windowParams);
   mainWindow.on('closed', function() { stop(); });
+  //mainWindow.webContents.openDevTools();
 }
 
 function loadDaveContents (url){
   mainWindow.loadURL(url);
   mainWindow.webContents.session.clearCache(function(){})
-  // mainWindow.webContents.openDevTools();
 }
 
 function log (msg){
   logMessage = msg + "</br>" + logMessage;
-  console.log(logMessage);
+  console.log(msg);
   logToWindow(logMessage);
 }
 
 function logToWindow (msg){
   if (mainWindow != null) {
     var style = '<style>.myclass {position: absolute;top: 50%;width:95%;text-align:center}</style>'
-    var html = '<div class="myclass">' + msg + '</div>'
+    var html = '<div class="myclass">' + statusMsg + msg + '</div>'
     mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(style + html));
   }
 }

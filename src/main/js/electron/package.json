@@ -6,7 +6,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-packager . DAVEApp --platform=linux --arch=x64 --overwrite --out ../../../../build"
+    "build": "electron-packager . DAVEApp --overwrite --out ../../../../build"
   },
   "dependencies": {
     "config-js": "^1.1.9",
@@ -14,6 +14,6 @@
     "request-promise": "*"
   },
   "devDependencies": {
-    "electron": "*"
+    "electron": "^1.4.14"
   }
 }
