@@ -37,5 +37,16 @@ function Service (base_url) {
     });
   };
 
+  this.request_lightcurve = function (lc_data, fn) {
+    log("request_lightcurve plot " + JSON.stringify(lc_data));
+    $.ajax({
+       type : "POST",
+       url : thisService.base_url + "/get_ligthcurve",
+       data: JSON.stringify(lc_data, null, '\t'),
+       contentType: 'application/json;charset=UTF-8',
+       success: fn
+    });
+  };
+
   log("Service ready!");
 }

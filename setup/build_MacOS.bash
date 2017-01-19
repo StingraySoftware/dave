@@ -1,11 +1,14 @@
 #!/bin/bash
 
+BUILD_NAME=DAVEApp-darwin-x64
+BUILD_FOLDER=build/$BUILD_NAME
+
+rm -rf $BUILD_FOLDER
+rm -f build/$BUILD_NAME.zip
+
 cd src/main/js/electron
 npm run build --platform=darwin --arch=x64
 cd -
-
-BUILD_NAME=DAVEApp-darwin-x64
-BUILD_FOLDER=build/$BUILD_NAME
 
 \cp setup/config/deply_darwin_config.js $BUILD_FOLDER/DAVEApp.app/Contents/Resources/app/config.js
 \cp -r src/main/resources $BUILD_FOLDER/resources

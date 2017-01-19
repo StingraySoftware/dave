@@ -46,6 +46,7 @@ def get_txt_dataset(destination, table_id, header_names):
     dataset = DataSet(table_id)
     dataset.add_table(table_id, header_names)
 
+    # Column1, Column1Err, Column2, Column2Err .. header order expected
     for i in range(len(header_names)):
         header_name = header_names[i]
         column = dataset.tables[table_id].columns[header_name]
@@ -67,8 +68,8 @@ def get_fits_dataset(destination, table_id):
 
     for i in range(len(header_names)):
         header_name = header_names[i]
-        dataset.tables[table_id].columns[header_name].values = tbdata.field(i)
+        dataset.tables[table_id].columns[header_name].values = np.append([], tbdata.field(i))
 
-    logging.debug("Read lc file successfully: %s" % destination)
+    logging.debug("Read fits file successfully: %s" % destination)
 
     return dataset

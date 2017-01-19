@@ -12,7 +12,7 @@ def is_valid_file (filename):
         return False
 
     ext = os.path.splitext(filename)[1]
-    return (ext == ".txt") or (ext == ".lc")
+    return (ext == ".txt") or (ext == ".lc") or (ext == ".evt")
 
 
 # save_file: Upload a data file to the Flask server path
