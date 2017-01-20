@@ -153,8 +153,17 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	cd $DIR/..
 
 	# Copy built libraries to python project
-	\cp -r $STINGRAY_FOLDER/build/lib.macosx-10.5-x86_64-3.5/stingray src/main/python
-	\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.macosx-10.5-x86_64-3.5/astropy_helpers src/main/python
+	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+		#Linux
+		\cp -r $STINGRAY_FOLDER/build/lib.linux-x86_64-3.5/stingray src/main/python
+		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
+
+	elif [[ "$OSTYPE" == "darwin"* ]]; then
+		# Mac OSX
+		\cp -r $STINGRAY_FOLDER/build/lib.macosx-10.5-x86_64-3.5/stingray src/main/python
+		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.macosx-10.5-x86_64-3.5/astropy_helpers src/main/python
+
+	fi
 fi
 
 
