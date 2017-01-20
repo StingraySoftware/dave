@@ -25,16 +25,6 @@ cd -
 
 echo Installing in $DIR
 
-#Installing Stingray
-STINGRAY_FOLDER=$DIR/../python/stingray
-
-echo Installing Stingray
-cd $STINGRAY_FOLDER
-pip install -r requirements.txt
-python setup.py install
-cd -
-
-
 # Install miniconda
 MINICONDA=$DIR/miniconda.sh
 if [ ! -e $MINICONDA ] ; then
@@ -67,7 +57,7 @@ if [[ retVal -ne 0 ]] ; then
 fi
 chmod u+x $MINICONDA
 
-
+#Install Miniconda
 INSTALL_DIR=$DIR/miniconda
 if [ ! -e $INSTALL_DIR ]; then
   echo "Installing miniconda"

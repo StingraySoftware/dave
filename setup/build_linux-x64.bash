@@ -12,8 +12,13 @@ cd -
 
 \cp setup/config/deply_linux_config.js $BUILD_FOLDER/resources/app/config.js
 \cp -r src/main/resources src/main/python $BUILD_FOLDER/resources
+\cp -r work/stingray/requirements.txt $BUILD_FOLDER/resources/python
+rm -f $BUILD_FOLDER/resources/python/*.log
+rm -f $BUILD_FOLDER/resources/python/uploadeddataset/*
 \cp -r setup/environment.yml $BUILD_FOLDER/resources
 
 cd build
 zip -r $BUILD_NAME.zip $BUILD_NAME
 cd -
+
+echo "Linux-x64 Build Success!"

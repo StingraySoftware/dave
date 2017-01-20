@@ -129,7 +129,7 @@ source activate dave
 
 
 #Installing Stingray
-STINGRAY_FOLDER=src/main/python/stingray
+STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 
 if [ ! -e $STINGRAY_FOLDER ]; then
@@ -138,9 +138,23 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git clone --recursive $STINGRAY_URL $STINGRAY_FOLDER
 
 	cd $STINGRAY_FOLDER
+
+	#Install stingray libraries
 	pip install -r requirements.txt
+
+	#Build stingray
 	python setup.py install
-	cd -
+
+	cd $STINGRAY_FOLDER/astropy_helpers
+
+	#Build astropy_helpers
+	python setup.py install
+
+	cd $DIR/..
+
+	# Copy built libraries to python project
+	\cp -r $STINGRAY_FOLDER/build/lib.macosx-10.5-x86_64-3.5/stingray src/main/python
+	\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.macosx-10.5-x86_64-3.5/astropy_helpers src/main/python
 fi
 
 

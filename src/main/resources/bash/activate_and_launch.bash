@@ -33,10 +33,17 @@ echo "Activating Python environment"
 ACTIVATE_CMD="$ENVDIR/miniconda/bin/activate"
 source $ACTIVATE_CMD dave
 
+#Installing Stingray
+PYTHON_FOLDER=$RES_DIR/python
+echo Installing Stingray
+cd $PYTHON_FOLDER
+pip install -r requirements.txt
+
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
-python $RES_DIR/python/server.py &
+python server.py &
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
+cd -
 
 wait
