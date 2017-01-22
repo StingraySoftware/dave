@@ -57,7 +57,7 @@ if [[ retVal -ne 0 ]] ; then
 fi
 chmod u+x $MINICONDA
 
-
+#Install Miniconda
 INSTALL_DIR=$DIR/miniconda
 if [ ! -e $INSTALL_DIR ]; then
   echo "Installing miniconda"

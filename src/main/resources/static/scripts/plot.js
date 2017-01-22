@@ -1,11 +1,11 @@
 
-function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
+function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar) {
 
   var currentObj = this;
   this.id = id;
   this.plotId = "plot_" + id;
   this.plotConfig = plotConfig;
-  this.service = service;
+  this.getDataFromServerFn = getDataFromServerFn;
   this.onFiltersChanged = onFiltersChangedFn;
   this.isVisible = true;
 
@@ -54,7 +54,7 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
  };
 
  this.refreshData = function () {
-   currentObj.service.request_plot_data( currentObj.plotConfig, currentObj.onPlotDataReceived );
+   currentObj.getDataFromServerFn( currentObj.plotConfig, currentObj.onPlotDataReceived );
  }
 
  this.onPlotDataReceived = function ( data ) {
@@ -82,6 +82,11 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
                                         currentObj.plotConfig.styles.labels[0],
                                         currentObj.plotConfig.styles.labels[1],
                                         'Amplitude<br>Map');
+   } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
+      plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,
+                                   [], [],
+                                   currentObj.plotConfig.styles.labels[0],
+                                   currentObj.plotConfig.styles.labels[1]);
    }
 
    if (plotlyConfig != null) {
@@ -114,18 +119,32 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
 
  this.registerPlotEvents = function () {
 
-   if(this.plotConfig.styles.type == "2d") {
+   if((this.plotConfig.styles.type == "2d")
+      || (this.plotConfig.styles.type == "ligthcurve")) {
 
      this.plotElem.on('plotly_selected', (eventData) => {
 
-       if (eventData) {
+       if (eventData){
          var xRange = eventData.range.x;
          var yRange = eventData.range.y;
-         var xFilter = $.extend({ from: Math.floor(xRange[0]), to: Math.ceil(xRange[1]) },
-                                  this.plotConfig.axis[0]);
-         var yFilter = $.extend({ from: Math.floor(yRange[0]), to: Math.ceil(yRange[1]) },
-                                  this.plotConfig.axis[1]);
-         currentObj.onFiltersChanged ( [ xFilter, yFilter ]);
+         var filters = [];
+
+         //If plot data for label[0] is the same as axis[0] data,
+         // else label data is calculated/derived with some process
+         if (this.plotConfig.axis[0].column == this.plotConfig.styles.labels[0]){
+          filters.push($.extend({ from: Math.floor(xRange[0]), to: Math.ceil(xRange[1]) },
+                                  this.plotConfig.axis[0]));
+         }
+
+         //Same here but for other axis
+         if (this.plotConfig.axis[1].column == this.plotConfig.styles.labels[1]){
+            filters.push($.extend({ from: Math.floor(yRange[0]), to: Math.ceil(yRange[1]) },
+                                  this.plotConfig.axis[1]));
+         }
+
+         if (filters.length > 0){
+           currentObj.onFiltersChanged (filters);
+         }
       }
 
      });
@@ -143,13 +162,17 @@ function Plot(id, plotConfig, service, onFiltersChangedFn, toolbar) {
           var ptNumber = pt.pointNumber;
           var trace = pt.data;
 
-          error_x_string= (trace.error_x.array[ptNumber]).toString();
-          error_y_string= (trace.error_y.array[ptNumber]).toString();
+          var error_x_string = "";
+          var error_y_string = "";
+          if (ptNumber < trace.error_x.array.length) {
+            error_x_string= "+/-" + (trace.error_x.array[ptNumber]).toString();
+            error_y_string= "+/-" + (trace.error_y.array[ptNumber]).toString();
+          }
 
           var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
           var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
 
-          currentObj.$hoverinfo.html(infotextforx +"+/-"  + error_x_string + spacesup + infotextfory + "+/-" + error_y_string);
+          currentObj.$hoverinfo.html(infotextforx  + error_x_string + spacesup + infotextfory + error_y_string);
 
      }).on('plotly_unhover', function(data){
          currentObj.$hoverinfo.html("");

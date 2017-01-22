@@ -43,6 +43,12 @@ def get_plot_data():
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 
+@app.route('/get_ligthcurve', methods = ['POST'])
+def get_ligthcurve():
+    return DaveEndpoint.get_ligthcurve (request.json['filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], request.json['dt'])
+
+
 @app.route('/')
 def root():
     logging.debug("Root page requested!")

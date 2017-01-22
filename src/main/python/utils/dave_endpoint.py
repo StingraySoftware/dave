@@ -6,6 +6,8 @@ import urllib
 
 import utils.file_utils as FileUtils
 import utils.dave_engine as DaveEngine
+from utils.np_encoder import NPEncoder
+
 
 
 #UPLOADS THE FILE AND STORES IT ON SESSION
@@ -39,7 +41,7 @@ def get_dataset_schema(filename, target):
         return common_error("Error opening file")
 
     schema = DaveEngine.get_dataset_schema(destination)
-    return json.dumps(schema)
+    return json.dumps(schema, cls=NPEncoder)
 
 
 def common_error(error):
@@ -63,4 +65,24 @@ def get_plot_data(filename, target, filters, styles, axis):
     logging.debug("get_plot_data: axis %s" % axis)
 
     data = DaveEngine.get_plot_data(destination, filters, styles, axis)
-    return json.dumps(data)
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_ligthcurve(filename, target, filters, axis, dt):
+    if not filename:
+        return "No filename setted"
+
+    if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
+        return "Filename not uploaded"
+
+    destination = FileUtils.get_destination(target, filename)
+    if not destination:
+        return "Error opening file"
+
+    logging.debug("get_ligthcurve: %s" % filename)
+    logging.debug("get_ligthcurve: filters %s" % filters)
+    logging.debug("get_ligthcurve: axis %s" % axis)
+    logging.debug("get_ligthcurve: dt %f" % dt)
+
+    data = DaveEngine.get_ligthcurve(destination, filters, axis, dt)
+    return json.dumps(data, cls=NPEncoder)
