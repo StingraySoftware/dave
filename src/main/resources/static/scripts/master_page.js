@@ -24,13 +24,14 @@ function onDatasetChanged ( filename ) {
   log("onDatasetChanged:" + filename);
   theFilename = filename;
 
-  theOutputPanel.onDatasetChanged(filename);
-
   theService.get_dataset_schema(filename, function( schema ) {
       log("onDatasetChanged:" + schema);
       var jsonSchema = JSON.parse(schema);
       theToolPanel.onDatasetSchemaChanged(jsonSchema);
+      theOutputPanel.onDatasetChanged(filename);
       theOutputPanel.onDatasetValuesChanged(filename, []);
+    }, function( error ) {
+        log("onDatasetChanged error:" + JSON.stringify(error));
     });
 }
 

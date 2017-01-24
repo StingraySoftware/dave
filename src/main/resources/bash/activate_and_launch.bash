@@ -35,7 +35,7 @@ source $ACTIVATE_CMD dave
 
 #Installing Stingray
 PYTHON_FOLDER=$RES_DIR/python
-echo Installing Stingray
+echo Installing Python dependencies
 cd $PYTHON_FOLDER
 pip install -r requirements.txt
 

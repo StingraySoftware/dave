@@ -104,14 +104,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar) 
 
  this.resize = function () {
    try {
+     if (currentObj.plotElem != null) {
+       var update = {
+         width: $(currentObj.plotElem).width(),
+         height: $(currentObj.plotElem).height()
+       };
 
-     var update = {
-       width: $(currentObj.plotElem).width(),
-       height: $(currentObj.plotElem).height()
-     };
-
-     Plotly.relayout(currentObj.plotId, update);
-
+       Plotly.relayout(currentObj.plotId, update);
+     } else {
+       log("Resize plot " + currentObj.id + ", not ready yet. ");
+     }
    } catch (ex) {
      log("Resize plot " + currentObj.id + " error: " + ex);
    }

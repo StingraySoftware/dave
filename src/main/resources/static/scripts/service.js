@@ -22,8 +22,8 @@ function Service (base_url) {
      });
    };
 
-  this.get_dataset_schema  = function ( filename, fn ) {
-    $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } ).done(fn);
+  this.get_dataset_schema  = function ( filename, fn, errorFn ) {
+    $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } ).done(fn).fail(errorFn);
   };
 
   this.request_plot_data = function (plot_data, fn) {

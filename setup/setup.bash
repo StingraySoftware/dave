@@ -164,9 +164,10 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		\cp -r $STINGRAY_FOLDER/build/lib.macosx-10.5-x86_64-3.5/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.macosx-10.5-x86_64-3.5/astropy_helpers src/main/python
 
+		#This is for MagicFile not for styngray, but only applies to macosx
+		brew install libmagic
 	fi
 fi
-
 
 # Installing node modules
 echo Installing node modules

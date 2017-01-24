@@ -17,6 +17,10 @@ users can insert their own algorithms to compare the effects of such changes.
 
 You will see that there's plenty left to do!
 
+NOTE: Mac OSX dependencies
+* Homebrew installed (http://brew.sh/)
+* Administrator rights
+
 ## Contribute
 
 Please talk to us! We use Slack to discuss the work. To join our channels, since

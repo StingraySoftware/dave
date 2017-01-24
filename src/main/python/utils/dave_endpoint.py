@@ -15,13 +15,13 @@ def upload(file, target):
     if not file.filename:
         return common_error("No sent file")
 
-    if not FileUtils.is_valid_file(file.filename):
-        return common_error("File extension is not supported...")
-
     destination = FileUtils.save_file (file, target)
 
     if not destination:
         return common_error("Error uploading file...")
+
+    if not FileUtils.is_valid_file(destination):
+        return common_error("File extension is not supported...")
 
     logging.debug("Uploaded filename: %s" % destination)
     session['uploaded_filename'] = file.filename
@@ -37,8 +37,8 @@ def get_dataset_schema(filename, target):
         return common_error("Filename not uploaded")
 
     destination = FileUtils.get_destination(target, filename)
-    if not destination:
-        return common_error("Error opening file")
+    if not FileUtils.is_valid_file(destination):
+        return common_error("Invalid file")
 
     schema = DaveEngine.get_dataset_schema(destination)
     return json.dumps(schema, cls=NPEncoder)
@@ -56,8 +56,8 @@ def get_plot_data(filename, target, filters, styles, axis):
         return "Filename not uploaded"
 
     destination = FileUtils.get_destination(target, filename)
-    if not destination:
-        return "Error opening file"
+    if not FileUtils.is_valid_file(destination):
+        return "Invalid file"
 
     logging.debug("get_plot_data: %s" % filename)
     logging.debug("get_plot_data: filters %s" % filters)
@@ -76,8 +76,8 @@ def get_ligthcurve(filename, target, filters, axis, dt):
         return "Filename not uploaded"
 
     destination = FileUtils.get_destination(target, filename)
-    if not destination:
-        return "Error opening file"
+    if not FileUtils.is_valid_file(destination):
+        return "Invalid file"
 
     logging.debug("get_ligthcurve: %s" % filename)
     logging.debug("get_ligthcurve: filters %s" % filters)

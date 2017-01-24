@@ -8,13 +8,14 @@ from werkzeug import secure_filename
 def get_destination (target, filename):
     return "/".join([target, secure_filename(filename)])
 
-def is_valid_file (filename):
-    if not filename:
+def is_valid_file (destination):
+    if not destination or not os.path.isfile(destination):
         return False
 
+    print("destination: %s" % destination)
     ext = magic.from_file(destination)
-    logging.debug("File extension: %s" % ext)
-    return (ext == ".txt") or (ext == ".lc") or (ext == ".evt")
+    print("File extension: %s" % ext)
+    return (ext.find("ASCII") == 0) or (ext.find("FITS") == 0)
 
 
 # save_file: Upload a data file to the Flask server path
