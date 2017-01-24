@@ -1,7 +1,7 @@
 module.exports = {
   environment : {
     enabled : 'true',
-    path : '../../../../resources/bash/activate_and_launch.bash'
+    path : '../../../dave/resources/bash/activate_and_launch.bash'
   },
   python : {
     enabled : 'false',

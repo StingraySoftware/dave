@@ -21,12 +21,19 @@ cd $RES_DIR
 RES_DIR=$(pwd)
 cd -
 
-ENVDIR=${RES_DIR}/work
+ENVDIR=$HOME/Dave_work
 
 if [ ! -e $ENVDIR ]; then
 	echo "Installing Python environmen"
 	SETUP_CMD="$RES_DIR/resources/bash/create_env.bash"
 	. $SETUP_CMD
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# Mac OSX
+	#This is for MagicFile but only applies to macosx
+	echo "Installing HomeBrew and LibMagic"
+	/usr/local/bin/brew install libmagic
 fi
 
 echo "Activating Python environment"
@@ -41,7 +48,7 @@ pip install -r requirements.txt
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
-python server.py &
+python server.py $ENVDIR/ ./ &
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 cd -

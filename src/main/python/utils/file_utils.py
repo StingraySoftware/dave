@@ -13,9 +13,7 @@ def is_valid_file(destination):
     if not destination or not os.path.isfile(destination):
         return False
 
-    print("destination: %s" % destination)
     ext = magic.from_file(destination)
-    print("File extension: %s" % ext)
     return (ext.find("ASCII") == 0) or (ext.find("FITS") == 0)
 
 

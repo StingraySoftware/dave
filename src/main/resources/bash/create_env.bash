@@ -10,11 +10,12 @@ fi
 
 
 # install in directory work in the top-level dir in the project
-DIR=$_SCRIPT_FOLDER/../../work
+DIR=$_SCRIPT_FOLDER/../..
+WORKDIR=$HOME/Dave_work
 
-if [ ! -e $DIR ]; then
-	echo "Creating work directory: $DIR"
-	mkdir $DIR
+if [ ! -e $WORKDIR ]; then
+	echo "Creating work directory: $WORKDIR"
+	mkdir $WORKDIR
 fi
 
 # normalize dir
@@ -23,10 +24,10 @@ cd $DIR
 DIR=$(pwd)
 cd -
 
-echo Installing in $DIR
+echo Installing in $WORKDIR
 
 # Install miniconda
-MINICONDA=$DIR/miniconda.sh
+MINICONDA=$WORKDIR/miniconda.sh
 if [ ! -e $MINICONDA ] ; then
 
 		if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -58,7 +59,7 @@ fi
 chmod u+x $MINICONDA
 
 #Install Miniconda
-INSTALL_DIR=$DIR/miniconda
+INSTALL_DIR=$WORKDIR/miniconda
 if [ ! -e $INSTALL_DIR ]; then
   echo "Installing miniconda"
   $MINICONDA -b -p $INSTALL_DIR
@@ -68,4 +69,4 @@ export PATH=${PATH}:${INSTALL_DIR}/bin
 
 # Install Python dependencies
 echo "Creating Python environment"
-conda env create -f $DIR/../environment.yml
+conda env create -f $DIR/environment.yml
