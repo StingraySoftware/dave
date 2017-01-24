@@ -36,9 +36,9 @@ app.on('ready', function() {
     if (!config.pythonEnabled && !config.envEnabled) {
       log('All server modes are disabled on configuration. Connecting anyways...');
     } else if (config.pythonEnabled) {
-      launchProcess ("python", config.pythonPath, "Python");
+      launchProcess ("python", [config.pythonPath, '/tmp', '..'], "Python");
     } else if (config.envEnabled) {
-      launchProcess ("/bin/bash", config.envScriptPath, "Env&Python");
+      launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
     }
 
     PYTHON_URL = config.pythonUrl;
@@ -78,7 +78,7 @@ function launchProcess(process, argument, processName) {
       log('Launching ' + processName + '... </br> CMD: ' + process + " " + argument + '</br> CWD: ' + __dirname );
     }
 
-    subpy = cp.spawn(process, [argument]);
+    subpy = cp.spawn(process, argument);
 
     subpy.stdout.on('data', (data) => {
       log(processName + ' stdout: ' + data);

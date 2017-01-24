@@ -9,11 +9,11 @@ import utils.dave_endpoint as DaveEndpoint
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
-    logsdir = os.path.dirname(sys.argv[1])
+    logsdir = sys.argv[1]
 
 scriptdir = "."
 if len(sys.argv) > 2 and sys.argv[2] != "":
-    scriptdir = os.path.dirname(sys.argv[2])
+    scriptdir = sys.argv[2]
 
 logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
 

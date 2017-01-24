@@ -48,7 +48,7 @@ pip install -r requirements.txt
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
-python server.py $ENVDIR/ ./ &
+python server.py $ENVDIR . &
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 cd -
