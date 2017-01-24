@@ -28,7 +28,6 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   this.resize = function() {
     for (i in this.plots) { this.plots[i].resize(); };
   }
-  $(window).resize(this.resize);
 
   this.forceResize = function () {
     $(window).trigger("resize");

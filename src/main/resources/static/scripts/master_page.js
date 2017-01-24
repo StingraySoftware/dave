@@ -14,6 +14,7 @@ $(document).ready(function () {
   theService = new Service (DOMAIN_URL);
   theToolPanel = new ToolPanel (".toolPanel", theService, onDatasetChanged, onFiltersChanged);
   theOutputPanel = new OutputPanel (".outputPanelContainer", ".outputPanelToolBar", theService, onFiltersChangedFromPlot);
+  $(window).resize(function () { theOutputPanel.resize(); });
 
   log("App Ready!! ->" + DOMAIN_URL);
 
