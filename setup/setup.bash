@@ -7,8 +7,7 @@ if [ ! -e $GIT_DIR ] ; then
 fi
 
 # Install in directory work in the top-level dir in the project
-DAVE_VERSION=0.0
-DIR=${GIT_DIR}/../work-${DAVE_VERSION}
+DIR=${GIT_DIR}/../work
 
 if [ ! -e $DIR ]; then
 	mkdir $DIR
