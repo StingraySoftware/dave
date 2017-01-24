@@ -1,6 +1,7 @@
 
 import os
 import logging
+import magic
 from werkzeug import secure_filename
 
 
@@ -11,7 +12,8 @@ def is_valid_file (filename):
     if not filename:
         return False
 
-    ext = os.path.splitext(filename)[1]
+    ext = magic.from_file(destination)
+    logging.debug("File extension: %s" % ext)
     return (ext == ".txt") or (ext == ".lc") or (ext == ".evt")
 
 

@@ -1,6 +1,7 @@
 
 import os
 import logging
+import magic
 
 from model.dataset import DataSet
 import numpy as np
@@ -12,7 +13,9 @@ def get_file_dataset(destination):
     if not destination:
         return None
 
-    filename, file_extension = os.path.splitext(destination)
+    filename = os.path.splitext(destination)[0]
+    file_extension = magic.from_file(destination)
+    logging.debug("File extension: %s" % file_extension)
 
     if file_extension == ".txt":
 
