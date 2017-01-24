@@ -7,7 +7,7 @@ rm -rf $BUILD_FOLDER
 rm -f build/$BUILD_NAME.zip
 
 cd src/main/js/electron
-npm run build --platform=linux --arch=x64
+npm run build-linux
 cd -
 
 \cp setup/config/deply_linux_config.js $BUILD_FOLDER/resources/app/config.js

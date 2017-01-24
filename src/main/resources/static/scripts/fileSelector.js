@@ -11,7 +11,7 @@ function fileSelector(id, filename, uploadFn, onFileChangedFn) {
                     '<form action="" method="POST" enctype="multipart/form-data">' +
                       '<h3>Filename</h3>' +
                       '<label class="fileBtn">' +
-                        '<input id="upload_input" name="file" type="file"/>' +
+                        '<input id="upload_input" name="file" type="file" style="width:100%"/>' +
                       '</label>' +
                    '</form>' +
                  '</div>');

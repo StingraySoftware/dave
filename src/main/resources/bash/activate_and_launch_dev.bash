@@ -42,7 +42,7 @@ cd -
 
 # LAUNCH PYTHON SERVER
 echo Launching Python Server
-python $DIR/src/main/python/server.py &
+python $DIR/src/main/python/server.py ./ ./ &
 python_pid=$!
 
 wait

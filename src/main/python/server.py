@@ -7,13 +7,17 @@ import logging
 
 import utils.dave_endpoint as DaveEndpoint
 
-scriptdir = os.path.dirname(sys.argv[0])
-if scriptdir == "":
-    scriptdir = "."
+logsdir = "."
+if len(sys.argv) > 1 and sys.argv[1] != "":
+    logsdir = os.path.dirname(sys.argv[1])
 
-logging.basicConfig(filename=scriptdir + '/flaskserver.log', level=logging.DEBUG)
+scriptdir = "."
+if len(sys.argv) > 2 and sys.argv[2] != "":
+    scriptdir = os.path.dirname(sys.argv[2])
 
+logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
 
+logging.info("Logs file is " + logsdir + "/flaskserver.log")
 logging.info("Templates dir is " + scriptdir + "/../resources/templates")
 
 app = Flask("dave_srv",

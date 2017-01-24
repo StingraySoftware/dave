@@ -1,18 +1,20 @@
 
 import os
 import logging
+import magic
 from werkzeug import secure_filename
 
 
-def get_destination (target, filename):
+def get_destination(target, filename):
     return "/".join([target, secure_filename(filename)])
 
-def is_valid_file (filename):
-    if not filename:
+
+def is_valid_file(destination):
+    if not destination or not os.path.isfile(destination):
         return False
 
-    ext = os.path.splitext(filename)[1]
-    return (ext == ".txt") or (ext == ".lc") or (ext == ".evt")
+    ext = magic.from_file(destination)
+    return (ext.find("ASCII") == 0) or (ext.find("FITS") == 0)
 
 
 # save_file: Upload a data file to the Flask server path
@@ -20,7 +22,7 @@ def is_valid_file (filename):
 # @param: file: file to upload
 # @param: target: folder name for upload destination
 #
-def save_file (file, target):
+def save_file(file, target):
 
     logging.debug("file: %s - %s" % (type(file), file))
 

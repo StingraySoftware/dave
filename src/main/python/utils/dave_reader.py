@@ -1,6 +1,7 @@
 
 import os
 import logging
+import magic
 
 from model.dataset import DataSet
 import numpy as np
@@ -12,9 +13,11 @@ def get_file_dataset(destination):
     if not destination:
         return None
 
-    filename, file_extension = os.path.splitext(destination)
+    filename = os.path.splitext(destination)[0]
+    file_extension = magic.from_file(destination)
+    logging.debug("File extension: %s" % file_extension)
 
-    if file_extension == ".txt":
+    if file_extension.find("ASCII") == 0:
 
         table_id = "txt_table"
         header_names = ["Time", "Rate", "color1", "color2"]
@@ -28,7 +31,7 @@ def get_file_dataset(destination):
 
         return dataset
 
-    elif file_extension == ".lc" or file_extension == ".evt":
+    elif file_extension.find("FITS") == 0:
 
         table_id = "fits_table"
         dataset = get_fits_dataset(destination, table_id)
