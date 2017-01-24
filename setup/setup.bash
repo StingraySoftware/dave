@@ -1,4 +1,16 @@
 #!/bin/bash
+#
+# Source this script to set up the environment for developing DAVE.
+# - Download miniconda and install packages and virtual env
+# - Download node and install packages
+
+# First check if the script is being sourced...
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
+	echo "This script has to be sourced! Like this:"
+	echo "source $(basename $0)"
+	exit
+fi
+
 
 GIT_DIR=$(git rev-parse --git-dir 2> /dev/null)
 if [ ! -e $GIT_DIR ] ; then

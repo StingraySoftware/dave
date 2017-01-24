@@ -1,25 +1,13 @@
 import numpy as np
+import logging
 
 def get_plotdiv_xy(dataset, axis):
-    data = []
-    for i in range(len(axis)):
-        column = dataset.tables[axis[i]["table"]].columns[axis[i]["column"]]
-        column_data = dict()
-        column_data["values"] = column.values
-        column_data["error_values"] = column.error_values
-        data = np.append(data, [column_data])
-
+    data = build_data_list(dataset, axis)
     return data
 
 
 def get_plotdiv_xyz(dataset, axis):
-    data = []
-    for i in range(len(axis)):
-        column = dataset.tables[axis[i]["table"]].columns[axis[i]["column"]]
-        column_data = dict()
-        column_data["values"] = column.values
-        column_data["error_values"] = column.error_values
-        data = np.append(data, [column_data])
+    data = build_data_list(dataset, axis)
 
     color_array = np.random.uniform(-5, 5, size=len(data[0]["values"]))
     color_data = dict()
@@ -33,17 +21,25 @@ def get_plotdiv_xyz(dataset, axis):
 
 
 def get_plotdiv_scatter(dataset, axis):
-    data = []
-    for i in range(len(axis)):
-        column = dataset.tables[axis[i]["table"]].columns[axis[i]["column"]]
-        column_data = dict()
-        column_data["values"] = column.values
-        column_data["error_values"] = column.error_values
-        data = np.append(data, [column_data])
-
+    data = build_data_list(dataset, axis)
     amplitude_array = np.random.uniform(-5, 5, size=len(data[0]["values"]))
     amplitude_data = dict()
     amplitude_data["values"] = amplitude_array
     data = np.append(data, [amplitude_data])
 
+    return data
+
+
+def build_data_list(dataset, axis):
+    data = []
+    for i in range(len(axis)):
+        table_name = axis[i]["table"]
+        if table_name in dataset.tables:
+            column = dataset.tables[table_name].columns[axis[i]["column"]]
+            column_data = dict()
+            column_data["values"] = column.values
+            column_data["error_values"] = column.error_values
+            data = np.append(data, [column_data])
+        else:
+            logging.error("Accessing unknown table: %s" % table_name)
     return data
