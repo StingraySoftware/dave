@@ -21,6 +21,7 @@ def test_get_dataset_schema(s):
 
     assert not os.path.isfile(destination) or schema is not None
 
+
 @given(text(min_size=1))
 @example("test.evt")
 def test_get_ligthcurve(s):

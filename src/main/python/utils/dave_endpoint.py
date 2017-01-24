@@ -23,7 +23,7 @@ def upload(file, target):
         return common_error("File extension is not supported...")
 
     logging.debug("Uploaded filename: %s" % destination)
-    session['uploaded_filename']=file.filename
+    session['uploaded_filename'] = file.filename
 
     return json.dumps(dict(filename=file.filename))
 
