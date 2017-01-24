@@ -63,4 +63,4 @@ for error in (400, 401, 403, 404, 500):  # or with other http code you consider 
     app.error_handler_spec[None][error] = http_error_handler
 
 if __name__ == '__main__':
-    app.run()  # Use app.run(host='0.0.0.0') for listen on all interfaces
+    app.run(debug=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces
