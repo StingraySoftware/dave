@@ -5,10 +5,11 @@ import magic
 from werkzeug import secure_filename
 
 
-def get_destination (target, filename):
+def get_destination(target, filename):
     return "/".join([target, secure_filename(filename)])
 
-def is_valid_file (destination):
+
+def is_valid_file(destination):
     if not destination or not os.path.isfile(destination):
         return False
 
@@ -23,7 +24,7 @@ def is_valid_file (destination):
 # @param: file: file to upload
 # @param: target: folder name for upload destination
 #
-def save_file (file, target):
+def save_file(file, target):
 
     logging.debug("file: %s - %s" % (type(file), file))
 

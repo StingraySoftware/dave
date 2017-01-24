@@ -9,13 +9,12 @@ import utils.dave_engine as DaveEngine
 from utils.np_encoder import NPEncoder
 
 
-
-#UPLOADS THE FILE AND STORES IT ON SESSION
+# UPLOADS THE FILE AND STORES IT ON SESSION
 def upload(file, target):
     if not file.filename:
         return common_error("No sent file")
 
-    destination = FileUtils.save_file (file, target)
+    destination = FileUtils.save_file(file, target)
 
     if not destination:
         return common_error("Error uploading file...")
@@ -24,14 +23,14 @@ def upload(file, target):
         return common_error("File extension is not supported...")
 
     logging.debug("Uploaded filename: %s" % destination)
-    session['uploaded_filename'] = file.filename
+    session['uploaded_filename']=file.filename
 
-    return json.dumps(dict(filename = file.filename))
+    return json.dumps(dict(filename=file.filename))
 
 
 def get_dataset_schema(filename, target):
     if not filename:
-        return common_error(error = "No filename setted")
+        return common_error(error="No filename setted")
 
     if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
         return common_error("Filename not uploaded")
@@ -45,7 +44,7 @@ def get_dataset_schema(filename, target):
 
 
 def common_error(error):
-    return json.dumps(dict(error = error))
+    return json.dumps(dict(error=error))
 
 
 def get_plot_data(filename, target, filters, styles, axis):
