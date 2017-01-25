@@ -135,3 +135,24 @@ def test_add_row(s, c, v, e):
     table.add_row(row)
 
     assert len(table.columns[c].values) == 1
+
+
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_join(s, c, v0, e0, v1, e1):
+    table1 = Table(s)
+    table1.add_columns([c])
+    table1.columns[c].add_value(v0, e0)
+    table2 = Table(s)
+    table2.add_columns([c])
+    table2.columns[c].add_value(v1, e1)
+
+    jtable = table1.join(table2)
+
+    assert len(jtable.columns[c].values) == 2

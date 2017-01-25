@@ -107,8 +107,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                 {
                   filename: filename,
                   styles: { type: "scatter", labels: ["TIME", "PI"] },
-                  axis: [ { table:"fits_table", column:"TIME" } ,
-                          { table:"fits_table", column:"PI" } ]
+                  axis: [ { table:"EVENTS", column:"TIME" } ,
+                          { table:"EVENTS", column:"PI" } ]
                 },
                 this.service.request_plot_data,
                 this.onFiltersChangedFromPlot,
@@ -120,8 +120,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   {
                     filename: filename,
                     styles: { type: "ligthcurve", labels: ["TIME", "sumPI"] },
-                    axis: [ { table:"fits_table", column:"TIME" },
-                            { table:"fits_table", column:"PI" } ],
+                    axis: [ { table:"EVENTS", column:"TIME" },
+                            { table:"EVENTS", column:"PI" } ],
                     dt: 16.0
                   },
                   this.service.request_lightcurve,

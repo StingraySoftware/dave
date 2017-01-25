@@ -51,6 +51,13 @@ class Column:
         else:
             return None
 
-    def add_value(self, value, error):
+    def add_value(self, value, error=0.0):
         self.values = np.append(self.values, [value])
         self.error_values = np.append(self.error_values, [error])
+
+    def add_values(self, values, errors=None):
+        for i in range(len(values)):
+            if not errors:
+                self.add_value(values[i])
+            else:
+                self.add_value(values[i], errors[i])

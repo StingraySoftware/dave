@@ -94,3 +94,30 @@ def test_apply_filters(s, t, c, list, min_value, max_value):
 
     else:
         assert schema[t][c]["count"] == len(list)
+
+
+@given(
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.text(min_size=1),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False),
+    st.integers(),
+    st.floats(allow_nan=False, allow_infinity=False)
+)
+def test_join(s, t, c, v0, e0, v1, e1):
+    dataset1 = DataSet(s)
+    dataset1.add_table(t, [c])
+    dataset1.tables[t].columns[c].add_value(v0, e0)
+    dataset2 = DataSet(s)
+    dataset2.add_table(t, [c])
+    dataset2.tables[t].columns[c].add_value(v1, e0)
+
+    dataset1 = dataset1.join(dataset2)
+    schema = dataset1.get_schema()
+
+    assert t in schema
+    assert schema[t]
+    assert c in schema[t]
+    assert "count" in schema[t][c]
+    assert schema[t][c]["count"] == 2
