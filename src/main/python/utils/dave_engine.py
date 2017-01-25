@@ -1,9 +1,7 @@
 import utils.dave_reader as DaveReader
+import utils.dataset_helper as DsHelper
 import utils.plotter as Plotter
 import numpy as np
-import logging
-
-from stingray.events import EventList
 
 # get_dataset_schema: Returns the schema of a dataset of given file
 # the plot inside with a given file destination
@@ -16,6 +14,18 @@ def get_dataset_schema(destination):
         return dataset.get_schema()
     else:
         return None
+
+
+def get_filtered_dataset(destination, filters):
+    dataset = DaveReader.get_file_dataset(destination)
+
+    if not dataset:
+        return None
+
+    gti_filters = DsHelper.get_dataset_gti_as_filters(dataset, filters)
+    filtered_ds = DsHelper.apply_gti_filters_to_dataset(dataset, gti_filters)
+    filtered_ds = filtered_ds.apply_filters(filters)
+    return filtered_ds
 
 
 # get_plot_data: Returns the data for a plot
@@ -31,8 +41,7 @@ def get_dataset_schema(destination):
 #
 def get_plot_data(destination, filters, styles, axis):
 
-    dataset = DaveReader.get_file_dataset(destination)
-    filtered_ds = dataset.apply_filters(filters)
+    filtered_ds = get_filtered_dataset(destination, filters)
 
     # Config checking
     if "type" not in styles:
@@ -80,34 +89,33 @@ def get_plot_data(destination, filters, styles, axis):
 #
 def get_ligthcurve(destination, filters, axis, dt):
 
-    dataset = DaveReader.get_file_dataset(destination)
-
-    if not dataset:
+    filtered_ds = get_filtered_dataset(destination, filters)
+    if not filtered_ds:
         return None
-
-    filtered_ds = dataset.apply_filters(filters)
 
     if len(axis) != 2:
         return "Wrong number of axis"
 
-    time_data = np.append([], filtered_ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-    pi_data = np.append([], filtered_ds.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
-
-    # Sort event list
-    sort_events = np.sort([time_data, pi_data], axis=1)
-
-    eventlist = EventList(sort_events[0], pi=sort_events[1])
+    # Creates lightcurves by gti and joins in one
+    eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
     lc = eventlist.to_lc(dt)
+    list_of_lcs = lc.split_by_gti()
+    lc = list_of_lcs[0]
 
-    #The same done with stingray, but needs to setup start and end of lc for data filtering
-    #from stingray import Lightcurve
-    #from stingray.io import load_events_and_gtis
-    #from stingray.io import order_list_of_arrays
-    #pi_column = axis[1]["column"]
-    #fits_data = load_events_and_gtis(destination, additional_columns=[pi_column])
-    #eventlist = EventList(fits_data.ev_list, pi=fits_data.additional_data[pi_column])
-    #lc = eventlist.to_lc(dt, tstart=None, tseg=None)
+    if len(list_of_lcs) > 1:
+        for i in range(1, len(list_of_lcs)):
+            lc = lc.join(list_of_lcs[i])
 
+    # The same done with stingray, but needs to setup start and end of lc for data filtering
+    # from stingray import Lightcurve
+    # from stingray.io import load_events_and_gtis
+    # from stingray.io import order_list_of_arrays
+    # pi_column = axis[1]["column"]
+    # fits_data = load_events_and_gtis(destination, additional_columns=[pi_column])
+    # eventlist = EventList(fits_data.ev_list, pi=fits_data.additional_data[pi_column])
+    # lc = eventlist.to_lc(dt, tstart=None, tseg=None)
+
+    # Preapares the result
     result = []
     column_time = dict()
     column_time["values"] = lc.time

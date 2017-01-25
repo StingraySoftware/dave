@@ -6,6 +6,7 @@ import magic
 from model.dataset import DataSet
 import numpy as np
 from astropy.io import fits
+from stingray.io import load_events_and_gtis
 
 
 def get_file_dataset(destination):
@@ -33,10 +34,12 @@ def get_file_dataset(destination):
 
     elif file_extension.find("FITS") == 0:
 
-        table_id = "fits_table"
-        dataset = get_fits_dataset(destination, table_id)
+        # ds_id = "fits_table"
+        # table_ids = ["Primary", "EVENTS", "GTI"]
+        # dataset = get_fits_dataset(destination, ds_id, table_ids)
+        # return dataset
 
-        return dataset
+        return get_fits_dataset_with_stingray(destination)
 
     else:
         return None
@@ -61,18 +64,78 @@ def get_txt_dataset(destination, table_id, header_names):
     return dataset
 
 
-def get_fits_dataset(destination, table_id):
+# Returns a dataset by reading a Fits file, returns all tables, NOT USED!!
+def get_fits_dataset(destination, dsId, table_ids):
     hdulist = fits.open(destination)
-    tbdata = hdulist[1].data
+    dataset = DataSet(dsId)
 
-    header_names = hdulist[1].columns.names
-    dataset = DataSet(table_id)
-    dataset.add_table(table_id, header_names)
+    for t in range(len(hdulist)):
 
-    for i in range(len(header_names)):
-        header_name = header_names[i]
-        dataset.tables[table_id].columns[header_name].values = np.append([], tbdata.field(i))
+        if isinstance(hdulist[t], fits.hdu.table.BinTableHDU):
+            table_id = table_ids[t]
+            header_names = hdulist[t].columns.names
+            tbdata = hdulist[t].data
+            dataset.add_table(table_id, header_names)
+
+            for i in range(len(header_names)):
+                header_name = header_names[i]
+                dataset.tables[table_id].columns[header_name].values = np.append([], tbdata.field(i))
+
+        else:
+            logging.debug("No valid data on: %s" % t)
+            logging.debug("Type of Data: %s" % type(hdulist[t]))
+
+    hdulist.close()
 
     logging.debug("Read fits file successfully: %s" % destination)
+
+    return dataset
+
+
+# Returns the column's names of a given table of Fits file
+def get_fits_table_column_names(destination, table_id):
+    hdulist = fits.open(destination)
+
+    if hdulist[table_id]:
+        if isinstance(hdulist[table_id], fits.hdu.table.BinTableHDU):
+            return hdulist[table_id].columns.names
+
+    return None
+
+
+# Returns a dataset containin HDU table and GTI table with the Fits data using Stingray library
+def get_fits_dataset_with_stingray(destination, dsId='FITS', hduname='EVENTS', column='TIME'):
+
+    # Gets columns from fits hdu table
+    columns = get_fits_table_column_names (destination, hduname)
+
+    # Prepares additional_columns
+    additional_columns = []
+    for i in range(len(columns)):
+        if columns[i] != column:
+            additional_columns = np.append(additional_columns, columns[i])
+
+    # Reads fits data
+    fits_data = load_events_and_gtis(destination, additional_columns=additional_columns)
+
+    # Creates the dataset
+    dataset = DataSet(dsId)
+
+    #Fills Hdu table
+    dataset.add_table(hduname, columns)
+    dataset.tables[hduname].columns[column].add_values(fits_data.ev_list)
+    for i in range(len(additional_columns)):
+        column = additional_columns[i]
+        dataset.tables[hduname].columns[column].add_values(fits_data.additional_data[column])
+
+    #Fills Gtis table
+    gti_columns = ["START", "STOP"]
+    gti_start = fits_data.gti_list[:, 0]
+    gti_end = fits_data.gti_list[:, 1]
+    dataset.add_table("GTI", gti_columns)
+    dataset.tables["GTI"].columns[gti_columns[0]].add_values(gti_start)
+    dataset.tables["GTI"].columns[gti_columns[1]].add_values(gti_end)
+
+    logging.debug("Read fits with stingray file successfully: %s" % destination)
 
     return dataset

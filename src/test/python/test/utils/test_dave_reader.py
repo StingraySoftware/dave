@@ -27,28 +27,52 @@ def test_get_txt_dataset(s):
 @given(text())
 def test_get_fits_dataset_lc(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_2.lc")
-    table_id = "fits_table"
-    dataset = DaveReader.get_fits_dataset(destination, table_id)
+    ds_id = "fits_table"
+    table_ids = ["Primary", "RATE", "STDGTI"]
+    dataset = DaveReader.get_fits_dataset(destination, ds_id, table_ids)
     assert dataset
-    assert len(dataset.tables) == 1
-    assert table_id in dataset.tables
-    assert len(dataset.tables[table_id].columns) == 4
+    assert len(dataset.tables) == 2
+    assert table_ids[1] in dataset.tables
+    assert len(dataset.tables[table_ids[1]].columns) == 4
+
+
+@given(text())
+def test_get_fits_table_column_names(s):
+    destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
+    column_names = DaveReader.get_fits_table_column_names(destination, "EVENTS")
+    assert len(column_names) == 2
+
 
 @given(text())
 def test_get_fits_dataset_evt(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
-    table_id = "fits_table"
-    dataset = DaveReader.get_fits_dataset(destination, table_id)
+    ds_id = "fits_table"
+    table_ids = ["Primary", "EVENTS", "GTI"]
+    dataset = DaveReader.get_fits_dataset(destination, ds_id, table_ids)
     assert dataset
-    assert len(dataset.tables) == 1
-    assert table_id in dataset.tables
-    assert len(dataset.tables[table_id].columns) == 2
+    assert len(dataset.tables) == 2
+    assert table_ids[1] in dataset.tables
+    assert len(dataset.tables[table_ids[1]].columns) == 2
+
+
+@given(text())
+def test_get_fits_dataset_with_stingray(s):
+    destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
+    ds_id = "fits_table"
+    table_ids = ["Primary", "EVENTS", "GTI"]
+    dataset = DaveReader.get_fits_dataset_with_stingray(destination)
+    assert dataset
+    assert len(dataset.tables) == 2
+    assert table_ids[1] in dataset.tables
+    assert len(dataset.tables[table_ids[1]].columns) == 2
+
 
 @given(text())
 def test_get_file_dataset(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_2.lc")
-    table_id = "fits_table"
-    dataset = DaveReader.get_file_dataset(destination)
+    ds_id = "fits_table"
+    table_ids = ["Primary", "RATE", "STDGTI"]
+    dataset = DaveReader.get_fits_dataset(destination, ds_id, table_ids)
     assert dataset
-    assert len(dataset.tables) == 1
-    assert table_id in dataset.tables
+    assert len(dataset.tables) == 2
+    assert table_ids[1] in dataset.tables

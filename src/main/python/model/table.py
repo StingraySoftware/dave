@@ -64,3 +64,11 @@ class Table:
             value = row[column_name]["value"]
             error = row[column_name]["error_value"]
             self.columns[column_name].add_value(value, error)
+
+    def join (self, table):
+        res_table = self.clone()
+        any_column = table.columns[list(table.columns.keys())[0]]
+        for i in range(len(any_column.values)):
+            res_table.add_row(table.get_row(i))
+
+        return res_table

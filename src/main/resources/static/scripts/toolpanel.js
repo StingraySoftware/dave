@@ -27,23 +27,26 @@ function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChanged
     sliderSelectors_remove();
 
     for (tableName in schema) {
-      var table = schema[tableName];
+      if (tableName != "GTI") {
 
-      for (columnName in table) {
+        var table = schema[tableName];
 
-        var column = table[columnName];
-        var filterData = { table:tableName, column:columnName };
-        var selector = new sliderSelector(columnName,
-                                          columnName + ":",
-                                          filterData,
-                                          "From", "To",
-                                          column.min_value, column.max_value,
-                                          this.onSelectorValuesChanged);
-        this.$html.find(".selectorsContainer").append(selector.$html);
+        for (columnName in table) {
+
+          var column = table[columnName];
+          var filterData = { table:tableName, column:columnName };
+          var selector = new sliderSelector(columnName,
+                                            columnName + ":",
+                                            filterData,
+                                            "From", "To",
+                                            column.min_value, column.max_value,
+                                            this.onSelectorValuesChanged);
+          this.$html.find(".selectorsContainer").append(selector.$html);
+        }
+
+        this.buttonsContainer.removeClass("hidden");
+        this.buttonsContainer.fadeIn();
       }
-
-      this.buttonsContainer.removeClass("hidden");
-      this.buttonsContainer.fadeIn();
     }
   }
 
