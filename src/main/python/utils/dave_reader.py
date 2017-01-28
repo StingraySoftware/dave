@@ -8,11 +8,16 @@ import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
 
+cached_datasets = dict()
 
 def get_file_dataset(destination):
 
     if not destination:
         return None
+
+    if destination in cached_datasets:
+        logging.debug("Returned cached dataset")
+        return cached_datasets[destination]
 
     filename = os.path.splitext(destination)[0]
     file_extension = magic.from_file(destination)
@@ -30,6 +35,7 @@ def get_file_dataset(destination):
         random_values = np.random.uniform(-1, 1, size=numValues)
         table.columns["Amplitude"].values = random_values
 
+        cached_datasets[destination] = dataset
         return dataset
 
     elif file_extension.find("FITS") == 0:
@@ -39,7 +45,12 @@ def get_file_dataset(destination):
         # dataset = get_fits_dataset(destination, ds_id, table_ids)
         # return dataset
 
-        return get_fits_dataset_with_stingray(destination)
+        dataset = get_fits_dataset_with_stingray(destination, dsId='FITS',
+                                           hduname='EVENTS', column='TIME',
+                                           gtistring='GTI,STDGTI,STDGTI04')
+
+        cached_datasets[destination] = dataset
+        return dataset
 
     else:
         return None
@@ -104,10 +115,14 @@ def get_fits_table_column_names(destination, table_id):
 
 
 # Returns a dataset containin HDU table and GTI table with the Fits data using Stingray library
-def get_fits_dataset_with_stingray(destination, dsId='FITS', hduname='EVENTS', column='TIME'):
+def get_fits_dataset_with_stingray(destination, dsId='FITS',
+                                   hduname='EVENTS', column='TIME',
+                                   gtistring='GTI,STDGTI'):
 
     # Gets columns from fits hdu table
+    logging.debug("Reading Fits columns")
     columns = get_fits_table_column_names (destination, hduname)
+    columns = ["TIME", "PI"]
 
     # Prepares additional_columns
     additional_columns = []
@@ -115,13 +130,19 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS', hduname='EVENTS', c
         if columns[i] != column:
             additional_columns = np.append(additional_columns, columns[i])
 
+
+
     # Reads fits data
-    fits_data = load_events_and_gtis(destination, additional_columns=additional_columns)
+    logging.debug("Reading Fits columns's data")
+    fits_data = load_events_and_gtis(destination, additional_columns=additional_columns,
+                                    gtistring=gtistring,
+                                    hduname=hduname, column=column)
 
     # Creates the dataset
     dataset = DataSet(dsId)
 
     #Fills Hdu table
+    logging.debug("Fills Hdu table")
     dataset.add_table(hduname, columns)
     dataset.tables[hduname].columns[column].add_values(fits_data.ev_list)
     for i in range(len(additional_columns)):
@@ -129,6 +150,7 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS', hduname='EVENTS', c
         dataset.tables[hduname].columns[column].add_values(fits_data.additional_data[column])
 
     #Fills Gtis table
+    logging.debug("Fills Gtis table")
     gti_columns = ["START", "STOP"]
     gti_start = fits_data.gti_list[:, 0]
     gti_end = fits_data.gti_list[:, 1]

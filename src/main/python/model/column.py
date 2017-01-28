@@ -6,6 +6,7 @@ class Column:
     id = ""
     values = []
     error_values = []
+    has_error_values = False
 
     def __init__(self, id):
         self.id = id
@@ -46,18 +47,23 @@ class Column:
             return None
 
     def get_error_value(self, index):
-        if index >= 0 and index < len(self.error_values):
-            return copy.copy(self.error_values[index])
+        if self.has_error_values:
+            if index >= 0 and index < len(self.error_values):
+                return copy.copy(self.error_values[index])
+            else:
+                return None
         else:
-            return None
+            return 0
 
     def add_value(self, value, error=0.0):
         self.values = np.append(self.values, [value])
         self.error_values = np.append(self.error_values, [error])
 
     def add_values(self, values, errors=None):
-        for i in range(len(values)):
-            if not errors:
-                self.add_value(values[i])
-            else:
-                self.add_value(values[i], errors[i])
+        self.values = np.append(self.values, values)
+
+        if errors:
+            self.has_error_values = True
+            self.error_values = np.append(self.error_values, errors)
+        else:
+            self.has_error_values = False

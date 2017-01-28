@@ -3,16 +3,19 @@ import numpy as np
 from stingray.events import EventList
 import utils.filters_helper as FltHelper
 from model.table import Table
+import logging
 
 
 # Return dataset GTI table as array of filters over EVENTS table and TIME column
 def get_dataset_gti_as_filters(dataset, additional_filters=[]):
 
+    logging.debug("DsHelper.get_time_filter...")
     time_filter = FltHelper.get_time_filter(additional_filters)
 
     filters = []
 
     if "GTI" in dataset.tables:
+        logging.debug("DsHelper.CalculateGTIs...")
         gtistart = dataset.tables["GTI"].columns["START"].values
         gtistop = dataset.tables["GTI"].columns["STOP"].values
         gti_list = np.array([[a, b]
@@ -43,6 +46,7 @@ def get_dataset_gti_as_filters(dataset, additional_filters=[]):
                 filter = FltHelper.createTimeFilter(gti_from, gti_to)
                 filters = np.append(filters, filter)
 
+    logging.debug("DsHelper.get_dataset_gti_as_filters end...")
     return filters
 
 
@@ -58,17 +62,27 @@ def apply_gti_filters_to_dataset(dataset, gti_filters):
 
         # One dataset with the gti per each filter
         gti_datasets = []
+
+        num_gtis = len(gti_filters)
+        i_gti = 0
+        logging.debug("apply_gti_filters_to_dataset: Nº GTIs:  %s" % len(gti_filters))
         for filter in gti_filters:
+            logging.debug("apply_gti_filters_to_dataset: GTI:  %s" % i_gti)
             gti_dataset = dataset.apply_filters([filter])
-            gti_dataset.tables["GTI"] = get_empty_gti_table()
-            gti_dataset.tables["GTI"].columns["START"].add_value(filter["from"])
-            gti_dataset.tables["GTI"].columns["STOP"].add_value(filter["to"])
+            gti_dataset.tables["GTI"] = get_gti_table(filter["from"], filter["to"])
             gti_datasets = np.append(gti_datasets, gti_dataset)
+            i_gti = i_gti + 1
+            if i_gti > 5:
+                break
 
         # Join every rows in EVENTS table from filtered datasets
         result_ds = gti_datasets[0]
+        i_gti = 0
+        logging.debug("apply_gti_filters_to_dataset: JOIN:  %s" % len(gti_filters))
         if len(gti_datasets) > 1:
             for i in range(1, len(gti_datasets)):
+                logging.debug("apply_gti_filters_to_dataset: JOIN:  %s" % i_gti)
+                i_gti = i_gti + 1
                 if len(gti_datasets[i].tables["EVENTS"].columns["TIME"].values) > 0:
                     result_ds.tables["EVENTS"] = result_ds.tables["EVENTS"].join(gti_datasets[i].tables["EVENTS"])
                     result_ds.tables["GTI"] = result_ds.tables["GTI"].join(gti_datasets[i].tables["GTI"])
@@ -101,4 +115,10 @@ def get_eventlist_from_dataset(dataset, axis):
 def get_empty_gti_table():
     table = Table ("GTI")
     table.add_columns (["START", "STOP"])
+    return table
+
+def get_gti_table(from_val, to_val):
+    table = get_empty_gti_table()
+    table.columns["START"].add_value(from_val)
+    table.columns["STOP"].add_value(to_val)
     return table

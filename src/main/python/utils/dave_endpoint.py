@@ -35,11 +35,13 @@ def get_dataset_schema(filename, target):
     if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
         return common_error("Filename not uploaded")
 
+    logging.debug("get_dataset_schema")
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
         return common_error("Invalid file")
 
     schema = DaveEngine.get_dataset_schema(destination)
+    logging.debug("get_dataset_schema end...")
     return json.dumps(schema, cls=NPEncoder)
 
 
@@ -64,6 +66,9 @@ def get_plot_data(filename, target, filters, styles, axis):
     logging.debug("get_plot_data: axis %s" % axis)
 
     data = DaveEngine.get_plot_data(destination, filters, styles, axis)
+
+    logging.debug("get_plot_data: Finish!")
+
     return json.dumps(data, cls=NPEncoder)
 
 
@@ -84,4 +89,7 @@ def get_ligthcurve(filename, target, filters, axis, dt):
     logging.debug("get_ligthcurve: dt %f" % dt)
 
     data = DaveEngine.get_ligthcurve(destination, filters, axis, dt)
+
+    logging.debug("get_ligthcurve: Finish!")
+
     return json.dumps(data, cls=NPEncoder)

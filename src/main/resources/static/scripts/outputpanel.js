@@ -12,7 +12,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
 
   this.initPlots = function(filename) {
     //PLOTS HARDCODED BY THE MOMENT HERE
-    if (filename.endsWith(".evt")) {
+    if (!filename.endsWith(".txt")) {
       this.plots = this.getFitsTablePlots(filename);
     } else {
       this.plots = this.getTxtTablePlots(filename);

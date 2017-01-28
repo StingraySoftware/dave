@@ -1,4 +1,5 @@
 from model.column import Column
+import numpy as np
 import logging
 
 
@@ -21,14 +22,19 @@ class Table:
         return schema
 
     def clone(self):
+        logging.debug("Table.clone start!!")
         table = Table(self.id)
 
         for column_name in self.columns:
+            logging.debug("Table.clone column_name: %s" % column_name)
             table.columns[column_name] = self.columns[column_name].clone()
+
+        logging.debug("Table.clone start!!")
 
         return table
 
     def apply_filter(self, filter):
+        logging.debug("Table.apply_filters start!! filter: %s" % filter)
         column_name = filter["column"]
         if column_name not in self.columns:
             logging.error("table.apply_filter wrong column: %s" % column_name)
@@ -43,11 +49,14 @@ class Table:
             filtered_table.columns[tmp_column_name] = Column(tmp_column_name)
 
         column = self.columns[column_name]
-        for i in range(len(column.values)):
-            value = column.values[i]
-            if (value >= filter["from"]) and (value <= filter["to"]):
-                filtered_table.add_row(self.get_row(i))
+        logging.debug("Table.apply_filters filtered_indexes start!!")
+        filtered_indexes = np.array([i for i in range(len(column.values)) if ((column.values[i] >= filter["from"]) and (column.values[i] <= filter["to"]))])
+        logging.debug("Table.apply_filters filtered_indexes %s" % len(filtered_indexes))
 
+        for i in filtered_indexes:
+            filtered_table.add_row(self.get_row(i))
+
+        logging.debug("Table.apply_filters end!!")
         return filtered_table
 
     def get_row(self, index):

@@ -2,6 +2,7 @@ import utils.dave_reader as DaveReader
 import utils.dataset_helper as DsHelper
 import utils.plotter as Plotter
 import numpy as np
+import logging
 
 # get_dataset_schema: Returns the schema of a dataset of given file
 # the plot inside with a given file destination
@@ -17,14 +18,22 @@ def get_dataset_schema(destination):
 
 
 def get_filtered_dataset(destination, filters):
+    logging.debug("get_filtered_dataset...")
     dataset = DaveReader.get_file_dataset(destination)
 
     if not dataset:
         return None
 
+    logging.debug("get_dataset_gti_as_filters")
     gti_filters = DsHelper.get_dataset_gti_as_filters(dataset, filters)
+
+    logging.debug("apply_gti_filters_to_dataset")
     filtered_ds = DsHelper.apply_gti_filters_to_dataset(dataset, gti_filters)
+
+    logging.debug("apply_filters")
     filtered_ds = filtered_ds.apply_filters(filters)
+
+    logging.debug("get_filtered_dataset end!")
     return filtered_ds
 
 
@@ -97,11 +106,13 @@ def get_ligthcurve(destination, filters, axis, dt):
         return "Wrong number of axis"
 
     # Creates lightcurves by gti and joins in one
+    print ("Create lightcurve ....")
     eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
     lc = eventlist.to_lc(dt)
     list_of_lcs = lc.split_by_gti()
     lc = list_of_lcs[0]
 
+    print ("Join lightcurves ....")
     if len(list_of_lcs) > 1:
         for i in range(1, len(list_of_lcs)):
             lc = lc.join(list_of_lcs[i])
@@ -116,6 +127,7 @@ def get_ligthcurve(destination, filters, axis, dt):
     # lc = eventlist.to_lc(dt, tstart=None, tseg=None)
 
     # Preapares the result
+    print ("Result lightcurves ....")
     result = []
     column_time = dict()
     column_time["values"] = lc.time

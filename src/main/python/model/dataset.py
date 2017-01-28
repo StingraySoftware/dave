@@ -20,16 +20,20 @@ class DataSet:
         return schema
 
     def clone (self):
+        logging.debug("dataset.clone start!!")
         dataset = DataSet(self.id)
 
         for table_id in self.tables:
+            logging.error("dataset.clone table_id: %s" % table_id)
             table = self.tables[table_id].clone()
             dataset.tables[table_id] = table
 
+        logging.debug("dataset.clone end!!")
         return dataset
 
     def apply_filters(self, filters):
 
+        logging.debug("dataset.apply_filters start!!")
         if not filters or not len(filters):
             logging.debug("dataset.apply_filters wrong filters!!")
             logging.debug(filters)
@@ -44,9 +48,11 @@ class DataSet:
             else:
                 logging.error("dataset.apply_filters wrong table_id: %s" % table_id)
 
+        logging.debug("dataset.apply_filters end!!")
         return filtered_dataset
 
     def join (self, dataset):
+        logging.debug("dataset.join start!!")
         joined_dataset = self.clone()
 
         for table_id in joined_dataset.tables:
@@ -54,4 +60,5 @@ class DataSet:
                 table = joined_dataset.tables[table_id].join(dataset.tables[table_id])
                 joined_dataset.tables[table_id] = table
 
+        logging.debug("dataset.join end!!")
         return joined_dataset
