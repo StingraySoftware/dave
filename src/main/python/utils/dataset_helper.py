@@ -72,8 +72,6 @@ def apply_gti_filters_to_dataset(dataset, gti_filters):
             gti_dataset.tables["GTI"] = get_gti_table(filter["from"], filter["to"])
             gti_datasets = np.append(gti_datasets, gti_dataset)
             i_gti = i_gti + 1
-            if i_gti > 5:
-                break
 
         # Join every rows in EVENTS table from filtered datasets
         result_ds = gti_datasets[0]

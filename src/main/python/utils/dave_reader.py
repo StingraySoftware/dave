@@ -131,32 +131,55 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
             additional_columns = np.append(additional_columns, columns[i])
 
 
-
     # Reads fits data
     logging.debug("Reading Fits columns's data")
     fits_data = load_events_and_gtis(destination, additional_columns=additional_columns,
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
 
+
+    gti_start = fits_data.gti_list[:, 0]
+    gti_end = fits_data.gti_list[:, 1]
+
     # Creates the dataset
     dataset = DataSet(dsId)
 
     #Fills Hdu table
-    logging.debug("Fills Hdu table")
+    logging.debug("Creates Hdu table")
     dataset.add_table(hduname, columns)
-    dataset.tables[hduname].columns[column].add_values(fits_data.ev_list)
-    for i in range(len(additional_columns)):
-        column = additional_columns[i]
-        dataset.tables[hduname].columns[column].add_values(fits_data.additional_data[column])
 
-    #Fills Gtis table
-    logging.debug("Fills Gtis table")
-    gti_columns = ["START", "STOP"]
-    gti_start = fits_data.gti_list[:, 0]
-    gti_end = fits_data.gti_list[:, 1]
+    logging.debug("Creates Gtis table")
+    gti_columns = ["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"]
     dataset.add_table("GTI", gti_columns)
-    dataset.tables["GTI"].columns[gti_columns[0]].add_values(gti_start)
-    dataset.tables["GTI"].columns[gti_columns[1]].add_values(gti_end)
+
+    logging.debug("Filling tables")
+    gti_index = 0;
+    start_event_idx = 0;
+    end_event_idx = 0;
+    for e in range(len(fits_data.ev_list)):
+        event = fits_data.ev_list[e]
+        if event > gti_end[gti_index]:
+            # The GTI has ended, so lets insert it on dataset
+            logging.debug("Adding GTI %s" % gti_index)
+            dataset.tables["GTI"].columns["START"].add_value(gti_start[gti_index])
+            dataset.tables["GTI"].columns["STOP"].add_value(gti_end[gti_index])
+            dataset.tables["GTI"].columns["START_EVENT_IDX"].add_value(start_event_idx)
+            dataset.tables["GTI"].columns["END_EVENT_IDX"].add_value(end_event_idx)
+
+            # Insert values at range on dataset
+            dataset.tables[hduname].columns[column].add_values(fits_data.ev_list[start_event_idx:end_event_idx:1])
+            for i in range(len(additional_columns)):
+                dataset.tables[hduname].columns[additional_columns[i]].add_values(fits_data.additional_data[additional_columns[i]][start_event_idx:end_event_idx:1])
+
+            # Continue with next GTI
+            gti_index += 1
+            start_event_idx = -1
+
+        if event >= gti_start[gti_index] and event <= gti_end[gti_index]:
+            if start_event_idx < 0:
+                start_event_idx = e
+            end_event_idx = e
+
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)
 
