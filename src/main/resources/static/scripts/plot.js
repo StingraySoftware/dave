@@ -61,7 +61,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar) 
 
    var plotlyConfig = null;
 
+   log("onPlotReceived received data!, plot" + currentObj.id);
    data = JSON.parse(data);
+   log("onPlotReceived paserd data!, plot" + currentObj.id);
 
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,

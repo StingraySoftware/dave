@@ -24,14 +24,14 @@ def get_filtered_dataset(destination, filters):
     if not dataset:
         return None
 
-    logging.debug("get_dataset_gti_as_filters")
-    gti_filters = DsHelper.get_dataset_gti_as_filters(dataset, filters)
+    #logging.debug("get_dataset_gti_as_filters")
+    #gti_filters = DsHelper.get_dataset_gti_as_filters(dataset, filters)
 
-    logging.debug("apply_gti_filters_to_dataset")
-    filtered_ds = DsHelper.apply_gti_filters_to_dataset(dataset, gti_filters)
+    #logging.debug("apply_gti_filters_to_dataset")
+    #filtered_ds = DsHelper.apply_gti_filters_to_dataset(dataset, gti_filters)
 
     logging.debug("apply_filters")
-    filtered_ds = filtered_ds.apply_filters(filters)
+    filtered_ds = dataset.apply_filters(filters)
 
     logging.debug("get_filtered_dataset end!")
     return filtered_ds

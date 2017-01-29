@@ -2,6 +2,7 @@
 import os
 import logging
 import magic
+import time
 
 from model.dataset import DataSet
 import numpy as np
@@ -124,12 +125,15 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     columns = get_fits_table_column_names (destination, hduname)
     columns = ["TIME", "PI"]
 
+    event_values = []
+
     # Prepares additional_columns
     additional_columns = []
+    additional_columns_values = dict()
     for i in range(len(columns)):
         if columns[i] != column:
             additional_columns = np.append(additional_columns, columns[i])
-
+            additional_columns_values[columns[i]] = []
 
     # Reads fits data
     logging.debug("Reading Fits columns's data")
@@ -152,35 +156,69 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     gti_columns = ["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"]
     dataset.add_table("GTI", gti_columns)
 
-    logging.debug("Filling tables")
-    gti_index = 0;
-    start_event_idx = 0;
-    end_event_idx = 0;
-    for e in range(len(fits_data.ev_list)):
-        event = fits_data.ev_list[e]
-        if event > gti_end[gti_index]:
+    logging.debug("Reading tables")
+    start_event_idx = 0
+    end_event_idx = 0
+    start_time = time.time()
+    append_start_time = time.time()
+    append_elapsed_time = 0
+    inserted_rows = 0
+
+    for gti_index in range(len(gti_start)):
+
+        start_event_idx = find_idx_nearest_val(fits_data.ev_list, gti_start[gti_index])
+        end_event_idx = find_idx_nearest_val(fits_data.ev_list, gti_end[gti_index])
+
+        if end_event_idx > start_event_idx:
             # The GTI has ended, so lets insert it on dataset
-            logging.debug("Adding GTI %s" % gti_index)
+            if gti_index % 100 == 0:
+                logging.debug("Adding GTI %s" % gti_index)
+                logging.debug("Num rows %s" % inserted_rows)
+                elapsed_time = time.time() - start_time
+                logging.debug("Elapsed %s" % elapsed_time)
+                logging.debug("Append Elapsed %s" % append_elapsed_time)
+                start_time = time.time()
+                append_elapsed_time = 0
+                inserted_rows = 0
+
             dataset.tables["GTI"].columns["START"].add_value(gti_start[gti_index])
             dataset.tables["GTI"].columns["STOP"].add_value(gti_end[gti_index])
             dataset.tables["GTI"].columns["START_EVENT_IDX"].add_value(start_event_idx)
             dataset.tables["GTI"].columns["END_EVENT_IDX"].add_value(end_event_idx)
 
             # Insert values at range on dataset
-            dataset.tables[hduname].columns[column].add_values(fits_data.ev_list[start_event_idx:end_event_idx:1])
+            append_start_time = time.time()
+            event_values.extend(fits_data.ev_list[start_event_idx:end_event_idx:1])
             for i in range(len(additional_columns)):
-                dataset.tables[hduname].columns[additional_columns[i]].add_values(fits_data.additional_data[additional_columns[i]][start_event_idx:end_event_idx:1])
+                additional_columns_values[additional_columns[i]].extend(fits_data.additional_data[additional_columns[i]][start_event_idx:end_event_idx:1])
+            append_elapsed_time += time.time() - append_start_time
 
-            # Continue with next GTI
-            gti_index += 1
-            start_event_idx = -1
+            inserted_rows += (end_event_idx - start_event_idx)
 
-        if event >= gti_start[gti_index] and event <= gti_end[gti_index]:
-            if start_event_idx < 0:
-                start_event_idx = e
-            end_event_idx = e
+        else:
+            logging.debug("Wrong indexes for %s" % gti_index)
 
+
+    logging.debug("Fill dataset")
+    dataset.tables[hduname].columns[column].add_values(event_values)
+    for i in range(len(additional_columns)):
+        dataset.tables[hduname].columns[additional_columns[i]].add_values(additional_columns_values[additional_columns[i]])
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)
 
     return dataset
+
+
+# Finds the idx of the nearest value on the array, array must be sorted
+def find_idx_nearest_val(array, value):
+    idx = np.searchsorted(array, value, side="left")
+    if idx >= len(array):
+        idx_nearest = len(array)-1
+    elif idx == 0:
+        idx_nearest = 0
+    else:
+        if abs(value - array[idx-1]) < abs(value - array[idx]):
+            idx_nearest = idx-1
+        else:
+            idx_nearest = idx
+    return idx_nearest

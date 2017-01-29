@@ -113,7 +113,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                 this.service.request_plot_data,
                 this.onFiltersChangedFromPlot,
                 this.$toolBar
-              ),
+              )/*,
 
               new Plot(
                   "ligthcurve_" + filename,
@@ -127,7 +127,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   this.service.request_lightcurve,
                   this.onFiltersChangedFromPlot,
                   this.$toolBar
-                )
+                )*/
 
               ];
   }

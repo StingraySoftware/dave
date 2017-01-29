@@ -67,9 +67,13 @@ def get_plot_data(filename, target, filters, styles, axis):
 
     data = DaveEngine.get_plot_data(destination, filters, styles, axis)
 
+    logging.debug("get_plot_data: json.dumps...")
+
+    jsonData = json.dumps(data, cls=NPEncoder)
+
     logging.debug("get_plot_data: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonData
 
 
 def get_ligthcurve(filename, target, filters, axis, dt):
