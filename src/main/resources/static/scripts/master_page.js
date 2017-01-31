@@ -28,7 +28,7 @@ function onDatasetChanged ( filename ) {
       log("onDatasetChanged:" + schema);
       var jsonSchema = JSON.parse(schema);
       theToolPanel.onDatasetSchemaChanged(jsonSchema);
-      theOutputPanel.onDatasetChanged(filename);
+      theOutputPanel.onDatasetChanged(filename, jsonSchema);
       theOutputPanel.onDatasetValuesChanged(filename, []);
     }, function( error ) {
         log("onDatasetChanged error:" + JSON.stringify(error));

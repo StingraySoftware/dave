@@ -101,6 +101,11 @@ h3
   font-size: 0.7em;
 }
 
+.fullWidth
+{
+  width: 98%;
+}
+
 .sliderSelector .switch-wrapper {
   display: inline-block;
   position: relative;

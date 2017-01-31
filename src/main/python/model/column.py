@@ -1,6 +1,4 @@
-import numpy as np
 import copy
-
 
 class Column:
     id = ""
@@ -10,8 +8,8 @@ class Column:
 
     def __init__(self, id):
         self.id = id
-        self.values = np.array([])
-        self.error_values = np.array([])
+        self.values = []
+        self.error_values = []
 
     def get_schema(self):
         schema = dict()
@@ -36,8 +34,8 @@ class Column:
 
     def clone(self):
         column = Column(self.id)
-        column.values = np.copy(self.values)
-        column.error_values = np.copy(self.error_values)
+        column.values = copy.copy(self.values)
+        column.error_values = copy.copy(self.error_values)
         return column
 
     def get_value(self, index):
@@ -56,14 +54,14 @@ class Column:
             return 0
 
     def add_value(self, value, error=0.0):
-        self.values = np.append(self.values, [value])
-        self.error_values = np.append(self.error_values, [error])
+        self.values.extend([value])
+        self.error_values.extend([error])
 
     def add_values(self, values, errors=None):
-        self.values = np.append(self.values, values)
+        self.values.extend(values)
 
         if errors:
             self.has_error_values = True
-            self.error_values = np.append(self.error_values, errors)
+            self.error_values.extend(errors)
         else:
             self.has_error_values = False

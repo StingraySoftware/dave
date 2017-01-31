@@ -1,5 +1,6 @@
 import utils.dave_reader as DaveReader
 import utils.dataset_helper as DsHelper
+import utils.filters_helper as FltHelper
 import utils.plotter as Plotter
 import numpy as np
 import logging
@@ -23,6 +24,13 @@ def get_filtered_dataset(destination, filters):
 
     if not dataset:
         return None
+
+    #if len(dataset.tables["EVENTS"].columns["TIME"].values) > 1000 and len(filters) == 0:
+    #    logging.warn("Returning only first one thousand points.")
+    #    start = dataset.tables["EVENTS"].columns["TIME"].values[0]
+    #    end = dataset.tables["EVENTS"].columns["TIME"].values[1000]
+    #    time_filter = FltHelper.createTimeFilter(start, end)
+    #    filters.append(time_filter)
 
     #logging.debug("get_dataset_gti_as_filters")
     #gti_filters = DsHelper.get_dataset_gti_as_filters(dataset, filters)
@@ -106,16 +114,16 @@ def get_ligthcurve(destination, filters, axis, dt):
         return "Wrong number of axis"
 
     # Creates lightcurves by gti and joins in one
-    print ("Create lightcurve ....")
+    logging.debug("Create lightcurve ....")
     eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
     lc = eventlist.to_lc(dt)
-    list_of_lcs = lc.split_by_gti()
-    lc = list_of_lcs[0]
+    #list_of_lcs = lc.split_by_gti()
+    #lc = list_of_lcs[0]
 
-    print ("Join lightcurves ....")
-    if len(list_of_lcs) > 1:
-        for i in range(1, len(list_of_lcs)):
-            lc = lc.join(list_of_lcs[i])
+    #print ("Join lightcurves ....")
+    #if len(list_of_lcs) > 1:
+    #    for i in range(1, len(list_of_lcs)):
+    #        lc = lc.join(list_of_lcs[i])
 
     # The same done with stingray, but needs to setup start and end of lc for data filtering
     # from stingray import Lightcurve
@@ -127,14 +135,14 @@ def get_ligthcurve(destination, filters, axis, dt):
     # lc = eventlist.to_lc(dt, tstart=None, tseg=None)
 
     # Preapares the result
-    print ("Result lightcurves ....")
+    logging.debug("Result lightcurves ....")
     result = []
     column_time = dict()
     column_time["values"] = lc.time
     result = np.append(result, [column_time])
 
     column_pi = dict()
-    column_pi["values"] = lc.counts
+    column_pi["values"] = lc.countrate
     result = np.append(result, [column_pi])
 
     return result

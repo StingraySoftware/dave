@@ -4,6 +4,7 @@ from stingray.events import EventList
 import utils.filters_helper as FltHelper
 from model.table import Table
 import logging
+import bisect
 
 
 # Return dataset GTI table as array of filters over EVENTS table and TIME column
@@ -95,8 +96,8 @@ def apply_gti_filters_to_dataset(dataset, gti_filters):
 def get_eventlist_from_dataset(dataset, axis):
 
     # Extract axis values
-    time_data = np.append([], dataset.tables[axis[0]["table"]].columns["TIME"].values)
-    pi_data = np.append([], dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
+    time_data = np.array(dataset.tables[axis[0]["table"]].columns["TIME"].values)
+    pi_data = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
 
     # Extract GTIs
     gtistart = dataset.tables["GTI"].columns["START"].values
@@ -115,8 +116,27 @@ def get_empty_gti_table():
     table.add_columns (["START", "STOP"])
     return table
 
+
 def get_gti_table(from_val, to_val):
     table = get_empty_gti_table()
     table.columns["START"].add_value(from_val)
     table.columns["STOP"].add_value(to_val)
     return table
+
+
+# Finds the idx of the nearest value on the array, array must be sorted
+def find_idx_nearest_val(array, value):
+
+    #idx = np.searchsorted(array, value, side="left")
+    idx = bisect.bisect_left(array, value) # Looks like bisec is faster with structured data than searchsorted
+
+    if idx >= len(array):
+        idx_nearest = len(array)-1
+    elif idx == 0:
+        idx_nearest = 0
+    else:
+        if abs(value - array[idx-1]) < abs(value - array[idx]):
+            idx_nearest = idx-1
+        else:
+            idx_nearest = idx
+    return idx_nearest

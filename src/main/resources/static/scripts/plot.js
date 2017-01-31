@@ -1,5 +1,5 @@
 
-function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar) {
+function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar, cssClass) {
 
   var currentObj = this;
   this.id = id;
@@ -8,8 +8,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar) 
   this.getDataFromServerFn = getDataFromServerFn;
   this.onFiltersChanged = onFiltersChangedFn;
   this.isVisible = true;
+  this.cssClass = (cssClass != undefined) ? cssClass : "";
 
-  this.$html = $('<div class="plotContainer ' + this.id + '">' +
+  this.$html = $('<div class="plotContainer ' + this.id + ' ' + this.cssClass + '">' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div style="float:right">' +
                   ' <div class="hoverinfo"></div>' +
