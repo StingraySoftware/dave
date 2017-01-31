@@ -60,7 +60,7 @@ def get_file_dataset(destination):
 def get_txt_dataset(destination, table_id, header_names):
 
     data = np.loadtxt(destination)
-    dataset = DataSet.get_dataset(table_id, header_names)
+    dataset = DataSet.get_dataset(table_id, table_id, header_names)
 
     # Column1, Column1Err, Column2, Column2Err .. header order expected
     for i in range(len(header_names)):
@@ -77,7 +77,7 @@ def get_txt_dataset(destination, table_id, header_names):
 # Returns a dataset by reading a Fits file, returns all tables, NOT USED!!
 def get_fits_dataset(destination, dsId, table_ids):
     hdulist = fits.open(destination)
-    dataset = DataSet.get_dataset(table_id, [])
+    dataset = DataSet.get_empty_dataset(dsId)
 
     for t in range(len(hdulist)):
 

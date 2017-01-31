@@ -53,15 +53,14 @@ class Column:
         else:
             return 0
 
-    def add_value(self, value, error=0.0):
+    def add_value(self, value, error=None):
         self.values.extend([value])
-        self.error_values.extend([error])
+        self.has_error_values = not (error is None)
+        if self.has_error_values:
+            self.error_values.extend([error])
 
     def add_values(self, values, errors=None):
         self.values.extend(values)
-
-        if errors:
-            self.has_error_values = True
+        self.has_error_values = not (errors is None)
+        if self.has_error_values:
             self.error_values.extend(errors)
-        else:
-            self.has_error_values = False

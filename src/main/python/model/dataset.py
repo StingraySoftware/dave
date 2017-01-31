@@ -94,9 +94,14 @@ class DataSet:
 
 
 # STATIC MEHTODS
+
 # Returns a new empty dataset with the specified table_id and columns
-def get_dataset(destination, table_id, columns):
-    dataset = DataSet(table_id)
+def get_empty_dataset(ds_id):
+    return DataSet(ds_id)
+
+# Returns a new empty dataset with the specified table_id and columns
+def get_dataset(ds_id, table_id, columns):
+    dataset = get_empty_dataset(ds_id)
     dataset.add_table(table_id, columns)
     return dataset
 
