@@ -12,6 +12,7 @@
   "dependencies": {
     "config-js": "^1.1.9",
     "electron-packager": "^8.5.0",
+    "menu": "^0.2.5",
     "request-promise": "*"
   },
   "devDependencies": {

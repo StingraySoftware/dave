@@ -1,10 +1,10 @@
 module.exports = {
   environment : {
-    enabled : 'false',
+    enabled : 'true',
     path : '../../resources/bash/activate_and_launch_dev.bash'
   },
   python : {
-    enabled : 'false',
+    enabled : 'true',
     path : '../../python/server.py',
     url : 'http://localhost:5000'
   },
