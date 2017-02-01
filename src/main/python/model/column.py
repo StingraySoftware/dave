@@ -1,16 +1,15 @@
-import numpy as np
 import copy
-
 
 class Column:
     id = ""
     values = []
     error_values = []
+    has_error_values = False
 
     def __init__(self, id):
         self.id = id
-        self.values = np.array([])
-        self.error_values = np.array([])
+        self.values = []
+        self.error_values = []
 
     def get_schema(self):
         schema = dict()
@@ -35,8 +34,8 @@ class Column:
 
     def clone(self):
         column = Column(self.id)
-        column.values = np.copy(self.values)
-        column.error_values = np.copy(self.error_values)
+        column.values = copy.copy(self.values)
+        column.error_values = copy.copy(self.error_values)
         return column
 
     def get_value(self, index):
@@ -46,11 +45,22 @@ class Column:
             return None
 
     def get_error_value(self, index):
-        if index >= 0 and index < len(self.error_values):
-            return copy.copy(self.error_values[index])
+        if self.has_error_values:
+            if index >= 0 and index < len(self.error_values):
+                return copy.copy(self.error_values[index])
+            else:
+                return None
         else:
-            return None
+            return 0
 
-    def add_value(self, value, error):
-        self.values = np.append(self.values, [value])
-        self.error_values = np.append(self.error_values, [error])
+    def add_value(self, value, error=None):
+        self.values.extend([value])
+        self.has_error_values = not (error is None)
+        if self.has_error_values:
+            self.error_values.extend([error])
+
+    def add_values(self, values, errors=None):
+        self.values.extend(values)
+        self.has_error_values = not (errors is None)
+        if self.has_error_values:
+            self.error_values.extend(errors)

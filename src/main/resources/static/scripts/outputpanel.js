@@ -10,10 +10,10 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   this.$toolBar = $(this.toolBarSelector);
   this.plots = [];
 
-  this.initPlots = function(filename) {
+  this.initPlots = function(filename, schema) {
     //PLOTS HARDCODED BY THE MOMENT HERE
-    if (filename.endsWith(".evt")) {
-      this.plots = this.getFitsTablePlots(filename);
+    if (!filename.endsWith(".txt")) {
+      this.plots = this.getFitsTablePlots(filename, schema);
     } else {
       this.plots = this.getTxtTablePlots(filename);
     }
@@ -33,8 +33,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     $(window).trigger("resize");
   }
 
-  this.onDatasetChanged = function ( filename ) {
-    this.initPlots(filename);
+  this.onDatasetChanged = function ( filename, schema ) {
+    this.initPlots(filename, schema);
   }
 
   this.onDatasetValuesChanged = function ( filename, filters ) {
@@ -100,33 +100,38 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
               ];
   }
 
-  this.getFitsTablePlots = function ( filename ) {
+  this.getFitsTablePlots = function ( filename, schema ) {
+
+    dt = 100;//Math.ceil((schema.EVENTS.TIME.max_value - schema.EVENTS.TIME.min_value) / 100.0);
+    log("getFitsTablePlots: dt: " + dt );
+
     return [
-              new Plot(
+              /*new Plot(
                 "time_pi_" + filename,
                 {
                   filename: filename,
                   styles: { type: "scatter", labels: ["TIME", "PI"] },
-                  axis: [ { table:"fits_table", column:"TIME" } ,
-                          { table:"fits_table", column:"PI" } ]
+                  axis: [ { table:"EVENTS", column:"TIME" } ,
+                          { table:"EVENTS", column:"PI" } ]
                 },
                 this.service.request_plot_data,
                 this.onFiltersChangedFromPlot,
                 this.$toolBar
-              ),
+              ),*/
 
               new Plot(
                   "ligthcurve_" + filename,
                   {
                     filename: filename,
-                    styles: { type: "ligthcurve", labels: ["TIME", "sumPI"] },
-                    axis: [ { table:"fits_table", column:"TIME" },
-                            { table:"fits_table", column:"PI" } ],
-                    dt: 16.0
+                    styles: { type: "ligthcurve", labels: ["TIME", "Count Rate(c/s)"] },
+                    axis: [ { table:"EVENTS", column:"TIME" },
+                            { table:"EVENTS", column:"PI" } ],
+                    dt: dt
                   },
                   this.service.request_lightcurve,
                   this.onFiltersChangedFromPlot,
-                  this.$toolBar
+                  this.$toolBar,
+                  "fullWidth"
                 )
 
               ];
