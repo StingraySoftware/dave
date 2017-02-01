@@ -174,10 +174,20 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		# Mac OSX
 		\cp -r $STINGRAY_FOLDER/build/lib.macosx-10.5-x86_64-3.5/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.macosx-10.5-x86_64-3.5/astropy_helpers src/main/python
-
-		#This is for MagicFile not for styngray, but only applies to macosx
-		brew install libmagic
 	fi
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# Mac OSX
+	#This is for MagicFile not for styngray, but only applies to macosx
+	if [ ! -f /usr/local/bin/brew ]; then
+		echo "Please install HomeBrew before continue."
+		echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
+		echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+		exit 1
+	fi
+
+	/usr/local/bin/brew install libmagic
 fi
 
 # Installing node modules

@@ -15,8 +15,8 @@ mkdir $BUILD_FOLDER/DAVEApp.app/dave
 \cp -r src/main/resources $BUILD_FOLDER/DAVEApp.app/dave/resources
 \cp -r src/main/python $BUILD_FOLDER/DAVEApp.app/dave/python
 \cp -r work/stingray/requirements.txt $BUILD_FOLDER/DAVEApp.app/dave/python
-rm -f $BUILD_FOLDER/DAVEApp.app/dave/resources/python/*.log
-rm -f $BUILD_FOLDER/DAVEApp.app/dave/resources/python/uploadeddataset/*
+rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/*.log
+rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/uploadeddataset/*
 \cp -r setup/environment.yml $BUILD_FOLDER/DAVEApp.app/dave/
 
 cd build
