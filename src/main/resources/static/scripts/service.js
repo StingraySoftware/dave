@@ -5,8 +5,7 @@ function Service (base_url) {
 
   this.base_url = base_url;
 
-  this.upload_form_data = function (successFn, errorFn) {
-    var formData = new FormData($('form')[0]);
+  this.upload_form_data = function (successFn, errorFn, formData) {
     $.ajax({
        url: thisService.base_url + "/upload",
        type: 'POST',

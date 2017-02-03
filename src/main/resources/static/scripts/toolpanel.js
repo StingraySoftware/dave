@@ -1,5 +1,5 @@
 
-function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChangedFn) {
+function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetChangedFn, onFiltersChangedFn) {
 
   var currentObj = this;
 
@@ -8,13 +8,17 @@ function ToolPanel (classSelector, service, onDatasetChangedFn, onFiltersChanged
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.clearBtn = this.$html.find(".btnClear");
 
-  this.onDatasetChanged = onDatasetChangedFn;
+  this.onSrcDatasetChangedFn = onSrcDatasetChangedFn;
+  this.onBckDatasetChangedFn = onBckDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
 
   this.lastTimeoutId = null;
 
-  var theFileSelector = new fileSelector("theFileSelector", theFilename, service.upload_form_data, this.onDatasetChanged);
-  this.$html.prepend(theFileSelector.$html);
+  var theBckFileSelector = new fileSelector("theBckFileSelector", "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
+  this.$html.prepend(theBckFileSelector.$html);
+
+  var theSrcFileSelector = new fileSelector("theSrcFileSelector", "Src File:", service.upload_form_data, this.onSrcDatasetChangedFn);
+  this.$html.prepend(theSrcFileSelector.$html);
 
   this.clearBtn.button().bind("click", function( event ) {
       event.preventDefault();

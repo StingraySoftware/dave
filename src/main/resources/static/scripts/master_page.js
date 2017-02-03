@@ -5,6 +5,7 @@ var theToolPanel = null;
 var theOutputPanel = null;
 var theService = null;
 var theFilename = "";
+var theBckFilename = "";
 
 $(document).ready(function () {
 
@@ -12,7 +13,7 @@ $(document).ready(function () {
   log("App started!! ->" + DOMAIN_URL);
 
   theService = new Service (DOMAIN_URL);
-  theToolPanel = new ToolPanel (".toolPanel", theService, onDatasetChanged, onFiltersChanged);
+  theToolPanel = new ToolPanel (".toolPanel", theService, onSrcDatasetChanged, onBckDatasetChanged, onFiltersChanged);
   theOutputPanel = new OutputPanel (".outputPanelContainer", ".outputPanelToolBar", theService, onFiltersChangedFromPlot);
   $(window).resize(function () { theOutputPanel.resize(); });
 
@@ -20,18 +21,36 @@ $(document).ready(function () {
 
 });
 
-function onDatasetChanged ( filename ) {
-  log("onDatasetChanged:" + filename);
+function onSrcDatasetChanged ( filename ) {
+  log("onSrcDatasetChanged:" + filename);
   theFilename = filename;
 
   theService.get_dataset_schema(filename, function( schema ) {
-      log("onDatasetChanged:" + schema);
+      log("onSrcDatasetChanged:" + schema);
       var jsonSchema = JSON.parse(schema);
       theToolPanel.onDatasetSchemaChanged(jsonSchema);
-      theOutputPanel.onDatasetChanged(filename, jsonSchema);
+      theOutputPanel.onDatasetChanged(filename, theBckFilename, jsonSchema);
       theOutputPanel.onDatasetValuesChanged(filename, []);
     }, function( error ) {
-        log("onDatasetChanged error:" + JSON.stringify(error));
+        log("onSrcDatasetChanged error:" + JSON.stringify(error));
+    });
+}
+
+function onBckDatasetChanged ( filename ) {
+  log("onBckDatasetChanged:" + filename);
+  theBckFilename = filename;
+
+  theService.get_dataset_schema(filename, function( schema ) {
+      log("onBckDatasetChanged:" + schema);
+
+      if (theFilename != "") {
+        var jsonSchema = JSON.parse(schema);
+        theOutputPanel.onDatasetChanged(filename, theBckFilename, jsonSchema);
+        theOutputPanel.onDatasetValuesChanged(filename, []);
+      }
+
+    }, function( error ) {
+        log("onBckDatasetChanged error:" + JSON.stringify(error));
     });
 }
 

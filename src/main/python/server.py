@@ -49,7 +49,7 @@ def get_plot_data():
 
 @app.route('/get_ligthcurve', methods = ['POST'])
 def get_ligthcurve():
-    return DaveEndpoint.get_ligthcurve (request.json['filename'], UPLOADS_TARGET,
+    return DaveEndpoint.get_ligthcurve (request.json['filename'], request.json['bck_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], request.json['dt'])
 
 

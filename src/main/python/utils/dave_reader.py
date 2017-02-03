@@ -8,17 +8,17 @@ import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
 import utils.dataset_helper as DsHelper
+import utils.dataset_cache as DsCache
 
-cached_datasets = dict()
 
 def get_file_dataset(destination):
 
     if not destination:
         return None
 
-    if destination in cached_datasets:
+    if DsCache.contains(destination):
         logging.debug("Returned cached dataset")
-        return cached_datasets[destination]
+        return DsCache.get(destination)
 
     filename = os.path.splitext(destination)[0]
     file_extension = magic.from_file(destination)
@@ -36,7 +36,7 @@ def get_file_dataset(destination):
         random_values = np.random.uniform(-1, 1, size=numValues)
         table.columns["Amplitude"].values = random_values
 
-        cached_datasets[destination] = dataset
+        DsCache.add(destination, dataset)
         return dataset
 
     elif file_extension.find("FITS") == 0:
@@ -50,7 +50,7 @@ def get_file_dataset(destination):
                                            hduname='EVENTS', column='TIME',
                                            gtistring='GTI,STDGTI,STDGTI04')
 
-        cached_datasets[destination] = dataset
+        DsCache.add(destination, dataset)
         return dataset
 
     else:

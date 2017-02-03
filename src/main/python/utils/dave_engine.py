@@ -96,7 +96,8 @@ def get_plot_data(destination, filters, styles, axis):
 
 # get_ligthcurve: Returns the data for the Lightcurve
 #
-# @param: destination: file destination
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
 # @param: filters: array with the filters to apply
 #         [{ table = "fits_table", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
@@ -104,9 +105,9 @@ def get_plot_data(destination, filters, styles, axis):
 #            { table = "fits_table", column = "PI" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_ligthcurve(destination, filters, axis, dt):
+def get_ligthcurve(src_destination, bck_destination, filters, axis, dt):
 
-    filtered_ds = get_filtered_dataset(destination, filters)
+    filtered_ds = get_filtered_dataset(src_destination, filters)
     if not filtered_ds:
         return None
 
@@ -134,6 +135,21 @@ def get_ligthcurve(destination, filters, axis, dt):
     # eventlist = EventList(fits_data.ev_list, pi=fits_data.additional_data[pi_column])
     # lc = eventlist.to_lc(dt, tstart=None, tseg=None)
 
+    # Source lightcurve count rate
+    count_rate = lc.countrate
+
+    # Applies backgrund data to lightcurves if necessary
+    if bck_destination:
+        filtered_bck_ds = get_filtered_dataset(bck_destination, filters)
+        if not filtered_bck_ds:
+            return None
+
+        logging.debug("Create background lightcurve ....")
+        bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
+        bck_lc = bck_eventlist.to_lc(dt)
+
+        count_rate = count_rate - bck_lc.countrate
+
     # Preapares the result
     logging.debug("Result lightcurves ....")
     result = []
@@ -142,7 +158,7 @@ def get_ligthcurve(destination, filters, axis, dt):
     result = np.append(result, [column_time])
 
     column_pi = dict()
-    column_pi["values"] = lc.countrate
+    column_pi["values"] = count_rate
     result = np.append(result, [column_pi])
 
     return result

@@ -10,10 +10,10 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   this.$toolBar = $(this.toolBarSelector);
   this.plots = [];
 
-  this.initPlots = function(filename, schema) {
+  this.initPlots = function(filename, bck_filename, schema) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!filename.endsWith(".txt")) {
-      this.plots = this.getFitsTablePlots(filename, schema);
+      this.plots = this.getFitsTablePlots(filename, bck_filename, schema);
     } else {
       this.plots = this.getTxtTablePlots(filename);
     }
@@ -33,8 +33,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     $(window).trigger("resize");
   }
 
-  this.onDatasetChanged = function ( filename, schema ) {
-    this.initPlots(filename, schema);
+  this.onDatasetChanged = function ( filename, bck_filename, schema ) {
+    this.initPlots(filename, bck_filename, schema);
   }
 
   this.onDatasetValuesChanged = function ( filename, filters ) {
@@ -100,7 +100,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
               ];
   }
 
-  this.getFitsTablePlots = function ( filename, schema ) {
+  this.getFitsTablePlots = function ( filename, bck_filename, schema ) {
 
     dt = 100;//Math.ceil((schema.EVENTS.TIME.max_value - schema.EVENTS.TIME.min_value) / 100.0);
     log("getFitsTablePlots: dt: " + dt );
@@ -123,6 +123,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   "ligthcurve_" + filename,
                   {
                     filename: filename,
+                    bck_filename: bck_filename,
                     styles: { type: "ligthcurve", labels: ["TIME", "Count Rate(c/s)"] },
                     axis: [ { table:"EVENTS", column:"TIME" },
                             { table:"EVENTS", column:"PI" } ],

@@ -1,9 +1,8 @@
-from flask import session
-
 import json
 import logging
 import urllib
 
+import utils.session_helper as SessionHelper
 import utils.file_utils as FileUtils
 import utils.dave_engine as DaveEngine
 from utils.np_encoder import NPEncoder
@@ -23,7 +22,7 @@ def upload(file, target):
         return common_error("File extension is not supported...")
 
     logging.debug("Uploaded filename: %s" % destination)
-    session['uploaded_filename'] = file.filename
+    SessionHelper.add_uploaded_file_to_session(file.filename)
 
     return json.dumps(dict(filename=file.filename))
 
@@ -32,7 +31,7 @@ def get_dataset_schema(filename, target):
     if not filename:
         return common_error(error="No filename setted")
 
-    if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
+    if not SessionHelper.is_file_uploaded(filename):
         return common_error("Filename not uploaded")
 
     logging.debug("get_dataset_schema")
@@ -53,7 +52,7 @@ def get_plot_data(filename, target, filters, styles, axis):
     if not filename:
         return "No filename setted"
 
-    if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
+    if not SessionHelper.is_file_uploaded(filename):
         return "Filename not uploaded"
 
     destination = FileUtils.get_destination(target, filename)
@@ -76,23 +75,33 @@ def get_plot_data(filename, target, filters, styles, axis):
     return jsonData
 
 
-def get_ligthcurve(filename, target, filters, axis, dt):
-    if not filename:
+def get_ligthcurve(src_filename, bck_filename, target, filters, axis, dt):
+    if not src_filename:
         return "No filename setted"
 
-    if not session['uploaded_filename'] or session['uploaded_filename'] != filename:
-        return "Filename not uploaded"
+    if not SessionHelper.is_file_uploaded(src_filename):
+        return "Source Filename not uploaded"
 
-    destination = FileUtils.get_destination(target, filename)
-    if not FileUtils.is_valid_file(destination):
-        return "Invalid file"
+    src_destination = FileUtils.get_destination(target, src_filename)
+    if not FileUtils.is_valid_file(src_destination):
+        return "Invalid source file"
 
-    logging.debug("get_ligthcurve: %s" % filename)
+    bck_destination = ""
+    if bck_filename:
+        if not SessionHelper.is_file_uploaded(bck_filename):
+            return "Backgrund Filename not uploaded"
+
+        bck_destination = FileUtils.get_destination(target, bck_filename)
+        if not FileUtils.is_valid_file(bck_destination):
+            return "Invalid backgrund file"
+
+    logging.debug("get_ligthcurve src: %s" % src_filename)
+    logging.debug("get_ligthcurve bck: %s" % bck_filename)
     logging.debug("get_ligthcurve: filters %s" % filters)
     logging.debug("get_ligthcurve: axis %s" % axis)
     logging.debug("get_ligthcurve: dt %f" % dt)
 
-    data = DaveEngine.get_ligthcurve(destination, filters, axis, dt)
+    data = DaveEngine.get_ligthcurve(src_destination, bck_destination, filters, axis, dt)
 
     logging.debug("get_ligthcurve: Finish!")
 
