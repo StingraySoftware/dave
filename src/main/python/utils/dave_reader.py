@@ -89,7 +89,7 @@ def get_fits_dataset(destination, dsId, table_ids):
 
             for i in range(len(header_names)):
                 header_name = header_names[i]
-                dataset.tables[table_id].columns[header_name].values = np.append([], tbdata.field(i))
+                dataset.tables[table_id].columns[header_name].values.append(tbdata.field(i))
 
         else:
             logging.debug("No valid data on: %s" % t)
@@ -113,14 +113,15 @@ def get_fits_table_column_names(destination, table_id):
     return None
 
 
-# Returns a dataset containin HDU table and GTI table with the Fits data using Stingray library
+# Returns a dataset containin HDU table and GTI table
+# with the Fits data using Stingray library
 def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                    hduname='EVENTS', column='TIME',
                                    gtistring='GTI,STDGTI'):
 
     # Gets columns from fits hdu table
     logging.debug("Reading Fits columns")
-    columns = get_fits_table_column_names (destination, hduname)
+    columns = get_fits_table_column_names(destination, hduname)
     columns = ["TIME", "PI"]
 
     event_values = []
@@ -130,7 +131,7 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     additional_columns_values = dict()
     for i in range(len(columns)):
         if columns[i] != column:
-            additional_columns = np.append(additional_columns, columns[i])
+            additional_columns.append(columns[i])
             additional_columns_values[columns[i]] = []
 
     # Reads fits data
