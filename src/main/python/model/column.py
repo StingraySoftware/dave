@@ -6,10 +6,12 @@ class Column:
     error_values = []
     has_error_values = False
 
+
     def __init__(self, id):
         self.id = id
         self.values = []
         self.error_values = []
+
 
     def get_schema(self):
         schema = dict()
@@ -17,6 +19,7 @@ class Column:
         self.add_list_to_schema("", self.values, schema)
         self.add_list_to_schema("error_", self.error_values, schema)
         return schema
+
 
     def add_list_to_schema(self, list_prefix, list, schema):
         count = len(list)
@@ -32,17 +35,20 @@ class Column:
             schema[list_prefix + "avg_value"] = 0
         return schema
 
+
     def clone(self):
         column = Column(self.id)
         column.values = copy.copy(self.values)
         column.error_values = copy.copy(self.error_values)
         return column
 
+
     def get_value(self, index):
         if index >= 0 and index < len(self.values):
             return copy.copy(self.values[index])
         else:
             return None
+
 
     def get_error_value(self, index):
         if self.has_error_values:
@@ -53,11 +59,13 @@ class Column:
         else:
             return 0
 
+
     def add_value(self, value, error=None):
         self.values.extend([value])
         self.has_error_values = not (error is None)
         if self.has_error_values:
             self.error_values.extend([error])
+
 
     def add_values(self, values, errors=None):
         self.values.extend(values)

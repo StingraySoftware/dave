@@ -6,6 +6,8 @@ import os
 import logging
 
 import utils.dave_endpoint as DaveEndpoint
+import utils.gevent_helper as GeHelper
+import utils.dave_logger as Logger
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -14,6 +16,10 @@ if len(sys.argv) > 1 and sys.argv[1] != "":
 scriptdir = "."
 if len(sys.argv) > 2 and sys.argv[2] != "":
     scriptdir = sys.argv[2]
+
+server_port = 5000
+if len(sys.argv) > 3 and sys.argv[3] != "":
+    server_port = int(sys.argv[3])
 
 logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
 
@@ -53,9 +59,19 @@ def get_ligthcurve():
             request.json['filters'], request.json['axis'], request.json['dt'])
 
 
+# Receives a message from client and send it to all subscribers
+@app.route("/publish", methods=['POST'])
+def publish():
+    return GeHelper.publish(request.json['message'])
+
+
+@app.route("/subscribe")
+def subscribe():
+    return GeHelper.subscribe()
+
+
 @app.route('/')
 def root():
-    logging.debug("Root page requested!")
     return render_template("master_page.html")
 
 
@@ -68,4 +84,6 @@ for error in (400, 401, 403, 404, 500):  # or with other http code you consider 
     app.error_handler_spec[None][error] = http_error_handler
 
 if __name__ == '__main__':
+    GeHelper.start(server_port, app)
+    Logger.start(GeHelper)
     app.run(debug=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces

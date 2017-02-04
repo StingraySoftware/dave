@@ -1,19 +1,22 @@
 from model.column import Column
 import numpy as np
-import logging
+import utils.dave_logger as logging
 
 
 class Table:
     id = ""
     columns = dict()
 
+
     def __init__(self, id):
         self.id = id
         self.columns = dict()
 
+
     def add_columns(self, column_names):
         for i in range(len(column_names)):
             self.columns[column_names[i]] = Column(column_names[i])
+
 
     def get_schema(self):
         schema = dict()
@@ -21,20 +24,15 @@ class Table:
             schema[column_name] = self.columns[column_name].get_schema()
         return schema
 
+
     def clone(self):
-        logging.debug("Table.clone start!!")
         table = Table(self.id)
-
         for column_name in self.columns:
-            logging.debug("Table.clone column_name: %s" % column_name)
             table.columns[column_name] = self.columns[column_name].clone()
-
-        logging.debug("Table.clone start!!")
-
         return table
 
+
     def apply_filter(self, filter):
-        logging.debug("Table.apply_filters start!! filter: %s" % filter)
         column_name = filter["column"]
         if column_name not in self.columns:
             logging.error("table.apply_filter wrong column: %s" % column_name)
@@ -49,15 +47,13 @@ class Table:
             filtered_table.columns[tmp_column_name] = Column(tmp_column_name)
 
         column = self.columns[column_name]
-        logging.debug("Table.apply_filters filtered_indexes start!!")
         filtered_indexes = np.array([i for i in range(len(column.values)) if ((column.values[i] >= filter["from"]) and (column.values[i] <= filter["to"]))])
-        logging.debug("Table.apply_filters filtered_indexes %s" % len(filtered_indexes))
 
         for i in filtered_indexes:
             filtered_table.add_row(self.get_row(i))
 
-        logging.debug("Table.apply_filters end!!")
         return filtered_table
+
 
     def get_row(self, index):
         row = dict()
@@ -68,11 +64,13 @@ class Table:
             row[column_name]["error_value"] = column.get_error_value(index)
         return row
 
+
     def add_row(self, row):
         for column_name in row:
             value = row[column_name]["value"]
             error = row[column_name]["error_value"]
             self.columns[column_name].add_value(value, error)
+
 
     def join (self, table):
         res_table = self.clone()

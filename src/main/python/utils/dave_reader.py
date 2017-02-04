@@ -1,6 +1,6 @@
 
 import os
-import logging
+import utils.dave_logger as logging
 import magic
 
 import model.dataset as DataSet
@@ -92,8 +92,8 @@ def get_fits_dataset(destination, dsId, table_ids):
                 dataset.tables[table_id].columns[header_name].values.append(tbdata.field(i))
 
         else:
-            logging.debug("No valid data on: %s" % t)
-            logging.debug("Type of Data: %s" % type(hdulist[t]))
+            logging.warn("No valid data on: %s" % t)
+            logging.warn("Type of Data: %s" % type(hdulist[t]))
 
     hdulist.close()
 

@@ -1,5 +1,5 @@
 import json
-import logging
+import utils.dave_logger as logging
 import urllib
 
 import utils.session_helper as SessionHelper
@@ -21,7 +21,7 @@ def upload(file, target):
     if not FileUtils.is_valid_file(destination):
         return common_error("File extension is not supported...")
 
-    logging.debug("Uploaded filename: %s" % destination)
+    logging.info("Uploaded filename: %s" % destination)
     SessionHelper.add_uploaded_file_to_session(file.filename)
 
     return json.dumps(dict(filename=file.filename))
@@ -34,13 +34,11 @@ def get_dataset_schema(filename, target):
     if not SessionHelper.is_file_uploaded(filename):
         return common_error("Filename not uploaded")
 
-    logging.debug("get_dataset_schema")
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
         return common_error("Invalid file")
 
     schema = DaveEngine.get_dataset_schema(destination)
-    logging.debug("get_dataset_schema end...")
     return json.dumps(schema, cls=NPEncoder)
 
 

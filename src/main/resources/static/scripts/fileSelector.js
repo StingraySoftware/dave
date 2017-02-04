@@ -31,6 +31,8 @@ function fileSelector(id, label, uploadFn, onFileChangedFn) {
      var newFilename = fullfilename.replace(/^.*[\\\/]/, '');
      var formData = new FormData(currentObj.$html.find('form')[0]);
 
+     waitingDialog.show('Uploading file: ' + newFilename);
+
      currentObj.uploadFn(function (response) {
                                      var jsonRes = JSON.parse(response);
                                      if (jsonRes.error != undefined) {
@@ -45,6 +47,7 @@ function fileSelector(id, label, uploadFn, onFileChangedFn) {
 
    this.onUploadError = function ( error ) {
      if (error != undefined) {
+       waitingDialog.hide();
        log("onUploadError:" + JSON.stringify(error));
        currentObj.$html.find("#" + currentObj.uploadInputId).val("");
      }

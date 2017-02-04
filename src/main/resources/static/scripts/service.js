@@ -47,5 +47,12 @@ function Service (base_url) {
     });
   };
 
+  this.subscribe_to_server_messages = function (fn) {
+    var evtSrc = new EventSource("/subscribe");
+    evtSrc.onmessage = function(e) {
+        fn(e.data);
+    };
+  };
+
   log("Service ready!");
 }

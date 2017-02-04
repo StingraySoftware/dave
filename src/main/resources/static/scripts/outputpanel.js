@@ -38,8 +38,15 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   }
 
   this.onDatasetValuesChanged = function ( filename, filters ) {
+    waitingDialog.show('Retrieving plots data...');
     log("onDatasetValuesChanged:" + filename + ", filters: " + JSON.stringify(filters) );
     for (i in this.plots) { this.plots[i].onDatasetValuesChanged( filename, filters ); };
+  }
+
+  this.onPlotReady = function (plot) {
+    var allPlotsReady = true;
+    for (i in this.plots) { allPlotsReady = allPlotsReady && this.plots[i].isReady; };
+    if (allPlotsReady) { waitingDialog.hide(); }
   }
 
   //This aplply only while final plots are defined by team
@@ -55,6 +62,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 ),
 
@@ -68,6 +76,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 ),
 
@@ -82,6 +91,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 ),
 
@@ -95,6 +105,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 )
               ];
@@ -116,6 +127,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                 },
                 this.service.request_plot_data,
                 this.onFiltersChangedFromPlot,
+                this.onPlotReady,
                 this.$toolBar
               ),*/
 
@@ -131,6 +143,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_lightcurve,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar,
                   "fullWidth"
                 )

@@ -1,6 +1,6 @@
 
 import os
-import logging
+import utils.dave_logger as logging
 import magic
 from werkzeug import secure_filename
 
