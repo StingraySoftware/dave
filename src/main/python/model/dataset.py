@@ -160,8 +160,8 @@ def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end,
                 # Insert values at range on dataset
                 hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx:1])
                 for i in range(len(additional_columnsadditional_columns[i]):
-                    ad_column = additional_columns[i]
-                    values = ds_columns[ad_column][start_event_idx:end_event_idx:1]
+                    ad_column=additional_columns[i]
+                    values=ds_columns[ad_column][start_event_idx:end_event_idx:1]
                     hdu_table.columns[ad_column].add_values(values)
 
             else:
