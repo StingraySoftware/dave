@@ -1,6 +1,6 @@
 
 import os
-import logging
+import utils.dave_logger as logging
 import magic
 
 import model.dataset as DataSet
@@ -8,17 +8,17 @@ import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
 import utils.dataset_helper as DsHelper
+import utils.dataset_cache as DsCache
 
-cached_datasets = dict()
 
 def get_file_dataset(destination):
 
     if not destination:
         return None
 
-    if destination in cached_datasets:
+    if DsCache.contains(destination):
         logging.debug("Returned cached dataset")
-        return cached_datasets[destination]
+        return DsCache.get(destination)
 
     filename = os.path.splitext(destination)[0]
     file_extension = magic.from_file(destination)
@@ -36,7 +36,7 @@ def get_file_dataset(destination):
         random_values = np.random.uniform(-1, 1, size=numValues)
         table.columns["Amplitude"].values = random_values
 
-        cached_datasets[destination] = dataset
+        DsCache.add(destination, dataset)
         return dataset
 
     elif file_extension.find("FITS") == 0:
@@ -50,7 +50,7 @@ def get_file_dataset(destination):
                                            hduname='EVENTS', column='TIME',
                                            gtistring='GTI,STDGTI,STDGTI04')
 
-        cached_datasets[destination] = dataset
+        DsCache.add(destination, dataset)
         return dataset
 
     else:
@@ -89,11 +89,11 @@ def get_fits_dataset(destination, dsId, table_ids):
 
             for i in range(len(header_names)):
                 header_name = header_names[i]
-                dataset.tables[table_id].columns[header_name].values = np.append([], tbdata.field(i))
+                dataset.tables[table_id].columns[header_name].values.append(tbdata.field(i))
 
         else:
-            logging.debug("No valid data on: %s" % t)
-            logging.debug("Type of Data: %s" % type(hdulist[t]))
+            logging.warn("No valid data on: %s" % t)
+            logging.warn("Type of Data: %s" % type(hdulist[t]))
 
     hdulist.close()
 
@@ -113,14 +113,15 @@ def get_fits_table_column_names(destination, table_id):
     return None
 
 
-# Returns a dataset containin HDU table and GTI table with the Fits data using Stingray library
+# Returns a dataset containin HDU table and GTI table
+# with the Fits data using Stingray library
 def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                    hduname='EVENTS', column='TIME',
                                    gtistring='GTI,STDGTI'):
 
     # Gets columns from fits hdu table
     logging.debug("Reading Fits columns")
-    columns = get_fits_table_column_names (destination, hduname)
+    columns = get_fits_table_column_names(destination, hduname)
     columns = ["TIME", "PI"]
 
     event_values = []
@@ -130,7 +131,7 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     additional_columns_values = dict()
     for i in range(len(columns)):
         if columns[i] != column:
-            additional_columns = np.append(additional_columns, columns[i])
+            additional_columns.append(columns[i])
             additional_columns_values[columns[i]] = []
 
     # Reads fits data
@@ -142,7 +143,8 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     gti_start = fits_data.gti_list[:, 0]
     gti_end = fits_data.gti_list[:, 1]
 
-    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, fits_data.ev_list, gti_start, gti_end, None, None, hduname, column)
+    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, fits_data.ev_list,
+                                                gti_start, gti_end, None, None, hduname, column)
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)
 

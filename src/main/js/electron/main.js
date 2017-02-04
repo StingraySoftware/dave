@@ -6,6 +6,7 @@ var cp = require('child_process');
 var rq = require('request-promise');
 var Config = require('config-js');
 var Menu = require("menu");
+var request = require('request');
 
 let mainWindow,
     windowParams = {
@@ -17,18 +18,16 @@ var retries = 0;
 var connected = false;
 var subpy = null;
 var processRunning = true; //If false could cause fail of first connectToServer call
-
-var statusMsg = "";
-var logMessage = "";
 var logDebugMode = false;
 
 var PYTHON_URL = "";
 
 app.on('ready', function() {
-  createWindow();
 
   var config = loadConfig();
   console.log('config: ' + JSON.stringify(config));
+
+  createWindow(config.splash_path);
 
   if (config.error == null) {
 
@@ -65,6 +64,7 @@ function loadConfig(){
       configObj.pythonUrl = config.get('python.url');
 
       configObj.logDebugMode = config.get('logDebugMode') == "true";
+      configObj.splash_path = config.get('splash_path');
 
       return configObj;
 
@@ -135,8 +135,10 @@ function connectToServer (){
     }
 }
 
-function createWindow (){
+function createWindow (splash_path){
+  console.log('Creating splash: ' + splash_path);
   mainWindow = new BrowserWindow(windowParams);
+  mainWindow.loadURL("file://" + __dirname + splash_path);
   mainWindow.on('closed', function() { stop(); });
   //mainWindow.webContents.openDevTools();
 }
@@ -147,16 +149,13 @@ function loadDaveContents (url){
 }
 
 function log (msg){
-  logMessage = msg + "</br>" + logMessage;
   console.log(msg);
-  logToWindow(logMessage);
+  logToWindow(msg);
 }
 
 function logToWindow (msg){
   if (mainWindow != null) {
-    var style = '<style>.myclass {position: absolute;top: 50%;width:95%;text-align:center}</style>'
-    var html = '<div class="myclass">' + statusMsg + msg + '</div>'
-    mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(style + html));
+    mainWindow.webContents.executeJavaScript("log('" + msg + "');");
   }
 }
 
@@ -169,10 +168,34 @@ function stop (){
     mainWindow = null;
     if (subpy != null) {
       console.log('Stopping server!');
-      subpy.kill('SIGINT');
-      setTimeout (function(){ app.quit(); }, retryInterval);
+      sendkillToServer ();
+    } else {
+      app.quit();
     }
   }
+}
+
+function sendkillToServer (){
+  try {
+    request(PYTHON_URL + '/shutdown', function (error, response, body) {
+      setTimeout (function(){
+                    killServer();
+                    delayedQuit();
+                  }
+                  , retryInterval);
+    });
+  } catch (ex) {
+    killServer();
+    delayedQuit();
+  }
+}
+
+function killServer (){
+  subpy.kill('SIGINT');
+}
+
+function delayedQuit(){
+  setTimeout (function(){ app.quit(); }, retryInterval);
 }
 
 function prepareMenu (){

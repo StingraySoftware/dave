@@ -10,10 +10,10 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   this.$toolBar = $(this.toolBarSelector);
   this.plots = [];
 
-  this.initPlots = function(filename, schema) {
+  this.initPlots = function(filename, bck_filename, schema) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!filename.endsWith(".txt")) {
-      this.plots = this.getFitsTablePlots(filename, schema);
+      this.plots = this.getFitsTablePlots(filename, bck_filename, schema);
     } else {
       this.plots = this.getTxtTablePlots(filename);
     }
@@ -33,13 +33,20 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     $(window).trigger("resize");
   }
 
-  this.onDatasetChanged = function ( filename, schema ) {
-    this.initPlots(filename, schema);
+  this.onDatasetChanged = function ( filename, bck_filename, schema ) {
+    this.initPlots(filename, bck_filename, schema);
   }
 
   this.onDatasetValuesChanged = function ( filename, filters ) {
+    waitingDialog.show('Retrieving plots data...');
     log("onDatasetValuesChanged:" + filename + ", filters: " + JSON.stringify(filters) );
     for (i in this.plots) { this.plots[i].onDatasetValuesChanged( filename, filters ); };
+  }
+
+  this.onPlotReady = function (plot) {
+    var allPlotsReady = true;
+    for (i in this.plots) { allPlotsReady = allPlotsReady && this.plots[i].isReady; };
+    if (allPlotsReady) { waitingDialog.hide(); }
   }
 
   //This aplply only while final plots are defined by team
@@ -55,6 +62,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 ),
 
@@ -68,6 +76,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 ),
 
@@ -82,6 +91,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 ),
 
@@ -95,12 +105,13 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_plot_data,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar
                 )
               ];
   }
 
-  this.getFitsTablePlots = function ( filename, schema ) {
+  this.getFitsTablePlots = function ( filename, bck_filename, schema ) {
 
     dt = 100;//Math.ceil((schema.EVENTS.TIME.max_value - schema.EVENTS.TIME.min_value) / 100.0);
     log("getFitsTablePlots: dt: " + dt );
@@ -116,6 +127,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                 },
                 this.service.request_plot_data,
                 this.onFiltersChangedFromPlot,
+                this.onPlotReady,
                 this.$toolBar
               ),*/
 
@@ -123,6 +135,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   "ligthcurve_" + filename,
                   {
                     filename: filename,
+                    bck_filename: bck_filename,
                     styles: { type: "ligthcurve", labels: ["TIME", "Count Rate(c/s)"] },
                     axis: [ { table:"EVENTS", column:"TIME" },
                             { table:"EVENTS", column:"PI" } ],
@@ -130,6 +143,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   },
                   this.service.request_lightcurve,
                   this.onFiltersChangedFromPlot,
+                  this.onPlotReady,
                   this.$toolBar,
                   "fullWidth"
                 )

@@ -5,8 +5,7 @@ function Service (base_url) {
 
   this.base_url = base_url;
 
-  this.upload_form_data = function (successFn, errorFn) {
-    var formData = new FormData($('form')[0]);
+  this.upload_form_data = function (successFn, errorFn, formData) {
     $.ajax({
        url: thisService.base_url + "/upload",
        type: 'POST',
@@ -41,11 +40,18 @@ function Service (base_url) {
     log("request_lightcurve plot " + JSON.stringify(lc_data));
     $.ajax({
        type : "POST",
-       url : thisService.base_url + "/get_ligthcurve",
+       url : thisService.base_url + "/get_lightcurve",
        data: JSON.stringify(lc_data, null, '\t'),
        contentType: 'application/json;charset=UTF-8',
        success: fn
     });
+  };
+
+  this.subscribe_to_server_messages = function (fn) {
+    var evtSrc = new EventSource("/subscribe");
+    evtSrc.onmessage = function(e) {
+        fn(e.data);
+    };
   };
 
   log("Service ready!");

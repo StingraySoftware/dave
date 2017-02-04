@@ -7,6 +7,7 @@ dependencies:
 - python=3.5.1=0
 - werkzeug=0.11.9=py35_0
 - pytest=3.0.5
+- gevent=1.2.1
 - pip:
   - astropy==1.2.1
   - requests==2.10.0

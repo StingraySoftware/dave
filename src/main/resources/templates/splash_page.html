@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+
+  <head>
+
+    <title>DAVE</title>
+
+    <!-- Insert CSS below here for better page render performance -->
+    <link rel= "stylesheet" type= "text/css" href= "../static/styles/jquery-ui-1.12.1.min.css">
+    <link rel= "stylesheet" type= "text/css" href= "../static/styles/bootstrap-3.3.7.min.css">
+    <link rel= "stylesheet" type= "text/css" href= "../static/styles/bootstrap-theme-3.3.7.min.css">
+    <!--<link rel= "stylesheet" type= "text/css" href= "../static/styles/master_page.css">-->
+    <style>
+      body {
+        background: url(../static/img/bg.jpg);
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-size: cover;
+      }
+      @font-face {
+      	font-family: Furore;
+      	src: url("../static/fonts/Furore.otf") format("opentype");
+      }
+      .col-sm-12 { margin-top: 15%; padding-left: 8px; padding-right: 8px; }
+      .row {margin-top: 0px;}
+      .logotype {
+          font-family: Furore;
+          color: #DD4814;
+          font-size: 20px;
+      }
+      .titletype {
+          font-size:70px;
+      }
+    </style>
+
+    <!-- Insert this line above script imports for solve Electron import issues -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+    <script type=text/javascript src="../static/scripts/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/jquery-ui-1.12.1.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/bootstrap-3.3.7.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/logger-1.15.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/waiting_dialog.js"></script>
+    <script type="text/javascript" src="../static/scripts/splash_page.js'"></script>
+
+    <!-- Insert this line after script imports for solve Electron import issues -->
+    <script>
+      if (window.module) module = window.module;
+
+      $(document).ready(function () {
+
+        Logger.show();
+        log("App started!!");
+
+      });
+
+    </script>
+
+  </head>
+
+  <body>
+
+    <!-- Page Content-->
+    <div class="container fluid">
+      <div class="row">
+        <div class="col-sm-12 text-center">
+          <div class="logotype titletype">DAVE</div>
+          <div class="logotype">Powered by TIMELAB</div>
+          <br/>
+          <div class="progress progress-striped active" style="margin-top:60px; margin-bottom:0; margin-left:25%; width: 50%">
+            <div class="progress-bar" style="width: 100%"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </body>
+
+</html>

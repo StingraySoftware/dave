@@ -14,7 +14,7 @@ import utils.dataset_helper as DsHelper
 @given(st.text(min_size=1))
 @example("test.evt")
 @example("test_Gtis.evt")
-def test_get_dataset_gti_as_filters(s):
+def test_get_eventlist_from_dataset(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, s)
 
     if not FileUtils.is_valid_file(destination):
@@ -25,7 +25,12 @@ def test_get_dataset_gti_as_filters(s):
     if not dataset:
         return None
 
-    filter = FltHelper.createTimeFilter(80000325.0, 80000725.0)
-    gti_filters = DsHelper.get_dataset_gti_as_filters(dataset, [filter])
+    axis = [dict() for i in range(2)]
+    axis[0]["table"] = "EVENTS"
+    axis[0]["column"] = "TIME"
+    axis[1]["table"] = "EVENTS"
+    axis[1]["column"] = "PI"
 
-    assert not os.path.isfile(destination) or len(gti_filters) > 0
+    eventList = DsHelper.get_eventlist_from_dataset(dataset, axis)
+
+    assert not os.path.isfile(destination) or len(eventList.time) > 0

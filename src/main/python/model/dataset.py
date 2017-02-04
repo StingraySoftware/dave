@@ -1,7 +1,8 @@
 from model.table import Table
 import utils.dataset_helper as DsHelper
-import logging
+import utils.dave_logger as logging
 import time
+
 
 class DataSet:
     id = ""
@@ -11,34 +12,28 @@ class DataSet:
         self.id = id
         self.tables = dict()
 
-    def add_table(self, table_id, column_names ):
-        self.tables[table_id] = Table (table_id)
-        self.tables[table_id].add_columns (column_names)
+    def add_table(self, table_id, column_names):
+        self.tables[table_id] = Table(table_id)
+        self.tables[table_id].add_columns(column_names)
 
-    def get_schema (self):
+    def get_schema(self):
         schema = dict()
         for table_id in self.tables:
             schema[table_id] = self.tables[table_id].get_schema()
         return schema
 
-    def clone (self):
-        logging.debug("dataset.clone start!!")
+    def clone(self):
         dataset = DataSet(self.id)
 
         for table_id in self.tables:
-            logging.error("dataset.clone table_id: %s" % table_id)
             table = self.tables[table_id].clone()
             dataset.tables[table_id] = table
 
-        logging.debug("dataset.clone end!!")
         return dataset
 
     def apply_filters(self, filters):
 
-        logging.debug("dataset.apply_filters start!!")
         if not filters or not len(filters):
-            logging.debug("dataset.apply_filters wrong filters!!")
-            logging.debug(filters)
             return self
 
         filtered_dataset = self.clone()
@@ -53,11 +48,9 @@ class DataSet:
             else:
                 logging.error("dataset.apply_filters wrong table_id: %s" % table_id)
 
-        logging.debug("dataset.apply_filters end!!")
         return filtered_dataset
 
-    def join (self, dataset):
-        logging.debug("dataset.join start!!")
+    def join(self, dataset):
         joined_dataset = self.clone()
 
         for table_id in joined_dataset.tables:
@@ -65,7 +58,6 @@ class DataSet:
                 table = joined_dataset.tables[table_id].join(dataset.tables[table_id])
                 joined_dataset.tables[table_id] = table
 
-        logging.debug("dataset.join end!!")
         return joined_dataset
 
     def apply_time_filter(self, filter, hduname='EVENTS', column='TIME'):
@@ -87,8 +79,10 @@ class DataSet:
         gti_start = self.tables["GTI"].columns["START"].values
         gti_end = self.tables["GTI"].columns["STOP"].values
 
-        dataset = get_dataset_applying_gtis(self.id, columns_values, ev_list, gti_start, gti_end, filter["from"], filter["to"], hduname, column)
-        logging.debug("Dataset successfully filtered")
+        dataset = get_dataset_applying_gtis(self.id, columns_values, ev_list,
+                                            gti_start, gti_end,
+                                            filter["from"], filter["to"],
+                                            hduname, column)
 
         return dataset
 
@@ -98,6 +92,7 @@ class DataSet:
 # Returns a new empty dataset with the specified table_id and columns
 def get_empty_dataset(ds_id):
     return DataSet(ds_id)
+
 
 # Returns a new empty dataset with the specified table_id and columns
 def get_dataset(ds_id, table_id, columns):
@@ -110,11 +105,9 @@ def get_dataset(ds_id, table_id, columns):
 def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
     dataset = DataSet(dsId)
 
-    #Fills Hdu table
-    logging.debug("Creates Hdu table")
+    # Fills Hdu table
     dataset.add_table(hduname, columns)
 
-    logging.debug("Creates Gtis table")
     gti_columns = ["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"]
     dataset.add_table("GTI", gti_columns)
 
@@ -122,7 +115,9 @@ def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
 
 
 # Returns a new empty dataset with EVENTS and GTIs tables
-def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end, filter_start=None, filter_end=None, hduname="EVENTS", column='TIME'):
+def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end,
+                            filter_start=None, filter_end=None,
+                            hduname="EVENTS", column='TIME'):
 
     # Prepares additional_columns
     columns = [column]
@@ -138,10 +133,6 @@ def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end, fil
 
     start_event_idx = 0
     end_event_idx = 0
-    start_time = time.time()
-    append_start_time = time.time()
-    append_elapsed_time = 0
-    inserted_rows = 0
     hdu_table = dataset.tables[hduname]
     gti_table = dataset.tables["GTI"]
 
@@ -160,15 +151,6 @@ def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end, fil
 
             if end_event_idx > start_event_idx:
                 # The GTI has ended, so lets insert it on dataset
-                if gti_index % 100 == 0:
-                    logging.debug("Adding GTI %s" % gti_index)
-                    logging.debug("Num rows %s" % inserted_rows)
-                    elapsed_time = time.time() - start_time
-                    logging.debug("Elapsed %s" % elapsed_time)
-                    logging.debug("Append Elapsed %s" % append_elapsed_time)
-                    start_time = time.time()
-                    append_elapsed_time = 0
-                    inserted_rows = 0
 
                 gti_table.columns["START"].add_value(gti_start[gti_index])
                 gti_table.columns["STOP"].add_value(gti_end[gti_index])
@@ -176,16 +158,11 @@ def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end, fil
                 gti_table.columns["END_EVENT_IDX"].add_value(end_event_idx)
 
                 # Insert values at range on dataset
-                append_start_time = time.time()
-
-                hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx:1])
-
+                hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx])
                 for i in range(len(additional_columns)):
-                    hdu_table.columns[additional_columns[i]].add_values(ds_columns[additional_columns[i]][start_event_idx:end_event_idx:1])
-
-                append_elapsed_time += time.time() - append_start_time
-
-                inserted_rows += (end_event_idx - start_event_idx)
+                    ad_column=additional_columns[i]
+                    values=ds_columns[ad_column][start_event_idx:end_event_idx]
+                    hdu_table.columns[ad_column].add_values(values)
 
             else:
                 logging.warn("Wrong indexes for %s" % gti_index)

@@ -6,6 +6,8 @@ import os
 import logging
 
 import utils.dave_endpoint as DaveEndpoint
+import utils.gevent_helper as GeHelper
+import utils.dave_logger as Logger
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -14,6 +16,10 @@ if len(sys.argv) > 1 and sys.argv[1] != "":
 scriptdir = "."
 if len(sys.argv) > 2 and sys.argv[2] != "":
     scriptdir = sys.argv[2]
+
+server_port = 5000
+if len(sys.argv) > 3 and sys.argv[3] != "":
+    server_port = int(sys.argv[3])
 
 logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
 
@@ -41,30 +47,58 @@ def get_dataset_schema():
     return DaveEndpoint.get_dataset_schema(request.args['filename'], UPLOADS_TARGET)
 
 
-@app.route('/get_plot_data', methods = ['POST'])
+@app.route('/get_plot_data', methods=['POST'])
 def get_plot_data():
-    return DaveEndpoint.get_plot_data (request.json['filename'], UPLOADS_TARGET,
+    return DaveEndpoint.get_plot_data(request.json['filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 
-@app.route('/get_ligthcurve', methods = ['POST'])
-def get_ligthcurve():
-    return DaveEndpoint.get_ligthcurve (request.json['filename'], UPLOADS_TARGET,
+@app.route('/get_lightcurve', methods=['POST'])
+def get_lightcurve():
+    return DaveEndpoint.get_lightcurve(request.json['filename'], request.json['bck_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], request.json['dt'])
+
+
+# Receives a message from client and send it to all subscribers
+@app.route("/publish", methods=['POST'])
+def publish():
+    return GeHelper.publish(request.json['message'])
+
+
+@app.route("/subscribe")
+def subscribe():
+    return GeHelper.subscribe()
 
 
 @app.route('/')
 def root():
-    logging.debug("Root page requested!")
     return render_template("master_page.html")
+
+
+@app.route('/shutdown')
+def shutdown():
+    logging.info('Server shutting down...')
+    shutdown_server()
+    return 'Server shutting down...'
+
+
+# Shutdown flask server
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        logging.warn('Not running with the Werkzeug Server')
+        exit()
+    func()
 
 
 # Setting error handler
 def http_error_handler(error):
     return render_template("error.html", error=error), error
 
+
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
     app.error_handler_spec[None][error] = http_error_handler
 
 if __name__ == '__main__':
-    app.run(debug=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces
+    GeHelper.start(server_port, app)
+    app.run(debug=True, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces

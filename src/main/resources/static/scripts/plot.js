@@ -1,5 +1,5 @@
 
-function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar, cssClass) {
+function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass) {
 
   var currentObj = this;
   this.id = id;
@@ -7,7 +7,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar, 
   this.plotConfig = plotConfig;
   this.getDataFromServerFn = getDataFromServerFn;
   this.onFiltersChanged = onFiltersChangedFn;
+  this.onPlotReady = onPlotReadyFn;
   this.isVisible = true;
+  this.isReady = true;
   this.cssClass = (cssClass != undefined) ? cssClass : "";
 
   this.$html = $('<div class="plotContainer ' + this.id + ' ' + this.cssClass + '">' +
@@ -55,6 +57,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar, 
  };
 
  this.refreshData = function () {
+   currentObj.isReady = false;
    currentObj.getDataFromServerFn( currentObj.plotConfig, currentObj.onPlotDataReceived );
  }
 
@@ -64,7 +67,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar, 
 
    log("onPlotReceived received data!, plot" + currentObj.id);
    data = JSON.parse(data);
-   log("onPlotReceived paserd data!, plot" + currentObj.id);
+   log("onPlotReceived passed data!, plot" + currentObj.id);
 
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,
@@ -103,6 +106,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, toolbar, 
 
      log("onPlotReceived ERROR: WRONG PLOT CONFIG! plot " + currentObj.id);
    }
+
+   currentObj.isReady = true;
+   currentObj.onPlotReady();
  }
 
  this.resize = function () {
