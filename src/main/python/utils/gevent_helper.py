@@ -9,6 +9,7 @@ import logging
 
 subscriptions = []
 
+
 # SSE "protocol" is described here: http://mzl.la/UPFyxY
 class ServerSentEvent(object):
 
@@ -17,9 +18,9 @@ class ServerSentEvent(object):
         self.event = None
         self.id = None
         self.desc_map = {
-            self.data : "data",
-            self.event : "event",
-            self.id : "id"
+            self.data: "data",
+            self.event: "event",
+            self.id: "id"
         }
 
     def encode(self):
@@ -45,14 +46,13 @@ def subscribe():
                 result = q.get()
                 ev = ServerSentEvent(str(result))
                 yield ev.encode()
-        except GeneratorExit: # Or maybe use flask signals
+        except GeneratorExit: #  Or maybe use flask signals
             subscriptions.remove(q)
 
     return Response(gen(), mimetype="text/event-stream")
 
 
 def publish(message):
-    #Dummy data - pick up from request for real data
     def notify(message):
         for sub in subscriptions[:]:
             sub.put(message)

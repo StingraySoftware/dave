@@ -11,17 +11,17 @@ class DataSet:
         self.id = id
         self.tables = dict()
 
-    def add_table(self, table_id, column_names ):
-        self.tables[table_id] = Table (table_id)
-        self.tables[table_id].add_columns (column_names)
+    def add_table(self, table_id, column_names):
+        self.tables[table_id] = Table(table_id)
+        self.tables[table_id].add_columns(column_names)
 
-    def get_schema (self):
+    def get_schema(self):
         schema = dict()
         for table_id in self.tables:
             schema[table_id] = self.tables[table_id].get_schema()
         return schema
 
-    def clone (self):
+    def clone(self):
         dataset = DataSet(self.id)
 
         for table_id in self.tables:
@@ -89,6 +89,7 @@ class DataSet:
 def get_empty_dataset(ds_id):
     return DataSet(ds_id)
 
+
 # Returns a new empty dataset with the specified table_id and columns
 def get_dataset(ds_id, table_id, columns):
     dataset = get_empty_dataset(ds_id)
@@ -100,7 +101,7 @@ def get_dataset(ds_id, table_id, columns):
 def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
     dataset = DataSet(dsId)
 
-    #Fills Hdu table
+    # Fills Hdu table
     dataset.add_table(hduname, columns)
 
     gti_columns = ["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"]
