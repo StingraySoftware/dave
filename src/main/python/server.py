@@ -53,9 +53,9 @@ def get_plot_data():
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 
-@app.route('/get_ligthcurve', methods=['POST'])
-def get_ligthcurve():
-    return DaveEndpoint.get_ligthcurve(request.json['filename'], request.json['bck_filename'], UPLOADS_TARGET,
+@app.route('/get_lightcurve', methods=['POST'])
+def get_lightcurve():
+    return DaveEndpoint.get_lightcurve(request.json['filename'], request.json['bck_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], request.json['dt'])
 
 
@@ -86,7 +86,8 @@ def shutdown():
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
-        raise RuntimeError('Not running with the Werkzeug Server')
+        logging.warn('Not running with the Werkzeug Server')
+        exit()
     func()
 
 
@@ -100,4 +101,4 @@ for error in (400, 401, 403, 404, 500):  # or with other http code you consider 
 
 if __name__ == '__main__':
     GeHelper.start(server_port, app)
-    app.run(debug=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces
+    app.run(debug=True, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces

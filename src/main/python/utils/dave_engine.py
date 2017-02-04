@@ -75,7 +75,7 @@ def get_plot_data(destination, filters, styles, axis):
         return "Wrong plot type specified on styles"
 
 
-# get_ligthcurve: Returns the data for the Lightcurve
+# get_lightcurve: Returns the data for the Lightcurve
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -86,7 +86,7 @@ def get_plot_data(destination, filters, styles, axis):
 #            { table = "fits_table", column = "PI" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_ligthcurve(src_destination, bck_destination, filters, axis, dt):
+def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
 
     filtered_ds = get_filtered_dataset(src_destination, filters)
     if not filtered_ds:

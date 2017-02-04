@@ -73,7 +73,7 @@ def get_plot_data(filename, target, filters, styles, axis):
     return jsonData
 
 
-def get_ligthcurve(src_filename, bck_filename, target, filters, axis, dt):
+def get_lightcurve(src_filename, bck_filename, target, filters, axis, dt):
     if not src_filename:
         return "No filename setted"
 
@@ -93,14 +93,14 @@ def get_ligthcurve(src_filename, bck_filename, target, filters, axis, dt):
         if not FileUtils.is_valid_file(bck_destination):
             return "Invalid backgrund file"
 
-    logging.debug("get_ligthcurve src: %s" % src_filename)
-    logging.debug("get_ligthcurve bck: %s" % bck_filename)
-    logging.debug("get_ligthcurve: filters %s" % filters)
-    logging.debug("get_ligthcurve: axis %s" % axis)
-    logging.debug("get_ligthcurve: dt %f" % dt)
+    logging.debug("get_lightcurve src: %s" % src_filename)
+    logging.debug("get_lightcurve bck: %s" % bck_filename)
+    logging.debug("get_lightcurve: filters %s" % filters)
+    logging.debug("get_lightcurve: axis %s" % axis)
+    logging.debug("get_lightcurve: dt %f" % dt)
 
-    data = DaveEngine.get_ligthcurve(src_destination, bck_destination, filters, axis, dt)
+    data = DaveEngine.get_lightcurve(src_destination, bck_destination, filters, axis, dt)
 
-    logging.debug("get_ligthcurve: Finish!")
+    logging.debug("get_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)

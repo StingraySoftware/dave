@@ -40,7 +40,7 @@ function Service (base_url) {
     log("request_lightcurve plot " + JSON.stringify(lc_data));
     $.ajax({
        type : "POST",
-       url : thisService.base_url + "/get_ligthcurve",
+       url : thisService.base_url + "/get_lightcurve",
        data: JSON.stringify(lc_data, null, '\t'),
        contentType: 'application/json;charset=UTF-8',
        success: fn

@@ -18,9 +18,6 @@ var retries = 0;
 var connected = false;
 var subpy = null;
 var processRunning = true; //If false could cause fail of first connectToServer call
-
-var statusMsg = "";
-var logMessage = "";
 var logDebugMode = false;
 
 var PYTHON_URL = "";
@@ -158,7 +155,7 @@ function log (msg){
 
 function logToWindow (msg){
   if (mainWindow != null) {
-    mainWindow.webContents.executeJavaScript("log('" + statusMsg + msg + "');");
+    mainWindow.webContents.executeJavaScript("log('" + msg + "');");
   }
 }
 
@@ -171,21 +168,33 @@ function stop (){
     mainWindow = null;
     if (subpy != null) {
       console.log('Stopping server!');
-      try {
-        request(PYTHON_URL + '/shutdown', function (error, response, body) {
-          killServer();
-        });
-      } catch (ex) {
-        killServer();
-      }
+      sendkillToServer ();
     } else {
       app.quit();
     }
   }
 }
 
+function sendkillToServer (){
+  try {
+    request(PYTHON_URL + '/shutdown', function (error, response, body) {
+      setTimeout (function(){
+                    killServer();
+                    delayedQuit();
+                  }
+                  , retryInterval);
+    });
+  } catch (ex) {
+    killServer();
+    delayedQuit();
+  }
+}
+
 function killServer (){
   subpy.kill('SIGINT');
+}
+
+function delayedQuit(){
   setTimeout (function(){ app.quit(); }, retryInterval);
 }
 

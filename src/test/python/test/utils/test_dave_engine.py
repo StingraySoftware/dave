@@ -25,7 +25,7 @@ def test_get_dataset_schema(s):
 @given(text(min_size=1))
 @example("test.evt")
 @example("test_Gtis.evt")
-def test_get_ligthcurve(s):
+def test_get_lightcurve(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, s)
     result = None
 
@@ -36,6 +36,6 @@ def test_get_ligthcurve(s):
     axis[1]["column"] = "PI"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_ligthcurve(destination, "", [], axis, 16.)
+        result = DaveEngine.get_lightcurve(destination, "", [], axis, 16.)
 
     assert not os.path.isfile(destination) or result is not None
