@@ -42,6 +42,7 @@ def start(server_port, app):
         # Clean-up server (close socket, etc.)
         server.close()
 
+
 def subscribe():
     def join():
         q = Queue()
@@ -51,7 +52,7 @@ def subscribe():
                 result = q.get()
                 ev = ServerSentEvent(str(result))
                 yield ev.encode()
-        except GeneratorExit: #  Or maybe use flask signals
+        except GeneratorExit:  # Or maybe use flask signals
             subscriptions.remove(q)
 
     return Response(join(), mimetype="text/event-stream")

@@ -42,7 +42,9 @@ class Table:
             filtered_table.columns[tmp_column_name] = Column(tmp_column_name)
 
         column = self.columns[column_name]
-        filtered_indexes = np.array([i for i in range(len(column.values)) if ((column.values[i] >= filter["from"]) and (column.values[i] <= filter["to"]))])
+        filtered_indexes = np.array([i for i in range(len(column.values))
+                                        if ((column.values[i] >= filter["from"])
+                                            and (column.values[i] <= filter["to"]))])
 
         for i in filtered_indexes:
             filtered_table.add_row(self.get_row(i))

@@ -3,6 +3,7 @@ import utils.dataset_helper as DsHelper
 import utils.dave_logger as logging
 import time
 
+
 class DataSet:
     id = ""
     tables = dict()
@@ -49,7 +50,7 @@ class DataSet:
 
         return filtered_dataset
 
-    def join (self, dataset):
+    def join(self, dataset):
         joined_dataset = self.clone()
 
         for table_id in joined_dataset.tables:
@@ -78,7 +79,10 @@ class DataSet:
         gti_start = self.tables["GTI"].columns["START"].values
         gti_end = self.tables["GTI"].columns["STOP"].values
 
-        dataset = get_dataset_applying_gtis(self.id, columns_values, ev_list, gti_start, gti_end, filter["from"], filter["to"], hduname, column)
+        dataset = get_dataset_applying_gtis(self.id, columns_values, ev_list,
+                                            gti_start, gti_end,
+                                            filter["from"], filter["to"],
+                                            hduname, column)
 
         return dataset
 
@@ -111,7 +115,9 @@ def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
 
 
 # Returns a new empty dataset with EVENTS and GTIs tables
-def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end, filter_start=None, filter_end=None, hduname="EVENTS", column='TIME'):
+def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end,
+                            filter_start=None, filter_end=None,
+                            hduname="EVENTS", column='TIME'):
 
     # Prepares additional_columns
     columns = [column]
@@ -153,8 +159,10 @@ def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end, fil
 
                 # Insert values at range on dataset
                 hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx:1])
-                for i in range(len(additional_columns)):
-                    hdu_table.columns[additional_columns[i]].add_values(ds_columns[additional_columns[i]][start_event_idx:end_event_idx:1])
+                for i in range(len(additional_columnsadditional_columns[i]):
+                    ad_column = additional_columns[i]
+                    values = ds_columns[ad_column][start_event_idx:end_event_idx:1]
+                    hdu_table.columns[ad_column].add_values(values)
 
             else:
                 logging.warn("Wrong indexes for %s" % gti_index)

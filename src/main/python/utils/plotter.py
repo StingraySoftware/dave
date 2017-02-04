@@ -1,6 +1,7 @@
 import numpy as np
 import utils.dave_logger as logging
 
+
 def get_plotdiv_xy(dataset, axis):
     data = build_data_list(dataset, axis)
     return data

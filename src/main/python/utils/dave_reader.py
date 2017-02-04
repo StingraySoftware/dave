@@ -143,7 +143,8 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     gti_start = fits_data.gti_list[:, 0]
     gti_end = fits_data.gti_list[:, 1]
 
-    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, fits_data.ev_list, gti_start, gti_end, None, None, hduname, column)
+    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, fits_data.ev_list,
+                                                gti_start, gti_end, None, None, hduname, column)
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)
 

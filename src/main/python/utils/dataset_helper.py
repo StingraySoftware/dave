@@ -6,7 +6,7 @@ import utils.dave_logger as logging
 import bisect
 
 
-# Returns an Stingray EventList from a given dataset
+# Returns an Stingray EventList from a given dataset
 def get_eventlist_from_dataset(dataset, axis):
 
     # Extract axis values
@@ -42,7 +42,7 @@ def get_gti_table(from_val, to_val):
 def find_idx_nearest_val(array, value):
 
     # idx = np.searchsorted(array, value, side="left")
-    idx = bisect.bisect_left(array, value) # Looks like bisec is faster with structured data than searchsorted
+    idx = bisect.bisect_left(array, value) #  Looks like bisec is faster with structured data than searchsorted
 
     if idx >= len(array):
         idx_nearest = len(array) - 1
