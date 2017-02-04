@@ -6,6 +6,7 @@ var cp = require('child_process');
 var rq = require('request-promise');
 var Config = require('config-js');
 var Menu = require("menu");
+var request = require('request');
 
 let mainWindow,
     windowParams = {
@@ -169,10 +170,20 @@ function stop (){
     mainWindow = null;
     if (subpy != null) {
       console.log('Stopping server!');
-      subpy.kill('SIGINT');
-      setTimeout (function(){ app.quit(); }, retryInterval);
+      try {
+        request(PYTHON_URL + '/shutdown', function (error, response, body) {
+          killServer();
+        });
+      } catch (ex) {
+        killServer();
+      }
     }
   }
+}
+
+function killServer (){
+  subpy.kill('SIGINT');
+  setTimeout (function(){ app.quit(); }, retryInterval);
 }
 
 function prepareMenu (){

@@ -13,6 +13,7 @@
     "config-js": "^1.1.9",
     "electron-packager": "^8.5.0",
     "menu": "^0.2.5",
+    "request": "^2.79.0",
     "request-promise": "*"
   },
   "devDependencies": {

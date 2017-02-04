@@ -34,11 +34,16 @@ class ServerSentEvent(object):
 
 def start(server_port, app):
     server = WSGIServer(("", server_port), app)
-    server.serve_forever()
-
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Clean-up server (close socket, etc.)
+        server.close()
 
 def subscribe():
-    def gen():
+    def join():
         q = Queue()
         subscriptions.append(q)
         try:
@@ -49,7 +54,7 @@ def subscribe():
         except GeneratorExit: #  Or maybe use flask signals
             subscriptions.remove(q)
 
-    return Response(gen(), mimetype="text/event-stream")
+    return Response(join(), mimetype="text/event-stream")
 
 
 def publish(message):
