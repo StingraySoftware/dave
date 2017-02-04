@@ -8,5 +8,6 @@ module.exports = {
     path : '../resources/python/server.py',
     url : 'http://localhost:5000'
   },
-  logDebugMode : 'true'
+  logDebugMode : 'true',
+  splash_path : '/../../../dave/resources/templates/splash_page.html'
 };

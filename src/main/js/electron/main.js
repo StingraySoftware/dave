@@ -26,10 +26,11 @@ var logDebugMode = false;
 var PYTHON_URL = "";
 
 app.on('ready', function() {
-  createWindow();
 
   var config = loadConfig();
   console.log('config: ' + JSON.stringify(config));
+
+  createWindow(config.splash_path);
 
   if (config.error == null) {
 
@@ -66,6 +67,7 @@ function loadConfig(){
       configObj.pythonUrl = config.get('python.url');
 
       configObj.logDebugMode = config.get('logDebugMode') == "true";
+      configObj.splash_path = config.get('splash_path');
 
       return configObj;
 
@@ -136,8 +138,10 @@ function connectToServer (){
     }
 }
 
-function createWindow (){
+function createWindow (splash_path){
+  console.log('Creating splash: ' + splash_path);
   mainWindow = new BrowserWindow(windowParams);
+  mainWindow.loadURL("file://" + __dirname + splash_path);
   mainWindow.on('closed', function() { stop(); });
   //mainWindow.webContents.openDevTools();
 }
@@ -148,16 +152,13 @@ function loadDaveContents (url){
 }
 
 function log (msg){
-  logMessage = msg + "</br>" + logMessage;
   console.log(msg);
-  logToWindow(logMessage);
+  logToWindow(msg);
 }
 
 function logToWindow (msg){
   if (mainWindow != null) {
-    var style = '<style>.myclass {position: absolute;top: 50%;width:95%;text-align:center}</style>'
-    var html = '<div class="myclass">' + statusMsg + msg + '</div>'
-    mainWindow.loadURL("data:text/html;charset=utf-8," + encodeURI(style + html));
+    mainWindow.webContents.executeJavaScript("log('" + statusMsg + msg + "');");
   }
 }
 
@@ -177,6 +178,8 @@ function stop (){
       } catch (ex) {
         killServer();
       }
+    } else {
+      app.quit();
     }
   }
 }
