@@ -1,6 +1,7 @@
 import logging
 import utils.gevent_helper as GeHelper
 
+LOG_TO_SERVER_ENABLED = True
 
 # LOGGING WRAPPED METHODS
 def debug(obj):
@@ -25,4 +26,5 @@ def error(obj):
 
 # User GeHelper to send msg to client
 def log_to_server(msg):
-    GeHelper.publish(msg)
+    if LOG_TO_SERVER_ENABLED:
+        GeHelper.publish(msg)

@@ -133,11 +133,9 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
 
     # Prepares additional_columns
     additional_columns = []
-    additional_columns_values = dict()
     for i in range(len(columns)):
         if columns[i] != column:
             additional_columns.append(columns[i])
-            additional_columns_values[columns[i]] = []
 
     # Reads fits data
     logging.debug("Reading Fits columns's data")
@@ -150,7 +148,7 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
 
     event_values = fits_data.ev_list - events_stat_time
 
-    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, event_values,
+    dataset = DataSet.get_dataset_applying_gtis(dsId, fits_data.additional_data, event_values,
                                                 gti_start, gti_end, None, None, hduname, column)
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)

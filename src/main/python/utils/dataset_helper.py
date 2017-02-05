@@ -2,7 +2,6 @@ import numpy as np
 
 from stingray.events import EventList
 from model.table import Table
-import utils.dave_logger as logging
 import bisect
 
 
