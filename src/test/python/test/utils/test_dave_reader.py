@@ -2,6 +2,7 @@ from test.fixture import *
 
 from hypothesis import given
 from hypothesis.strategies import text
+from astropy.io import fits
 
 import utils.dave_reader as DaveReader
 import utils.file_utils as FileUtils
@@ -39,7 +40,8 @@ def test_get_fits_dataset_lc(s):
 @given(text())
 def test_get_fits_table_column_names(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
-    column_names = DaveReader.get_fits_table_column_names(destination, "EVENTS")
+    hdulist = fits.open(destination)
+    column_names = DaveReader.get_fits_table_column_names(hdulist, "EVENTS")
     assert len(column_names) == 2
 
 

@@ -103,8 +103,7 @@ def get_fits_dataset(destination, dsId, table_ids):
 
 
 # Returns the column's names of a given table of Fits file
-def get_fits_table_column_names(destination, table_id):
-    hdulist = fits.open(destination)
+def get_fits_table_column_names(hdulist, table_id):
 
     if hdulist[table_id]:
         if isinstance(hdulist[table_id], fits.hdu.table.BinTableHDU):
@@ -119,12 +118,18 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                    hduname='EVENTS', column='TIME',
                                    gtistring='GTI,STDGTI'):
 
+    # Opening Fits
+    hdulist = fits.open(destination)
+
     # Gets columns from fits hdu table
     logging.debug("Reading Fits columns")
-    columns = get_fits_table_column_names(destination, hduname)
+    columns = get_fits_table_column_names(hdulist, hduname)
     columns = ["TIME", "PI"]
 
-    event_values = []
+    events_stat_time = hdulist[hduname].header["TSTART"]
+
+    # Closes the FITS file, further file data reads will be done via Stingray
+    hdulist.close()
 
     # Prepares additional_columns
     additional_columns = []
@@ -140,10 +145,12 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
 
-    gti_start = fits_data.gti_list[:, 0]
-    gti_end = fits_data.gti_list[:, 1]
+    gti_start = fits_data.gti_list[:, 0] - events_stat_time
+    gti_end = fits_data.gti_list[:, 1] - events_stat_time
 
-    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, fits_data.ev_list,
+    event_values = fits_data.ev_list - events_stat_time
+
+    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, event_values,
                                                 gti_start, gti_end, None, None, hduname, column)
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)
