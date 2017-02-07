@@ -7,7 +7,6 @@ import model.dataset as DataSet
 import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
-import utils.dataset_helper as DsHelper
 import utils.dataset_cache as DsCache
 
 
@@ -126,7 +125,17 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     columns = get_fits_table_column_names(hdulist, hduname)
     columns = ["TIME", "PI"]
 
-    events_stat_time = hdulist[hduname].header["TSTART"]
+    # Gets FITS header properties
+    header = dict()
+    header_comments = dict()
+    for header_column in hdulist[hduname].header:
+        header[header_column] = str(hdulist[hduname].header[header_column])
+        header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
+
+    # Gets start time of observation
+    events_start_time = 0
+    if "TSTART" in header:
+        events_start_time = hdulist[hduname].header["TSTART"]
 
     # Closes the FITS file, further file data reads will be done via Stingray
     hdulist.close()
@@ -143,12 +152,12 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
 
-    gti_start = fits_data.gti_list[:, 0] - events_stat_time
-    gti_end = fits_data.gti_list[:, 1] - events_stat_time
+    gti_start = fits_data.gti_list[:, 0] - events_start_time
+    gti_end = fits_data.gti_list[:, 1] - events_start_time
 
-    event_values = fits_data.ev_list - events_stat_time
+    event_values = fits_data.ev_list - events_start_time
 
-    dataset = DataSet.get_dataset_applying_gtis(dsId, fits_data.additional_data, event_values,
+    dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments, fits_data.additional_data, event_values,
                                                 gti_start, gti_end, None, None, hduname, column)
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)

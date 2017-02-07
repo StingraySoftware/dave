@@ -19,7 +19,6 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     }
 
     //ADDS PLOTS TO PANEL
-    this.$html.html("");
     for (i in this.plots) { this.$html.append(this.plots[i].$html); };
     this.forceResize();
   };
@@ -34,7 +33,18 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   }
 
   this.onDatasetChanged = function ( filename, bck_filename, schema ) {
+
+    // Clears output panel
+    this.$html.html("");
+
+    // Adds plots
     this.initPlots(filename, bck_filename, schema);
+
+    // Adds FITS info if found
+    if (schema["EVENTS"]["HEADER"] !== undefined) {
+      var theInfoPanel = new infoPanel("infoPanel", "EVENTS HEADER:", schema["EVENTS"]["HEADER"], schema["EVENTS"]["HEADER_COMMENTS"]);
+      this.$html.append(theInfoPanel.$html);
+    }
   }
 
   this.onDatasetValuesChanged = function ( filename, filters ) {

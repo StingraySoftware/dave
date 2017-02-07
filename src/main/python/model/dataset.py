@@ -79,7 +79,8 @@ class DataSet:
         gti_start = self.tables["GTI"].columns["START"].values
         gti_end = self.tables["GTI"].columns["STOP"].values
 
-        dataset = get_dataset_applying_gtis(self.id, columns_values, ev_list,
+        dataset = get_dataset_applying_gtis(self.id, self.tables[hduname].header, self.tables[hduname].header_comments,
+                                            columns_values, ev_list,
                                             gti_start, gti_end,
                                             filter["from"], filter["to"],
                                             hduname, column)
@@ -115,7 +116,7 @@ def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
 
 
 # Returns a new empty dataset with EVENTS and GTIs tables
-def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end,
+def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ev_list, gti_start, gti_end,
                             filter_start=None, filter_end=None,
                             hduname="EVENTS", column='TIME'):
 
@@ -136,6 +137,10 @@ def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end,
     hdu_table = dataset.tables[hduname]
     gti_table = dataset.tables["GTI"]
 
+    # Sets table header info
+    hdu_table.set_header_info(header, header_comments)
+
+    # Prepare data with the GTIs Intervals
     must_filter = not ((filter_start is None) or (filter_end is None))
 
     for gti_index in range(len(gti_start)):

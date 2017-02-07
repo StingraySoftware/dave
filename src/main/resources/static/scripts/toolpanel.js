@@ -36,16 +36,17 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
         var table = schema[tableName];
 
         for (columnName in table) {
-
-          var column = table[columnName];
-          var filterData = { table:tableName, column:columnName };
-          var selector = new sliderSelector(columnName,
-                                            columnName + ":",
-                                            filterData,
-                                            "From", "To",
-                                            column.min_value, column.max_value,
-                                            this.onSelectorValuesChanged);
-          this.$html.find(".selectorsContainer").append(selector.$html);
+          if ((columnName != "HEADER") && (columnName != "HEADER_COMMENTS")) {
+            var column = table[columnName];
+            var filterData = { table:tableName, column:columnName };
+            var selector = new sliderSelector(columnName,
+                                              columnName + ":",
+                                              filterData,
+                                              "From", "To",
+                                              column.min_value, column.max_value,
+                                              this.onSelectorValuesChanged);
+            this.$html.find(".selectorsContainer").append(selector.$html);
+          }
         }
 
         this.buttonsContainer.removeClass("hidden");

@@ -98,28 +98,35 @@ def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
     # Creates lightcurves by gti and joins in one
     logging.debug("Create lightcurve ....")
     eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
-    lc = eventlist.to_lc(dt)
 
-    # Source lightcurve count rate
-    count_rate = lc.countrate
+    time_vals = []
+    count_rate = []
 
-    # Applies backgrund data to lightcurves if necessary
-    if bck_destination:
-        filtered_bck_ds = get_filtered_dataset(bck_destination, filters)
-        if not filtered_bck_ds:
-            return None
+    if len(eventlist.time) > 0:
+        lc = eventlist.to_lc(dt)
 
-        logging.debug("Create background lightcurve ....")
-        bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
-        bck_lc = bck_eventlist.to_lc(dt)
+        time_vals = lc.time
 
-        count_rate = count_rate - bck_lc.countrate
+        # Source lightcurve count rate
+        count_rate = lc.countrate
+
+        # Applies backgrund data to lightcurves if necessary
+        if bck_destination:
+            filtered_bck_ds = get_filtered_dataset(bck_destination, filters)
+            if not filtered_bck_ds:
+                return None
+
+            logging.debug("Create background lightcurve ....")
+            bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
+            bck_lc = bck_eventlist.to_lc(dt)
+
+            count_rate = count_rate - bck_lc.countrate
 
     # Preapares the result
     logging.debug("Result lightcurves ....")
     result = []
     column_time = dict()
-    column_time["values"] = lc.time
+    column_time["values"] = time_vals
     result = np.append(result, [column_time])
 
     column_pi = dict()

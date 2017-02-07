@@ -71,6 +71,50 @@ h3
   border-right: 1px solid black;
 }
 
+.infoPanel
+{
+  float:left;
+  width: 98%;
+  height: 305px;
+  border: 1px solid #afafaf;
+  background-color: #ffffff;
+  margin: 0;
+  margin-top: 12px;
+  margin-right: 12px;
+  padding: 12px;
+  padding-top: 0px;
+  overflow-y: scroll;
+}
+
+.infoPanel .property {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.infoPanel .btnShowAll
+{
+  float:right;
+  margin-top: 12px;
+}
+
+.property .tag {
+  width: 18%;
+  font-weight: bold;
+  vertical-align: top;
+}
+
+.property .value {
+  width: 30%;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.property .comment {
+  width: 48%;
+  color: #999999;
+  vertical-align: top;
+}
+
 .plotContainer
 {
   float:left;

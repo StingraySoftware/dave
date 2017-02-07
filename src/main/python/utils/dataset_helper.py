@@ -3,6 +3,7 @@ import numpy as np
 from stingray.events import EventList
 from model.table import Table
 import bisect
+import utils.dave_logger as logging
 
 
 # Returns an Stingray EventList from a given dataset
@@ -20,8 +21,13 @@ def get_eventlist_from_dataset(dataset, axis):
                                          gtistop)],
                         dtype=np.longdouble)
 
+    logging.debug("get_eventlist_from_dataset: gti_list -> " + str(len(gti_list)))
+
     # Returns the EventList
-    return EventList(time_data, gti=gti_list, pi=pi_data)
+    if len(gti_list) > 0:
+        return EventList(time_data, gti=gti_list, pi=pi_data)
+    else:
+        return EventList(time_data, pi=pi_data)
 
 
 def get_empty_gti_table():
