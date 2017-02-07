@@ -1,4 +1,4 @@
-
+import math
 
 def createFilter(table, column, from_val, to_val):
     filter = dict()
@@ -21,3 +21,15 @@ def get_time_filter(filters):
             return filter
 
     return None
+
+
+#Returns the filters applied to a passed bin size
+def apply_bin_size_to_filters(filters, bin_size):
+
+    time_filter = get_time_filter(filters)
+    if time_filter:
+        if time_filter["from"] < time_filter["to"]:
+            time_filter["from"] = math.floor(time_filter["from"] / bin_size) * bin_size
+            time_filter["to"] = math.ceil(time_filter["to"] / bin_size) * bin_size
+
+    return filters

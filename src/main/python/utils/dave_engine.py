@@ -88,6 +88,8 @@ def get_plot_data(destination, filters, styles, axis):
 #
 def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
 
+    filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
     filtered_ds = get_filtered_dataset(src_destination, filters)
     if not filtered_ds:
         return None

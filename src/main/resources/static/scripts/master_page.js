@@ -6,6 +6,7 @@ var theOutputPanel = null;
 var theService = null;
 var theFilename = "";
 var theBckFilename = "";
+var theBinSize = 100;
 
 $(document).ready(function () {
   waitingDialog.show('Creating environment');

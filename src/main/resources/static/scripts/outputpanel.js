@@ -123,8 +123,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
 
   this.getFitsTablePlots = function ( filename, bck_filename, schema ) {
 
-    dt = 100;//Math.ceil((schema.EVENTS.TIME.max_value - schema.EVENTS.TIME.min_value) / 100.0);
-    log("getFitsTablePlots: dt: " + dt );
+    log("getFitsTablePlots: theBinSize: " + theBinSize );
 
     return [
               /*new Plot(
@@ -148,8 +147,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                     bck_filename: bck_filename,
                     styles: { type: "ligthcurve", labels: ["TIME", "Count Rate(c/s)"] },
                     axis: [ { table:"EVENTS", column:"TIME" },
-                            { table:"EVENTS", column:"PI" } ],
-                    dt: dt
+                            { table:"EVENTS", column:"PI" } ]
                   },
                   this.service.request_lightcurve,
                   this.onFiltersChangedFromPlot,

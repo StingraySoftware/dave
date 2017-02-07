@@ -58,6 +58,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.refreshData = function () {
    currentObj.isReady = false;
+
+   if (currentObj.plotConfig.styles.type == "ligthcurve"){
+     currentObj.plotConfig.dt = theBinSize;
+   }
+
    currentObj.getDataFromServerFn( currentObj.plotConfig, currentObj.onPlotDataReceived );
  }
 

@@ -30,6 +30,18 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
 
     sliderSelectors_remove();
 
+    //Adds the Bin selector
+    if (theBinSelector != null){
+      theBinSelector.$html.remove();
+    }
+    theBinSelector = binSelector("binSelector",
+                  "BIN SIZE:",
+                  "From",
+                  1, 1000,
+                  this.onSelectorValuesChanged);
+    this.$html.find(".selectorsContainer").append(theBinSelector.$html);
+
+    //Adds the rest of selectors from dataset columns
     for (tableName in schema) {
       if (tableName != "GTI") {
 

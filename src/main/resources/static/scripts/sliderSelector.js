@@ -67,6 +67,14 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    //Set values method
    this.setValues = function (from, to, source) {
+
+     var step = 1;
+     if (this.filterData.column == "TIME") {
+         step = theBinSize;
+         this.fromValue = Math.floor (from / theBinSize) * theBinSize;
+         this.toValue = Math.floor (to / theBinSize) * theBinSize;
+     }
+
      this.fromValue = Math.floor(from);
      this.toValue = Math.ceil(to);
      this.fromInput.val( this.fromValue );
@@ -75,6 +83,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.slider.slider('values', 0, this.fromValue);
        this.slider.slider('values', 1, this.toValue);
      }
+     this.slider.slider( "option", "step", step);
    }
 
    this.getFilter = function () {
@@ -109,6 +118,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.container.fadeOut();
      }
    }
+
+   //Init from-to values
+   this.setValues( this.initFromValue, this.initToValue );
 
    //Collapses container
    this.container.hide();
