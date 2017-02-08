@@ -40,12 +40,18 @@ function infoPanel(id, title, header, headerComments) {
         keys.push(key);
       }
     }
-    keys.sort ();
 
-    for (i in keys){
-      var tag = keys[i];
-      this.container.append(this.getPropertyHtml(tag, this.header[tag], this.headerComments[tag]));
+    if (keys.length > 0) {
+      keys.sort ();
+
+      for (i in keys){
+        var tag = keys[i];
+        this.container.append(this.getPropertyHtml(tag, this.header[tag], this.headerComments[tag]));
+      }
+    } else {
+      this.container.append('<tr><td>No default header tags found!</td></tr>');
     }
+
   }
 
   this.redraw();

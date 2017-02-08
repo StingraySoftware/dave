@@ -7,6 +7,8 @@ var theService = null;
 var theFilename = "";
 var theBckFilename = "";
 var theBinSize = 100;
+var MIN_PLOT_POINTS = 2;
+var MAX_PLOT_POINTS = 10000;
 
 $(document).ready(function () {
   waitingDialog.show('Creating environment');

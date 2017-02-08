@@ -99,6 +99,9 @@ def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
 
     # Creates lightcurves by gti and joins in one
     logging.debug("Create lightcurve ....")
+
+    logging.debug("Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+
     eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
 
     time_vals = []

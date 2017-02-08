@@ -56,7 +56,7 @@ def get_plot_data():
 @app.route('/get_lightcurve', methods=['POST'])
 def get_lightcurve():
     return DaveEndpoint.get_lightcurve(request.json['filename'], request.json['bck_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], request.json['dt'])
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
 # Receives a message from client and send it to all subscribers

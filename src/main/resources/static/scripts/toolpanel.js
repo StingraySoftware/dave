@@ -34,10 +34,38 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
     if (theBinSelector != null){
       theBinSelector.$html.remove();
     }
+
+    var minBinSize = 1;
+    var maxBinSize = 1;
+    var initValue = 1;
+    var step = 1;
+    if (schema["EVENTS"] !== undefined){
+
+      //Caluculates max, min and step values for slider from time ranges
+      var binSize = (schema["EVENTS"]["TIME"].max_value - schema["EVENTS"]["TIME"].min_value) / MIN_PLOT_POINTS;
+      var multiplier = 1;
+
+      //If binSize is smaller than 1.0 find the divisor
+      while (binSize * multiplier < 1)
+      {
+        multiplier *= 10;
+      }
+
+      var tmpStep = (1.0 / multiplier) / 100.0;
+      if ((binSize / tmpStep) > MAX_PLOT_POINTS) {
+        //Fix step for not allowing more plot point than MAX_PLOT_POINTS
+        tmpStep = binSize / MAX_PLOT_POINTS;
+      }
+      minBinSize = tmpStep;
+      maxBinSize = binSize;
+      step = minBinSize / 100.0; // We need at least 100 steps on slider
+
+      initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+    }
     theBinSelector = binSelector("binSelector",
                   "BIN SIZE:",
                   "From",
-                  1, 1000,
+                  minBinSize, maxBinSize, step, initValue,
                   this.onSelectorValuesChanged);
     this.$html.find(".selectorsContainer").append(theBinSelector.$html);
 

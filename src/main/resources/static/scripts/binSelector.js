@@ -1,7 +1,7 @@
 
 var theBinSelector = null;
 
-function binSelector(id, title, fromLabel, fromValue, toValue, onSelectorValuesChangedFn) {
+function binSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn) {
 
   var currentObj = this;
   this.id = id;
@@ -11,7 +11,8 @@ function binSelector(id, title, fromLabel, fromValue, toValue, onSelectorValuesC
   this.initToValue = toValue;
   this.fromValue = fromValue;
   this.toValue = toValue;
-  this.value = Math.floor((fromValue + toValue) / 20.0) * 10;
+  this.value = initValue;
+  this.step = step;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
 
   theBinSelector = this;
@@ -40,7 +41,7 @@ function binSelector(id, title, fromLabel, fromValue, toValue, onSelectorValuesC
          min: this.fromValue,
          max: this.toValue,
          values: [this.value],
-         step: 10,
+         step: this.step,
          slide: function( event, ui ) {
            var sliderId = event.target.id.replace("slider-", "");
            theBinSelector.setValues( ui.values[ 0 ], "slider");
@@ -50,24 +51,21 @@ function binSelector(id, title, fromLabel, fromValue, toValue, onSelectorValuesC
 
    //Set values method
    this.setValues = function (value, source) {
-     if (value > 10){
-       this.value = Math.floor(value / 10.0) * 10;
-     } else {
-       this.value = 1;
-     }
-     
+     this.value = value;
      this.fromInput.val( this.value );
      if (source != "slider") {
        this.slider.slider('values', 0, this.value);
      }
 
      theBinSize = this.value;
+
+     log("New BinSize set: " + theBinSize);
    }
 
    //Init from-to values
    this.setValues( this.value );
 
-   log ("new binSelector id: " + this.id + ", Value: " + this.value);
+   log ("new binSelector id: " + this.id + ", Value: " + this.value + ", fromValue: " + this.fromValue + ", toValue: " + this.toValue + ", step: " + this.step);
 
    return this;
 }
