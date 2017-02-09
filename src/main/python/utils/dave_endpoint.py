@@ -6,40 +6,87 @@ import utils.session_helper as SessionHelper
 import utils.file_utils as FileUtils
 import utils.dave_engine as DaveEngine
 from utils.np_encoder import NPEncoder
+import utils.dataset_cache as DsCache
 
 
 # UPLOADS THE FILE AND STORES IT ON SESSION
-def upload(file, target):
-    if not file.filename:
-        return common_error("No sent file")
+def upload(files, target):
 
-    destination = FileUtils.save_file(file, target)
+    if len(files) == 0:
+        return common_error("No sent files")
 
-    if not destination:
-        return common_error("Error uploading file...")
+    filenames = []
 
-    if not FileUtils.is_valid_file(destination):
-        return common_error("File extension is not supported...")
+    for file in files:
 
-    logging.info("Uploaded filename: %s" % destination)
-    SessionHelper.add_uploaded_file_to_session(file.filename)
+        destination = FileUtils.save_file(file, target)
 
-    return json.dumps(dict(filename=file.filename))
+        if not destination:
+            return common_error("Error uploading file...")
 
+        if not FileUtils.is_valid_file(destination):
+            return common_error("File extension is not supported...")
 
-def get_dataset_schema(filename, target):
+        logging.info("Uploaded filename: %s" % destination)
+        SessionHelper.add_uploaded_file_to_session(file.filename)
+        filenames.append(file.filename)
+
+    return json.dumps(filenames)
+
+#Returns filename destination or a valid cache key, None if invalid
+def get_destination(filename, target):
     if not filename:
-        return common_error(error="No filename setted")
+        logging.error("No filename or cache key setted for filename %s" % filename)
+        return None
 
     if not SessionHelper.is_file_uploaded(filename):
-        return common_error("Filename not uploaded")
+        if not DsCache.contains(filename):
+            logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
+            return None
 
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
-        return common_error("Invalid file")
+        if not DsCache.contains(filename):
+            logging.error("Invalid file or not found in cache filename %s" % filename)
+            return None
+        else:
+            destination = filename  # Filename represents only a joined dataset key, not real file
+
+    return destination
+
+
+def get_dataset_schema(filename, target):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
 
     schema = DaveEngine.get_dataset_schema(destination)
     return json.dumps(schema, cls=NPEncoder)
+
+
+# append_file_to_dataset: Appends Fits data to a dataset
+#
+# @param: filename: filename or dataset cache key
+# @param: nextfile: file to append
+#
+def append_file_to_dataset(filename, nextfile, target):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
+
+    if not nextfile:
+        return common_error(error="No nextfile setted")
+
+    if not SessionHelper.is_file_uploaded(nextfile):
+        return common_error("Nextfile not uploaded")
+
+    next_destination = FileUtils.get_destination(target, nextfile)
+    if not FileUtils.is_valid_file(next_destination):
+        return common_error("Invalid next file")
+
+    new_filename = DaveEngine.append_file_to_dataset(destination, next_destination)
+
+    return json.dumps(new_filename)
 
 
 def common_error(error):
@@ -47,15 +94,9 @@ def common_error(error):
 
 
 def get_plot_data(filename, target, filters, styles, axis):
-    if not filename:
-        return "No filename setted"
-
-    if not SessionHelper.is_file_uploaded(filename):
-        return "Filename not uploaded"
-
-    destination = FileUtils.get_destination(target, filename)
-    if not FileUtils.is_valid_file(destination):
-        return "Invalid file"
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
 
     logging.debug("get_plot_data: %s" % filename)
     logging.debug("get_plot_data: filters %s" % filters)
@@ -74,15 +115,9 @@ def get_plot_data(filename, target, filters, styles, axis):
 
 
 def get_lightcurve(src_filename, bck_filename, target, filters, axis, dt):
-    if not src_filename:
-        return "No filename setted"
-
-    if not SessionHelper.is_file_uploaded(src_filename):
-        return "Source Filename not uploaded"
-
-    src_destination = FileUtils.get_destination(target, src_filename)
-    if not FileUtils.is_valid_file(src_destination):
-        return "Invalid source file"
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key")
 
     bck_destination = ""
     if bck_filename:

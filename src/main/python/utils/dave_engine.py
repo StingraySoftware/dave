@@ -4,6 +4,7 @@ import utils.filters_helper as FltHelper
 import utils.plotter as Plotter
 import numpy as np
 import utils.dave_logger as logging
+import utils.dataset_cache as DsCache
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
@@ -17,6 +18,25 @@ def get_dataset_schema(destination):
         return dataset.get_schema()
     else:
         return None
+
+
+# append_file_to_dataset: Appends Fits data to a dataset
+#
+# @param: destination: file destination or dataset cache key
+# @param: next_destination: file destination of file to append
+#
+def append_file_to_dataset(destination, next_destination):
+    dataset = DaveReader.get_file_dataset(destination)
+    if dataset:
+        next_dataset = DaveReader.get_file_dataset(next_destination)
+        if next_dataset:
+            dataset = dataset.join(next_dataset)
+            DsCache.remove(destination)  # Removes previous cached dataset for prev key
+            new_destination = destination + "|" + next_destination
+            DsCache.add(new_destination, dataset)  # Adds new cached dataset for new key
+            return new_destination
+
+    return ""
 
 
 def get_filtered_dataset(destination, filters):

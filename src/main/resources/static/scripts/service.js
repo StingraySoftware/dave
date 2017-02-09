@@ -25,6 +25,10 @@ function Service (base_url) {
     $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } ).done(fn).fail(errorFn);
   };
 
+  this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn ) {
+    $.get( thisService.base_url + "/append_file_to_dataset", { filename: filename, nextfile: nextfile } ).done(fn).fail(errorFn);
+  };
+
   this.request_plot_data = function (plot_data, fn) {
     log("request_plot_data plot " + JSON.stringify(plot_data));
     $.ajax({

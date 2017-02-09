@@ -20,3 +20,11 @@ def get(destination):
         return cached_datasets[destination]
 
     return None
+
+
+def remove(destination):
+    if destination in cached_datasets:
+        cached_datasets.pop(destination, None)
+        return True
+
+    return False

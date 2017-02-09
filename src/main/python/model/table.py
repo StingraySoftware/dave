@@ -31,6 +31,8 @@ class Table:
 
     def clone(self):
         table = Table(self.id)
+        table.header = self.header
+        table.header_comments = self.header_comments
         for column_name in self.columns:
             table.columns[column_name] = self.columns[column_name].clone()
         return table
