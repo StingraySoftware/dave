@@ -27,14 +27,27 @@ def get_dataset_schema(destination):
 #
 def append_file_to_dataset(destination, next_destination):
     dataset = DaveReader.get_file_dataset(destination)
-    if dataset:
+    if DsHelper.is_events_dataset(dataset):
         next_dataset = DaveReader.get_file_dataset(next_destination)
-        if next_dataset:
-            dataset = dataset.join(next_dataset)
+        if DsHelper.is_events_dataset(next_dataset):
+            # Looks what dataset is earliest
+            ds_start_time = DsHelper.get_events_dataset_start(dataset)
+            next_ds_start_time = DsHelper.get_events_dataset_start(next_dataset)
+
+            if next_ds_start_time < ds_start_time:
+                #Swap datasets
+                tmp_ds = dataset
+                dataset = next_dataset
+                next_dataset = tmp_ds
+
+            #Join and cache joined dataset
+            dataset.tables["EVENTS"] = dataset.tables["EVENTS"].join(next_dataset.tables["EVENTS"])
+            dataset.tables["GTI"] = DsHelper.join_gti_tables(dataset.tables["GTI"], next_dataset.tables["GTI"])
+
             DsCache.remove(destination)  # Removes previous cached dataset for prev key
-            new_destination = destination + "|" + next_destination
-            DsCache.add(new_destination, dataset)  # Adds new cached dataset for new key
-            return new_destination
+            new_cache_key = DsCache.get_key(destination + "|" + next_destination)
+            DsCache.add(new_cache_key, dataset)  # Adds new cached dataset for new key
+            return new_cache_key
 
     return ""
 

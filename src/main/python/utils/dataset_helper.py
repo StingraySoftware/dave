@@ -1,6 +1,7 @@
 import numpy as np
 
 from stingray.events import EventList
+from stingray.gti import join_gtis
 from model.table import Table
 import bisect
 import utils.dave_logger as logging
@@ -14,18 +15,11 @@ def get_eventlist_from_dataset(dataset, axis):
     pi_data = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
 
     # Extract GTIs
-    gtistart = dataset.tables["GTI"].columns["START"].values
-    gtistop = dataset.tables["GTI"].columns["STOP"].values
-    gti_list = np.array([[a, b]
-                         for a, b in zip(gtistart,
-                                         gtistop)],
-                        dtype=np.longdouble)
-
-    logging.debug("get_eventlist_from_dataset: gti_list -> " + str(len(gti_list)))
+    gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
 
     # Returns the EventList
-    if len(gti_list) > 0:
-        return EventList(time_data, gti=gti_list, pi=pi_data)
+    if len(gti) > 0:
+        return EventList(time_data, gti=gti, pi=pi_data)
     else:
         return EventList(time_data, pi=pi_data)
 
@@ -59,3 +53,47 @@ def find_idx_nearest_val(array, value):
         else:
             idx_nearest = idx
     return idx_nearest
+
+
+def is_events_dataset(dataset):
+    if dataset:
+        if "EVENTS" in dataset.tables:
+            if "TIME" in dataset.tables["EVENTS"].columns:
+                if "GTI" in dataset.tables:
+                    return True
+    return False
+
+
+def get_events_dataset_start(dataset):
+    if len(dataset.tables["EVENTS"].columns["TIME"].values) > 0:
+        return dataset.tables["EVENTS"].columns["TIME"].values[0]
+    return 0
+
+
+def get_stingray_gti_from_gti_table (gti_table):
+    return np.array([[a, b]
+                         for a, b in zip(gti_table.columns["START"].values,
+                                         gti_table.columns["STOP"].values)],
+                        dtype=np.longdouble)
+
+
+def get_gti_table_from_stingray_gti (gti):
+    gti_table = get_empty_gti_table()
+    gti_table.columns["START"].add_values(gti[:, 0])
+    gti_table.columns["STOP"].add_values(gti[:, 1])
+    return gti_table
+
+def join_gti_tables(gti_table_0, gti_table_1):
+    if not gti_table_0:
+        logging.warn("join_gti_tables: gti_table_0 is None, returned gti_table_1")
+        return gti_table_1
+
+    if not gti_table_1:
+        logging.warn("join_gti_tables: gti_table_1 is None, returned gti_table_0")
+        return gti_table_0
+
+    gti_0 = get_stingray_gti_from_gti_table (gti_table_0)
+    gti_1 = get_stingray_gti_from_gti_table (gti_table_1)
+    joined_gti = join_gtis(gti_0, gti_1)
+
+    return get_gti_table_from_stingray_gti(joined_gti)

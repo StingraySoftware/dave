@@ -155,6 +155,8 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     gti_start = fits_data.gti_list[:, 0] - events_start_time
     gti_end = fits_data.gti_list[:, 1] - events_start_time
 
+    logging.debug("Read fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
+
     event_values = fits_data.ev_list - events_start_time
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments, fits_data.additional_data, event_values,
