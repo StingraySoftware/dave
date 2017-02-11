@@ -151,14 +151,17 @@ def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
         # Applies backgrund data to lightcurves if necessary
         if bck_destination:
             filtered_bck_ds = get_filtered_dataset(bck_destination, filters)
-            if not filtered_bck_ds:
-                return None
+            if filtered_bck_ds:
+                logging.debug("Create background lightcurve ....")
+                bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
+                bck_lc = bck_eventlist.to_lc(dt)
 
-            logging.debug("Create background lightcurve ....")
-            bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
-            bck_lc = bck_eventlist.to_lc(dt)
-
-            count_rate = count_rate - bck_lc.countrate
+                if count_rate.shape == bck_lc.countrate.shape:
+                    count_rate = count_rate - bck_lc.countrate
+                else:
+                    logging.warn("Background counts differs from Source counts, omiting Bck data.")
+            else:
+                logging.warn("Background dataset is None!, omiting Bck data.")
 
     # Preapares the result
     logging.debug("Result lightcurves ....")
