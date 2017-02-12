@@ -69,6 +69,8 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
                   this.onSelectorValuesChanged);
     this.$html.find(".selectorsContainer").append(theBinSelector.$html);
 
+    var pi_column = null;
+
     //Adds the rest of selectors from dataset columns
     for (tableName in schema) {
       if (tableName != "GTI") {
@@ -86,6 +88,10 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
                                               column.min_value, column.max_value,
                                               this.onSelectorValuesChanged);
             this.$html.find(".selectorsContainer").append(selector.$html);
+
+            if (tableName == "EVENTS" && columnName == "PI") {
+              pi_column = column;
+            }
           }
         }
 
@@ -93,20 +99,48 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
         this.buttonsContainer.fadeIn();
       }
     }
+
+    if (pi_column != null){
+      this.createColorSelectors (pi_column);
+    }
+  }
+
+  this.createColorSelectors = function (column) {
+    var selectorNames = ["Color A", "Color B", "Color C", "Color D"];
+    var increment = column.max_value * (1 / selectorNames.length);
+    for (i in selectorNames) {
+      var selectorName = selectorNames[i];
+      var selectorKey = selectorName.replace(" ", "_");
+      var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector" };
+      var selector = new sliderSelector("selector_" + selectorKey,
+                                        selectorName + ":",
+                                        filterData,
+                                        "From", "To",
+                                        column.min_value, column.max_value,
+                                        this.onSelectorValuesChanged);
+      var min_value = increment * i;
+      var max_value = min_value + increment;
+      selector.setValues (min_value, max_value);
+      selector.setEnabled (true);
+      this.$html.find(".selectorsContainer").append(selector.$html);
+    }
   }
 
   this.applyFilters = function (filters) {
     sliderSelectors_applyFilters(filters);
   }
 
-  this.onSelectorValuesChanged = function ( ) {
+  this.getFilters = function (filters) {
+    return sliderSelectors_getFilters();
+  }
 
+  this.onSelectorValuesChanged = function (source) {
     if (this.lastTimeoutId != null) {
       clearTimeout(this.lastTimeoutId);
     }
 
     this.lastTimeoutId = setTimeout( function () {
-      theToolPanel.onFiltersChanged(theFilename, sliderSelectors_getFilters ());
+      theToolPanel.onFiltersChanged(theFilename, sliderSelectors_getFilters(source));
     }, 850);
   }
 

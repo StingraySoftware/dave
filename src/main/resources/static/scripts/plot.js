@@ -48,31 +48,37 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  });
 
  this.onDatasetValuesChanged = function ( filename, filters ) {
-   if (currentObj.plotConfig.filename == filename) {
-     currentObj.plotConfig.filters = filters
-     if (currentObj.isVisible) {
-       currentObj.refreshData();
+   if (this.plotConfig.filename == filename) {
+     this.plotConfig.filters = filters
+     if (this.isVisible) {
+       this.refreshData();
      }
    }
  };
 
  this.refreshData = function () {
-   currentObj.isReady = false;
+   this.setReadyState(false);
 
-   if (currentObj.plotConfig.styles.type == "ligthcurve"){
-     currentObj.plotConfig.dt = theBinSize;
+   if ((this.plotConfig.styles.type == "ligthcurve") ||
+      (this.plotConfig.styles.type == "colors_ligthcurve")){
+     this.plotConfig.dt = theBinSize;
    }
 
-   currentObj.getDataFromServerFn( currentObj.plotConfig, currentObj.onPlotDataReceived );
+   this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
  }
 
  this.onPlotDataReceived = function ( data ) {
 
    var plotlyConfig = null;
 
-   log("onPlotReceived received data!, plot" + currentObj.id);
-   data = JSON.parse(data);
    log("onPlotReceived passed data!, plot" + currentObj.id);
+   data = JSON.parse(data);
+
+   if (data == null) {
+     log("onPlotReceived wrong data!, plot" + currentObj.id);
+     currentObj.setReadyState(true);
+     return;
+   }
 
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,
@@ -98,6 +104,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    [], [],
                                    currentObj.plotConfig.styles.labels[0],
                                    currentObj.plotConfig.styles.labels[1]);
+   } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
+      plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
+                                   [], [], [],
+                                   currentObj.plotConfig.styles.labels[0],
+                                   currentObj.plotConfig.styles.labels[1],
+                                   currentObj.plotConfig.styles.labels[2]);
    }
 
    if (plotlyConfig != null) {
@@ -112,31 +124,37 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      log("onPlotReceived ERROR: WRONG PLOT CONFIG! plot " + currentObj.id);
    }
 
-   currentObj.isReady = true;
+   currentObj.setReadyState(true);
    currentObj.onPlotReady();
+ }
+
+ this.setReadyState = function (isReady) {
+   this.isReady = isReady;
+   log("setReadyState plot " + this.id + " -> " + isReady);
  }
 
  this.resize = function () {
    try {
-     if (currentObj.plotElem != null) {
+     if (this.plotElem != null) {
        var update = {
-         width: $(currentObj.plotElem).width(),
-         height: $(currentObj.plotElem).height()
+         width: $(this.plotElem).width(),
+         height: $(this.plotElem).height()
        };
 
-       Plotly.relayout(currentObj.plotId, update);
+       Plotly.relayout(this.plotId, update);
      } else {
-       log("Resize plot " + currentObj.id + ", not ready yet. ");
+       log("Resize plot " + this.id + ", not ready yet. ");
      }
    } catch (ex) {
-     log("Resize plot " + currentObj.id + " error: " + ex);
+     log("Resize plot " + this.id + " error: " + ex);
    }
  }
 
  this.registerPlotEvents = function () {
 
    if((this.plotConfig.styles.type == "2d")
-      || (this.plotConfig.styles.type == "ligthcurve")) {
+      || (this.plotConfig.styles.type == "ligthcurve")
+      || (this.plotConfig.styles.type == "colors_ligthcurve")) {
 
      this.plotElem.on('plotly_selected', (eventData) => {
 

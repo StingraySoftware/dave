@@ -60,8 +60,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          values: [ fromValue, toValue ],
          slide: function( event, ui ) {
            var sliderId = event.target.id.replace("slider-", "");
-           sliderSelectors_array[sliderId].setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-           sliderSelectors_array[sliderId].onSelectorValuesChanged();
+           var sliderWdg = sliderSelectors_array[sliderId];
+           sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+           sliderWdg.onSelectorValuesChanged(sliderWdg.filterData.source);
          }
      });
 
@@ -143,11 +144,19 @@ function sliderSelectors_clear () {
   }
 }
 
-function sliderSelectors_getFilters () {
+function sliderSelectors_getFilters (source) {
   var filters = [];
   for (i in sliderSelectors_array) {
     var filter = sliderSelectors_array[i].getFilter();
     if (filter != null) {
+      /*if (!isNull(source)) {
+        if (!isNull(filter.source) && filter.source == source) {
+          filters.push(filter);
+        }
+      } else if (isNull(filter.source)) {
+        filters.push(filter);
+      }*/
+
       filters.push(filter);
     }
   }

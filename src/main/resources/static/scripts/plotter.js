@@ -127,3 +127,57 @@ function get_plotdiv_scatter(x_values, y_values, color_array, x_label, y_label, 
       }
 
 }
+
+function get_plotdiv_xyy(x_values, y0_values, y1_values,
+                          x_error_values, y0_error_values, y1_error_values,
+                          x_label, y0_label, y1_label){
+
+    return {
+        data: [
+                {
+                  type : 'scatter',
+                  hoverinfo : 'none',
+                  x : x_values,
+                  y : y0_values,
+                  error_x : {
+                             type : 'data',
+                             array : x_error_values,
+                             visible : true
+                          },
+                  error_y : {
+                             type : 'data',
+                             array : y0_error_values,
+                             visible : true
+                          },
+                  name: y0_label
+                },
+                {
+                  type : 'scatter',
+                  hoverinfo : 'none',
+                  x : x_values,
+                  y : y1_values,
+                  error_x : {
+                             type : 'data',
+                             array : x_error_values,
+                             visible : true
+                          },
+                  error_y : {
+                             type : 'data',
+                             array : y1_error_values,
+                             visible : true
+                          },
+                  name: y1_label
+                }
+              ],
+        layout : {
+                   title : '',
+                   hovermode: 'closest',
+                   xaxis : {
+                             title : x_label,
+                             titlefont : DEFAULT_TITLE_FONT
+                           },
+                  dragmode:'select',
+                  margin: DEFAULT_MARGINS
+                }
+        }
+}

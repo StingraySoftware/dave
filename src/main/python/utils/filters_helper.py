@@ -14,7 +14,7 @@ def createTimeFilter(from_val, to_val):
     return createFilter ("EVENTS", "TIME", from_val, to_val)
 
 
-#Returns the filter refered to TIME from a list of filters
+# Returns the filter refered to TIME from a list of filters
 def get_time_filter(filters):
     for filter in filters:
         if filter["column"] == "TIME":
@@ -23,7 +23,7 @@ def get_time_filter(filters):
     return None
 
 
-#Returns the filters applied to a passed bin size
+# Returns the filters applied to a passed bin size
 def apply_bin_size_to_filters(filters, bin_size):
 
     time_filter = get_time_filter(filters)
@@ -33,3 +33,22 @@ def apply_bin_size_to_filters(filters, bin_size):
             time_filter["to"] = math.ceil(time_filter["to"] / bin_size) * bin_size
 
     return filters
+
+
+# Returns the filters removing all color filters
+def get_filters_clean_color_filters(filters):
+    return get_filters_from_color_filters(filters, "", "")
+
+
+# Returns the filters removing unmatched color filters, and renaming color_column_name by column_name
+def get_filters_from_color_filters(filters, color_column_name, column_name):
+    ret_filters = []
+    for filter in filters:
+        if "source" not in filter:
+            # This filter is general dataset filter, must be appended
+            ret_filters.append(filter)
+        elif filter["column"] == color_column_name:
+            filter["column"] = column_name
+            ret_filters.append(filter)
+
+    return ret_filters

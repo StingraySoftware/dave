@@ -51,7 +51,20 @@ function Service (base_url) {
        url : thisService.base_url + "/get_lightcurve",
        data: JSON.stringify(lc_data, null, '\t'),
        contentType: 'application/json;charset=UTF-8',
-       success: fn
+       success: fn,
+       error: fn
+    });
+  };
+
+  this.request_colors_lightcurve = function (lc_data, fn) {
+    log("request_colors_lightcurve plot " + JSON.stringify(lc_data));
+    $.ajax({
+       type : "POST",
+       url : thisService.base_url + "/get_colors_lightcurve",
+       data: JSON.stringify(lc_data, null, '\t'),
+       contentType: 'application/json;charset=UTF-8',
+       success: fn,
+       error: fn
     });
   };
 

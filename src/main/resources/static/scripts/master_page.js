@@ -61,8 +61,12 @@ function onSchemaChanged( schema, params ) {
   }
 
   var jsonSchema = JSON.parse(schema);
-  theToolPanel.onDatasetSchemaChanged(jsonSchema);
-  refreshPlotsData(jsonSchema);
+  if (isNull(jsonSchema.error)){
+    theToolPanel.onDatasetSchemaChanged(jsonSchema);
+    refreshPlotsData(jsonSchema);
+  } else {
+    log("onSchemaChanged error:" + schema);
+  }
 }
 
 function onBckSchemaChanged( schema, params ) {
@@ -73,10 +77,15 @@ function onBckSchemaChanged( schema, params ) {
     theBckFilename = params.filename;
   }
 
-  if (theFilename != "") {
-    refreshPlotsData(JSON.parse(schema))
+  var jsonSchema = JSON.parse(schema);
+  if (isNull(jsonSchema.error)){
+    if (theFilename != "") {
+      refreshPlotsData(jsonSchema)
+    } else {
+      waitingDialog.hide();
+    }
   } else {
-    waitingDialog.hide();
+    log("onBckSchemaChanged error:" + schema);
   }
 }
 
@@ -137,7 +146,7 @@ function onBckDatasetChanged ( filenames ) {
 
 function refreshPlotsData(schema) {
   theOutputPanel.onDatasetChanged(theFilename, theBckFilename, schema);
-  theOutputPanel.onDatasetValuesChanged(theFilename, []);
+  theOutputPanel.onDatasetValuesChanged(theFilename, theToolPanel.getFilters());
 }
 
 function onFiltersChanged (filename, filters) {
@@ -152,4 +161,8 @@ function onFiltersChangedFromPlot (filters) {
 
 function onServerMessageReceived (msg) {
   log("SERVER -> " + msg);
+}
+
+function isNull (value) {
+  return (value === undefined) || (value == null);
 }

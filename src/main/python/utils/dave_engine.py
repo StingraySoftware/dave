@@ -59,6 +59,11 @@ def get_filtered_dataset(destination, filters):
     return dataset.apply_filters(filters)
 
 
+def get_color_filtered_dataset(destination, filters, color_column_name, column_name):
+    color_filters = FltHelper.get_filters_from_color_filters(filters, color_column_name, column_name)
+    filtered_ds = get_filtered_dataset(destination, color_filters)
+    return filtered_ds
+
 # get_plot_data: Returns the data for a plot
 #
 # @param: destination: file destination
@@ -121,6 +126,7 @@ def get_plot_data(destination, filters, styles, axis):
 #
 def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
 
+    filters = FltHelper.get_filters_clean_color_filters(filters)
     filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
     filtered_ds = get_filtered_dataset(src_destination, filters)
@@ -137,6 +143,8 @@ def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
 
     eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
 
+    filtered_ds = None  # Dispose memory
+
     time_vals = []
     count_rate = []
 
@@ -147,6 +155,8 @@ def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
 
         # Source lightcurve count rate
         count_rate = lc.countrate
+
+        lc = None  # Dispose memory
 
         # Applies backgrund data to lightcurves if necessary
         if bck_destination:
@@ -160,18 +170,125 @@ def get_lightcurve(src_destination, bck_destination, filters, axis, dt):
                     count_rate = count_rate - bck_lc.countrate
                 else:
                     logging.warn("Background counts differs from Source counts, omiting Bck data.")
+
+                filtered_bck_ds = None  # Dispose memory
             else:
                 logging.warn("Background dataset is None!, omiting Bck data.")
+
+    eventlist = None  # Dispose memory
 
     # Preapares the result
     logging.debug("Result lightcurves ....")
     result = []
     column_time = dict()
     column_time["values"] = time_vals
-    result = np.append(result, [column_time])
+    result.append(column_time)
 
     column_pi = dict()
     column_pi["values"] = count_rate
-    result = np.append(result, [column_pi])
+    result.append(column_pi)
+
+    return result
+
+
+# get_colors_lightcurve: Returns the data for the Lightcurve
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "fits_table", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "fits_table", column = "TIME" },
+#            { table = "fits_table", column = "PI" } ]
+# @param: dt: The time resolution of the events.
+#
+def get_colors_lightcurve(src_destination, bck_destination, filters, axis, dt):
+
+    filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+    count_column_name = "PI"
+    color_keys = ["Color_A", "Color_B", "Color_C", "Color_D"]
+    filtered_datasets = []
+
+    for color_key in color_keys:
+        filtered_ds = get_color_filtered_dataset(src_destination, filters, color_key, count_column_name)
+        if not filtered_ds:
+            logging.warn("Can't create filtered_ds for " + str(color_key))
+            return None
+        filtered_datasets.append(filtered_ds)
+
+    if len(axis) != 2:
+        return "Wrong number of axis"
+
+    # Creates lightcurves by gti and joins in one
+    logging.debug("Create color lightcurve ....")
+
+    # Creates valid axis for lightcurve, not HCR or SCR
+    color_axis = [dict() for i in range(2)]
+    color_axis[0]["table"] = "EVENTS"
+    color_axis[0]["column"] = "TIME"
+    color_axis[1]["table"] = "EVENTS"
+    color_axis[1]["column"] = "PI"
+
+    time_vals = []
+    countrates = []
+
+    for color_idx in range(len(color_keys)):
+        eventlist = DsHelper.get_eventlist_from_dataset(filtered_datasets[color_idx], color_axis)
+
+        if len(eventlist.time) == 0:
+            logging.warn("Wrong lightcurve counts for eventlist -> " + str(color_keys[color_idx]))
+            return None
+
+        lc = eventlist.to_lc(dt)
+        if not len(time_vals):
+            time_vals = lc.time
+        countrates.append(lc.countrate)
+
+    filtered_datasets = None  # Dispose memory
+
+    # Applies backgrund data to lightcurves if necessary
+    if bck_destination:
+        filtered_bck_ds = get_filtered_dataset(bck_destination, filters)
+        if filtered_bck_ds:
+            logging.debug("Create background color lightcurve ...")
+            bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, color_axis)
+            bck_lc = bck_eventlist.to_lc(dt)
+
+            for color_idx in range(len(color_keys)):
+                if countrates[color_idx].shape == bck_lc.countrate.shape:
+                    countrates[color_idx] = countrates[color_idx] - bck_lc.countrate
+                else:
+                    logging.warn("Background counts differs from " + str(color_keys[color_idx]) + ", omiting Bck data.")
+
+            filtered_bck_ds = None  # Dispose memory
+            bck_eventlist = None
+            bck_lc = None
+        else:
+            logging.warn("Background dataset is None!, omiting Bck data.")
+
+    # Preapares the result
+    logging.debug("Result color lightcurves ....")
+    BIG_NUMBER = 9999999999999
+
+    result = []
+
+    column_time = dict()
+    column_time["values"] = time_vals
+    result.append(column_time)
+
+    column_src = dict()
+    with np.errstate(all='ignore'): # Ignore divisions by 0 and others
+        src_values = np.nan_to_num(countrates[0] / countrates[1])
+    src_values[src_values > BIG_NUMBER]=0
+    column_src["values"] = src_values
+    result.append(column_src)
+
+    column_hdr = dict()
+    with np.errstate(all='ignore'): # Ignore divisions by 0 and others
+        hdr_values = np.nan_to_num(countrates[2] / countrates[3])
+    hdr_values[hdr_values > BIG_NUMBER]=0
+    column_hdr["values"] = hdr_values
+    result.append(column_hdr)
 
     return result

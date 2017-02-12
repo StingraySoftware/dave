@@ -53,9 +53,9 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     for (i in this.plots) { this.plots[i].onDatasetValuesChanged( filename, filters ); };
   }
 
-  this.onPlotReady = function (plot) {
+  this.onPlotReady = function () {
     var allPlotsReady = true;
-    for (i in this.plots) { allPlotsReady = allPlotsReady && this.plots[i].isReady; };
+    for (i in currentObj.plots) { allPlotsReady = allPlotsReady && currentObj.plots[i].isReady; };
     if (allPlotsReady) { waitingDialog.hide(); }
   }
 
@@ -154,7 +154,23 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   this.onPlotReady,
                   this.$toolBar,
                   "fullWidth"
-                )
+                ),
+
+                new Plot(
+                    "colors_ligthcurve_" + filename,
+                    {
+                      filename: filename,
+                      bck_filename: bck_filename,
+                      styles: { type: "colors_ligthcurve", labels: ["TIME", "SCR", "HCR"] },
+                      axis: [ { table:"EVENTS", column:"TIME" },
+                              { table:"EVENTS", column:"SCR_HCR" } ]
+                    },
+                    this.service.request_colors_lightcurve,
+                    this.onFiltersChangedFromPlot,
+                    this.onPlotReady,
+                    this.$toolBar,
+                    "fullWidth"
+                  )
 
               ];
   }
