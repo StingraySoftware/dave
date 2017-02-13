@@ -1,8 +1,14 @@
 
+@font-face {
+  font-family: Furore;
+  src: url("../fonts/Furore.otf") format("opentype");
+}
+
 html,body,.container {
     height: 100%;
     width: 100%;
     margin: 0;
+    background-color: #ffffff;
 }
 
 h3
@@ -10,9 +16,26 @@ h3
   font-size: 1.2em;
 }
 
-.daveContainer *:before, .daveContainer *:after
-{
-    display: none;
+.logotype {
+    font-family: Furore;
+    color: #DD4814;
+    font-size: 20px;
+    padding: 15px 25px 40px 35px;
+    background-color: #222;
+    width: 220%;
+    margin: 0px 0px 0px -20px;
+}
+
+.side-nav {
+  width: 90px;
+}
+
+.side-nav a {
+  color: #9d9d9d;
+}
+
+.side-nav li.active {
+  background-color: #000;
 }
 
 .daveContainer.container:before
@@ -54,12 +77,19 @@ h3
 
 .wfSelectorContainer
 {
-  background-color: #cfcfcf;
+  width: 90px;
 }
 
 .toolPanelContainer
 {
-  background-color: #dfdfdf;
+  padding-top: 40px;
+  background-color: rgb(47, 47, 47);
+  color: #9d9d9d;
+}
+
+.toolPanelContainer input[type="text"] {
+  background-color: #4a4a4a;
+  border: 1px solid #222;
 }
 
 .outputPanelContainer
@@ -81,7 +111,7 @@ h3
   width: 98%;
   height: 305px;
   border: 1px solid #afafaf;
-  background-color: #ffffff;
+  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -124,7 +154,7 @@ h3
   float:left;
   width: 48%;
   border: 1px solid #afafaf;
-  background-color: #ffffff;
+  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -161,6 +191,11 @@ h3
   top: 3px;
 }
 
+.sliderSelector .ui-slider-horizontal {
+  background-color: #6a6a6a;
+  border: 1px solid #222;
+}
+
 .sliderSelector .selectorFrom, .sliderSelector .selectorTo {
   float: left;
   width: 80px;
@@ -176,5 +211,6 @@ h3
 }
 
 .buttonsContainer{
+  padding-top: 24px;
   padding-bottom: 60px;
 }

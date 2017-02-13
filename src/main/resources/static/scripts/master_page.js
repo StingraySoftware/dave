@@ -21,14 +21,34 @@ $(document).ready(function () {
   theService = new Service (DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
 
+  var wfSelector = $(".wfSelectorContainer");
+  prepareButton(wfSelector.find(".loadBtn"), "loadPanel");
+  prepareButton(wfSelector.find(".filterBtn"), "filterPanel");
+  prepareButton(wfSelector.find(".analyzeBtn"), "analyzePanel");
+  prepareButton(wfSelector.find(".styleBtn"), "stylePanel");
+
   theToolPanel = new ToolPanel (".toolPanel", theService, onSrcDatasetChanged, onBckDatasetChanged, onFiltersChanged);
   theOutputPanel = new OutputPanel (".outputPanelContainer", ".outputPanelToolBar", theService, onFiltersChangedFromPlot);
   $(window).resize(function () { theOutputPanel.resize(); });
+
+  setCurrentPanel("loadPanel");
+  wfSelector.find(".loadBtn").parent().addClass('active');
 
   log("App Ready!! ->" + DOMAIN_URL);
 
   waitingDialog.hide();
 });
+
+function prepareButton ( buttonElem, panel ) {
+  buttonElem.button().bind("click", function( event ) {
+    $(".wfSelectorContainer").find("li").removeClass('active');
+    setCurrentPanel(panel);
+  });
+}
+
+function setCurrentPanel ( panel ) {
+  theToolPanel.showPanel(panel);
+}
 
 function onSrcDatasetChanged ( filenames ) {
 

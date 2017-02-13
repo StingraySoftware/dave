@@ -10,6 +10,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
   this.$toolBar = $(this.toolBarSelector);
   this.plots = [];
 
+
+  //METHODS AND EVENTS
   this.initPlots = function(filename, bck_filename, schema) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!filename.endsWith(".txt")) {
@@ -23,7 +25,6 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     this.forceResize();
   };
 
-  //METHODS AND EVENTS
   this.resize = function() {
     for (i in this.plots) { this.plots[i].resize(); };
   }

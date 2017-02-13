@@ -77,6 +77,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (data == null) {
      log("onPlotReceived wrong data!, plot" + currentObj.id);
      currentObj.setReadyState(true);
+     currentObj.onPlotReady();
      return;
    }
 

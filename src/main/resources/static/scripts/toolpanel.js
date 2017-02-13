@@ -14,17 +14,22 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
 
   this.lastTimeoutId = null;
 
-  var theBckFileSelector = new fileSelector("theBckFileSelector", "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
-  this.$html.prepend(theBckFileSelector.$html);
-
   var theSrcFileSelector = new fileSelector("theSrcFileSelector", "Src File:", service.upload_form_data, this.onSrcDatasetChangedFn);
-  this.$html.prepend(theSrcFileSelector.$html);
+  this.$html.find(".fileSelectorsContainer").append(theSrcFileSelector.$html);
+
+  var theBckFileSelector = new fileSelector("theBckFileSelector", "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
+  this.$html.find(".fileSelectorsContainer").append(theBckFileSelector.$html);
 
   this.clearBtn.button().bind("click", function( event ) {
       event.preventDefault();
       sliderSelectors_clear();
       currentObj.onSelectorValuesChanged();
   });
+
+  this.showPanel = function ( panel ) {
+    this.$html.find(".panelContainer").hide();
+    this.$html.find("." + panel).show();
+  }
 
   this.onDatasetSchemaChanged = function ( schema ) {
 
