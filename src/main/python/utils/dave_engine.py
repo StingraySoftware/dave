@@ -55,6 +55,7 @@ def append_file_to_dataset(destination, next_destination):
 def get_filtered_dataset(destination, filters, gti_destination=""):
     dataset = DaveReader.get_file_dataset(destination)
     if not dataset:
+        logging.warn("get_filtered_dataset: destination specified but not loadable.")
         return None
 
     if gti_destination:
@@ -62,6 +63,7 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         if gti_dataset:
             dataset = DsHelper.get_dataset_applying_gti_dataset(dataset, gti_dataset)
             if not dataset:
+                logging.warn("get_filtered_dataset: dataset is none after applying gti_dataset.")
                 return None
         else:
             logging.warn("get_filtered_dataset: Gti_destination specified but not loadable.")
@@ -155,7 +157,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
     if not eventlist:
         logging.warn("Cant create eventlist from dataset")
-        return None 
+        return None
 
     filtered_ds = None  # Dispose memory
 

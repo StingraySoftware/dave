@@ -6,6 +6,7 @@ var theOutputPanel = null;
 var theService = null;
 var theFilename = "";
 var theFilenames = [];
+var theSchema = null;
 var theBckFilename = "";
 var theBckFilenames = [];
 var theGtiFilename = "";
@@ -86,15 +87,17 @@ function onSchemaChanged( schema, params ) {
   var jsonSchema = JSON.parse(schema);
   if (isNull(jsonSchema.error)){
 
+    theSchema = jsonSchema;
+
     // Sets the time unit
-    if (!isNull(schema["EVENTS"])
-        && !isNull(schema["EVENTS"]["HEADER"])
-        && !isNull(schema["EVENTS"]["HEADER"]["TUNIT1"])) {
-      theTimeUnit = schema["EVENTS"]["HEADER"]["TUNIT1"];
+    if (!isNull(theSchema["EVENTS"])
+        && !isNull(theSchema["EVENTS"]["HEADER"])
+        && !isNull(theSchema["EVENTS"]["HEADER"]["TUNIT1"])) {
+      theTimeUnit = theSchema["EVENTS"]["HEADER"]["TUNIT1"];
     }
 
-    theToolPanel.onDatasetSchemaChanged(jsonSchema);
-    refreshPlotsData(jsonSchema);
+    theToolPanel.onDatasetSchemaChanged(theSchema);
+    refreshPlotsData(theSchema);
   } else {
     log("onSchemaChanged error:" + schema);
     waitingDialog.hide();
@@ -111,8 +114,8 @@ function onBckSchemaChanged( schema, params ) {
 
   var jsonSchema = JSON.parse(schema);
   if (isNull(jsonSchema.error)){
-    if (theFilename != "") {
-      refreshPlotsData(jsonSchema);
+    if (theSchema != null) {
+      refreshPlotsData(theSchema);
     } else {
       waitingDialog.hide();
     }
@@ -132,8 +135,8 @@ function onGtiSchemaChanged( schema, params ) {
 
   var jsonSchema = JSON.parse(schema);
   if (isNull(jsonSchema.error)){
-    if (theFilename != "") {
-      refreshPlotsData(jsonSchema);
+    if (theSchema != null) {
+      refreshPlotsData(theSchema);
     } else {
       waitingDialog.hide();
     }
