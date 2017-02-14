@@ -29,12 +29,12 @@ class Table:
             schema[column_name] = self.columns[column_name].get_schema()
         return schema
 
-    def clone(self):
+    def clone(self, with_values=True):
         table = Table(self.id)
         table.header = self.header
         table.header_comments = self.header_comments
         for column_name in self.columns:
-            table.columns[column_name] = self.columns[column_name].clone()
+            table.columns[column_name] = self.columns[column_name].clone(with_values)
         return table
 
     def apply_filter(self, filter):

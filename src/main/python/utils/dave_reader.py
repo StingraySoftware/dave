@@ -7,6 +7,7 @@ import model.dataset as DataSet
 import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
+from stingray.gti import _get_gti_from_extension
 import utils.dataset_cache as DsCache
 
 
@@ -49,7 +50,9 @@ def get_file_dataset(destination):
                                            hduname='EVENTS', column='TIME',
                                            gtistring='GTI,STDGTI,STDGTI04')
 
-        DsCache.add(destination, dataset)
+        if dataset:
+            DsCache.add(destination, dataset)
+
         return dataset
 
     else:
@@ -73,7 +76,7 @@ def get_txt_dataset(destination, table_id, header_names):
     return dataset
 
 
-# Returns a dataset by reading a Fits file, returns all tables, NOT USED!!
+# Returns a dataset by reading a Fits file, returns all tables
 def get_fits_dataset(destination, dsId, table_ids):
     hdulist = fits.open(destination)
     dataset = DataSet.get_empty_dataset(dsId)
@@ -104,7 +107,7 @@ def get_fits_dataset(destination, dsId, table_ids):
 # Returns the column's names of a given table of Fits file
 def get_fits_table_column_names(hdulist, table_id):
 
-    if hdulist[table_id]:
+    if table_id in hdulist:
         if isinstance(hdulist[table_id], fits.hdu.table.BinTableHDU):
             return hdulist[table_id].columns.names
 
@@ -120,10 +123,14 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     # Opening Fits
     hdulist = fits.open(destination)
 
+    if hduname not in hdulist:
+        # If not EVENTS extension found, consider the Fits as GTI Fits
+        st_gtis = _get_gti_from_extension(hdulist, gtistring)
+        return DataSet.get_gti_dataset_from_stingray_gti(st_gtis)
+
     # Gets columns from fits hdu table
     logging.debug("Reading Fits columns")
     columns = get_fits_table_column_names(hdulist, hduname)
-    columns = ["TIME", "PI"]
 
     # Gets FITS header properties
     header = dict()

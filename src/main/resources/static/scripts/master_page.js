@@ -8,9 +8,12 @@ var theFilename = "";
 var theFilenames = [];
 var theBckFilename = "";
 var theBckFilenames = [];
+var theGtiFilename = "";
+var theGtiFilenames = [];
 var theBinSize = 100;
 var MIN_PLOT_POINTS = 2;
 var MAX_PLOT_POINTS = 10000;
+var theTimeUnit = "s";
 
 $(document).ready(function () {
   waitingDialog.show('Creating environment');
@@ -27,7 +30,7 @@ $(document).ready(function () {
   prepareButton(wfSelector.find(".analyzeBtn"), "analyzePanel");
   prepareButton(wfSelector.find(".styleBtn"), "stylePanel");
 
-  theToolPanel = new ToolPanel (".toolPanel", theService, onSrcDatasetChanged, onBckDatasetChanged, onFiltersChanged);
+  theToolPanel = new ToolPanel (".toolPanel", theService, onSrcDatasetChanged, onBckDatasetChanged, onGtiDatasetChanged, onFiltersChanged);
   theOutputPanel = new OutputPanel (".outputPanelContainer", ".outputPanelToolBar", theService, onFiltersChangedFromPlot);
   $(window).resize(function () { theOutputPanel.resize(); });
 
@@ -82,10 +85,19 @@ function onSchemaChanged( schema, params ) {
 
   var jsonSchema = JSON.parse(schema);
   if (isNull(jsonSchema.error)){
+
+    // Sets the time unit
+    if (!isNull(schema["EVENTS"])
+        && !isNull(schema["EVENTS"]["HEADER"])
+        && !isNull(schema["EVENTS"]["HEADER"]["TUNIT1"])) {
+      theTimeUnit = schema["EVENTS"]["HEADER"]["TUNIT1"];
+    }
+
     theToolPanel.onDatasetSchemaChanged(jsonSchema);
     refreshPlotsData(jsonSchema);
   } else {
     log("onSchemaChanged error:" + schema);
+    waitingDialog.hide();
   }
 }
 
@@ -100,12 +112,34 @@ function onBckSchemaChanged( schema, params ) {
   var jsonSchema = JSON.parse(schema);
   if (isNull(jsonSchema.error)){
     if (theFilename != "") {
-      refreshPlotsData(jsonSchema)
+      refreshPlotsData(jsonSchema);
     } else {
       waitingDialog.hide();
     }
   } else {
     log("onBckSchemaChanged error:" + schema);
+    waitingDialog.hide();
+  }
+}
+
+function onGtiSchemaChanged( schema, params ) {
+  log("onGtiSchemaChanged:" + schema);
+
+  if (params !== undefined && params != null){
+    theGtiFilenames = params.filenames;
+    theGtiFilename = params.filename;
+  }
+
+  var jsonSchema = JSON.parse(schema);
+  if (isNull(jsonSchema.error)){
+    if (theFilename != "") {
+      refreshPlotsData(jsonSchema);
+    } else {
+      waitingDialog.hide();
+    }
+  } else {
+    log("onGtiSchemaChanged error:" + schema);
+    waitingDialog.hide();
   }
 }
 
@@ -164,8 +198,30 @@ function onBckDatasetChanged ( filenames ) {
 
 }
 
+function onGtiDatasetChanged ( filenames ) {
+
+  if (filenames.length == 1) {
+
+    theGtiFilename = filenames[0];
+    waitingDialog.show('Getting file schema: ' + theGtiFilename);
+    log("onGtiDatasetChanged:" + theGtiFilename);
+    theService.get_dataset_schema(theGtiFilename, onGtiSchemaChanged);
+
+  } else if (filenames.length > 1){
+
+    theGtiFilenames = filenames;
+    theGtiFilename = filenames[0];
+    var params = { filename: theGtiFilename, filenames: theGtiFilenames, currentFile: 1, onSchemaChanged:onGtiSchemaChanged };
+    onSchemaChangedMultipleFiles(null, params);
+
+  } else {
+    log("onGtiDatasetChanged: No selected files..");
+  }
+
+}
+
 function refreshPlotsData(schema) {
-  theOutputPanel.onDatasetChanged(theFilename, theBckFilename, schema);
+  theOutputPanel.onDatasetChanged(theFilename, theBckFilename, theGtiFilename, schema);
   theOutputPanel.onDatasetValuesChanged(theFilename, theToolPanel.getFilters());
 }
 

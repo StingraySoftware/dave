@@ -114,54 +114,62 @@ def get_plot_data(filename, target, filters, styles, axis):
     return jsonData
 
 
-def get_lightcurve(src_filename, bck_filename, target, filters, axis, dt):
+def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
-        return common_error("Invalid file or cache key")
+        return common_error("Invalid file or cache key for source data")
 
     bck_destination = ""
     if bck_filename:
-        if not SessionHelper.is_file_uploaded(bck_filename):
-            return "Backgrund Filename not uploaded"
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
 
-        bck_destination = FileUtils.get_destination(target, bck_filename)
-        if not FileUtils.is_valid_file(bck_destination):
-            return "Invalid backgrund file"
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
 
     logging.debug("get_lightcurve src: %s" % src_filename)
     logging.debug("get_lightcurve bck: %s" % bck_filename)
+    logging.debug("get_lightcurve gti: %s" % gti_filename)
     logging.debug("get_lightcurve: filters %s" % filters)
     logging.debug("get_lightcurve: axis %s" % axis)
     logging.debug("get_lightcurve: dt %f" % dt)
 
-    data = DaveEngine.get_lightcurve(src_destination, bck_destination, filters, axis, dt)
+    data = DaveEngine.get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
 
     logging.debug("get_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_colors_lightcurve(src_filename, bck_filename, target, filters, axis, dt):
+def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
-        return common_error("Invalid file or cache key")
+        return common_error("Invalid file or cache key for source data")
 
     bck_destination = ""
     if bck_filename:
-        if not SessionHelper.is_file_uploaded(bck_filename):
-            return "Backgrund Filename not uploaded"
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
 
-        bck_destination = FileUtils.get_destination(target, bck_filename)
-        if not FileUtils.is_valid_file(bck_destination):
-            return "Invalid backgrund file"
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
 
     logging.debug("get_colors_lightcurve src: %s" % src_filename)
     logging.debug("get_colors_lightcurve bck: %s" % bck_filename)
+    logging.debug("get_colors_lightcurve gti: %s" % gti_filename)
     logging.debug("get_colors_lightcurve: filters %s" % filters)
     logging.debug("get_colors_lightcurve: axis %s" % axis)
     logging.debug("get_colors_lightcurve: dt %f" % dt)
 
-    data = DaveEngine.get_colors_lightcurve(src_destination, bck_destination, filters, axis, dt)
+    data = DaveEngine.get_colors_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
 
     logging.debug("get_colors_lightcurve: Finish!")
 

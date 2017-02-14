@@ -32,10 +32,11 @@ class Column:
             schema[list_prefix + "avg_value"] = 0
         return schema
 
-    def clone(self):
+    def clone(self, with_values=True):
         column = Column(self.id)
-        column.values = copy.copy(self.values)
-        column.error_values = copy.copy(self.error_values)
+        if with_values:
+            column.values = copy.copy(self.values)
+            column.error_values = copy.copy(self.error_values)
         return column
 
     def get_value(self, index):

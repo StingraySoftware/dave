@@ -1,5 +1,5 @@
 
-function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetChangedFn, onFiltersChangedFn) {
+function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetChangedFn, onGtiDatasetChangedFn, onFiltersChangedFn) {
 
   var currentObj = this;
 
@@ -10,6 +10,7 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
 
   this.onSrcDatasetChangedFn = onSrcDatasetChangedFn;
   this.onBckDatasetChangedFn = onBckDatasetChangedFn;
+  this.onGtiDatasetChangedFn = onGtiDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
 
   this.lastTimeoutId = null;
@@ -19,6 +20,9 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
 
   var theBckFileSelector = new fileSelector("theBckFileSelector", "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
   this.$html.find(".fileSelectorsContainer").append(theBckFileSelector.$html);
+
+  var theGtiFileSelector = new fileSelector("theGtiFileSelector", "Gti File:", service.upload_form_data, this.onGtiDatasetChangedFn);
+  this.$html.find(".fileSelectorsContainer").append(theGtiFileSelector.$html);
 
   this.clearBtn.button().bind("click", function( event ) {
       event.preventDefault();
@@ -68,7 +72,7 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
       initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
     }
     theBinSelector = binSelector("binSelector",
-                  "BIN SIZE:",
+                  "BIN SIZE (" + theTimeUnit  + "):",
                   "From",
                   minBinSize, maxBinSize, step, initValue,
                   this.onSelectorValuesChanged);
@@ -86,8 +90,12 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
           if ((columnName != "HEADER") && (columnName != "HEADER_COMMENTS")) {
             var column = table[columnName];
             var filterData = { table:tableName, column:columnName };
+            var columnTitle = columnName + ":";
+            if (columnName == "TIME") {
+               columnTitle = "TIME (" + theTimeUnit  + "):"
+            }
             var selector = new sliderSelector(columnName,
-                                              columnName + ":",
+                                              columnTitle,
                                               filterData,
                                               "From", "To",
                                               column.min_value, column.max_value,

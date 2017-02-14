@@ -12,10 +12,10 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
 
 
   //METHODS AND EVENTS
-  this.initPlots = function(filename, bck_filename, schema) {
+  this.initPlots = function(filename, bck_filename, gti_filename, schema) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!filename.endsWith(".txt")) {
-      this.plots = this.getFitsTablePlots(filename, bck_filename, schema);
+      this.plots = this.getFitsTablePlots(filename, bck_filename, gti_filename, schema);
     } else {
       this.plots = this.getTxtTablePlots(filename);
     }
@@ -33,16 +33,16 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
     $(window).trigger("resize");
   }
 
-  this.onDatasetChanged = function ( filename, bck_filename, schema ) {
+  this.onDatasetChanged = function ( filename, bck_filename, gti_filename, schema ) {
 
     // Clears output panel
     this.$html.html("");
 
     // Adds plots
-    this.initPlots(filename, bck_filename, schema);
+    this.initPlots(filename, bck_filename, gti_filename, schema);
 
     // Adds FITS info if found
-    if (schema["EVENTS"]["HEADER"] !== undefined) {
+    if (!isNull(schema["EVENTS"]) && !isNull(schema["EVENTS"]["HEADER"])) {
       var theInfoPanel = new infoPanel("infoPanel", "EVENTS HEADER:", schema["EVENTS"]["HEADER"], schema["EVENTS"]["HEADER_COMMENTS"]);
       this.$html.append(theInfoPanel.$html);
     }
@@ -67,7 +67,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   "time_rate_" + filename,
                   {
                     filename: filename,
-                    styles: { type: "2d", labels: ["Time", "Rate"] },
+                    styles: { type: "2d", labels: ["Time (" + theTimeUnit  + ")", "Rate"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
                             { table:"txt_table", column:"Rate" } ]
                   },
@@ -95,7 +95,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   "Time_Rate_Amplitude_" + filename,
                   {
                     filename: filename,
-                    styles: { type: "3d", labels: ["Time", "Rate", "Amplitude"] },
+                    styles: { type: "3d", labels: ["Time (" + theTimeUnit  + ")", "Rate", "Amplitude"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
                             { table:"txt_table", column:"Rate" } ,
                             { table:"txt_table", column:"Amplitude" } ]
@@ -110,7 +110,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   "Time_Frecuency_" + filename,
                   {
                     filename: filename,
-                    styles: { type: "scatter", labels: ["Time", "Frequency"] },
+                    styles: { type: "scatter", labels: ["Time (" + theTimeUnit  + ")", "Frequency"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
                             { table:"txt_table", column:"Rate" } ]
                   },
@@ -122,7 +122,7 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
               ];
   }
 
-  this.getFitsTablePlots = function ( filename, bck_filename, schema ) {
+  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, schema ) {
 
     log("getFitsTablePlots: theBinSize: " + theBinSize );
 
@@ -146,7 +146,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                   {
                     filename: filename,
                     bck_filename: bck_filename,
-                    styles: { type: "ligthcurve", labels: ["TIME", "Count Rate(c/s)"] },
+                    gti_filename: gti_filename,
+                    styles: { type: "ligthcurve", labels: ["TIME (" + theTimeUnit  + ")", "Count Rate(c/s)"] },
                     axis: [ { table:"EVENTS", column:"TIME" },
                             { table:"EVENTS", column:"PI" } ]
                   },
@@ -162,7 +163,8 @@ function OutputPanel (classSelector, toolBarSelector, service, onFiltersChangedF
                     {
                       filename: filename,
                       bck_filename: bck_filename,
-                      styles: { type: "colors_ligthcurve", labels: ["TIME", "SCR", "HCR"] },
+                      gti_filename: gti_filename,
+                      styles: { type: "colors_ligthcurve", labels: ["TIME (" + theTimeUnit  + ")", "SCR", "HCR"] },
                       axis: [ { table:"EVENTS", column:"TIME" },
                               { table:"EVENTS", column:"SCR_HCR" } ]
                     },
