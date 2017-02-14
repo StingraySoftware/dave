@@ -22,11 +22,11 @@ class DataSet:
             schema[table_id] = self.tables[table_id].get_schema()
         return schema
 
-    def clone(self):
+    def clone(self, with_values=True):
         dataset = DataSet(self.id)
 
         for table_id in self.tables:
-            table = self.tables[table_id].clone()
+            table = self.tables[table_id].clone(with_values)
             dataset.tables[table_id] = table
 
         return dataset
@@ -79,7 +79,8 @@ class DataSet:
         gti_start = self.tables["GTI"].columns["START"].values
         gti_end = self.tables["GTI"].columns["STOP"].values
 
-        dataset = get_dataset_applying_gtis(self.id, columns_values, ev_list,
+        dataset = get_dataset_applying_gtis(self.id, self.tables[hduname].header, self.tables[hduname].header_comments,
+                                            columns_values, ev_list,
                                             gti_start, gti_end,
                                             filter["from"], filter["to"],
                                             hduname, column)
@@ -114,57 +115,38 @@ def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
     return dataset
 
 
-# Returns a new empty dataset with EVENTS and GTIs tables
-def get_dataset_applying_gtis(dsId, ds_columns, ev_list, gti_start, gti_end,
+# Returns a new dataset with EVENTS and GTIs tables
+def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ev_list, gti_start, gti_end,
                             filter_start=None, filter_end=None,
                             hduname="EVENTS", column='TIME'):
 
     # Prepares additional_columns
     columns = [column]
-    additional_columns = []
-
     for column_name in ds_columns:
         columns.extend([column_name])
-        if column_name != column:
-            additional_columns.extend([column_name])
+
+    additional_columns = DsHelper.get_additional_column_names(ds_columns, column)
 
     # Creates the dataset
     dataset = get_events_type_dataset(dsId, columns, hduname)
 
-    start_event_idx = 0
-    end_event_idx = 0
-    hdu_table = dataset.tables[hduname]
-    gti_table = dataset.tables["GTI"]
+    # Sets table header info
+    dataset.tables[hduname].set_header_info(header, header_comments)
 
+    # Prepare data with the GTIs Intervals
     must_filter = not ((filter_start is None) or (filter_end is None))
 
-    for gti_index in range(len(gti_start)):
+    DsHelper.update_dataset_filtering_by_gti(dataset.tables[hduname], dataset.tables["GTI"],
+                                    ev_list, ds_columns, gti_start, gti_end,
+                                    additional_columns, column,
+                                    filter_start, filter_end, must_filter)
 
-        is_valid_gti = True
-        if must_filter:
-            is_valid_gti = (gti_start[gti_index] >= filter_start) and (gti_end[gti_index] <= filter_end)
+    return dataset
 
-        if is_valid_gti:
 
-            start_event_idx = DsHelper.find_idx_nearest_val(ev_list, gti_start[gti_index])
-            end_event_idx = DsHelper.find_idx_nearest_val(ev_list, gti_end[gti_index])
-
-            if end_event_idx > start_event_idx:
-                # The GTI has ended, so lets insert it on dataset
-
-                gti_table.columns["START"].add_value(gti_start[gti_index])
-                gti_table.columns["STOP"].add_value(gti_end[gti_index])
-                gti_table.columns["START_EVENT_IDX"].add_value(start_event_idx)
-                gti_table.columns["END_EVENT_IDX"].add_value(end_event_idx)
-
-                # Insert values at range on dataset
-                hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx])
-                for i in range(len(additional_columns)):
-                    ad_column=additional_columns[i]
-                    values=ds_columns[ad_column][start_event_idx:end_event_idx]
-                    hdu_table.columns[ad_column].add_values(values)
-
-            else:
-                logging.warn("Wrong indexes for %s" % gti_index)
-
+# Returns a new dataset with GTIs table from Stingray Gti list
+def get_gti_dataset_from_stingray_gti(st_gtis):
+    dataset = get_empty_dataset("GTI_DS")
+    gti_table = DsHelper.get_gti_table_from_stingray_gti(st_gtis)
+    dataset.tables["GTI"] = gti_table
     return dataset

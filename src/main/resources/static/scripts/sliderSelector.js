@@ -60,13 +60,22 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          values: [ fromValue, toValue ],
          slide: function( event, ui ) {
            var sliderId = event.target.id.replace("slider-", "");
-           sliderSelectors_array[sliderId].setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-           sliderSelectors_array[sliderId].onSelectorValuesChanged();
+           var sliderWdg = sliderSelectors_array[sliderId];
+           sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+           sliderWdg.onSelectorValuesChanged(sliderWdg.filterData.source);
          }
      });
 
    //Set values method
    this.setValues = function (from, to, source) {
+
+     var step = 1;
+     if (this.filterData.column == "TIME") {
+         step = theBinSize;
+         this.fromValue = Math.floor (from / theBinSize) * theBinSize;
+         this.toValue = Math.floor (to / theBinSize) * theBinSize;
+     }
+
      this.fromValue = Math.floor(from);
      this.toValue = Math.ceil(to);
      this.fromInput.val( this.fromValue );
@@ -75,6 +84,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.slider.slider('values', 0, this.fromValue);
        this.slider.slider('values', 1, this.toValue);
      }
+     this.slider.slider( "option", "step", step);
    }
 
    this.getFilter = function () {
@@ -110,6 +120,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
      }
    }
 
+   //Init from-to values
+   this.setValues( this.initFromValue, this.initToValue );
+
    //Collapses container
    this.container.hide();
 
@@ -131,11 +144,19 @@ function sliderSelectors_clear () {
   }
 }
 
-function sliderSelectors_getFilters () {
+function sliderSelectors_getFilters (source) {
   var filters = [];
   for (i in sliderSelectors_array) {
     var filter = sliderSelectors_array[i].getFilter();
     if (filter != null) {
+      /*if (!isNull(source)) {
+        if (!isNull(filter.source) && filter.source == source) {
+          filters.push(filter);
+        }
+      } else if (isNull(filter.source)) {
+        filters.push(filter);
+      }*/
+
       filters.push(filter);
     }
   }

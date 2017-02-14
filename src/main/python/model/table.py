@@ -5,6 +5,8 @@ import utils.dave_logger as logging
 
 class Table:
     id = ""
+    header = dict()
+    header_comments = dict()
     columns = dict()
 
     def __init__(self, id):
@@ -15,16 +17,24 @@ class Table:
         for i in range(len(column_names)):
             self.columns[column_names[i]] = Column(column_names[i])
 
+    def set_header_info(self, header, header_comments):
+        self.header = header
+        self.header_comments = header_comments
+
     def get_schema(self):
         schema = dict()
+        schema["HEADER"] = self.header
+        schema["HEADER_COMMENTS"] = self.header_comments
         for column_name in self.columns:
             schema[column_name] = self.columns[column_name].get_schema()
         return schema
 
-    def clone(self):
+    def clone(self, with_values=True):
         table = Table(self.id)
+        table.header = self.header
+        table.header_comments = self.header_comments
         for column_name in self.columns:
-            table.columns[column_name] = self.columns[column_name].clone()
+            table.columns[column_name] = self.columns[column_name].clone(with_values)
         return table
 
     def apply_filter(self, filter):

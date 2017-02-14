@@ -82,7 +82,7 @@ function launchProcess(process, argument, processName) {
     subpy = cp.spawn(process, argument);
 
     subpy.stdout.on('data', (data) => {
-      log(processName + ' stdout: ' + data);
+      log(processName + ': ' + data);
     });
 
     subpy.stderr.on('data', (data) => {

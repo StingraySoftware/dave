@@ -21,8 +21,16 @@ function Service (base_url) {
      });
    };
 
-  this.get_dataset_schema  = function ( filename, fn, errorFn ) {
-    $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } ).done(fn).fail(errorFn);
+  this.get_dataset_schema  = function ( filename, fn, errorFn, params ) {
+    $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } )
+      .done(function(res){fn(res, params);})
+      .fail(errorFn);
+  };
+
+  this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn, params ) {
+    $.get( thisService.base_url + "/append_file_to_dataset", { filename: filename, nextfile: nextfile } )
+      .done(function(res){fn(res, params);})
+      .fail(errorFn);
   };
 
   this.request_plot_data = function (plot_data, fn) {
@@ -43,7 +51,20 @@ function Service (base_url) {
        url : thisService.base_url + "/get_lightcurve",
        data: JSON.stringify(lc_data, null, '\t'),
        contentType: 'application/json;charset=UTF-8',
-       success: fn
+       success: fn,
+       error: fn
+    });
+  };
+
+  this.request_colors_lightcurve = function (lc_data, fn) {
+    log("request_colors_lightcurve plot " + JSON.stringify(lc_data));
+    $.ajax({
+       type : "POST",
+       url : thisService.base_url + "/get_colors_lightcurve",
+       data: JSON.stringify(lc_data, null, '\t'),
+       contentType: 'application/json;charset=UTF-8',
+       success: fn,
+       error: fn
     });
   };
 

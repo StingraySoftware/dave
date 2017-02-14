@@ -1,4 +1,4 @@
-
+import hashlib
 
 cached_datasets = dict()
 
@@ -20,3 +20,18 @@ def get(destination):
         return cached_datasets[destination]
 
     return None
+
+
+def remove(destination):
+    if destination in cached_datasets:
+        cached_datasets.pop(destination, None)
+        return True
+
+    return False
+
+
+def get_key(value):
+    m = hashlib.md5()
+    m.update(str(value).encode('utf-8'))
+    ugly_key = str(m.digest())
+    return "".join(e for e in ugly_key if e.isalnum())

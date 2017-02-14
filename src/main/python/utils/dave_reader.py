@@ -7,7 +7,7 @@ import model.dataset as DataSet
 import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
-import utils.dataset_helper as DsHelper
+from stingray.gti import _get_gti_from_extension
 import utils.dataset_cache as DsCache
 
 
@@ -50,7 +50,9 @@ def get_file_dataset(destination):
                                            hduname='EVENTS', column='TIME',
                                            gtistring='GTI,STDGTI,STDGTI04')
 
-        DsCache.add(destination, dataset)
+        if dataset:
+            DsCache.add(destination, dataset)
+
         return dataset
 
     else:
@@ -74,7 +76,7 @@ def get_txt_dataset(destination, table_id, header_names):
     return dataset
 
 
-# Returns a dataset by reading a Fits file, returns all tables, NOT USED!!
+# Returns a dataset by reading a Fits file, returns all tables
 def get_fits_dataset(destination, dsId, table_ids):
     hdulist = fits.open(destination)
     dataset = DataSet.get_empty_dataset(dsId)
@@ -103,10 +105,9 @@ def get_fits_dataset(destination, dsId, table_ids):
 
 
 # Returns the column's names of a given table of Fits file
-def get_fits_table_column_names(destination, table_id):
-    hdulist = fits.open(destination)
+def get_fits_table_column_names(hdulist, table_id):
 
-    if hdulist[table_id]:
+    if table_id in hdulist:
         if isinstance(hdulist[table_id], fits.hdu.table.BinTableHDU):
             return hdulist[table_id].columns.names
 
@@ -119,20 +120,38 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                    hduname='EVENTS', column='TIME',
                                    gtistring='GTI,STDGTI'):
 
+    # Opening Fits
+    hdulist = fits.open(destination)
+
+    if hduname not in hdulist:
+        # If not EVENTS extension found, consider the Fits as GTI Fits
+        st_gtis = _get_gti_from_extension(hdulist, gtistring)
+        return DataSet.get_gti_dataset_from_stingray_gti(st_gtis)
+
     # Gets columns from fits hdu table
     logging.debug("Reading Fits columns")
-    columns = get_fits_table_column_names(destination, hduname)
-    columns = ["TIME", "PI"]
+    columns = get_fits_table_column_names(hdulist, hduname)
 
-    event_values = []
+    # Gets FITS header properties
+    header = dict()
+    header_comments = dict()
+    for header_column in hdulist[hduname].header:
+        header[header_column] = str(hdulist[hduname].header[header_column])
+        header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
+
+    # Gets start time of observation
+    events_start_time = 0
+    if "TSTART" in header:
+        events_start_time = hdulist[hduname].header["TSTART"]
+
+    # Closes the FITS file, further file data reads will be done via Stingray
+    hdulist.close()
 
     # Prepares additional_columns
     additional_columns = []
-    additional_columns_values = dict()
     for i in range(len(columns)):
         if columns[i] != column:
             additional_columns.append(columns[i])
-            additional_columns_values[columns[i]] = []
 
     # Reads fits data
     logging.debug("Reading Fits columns's data")
@@ -140,10 +159,14 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
 
-    gti_start = fits_data.gti_list[:, 0]
-    gti_end = fits_data.gti_list[:, 1]
+    gti_start = fits_data.gti_list[:, 0] - events_start_time
+    gti_end = fits_data.gti_list[:, 1] - events_start_time
 
-    dataset = DataSet.get_dataset_applying_gtis(dsId, additional_columns_values, fits_data.ev_list,
+    logging.debug("Read fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
+
+    event_values = fits_data.ev_list - events_start_time
+
+    dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments, fits_data.additional_data, event_values,
                                                 gti_start, gti_end, None, None, hduname, column)
 
     logging.debug("Read fits with stingray file successfully: %s" % destination)

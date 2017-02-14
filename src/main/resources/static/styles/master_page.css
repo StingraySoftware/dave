@@ -1,8 +1,14 @@
 
+@font-face {
+  font-family: Furore;
+  src: url("../fonts/Furore.otf") format("opentype");
+}
+
 html,body,.container {
     height: 100%;
     width: 100%;
     margin: 0;
+    background-color: #ffffff;
 }
 
 h3
@@ -10,9 +16,26 @@ h3
   font-size: 1.2em;
 }
 
-.daveContainer *:before, .daveContainer *:after
-{
-    display: none;
+.logotype {
+    font-family: Furore;
+    color: #DD4814;
+    font-size: 20px;
+    padding: 15px 25px 40px 35px;
+    background-color: #222;
+    width: 220%;
+    margin: 0px 0px 0px -20px;
+}
+
+.side-nav {
+  width: 90px;
+}
+
+.side-nav a {
+  color: #9d9d9d;
+}
+
+.side-nav li.active {
+  background-color: #000;
 }
 
 .daveContainer.container:before
@@ -42,21 +65,31 @@ h3
     height: 100%;
 }
 
-.wfSelectorContainer, .toolPanelContainer, .outputPanelContainer
+.wfSelectorContainer, .toolPanelContainer, .outputPanelContainer, .height_100
 {
     float: left;
     position: static;
     height: 100%;
+    max-height: 100% !important;
+    overflow-x: hidden;
+    overflow-y: scroll;
 }
 
 .wfSelectorContainer
 {
-  background-color: #cfcfcf;
+  width: 90px;
 }
 
 .toolPanelContainer
 {
-  background-color: #dfdfdf;
+  padding-top: 40px;
+  background-color: rgb(47, 47, 47);
+  color: #9d9d9d;
+}
+
+.toolPanelContainer input[type="text"] {
+  background-color: #4a4a4a;
+  border: 1px solid #222;
 }
 
 .outputPanelContainer
@@ -64,6 +97,7 @@ h3
   margin: 0;
   padding: 0;
   padding-left: 15px;
+  padding-bottom: 60px;
 }
 
 .daveContainer .columnDivider
@@ -71,12 +105,56 @@ h3
   border-right: 1px solid black;
 }
 
+.infoPanel
+{
+  float:left;
+  width: 98%;
+  height: 305px;
+  border: 1px solid #afafaf;
+  /*background-color: #ffffff;*/
+  margin: 0;
+  margin-top: 12px;
+  margin-right: 12px;
+  padding: 12px;
+  padding-top: 0px;
+  overflow-y: scroll;
+}
+
+.infoPanel .property {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.infoPanel .btnShowAll
+{
+  float:right;
+  margin-top: 12px;
+}
+
+.property .tag {
+  width: 18%;
+  font-weight: bold;
+  vertical-align: top;
+}
+
+.property .value {
+  width: 30%;
+  overflow: hidden;
+  vertical-align: top;
+}
+
+.property .comment {
+  width: 48%;
+  color: #999999;
+  vertical-align: top;
+}
+
 .plotContainer
 {
   float:left;
   width: 48%;
   border: 1px solid #afafaf;
-  background-color: #ffffff;
+  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -113,6 +191,11 @@ h3
   top: 3px;
 }
 
+.sliderSelector .ui-slider-horizontal {
+  background-color: #6a6a6a;
+  border: 1px solid #222;
+}
+
 .sliderSelector .selectorFrom, .sliderSelector .selectorTo {
   float: left;
   width: 80px;
@@ -125,4 +208,9 @@ h3
 
 .sliderSelector .selectorSlider {
   margin-top: 35px;
+}
+
+.buttonsContainer{
+  padding-top: 24px;
+  padding-bottom: 60px;
 }

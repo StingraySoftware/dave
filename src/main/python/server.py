@@ -39,12 +39,17 @@ app.secret_key = os.urandom(24)
 # Routes methods
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-    return DaveEndpoint.upload(request.files['file'], UPLOADS_TARGET)
+    return DaveEndpoint.upload(request.files.getlist("file"), UPLOADS_TARGET)
 
 
 @app.route('/get_dataset_schema', methods=['GET'])
 def get_dataset_schema():
     return DaveEndpoint.get_dataset_schema(request.args['filename'], UPLOADS_TARGET)
+
+
+@app.route('/append_file_to_dataset', methods=['GET'])
+def append_file_to_dataset():
+    return DaveEndpoint.append_file_to_dataset(request.args['filename'], request.args['nextfile'], UPLOADS_TARGET)
 
 
 @app.route('/get_plot_data', methods=['POST'])
@@ -55,8 +60,16 @@ def get_plot_data():
 
 @app.route('/get_lightcurve', methods=['POST'])
 def get_lightcurve():
-    return DaveEndpoint.get_lightcurve(request.json['filename'], request.json['bck_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], request.json['dt'])
+    return DaveEndpoint.get_lightcurve(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
+
+
+@app.route('/get_colors_lightcurve', methods=['POST'])
+def get_colors_lightcurve():
+    return DaveEndpoint.get_colors_lightcurve(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
 # Receives a message from client and send it to all subscribers
