@@ -36,6 +36,6 @@ def test_get_lightcurve(s):
     axis[1]["column"] = "PI"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_lightcurve(destination, "", [], axis, 16.)
+        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16.)
 
     assert not os.path.isfile(destination) or result is not None
