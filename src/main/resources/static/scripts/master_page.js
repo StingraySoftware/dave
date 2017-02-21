@@ -161,15 +161,15 @@ function onSchemaChangedMultipleFiles( result, params ) {
 
   if (params.currentFile < params.filenames.length){
 
-    var filename = params.filenames[params.currentFile];
-    waitingDialog.show('Appending to dataset: ' + filename);
-    theService.append_file_to_dataset(params.filename, filename, onSchemaChangedMultipleFiles, onSchemaError, params);
+    var nextfile = params.filenames[params.currentFile];
+    waitingDialog.show('Appending to dataset: ' + nextfile);
+    theService.append_file_to_dataset(params.filename, nextfile, onSchemaChangedMultipleFiles, onSchemaError, params);
     params.currentFile++;
 
   } else {
 
-    waitingDialog.show('Getting file schema: ' + theFilename);
-    theService.get_dataset_schema(params.filename, params.onSchemaChanged, onSchemaError);
+    waitingDialog.show('Getting file schema: ' + params.filename);
+    theService.get_dataset_schema(params.filename, params.onSchemaChanged, onSchemaError, params);
   }
 
 }
