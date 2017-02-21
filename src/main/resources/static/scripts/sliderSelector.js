@@ -68,23 +68,25 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    //Set values method
    this.setValues = function (from, to, source) {
+       from = Math.min(Math.max(parseFloat(from), this.initFromValue), this.initToValue)
+       to = Math.min(Math.max(parseFloat(to), this.initFromValue), this.initToValue)
 
-     var step = 1;
-     if (this.filterData.column == "TIME") {
-         step = theBinSize;
-         this.fromValue = Math.floor (from / theBinSize) * theBinSize;
-         this.toValue = Math.floor (to / theBinSize) * theBinSize;
-     }
+       var step = 1.0;
+       if (this.filterData.column == "TIME") {
+           step = parseFloat(theBinSize);
+           this.fromValue = Math.floor (from / theBinSize) * theBinSize;
+           this.toValue = Math.floor (to / theBinSize) * theBinSize;
+       }
 
-     this.fromValue = Math.floor(from);
-     this.toValue = Math.ceil(to);
-     this.fromInput.val( this.fromValue );
-     this.toInput.val( this.toValue );
-     if (source != "slider") {
-       this.slider.slider('values', 0, this.fromValue);
-       this.slider.slider('values', 1, this.toValue);
-     }
-     this.slider.slider( "option", "step", step);
+       this.fromValue = Math.floor(from);
+       this.toValue = Math.ceil(to);
+       this.fromInput.val( this.fromValue );
+       this.toInput.val( this.toValue );
+       if (source != "slider") {
+         this.slider.slider('values', 0, this.fromValue);
+         this.slider.slider('values', 1, this.toValue);
+       }
+       this.slider.slider("option", "step", step);
    }
 
    this.getFilter = function () {

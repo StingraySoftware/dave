@@ -229,7 +229,7 @@ function refreshPlotsData(schema) {
 }
 
 function onFiltersChanged (filename, filters) {
-  log("onFiltersChanged:" + filename + ", filters: " + filters);
+  log("onFiltersChanged:" + filename + ", filters: " + JSON.stringify(filters));
   theOutputPanel.onDatasetValuesChanged(filename, filters);
 }
 
