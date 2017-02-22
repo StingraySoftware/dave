@@ -191,6 +191,10 @@ h3
   top: 3px;
 }
 
+.sliderSelector .switch-btn {
+  cursor: pointer;
+}
+
 .sliderSelector .ui-slider-horizontal {
   background-color: #6a6a6a;
   border: 1px solid #222;

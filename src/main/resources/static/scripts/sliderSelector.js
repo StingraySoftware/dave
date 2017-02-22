@@ -21,7 +21,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
                   '<h3>' + title +
                   '<div class="switch-wrapper">' +
-                  '  <input id="switch_' + this.id + '" type="checkbox">' +
+                  '  <div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
                   '</div>' +
                   '</h3>' +
                   '<div class="selectorContainer">' +
@@ -48,7 +48,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   //Prepares switchBox
   this.switchBox.click( function ( event ) {
     var switchId = event.target.id.replace("switch_", "");
-    sliderSelectors_array[switchId].setEnabled (this.checked);
+    sliderSelectors_array[switchId].setEnabled (!sliderSelectors_array[switchId].enabled);
     sliderSelectors_array[switchId].onSelectorValuesChanged();
   });
 
@@ -113,10 +113,11 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    this.setEnabled = function (enabled) {
      this.enabled = enabled;
-     this.switchBox.prop("checked", enabled);
      if (enabled) {
+       this.switchBox.switchClass("fa-plus-square", "fa-minus-square");
        this.container.fadeIn();
      } else {
+       this.switchBox.switchClass("fa-minus-square", "fa-plus-square");
        this.setValues( this.initFromValue, this.initToValue );
        this.container.fadeOut();
      }
