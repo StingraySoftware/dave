@@ -15,7 +15,7 @@ def get_eventlist_from_dataset(dataset, axis):
         return None
 
     # Extract axis values
-    time_data = np.array(dataset.tables[axis[0]["table"]].columns["TIME"].values)
+    time_data = np.array(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
     pi_data = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
 
     # Extract GTIs

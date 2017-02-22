@@ -69,11 +69,18 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         else:
             logging.warn("get_filtered_dataset: Gti_destination specified but not loadable.")
 
-    return dataset.apply_filters(filters)
+    logging.warn("get_filtered_dataset: filters - " + str(filters))
+    logging.warn("get_filtered_dataset: values - " + str(len(dataset.tables["EVENTS"].columns["TIME"].values)))
+    res = dataset.apply_filters(filters)
+    logging.warn("get_filtered_dataset: values - " + str(len(res.tables["EVENTS"].columns["TIME"].values)))
+
+    return res
 
 
 def get_color_filtered_dataset(destination, filters, color_column_name, column_name, gti_destination=""):
+    logging.warn("get_color_filtered_dataset: filters - " + str(filters))
     color_filters = FltHelper.get_filters_from_color_filters(filters, color_column_name, column_name)
+    logging.warn("get_color_filtered_dataset: color_filters - " + str(color_filters))
     filtered_ds = get_filtered_dataset(destination, color_filters, gti_destination)
     return filtered_ds
 
@@ -180,7 +187,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             if bck_destination:
 
                 filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-                if not DsHelper.is_events_dataset(filtered_bck_ds):
+                if DsHelper.is_events_dataset(filtered_bck_ds):
 
                     logging.debug("Create background lightcurve ....")
                     bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
@@ -238,6 +245,10 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
     time_vals = []
     countrates = []
 
+    if len(axis) != 2:
+        logging.warn("Wrong number of axis")
+        return None
+
     try:
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
@@ -251,10 +262,6 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
                 logging.warn("Can't create filtered_ds for " + str(color_key))
                 return None
             filtered_datasets.append(filtered_ds)
-
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
 
         # Creates lightcurves by gti and joins in one
         logging.debug("Create color lightcurve ....")
@@ -282,31 +289,32 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
 
         # Applies backgrund data to lightcurves if necessary
         if bck_destination:
-            filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-            if not DsHelper.is_events_dataset(filtered_bck_ds):
 
-                logging.debug("Create background color lightcurve ...")
-                bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, color_axis)
+            for color_idx in range(len(color_keys)):
 
-                if bck_eventlist and len(bck_eventlist.time) > 0:
-                    bck_lc = bck_eventlist.to_lc(dt)
+                color_key = color_keys[color_idx]
+                logging.debug("Create background color lightcurve ... color_key: " + color_key)
 
-                    for color_idx in range(len(color_keys)):
+                filtered_bck_ds = get_color_filtered_dataset(bck_destination, filters, color_key, count_column_name, gti_destination)
+
+                if DsHelper.is_events_dataset(filtered_bck_ds):
+
+                    bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, color_axis)
+                    if bck_eventlist and len(bck_eventlist.time) > 0:
+                        bck_lc = bck_eventlist.to_lc(dt)
+
                         if countrates[color_idx].shape == bck_lc.countrate.shape:
                             countrates[color_idx] = countrates[color_idx] - bck_lc.countrate
                         else:
                             logging.warn("Background counts differs from " + str(color_keys[color_idx]) + ", omiting Bck data.")
 
-                    bck_lc = None  # Dispose memory
+                        bck_lc = None  # Dispose memory
+
+                    filtered_bck_ds = None  # Dispose memory
+                    bck_eventlist = None
 
                 else:
-                    logging.warn("Wrong lightcurve counts for background data...")
-
-                filtered_bck_ds = None  # Dispose memory
-                bck_eventlist = None
-
-            else:
-                logging.warn("Background dataset is None!, omiting Bck data.")
+                    logging.warn("Background dataset is None!, omiting Bck data. color_key: " + color_key)
 
     except:
         logging.error(str(sys.exc_info()))
