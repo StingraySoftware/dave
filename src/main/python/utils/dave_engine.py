@@ -69,18 +69,11 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         else:
             logging.warn("get_filtered_dataset: Gti_destination specified but not loadable.")
 
-    logging.warn("get_filtered_dataset: filters - " + str(filters))
-    logging.warn("get_filtered_dataset: values - " + str(len(dataset.tables["EVENTS"].columns["TIME"].values)))
-    res = dataset.apply_filters(filters)
-    logging.warn("get_filtered_dataset: values - " + str(len(res.tables["EVENTS"].columns["TIME"].values)))
-
-    return res
+    return dataset.apply_filters(filters)
 
 
 def get_color_filtered_dataset(destination, filters, color_column_name, column_name, gti_destination=""):
-    logging.warn("get_color_filtered_dataset: filters - " + str(filters))
     color_filters = FltHelper.get_filters_from_color_filters(filters, color_column_name, column_name)
-    logging.warn("get_color_filtered_dataset: color_filters - " + str(color_filters))
     filtered_ds = get_filtered_dataset(destination, color_filters, gti_destination)
     return filtered_ds
 
