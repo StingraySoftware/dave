@@ -15,7 +15,7 @@ def get_eventlist_from_dataset(dataset, axis):
         return None
 
     # Extract axis values
-    time_data = np.array(dataset.tables[axis[0]["table"]].columns["TIME"].values)
+    time_data = np.array(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
     pi_data = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
 
     # Extract GTIs
@@ -172,19 +172,33 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, g
 
     for gti_index in range(len(gti_start)):
 
+        start = gti_start[gti_index]
+        end = gti_end[gti_index]
+
         is_valid_gti = True
         if must_filter:
-            is_valid_gti = (gti_start[gti_index] >= filter_start) and (gti_end[gti_index] <= filter_end)
+            is_valid_gti = ((filter_start <= start) and (filter_end >= end))
+            if not is_valid_gti:
+                if (filter_start < end) and (filter_end > end):
+                    start = filter_start
+                    is_valid_gti = True
+                elif (filter_start < start) and (filter_end > start):
+                    end = filter_end
+                    is_valid_gti = True
+                elif (filter_start >= start) and (filter_end <= end):
+                    start = filter_start
+                    end = filter_end
+                    is_valid_gti = True
 
         if is_valid_gti:
-            start_event_idx = find_idx_nearest_val(ev_list, gti_start[gti_index])
-            end_event_idx = find_idx_nearest_val(ev_list, gti_end[gti_index])
+            start_event_idx = find_idx_nearest_val(ev_list, start)
+            end_event_idx = find_idx_nearest_val(ev_list, end)
 
             if end_event_idx > start_event_idx:
                 # The GTI has ended, so lets insert it on dataset
 
-                gti_table.columns["START"].add_value(gti_start[gti_index])
-                gti_table.columns["STOP"].add_value(gti_end[gti_index])
+                gti_table.columns["START"].add_value(start)
+                gti_table.columns["STOP"].add_value(end)
                 gti_table.columns["START_EVENT_IDX"].add_value(start_event_idx)
                 gti_table.columns["END_EVENT_IDX"].add_value(end_event_idx)
 

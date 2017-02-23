@@ -5,6 +5,7 @@ import utils.plotter as Plotter
 import numpy as np
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
+import sys
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
@@ -139,69 +140,73 @@ def get_plot_data(destination, filters, styles, axis):
 #
 def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
 
-    filters = FltHelper.get_filters_clean_color_filters(filters)
-    filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-    filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-    if not DsHelper.is_events_dataset(filtered_ds):
-        logging.warn("Wrong dataset type")
-        return None
-
-    if len(axis) != 2:
-        logging.warn("Wrong number of axis")
-        return None
-
-    # Creates lightcurves by gti and joins in one
-    logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
-
-    eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
-    if not eventlist:
-        logging.warn("Cant create eventlist from dataset")
-        return None
-
-    filtered_ds = None  # Dispose memory
-
     time_vals = []
     count_rate = []
 
-    if len(eventlist.time) > 0:
-        lc = eventlist.to_lc(dt)
+    try:
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
-        time_vals = lc.time
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+        if not DsHelper.is_events_dataset(filtered_ds):
+            logging.warn("Wrong dataset type")
+            return None
 
-        # Source lightcurve count rate
-        count_rate = lc.countrate
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
 
-        lc = None  # Dispose memory
+        # Creates lightcurves by gti and joins in one
+        logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
 
-        # Applies backgrund data to lightcurves if necessary
-        if bck_destination:
+        eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
+        if not eventlist:
+            logging.warn("Cant create eventlist from dataset")
+            return None
 
-            filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-            if not DsHelper.is_events_dataset(filtered_bck_ds):
+        filtered_ds = None  # Dispose memory
 
-                logging.debug("Create background lightcurve ....")
-                bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
-                if bck_eventlist and len(bck_eventlist.time) > 0:
-                    bck_lc = bck_eventlist.to_lc(dt)
+        if len(eventlist.time) > 0:
+            lc = eventlist.to_lc(dt)
 
-                    if count_rate.shape == bck_lc.countrate.shape:
-                        count_rate = count_rate - bck_lc.countrate
+            time_vals = lc.time
+
+            # Source lightcurve count rate
+            count_rate = lc.countrate
+
+            lc = None  # Dispose memory
+
+            # Applies backgrund data to lightcurves if necessary
+            if bck_destination:
+
+                filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
+                if DsHelper.is_events_dataset(filtered_bck_ds):
+
+                    logging.debug("Create background lightcurve ....")
+                    bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
+                    if bck_eventlist and len(bck_eventlist.time) > 0:
+                        bck_lc = bck_eventlist.to_lc(dt)
+
+                        if count_rate.shape == bck_lc.countrate.shape:
+                            count_rate = count_rate - bck_lc.countrate
+                        else:
+                            logging.warn("Background counts differs from Source counts, omiting Bck data.")
+
+                        bck_lc = None
+
                     else:
-                        logging.warn("Background counts differs from Source counts, omiting Bck data.")
+                        logging.warn("Wrong lightcurve counts for background data...")
 
-                    bck_lc = None
+                    bck_eventlist = None  # Dispose memory
+                    filtered_bck_ds = None
 
                 else:
-                    logging.warn("Wrong lightcurve counts for background data...")
+                    logging.warn("Background dataset is None!, omiting Bck data.")
 
-                bck_eventlist = None  # Dispose memory
-                filtered_bck_ds = None
+        eventlist = None  # Dispose memory
 
-            else:
-                logging.warn("Background dataset is None!, omiting Bck data.")
-
-    eventlist = None  # Dispose memory
+    except:
+        logging.error(str(sys.exc_info()))
 
     # Preapares the result
     logging.debug("Result lightcurves ....")
@@ -230,78 +235,82 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 # @param: dt: The time resolution of the events.
 #
 def get_colors_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
-
-    filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-    count_column_name = "PI"
-    color_keys = ["Color_A", "Color_B", "Color_C", "Color_D"]
-    filtered_datasets = []
-
-    for color_key in color_keys:
-        filtered_ds = get_color_filtered_dataset(src_destination, filters, color_key, count_column_name, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds):
-            logging.warn("Can't create filtered_ds for " + str(color_key))
-            return None
-        filtered_datasets.append(filtered_ds)
+    time_vals = []
+    countrates = []
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
         return None
 
-    # Creates lightcurves by gti and joins in one
-    logging.debug("Create color lightcurve ....")
+    try:
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
-    # Creates valid axis for lightcurve, not HCR or SCR
-    color_axis = [dict() for i in range(2)]
-    color_axis[0]["table"] = "EVENTS"
-    color_axis[0]["column"] = "TIME"
-    color_axis[1]["table"] = "EVENTS"
-    color_axis[1]["column"] = "PI"
+        count_column_name = "PI"
+        color_keys = ["Color_A", "Color_B", "Color_C", "Color_D"]
+        filtered_datasets = []
 
-    time_vals = []
-    countrates = []
+        for color_key in color_keys:
+            filtered_ds = get_color_filtered_dataset(src_destination, filters, color_key, count_column_name, gti_destination)
+            if not DsHelper.is_events_dataset(filtered_ds):
+                logging.warn("Can't create filtered_ds for " + str(color_key))
+                return None
+            filtered_datasets.append(filtered_ds)
 
-    for color_idx in range(len(color_keys)):
-        eventlist = DsHelper.get_eventlist_from_dataset(filtered_datasets[color_idx], color_axis)
+        # Creates lightcurves by gti and joins in one
+        logging.debug("Create color lightcurve ....")
 
-        if not eventlist or len(eventlist.time) == 0:
-            logging.warn("Wrong lightcurve counts for eventlist -> " + str(color_keys[color_idx]))
-            return None
+        # Creates valid axis for lightcurve, not HCR or SCR
+        color_axis = [dict() for i in range(2)]
+        color_axis[0]["table"] = "EVENTS"
+        color_axis[0]["column"] = "TIME"
+        color_axis[1]["table"] = "EVENTS"
+        color_axis[1]["column"] = "PI"
 
-        lc = eventlist.to_lc(dt)
-        if not len(time_vals):
-            time_vals = lc.time
-        countrates.append(lc.countrate)
+        for color_idx in range(len(color_keys)):
+            eventlist = DsHelper.get_eventlist_from_dataset(filtered_datasets[color_idx], color_axis)
 
-    filtered_datasets = None  # Dispose memory
+            if not eventlist or len(eventlist.time) == 0:
+                logging.warn("Wrong lightcurve counts for eventlist -> " + str(color_keys[color_idx]))
+                return None
 
-    # Applies backgrund data to lightcurves if necessary
-    if bck_destination:
-        filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_bck_ds):
+            lc = eventlist.to_lc(dt)
+            if not len(time_vals):
+                time_vals = lc.time
+            countrates.append(lc.countrate)
 
-            logging.debug("Create background color lightcurve ...")
-            bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, color_axis)
+        filtered_datasets = None  # Dispose memory
 
-            if bck_eventlist and len(bck_eventlist.time) > 0:
-                bck_lc = bck_eventlist.to_lc(dt)
+        # Applies backgrund data to lightcurves if necessary
+        if bck_destination:
 
-                for color_idx in range(len(color_keys)):
-                    if countrates[color_idx].shape == bck_lc.countrate.shape:
-                        countrates[color_idx] = countrates[color_idx] - bck_lc.countrate
-                    else:
-                        logging.warn("Background counts differs from " + str(color_keys[color_idx]) + ", omiting Bck data.")
+            for color_idx in range(len(color_keys)):
 
-                bck_lc = None  # Dispose memory
+                color_key = color_keys[color_idx]
+                logging.debug("Create background color lightcurve ... color_key: " + color_key)
 
-            else:
-                logging.warn("Wrong lightcurve counts for background data...")
+                filtered_bck_ds = get_color_filtered_dataset(bck_destination, filters, color_key, count_column_name, gti_destination)
 
-            filtered_bck_ds = None  # Dispose memory
-            bck_eventlist = None
+                if DsHelper.is_events_dataset(filtered_bck_ds):
 
-        else:
-            logging.warn("Background dataset is None!, omiting Bck data.")
+                    bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, color_axis)
+                    if bck_eventlist and len(bck_eventlist.time) > 0:
+                        bck_lc = bck_eventlist.to_lc(dt)
+
+                        if countrates[color_idx].shape == bck_lc.countrate.shape:
+                            countrates[color_idx] = countrates[color_idx] - bck_lc.countrate
+                        else:
+                            logging.warn("Background counts differs from " + str(color_keys[color_idx]) + ", omiting Bck data.")
+
+                        bck_lc = None  # Dispose memory
+
+                    filtered_bck_ds = None  # Dispose memory
+                    bck_eventlist = None
+
+                else:
+                    logging.warn("Background dataset is None!, omiting Bck data. color_key: " + color_key)
+
+    except:
+        logging.error(str(sys.exc_info()))
 
     # Preapares the result
     logging.debug("Result color lightcurves ....")
@@ -314,16 +323,20 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
     result.append(column_time)
 
     column_src = dict()
-    with np.errstate(all='ignore'): # Ignore divisions by 0 and others
-        src_values = np.nan_to_num(countrates[0] / countrates[1])
-    src_values[src_values > BIG_NUMBER]=0
+    src_values = []
+    if len(countrates) == 4:
+        with np.errstate(all='ignore'): # Ignore divisions by 0 and others
+            src_values = np.nan_to_num(countrates[0] / countrates[1])
+        src_values[src_values > BIG_NUMBER]=0
     column_src["values"] = src_values
     result.append(column_src)
 
     column_hdr = dict()
-    with np.errstate(all='ignore'): # Ignore divisions by 0 and others
-        hdr_values = np.nan_to_num(countrates[2] / countrates[3])
-    hdr_values[hdr_values > BIG_NUMBER]=0
+    hdr_values = []
+    if len(countrates) == 4:
+        with np.errstate(all='ignore'): # Ignore divisions by 0 and others
+            hdr_values = np.nan_to_num(countrates[2] / countrates[3])
+        hdr_values[hdr_values > BIG_NUMBER]=0
     column_hdr["values"] = hdr_values
     result.append(column_hdr)
 

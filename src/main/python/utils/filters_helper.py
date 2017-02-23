@@ -1,4 +1,5 @@
 import math
+import copy
 
 def createFilter(table, column, from_val, to_val):
     filter = dict()
@@ -46,9 +47,11 @@ def get_filters_from_color_filters(filters, color_column_name, column_name):
     for filter in filters:
         if "source" not in filter:
             # This filter is general dataset filter, must be appended
-            ret_filters.append(filter)
+            new_filter = copy.copy(filter)
+            ret_filters.append(new_filter)
         elif filter["column"] == color_column_name:
-            filter["column"] = column_name
-            ret_filters.append(filter)
+            new_filter = copy.copy(filter)
+            new_filter["column"] = column_name
+            ret_filters.append(new_filter)
 
     return ret_filters

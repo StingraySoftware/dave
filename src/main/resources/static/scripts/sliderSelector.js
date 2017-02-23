@@ -21,7 +21,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
                   '<h3>' + title +
                   '<div class="switch-wrapper">' +
-                  '  <input id="switch_' + this.id + '" type="checkbox">' +
+                  '  <div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
                   '</div>' +
                   '</h3>' +
                   '<div class="selectorContainer">' +
@@ -48,7 +48,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   //Prepares switchBox
   this.switchBox.click( function ( event ) {
     var switchId = event.target.id.replace("switch_", "");
-    sliderSelectors_array[switchId].setEnabled (this.checked);
+    sliderSelectors_array[switchId].setEnabled (!sliderSelectors_array[switchId].enabled);
     sliderSelectors_array[switchId].onSelectorValuesChanged();
   });
 
@@ -68,23 +68,25 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    //Set values method
    this.setValues = function (from, to, source) {
+       from = Math.min(Math.max(parseFloat(from), this.initFromValue), this.initToValue)
+       to = Math.min(Math.max(parseFloat(to), this.initFromValue), this.initToValue)
 
-     var step = 1;
-     if (this.filterData.column == "TIME") {
-         step = theBinSize;
-         this.fromValue = Math.floor (from / theBinSize) * theBinSize;
-         this.toValue = Math.floor (to / theBinSize) * theBinSize;
-     }
+       var step = 1.0;
+       if (this.filterData.column == "TIME") {
+           step = parseFloat(theBinSize);
+           this.fromValue = Math.floor (from / theBinSize) * theBinSize;
+           this.toValue = Math.floor (to / theBinSize) * theBinSize;
+       }
 
-     this.fromValue = Math.floor(from);
-     this.toValue = Math.ceil(to);
-     this.fromInput.val( this.fromValue );
-     this.toInput.val( this.toValue );
-     if (source != "slider") {
-       this.slider.slider('values', 0, this.fromValue);
-       this.slider.slider('values', 1, this.toValue);
-     }
-     this.slider.slider( "option", "step", step);
+       this.fromValue = Math.floor(from);
+       this.toValue = Math.ceil(to);
+       this.fromInput.val( this.fromValue );
+       this.toInput.val( this.toValue );
+       if (source != "slider") {
+         this.slider.slider('values', 0, this.fromValue);
+         this.slider.slider('values', 1, this.toValue);
+       }
+       this.slider.slider("option", "step", step);
    }
 
    this.getFilter = function () {
@@ -111,10 +113,11 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    this.setEnabled = function (enabled) {
      this.enabled = enabled;
-     this.switchBox.prop("checked", enabled);
      if (enabled) {
+       this.switchBox.switchClass("fa-plus-square", "fa-minus-square");
        this.container.fadeIn();
      } else {
+       this.switchBox.switchClass("fa-minus-square", "fa-plus-square");
        this.setValues( this.initFromValue, this.initToValue );
        this.container.fadeOut();
      }

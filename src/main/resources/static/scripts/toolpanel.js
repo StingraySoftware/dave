@@ -92,7 +92,7 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
-               columnTitle = "TIME (" + theTimeUnit  + "):"
+               columnTitle = "TIME (" + theTimeUnit  + "):";
             }
             var selector = new sliderSelector(columnName,
                                               columnTitle,
