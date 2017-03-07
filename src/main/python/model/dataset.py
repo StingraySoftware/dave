@@ -103,7 +103,7 @@ def get_dataset(ds_id, table_id, columns):
 
 
 # Returns a new empty dataset with EVENTS and GTIs tables
-def get_events_type_dataset(dsId, columns, hduname="EVENTS"):
+def get_hdu_type_dataset(dsId, columns, hduname="EVENTS"):
     dataset = DataSet(dsId)
 
     # Fills Hdu table
@@ -128,7 +128,7 @@ def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ev_list
     additional_columns = DsHelper.get_additional_column_names(ds_columns, column)
 
     # Creates the dataset
-    dataset = get_events_type_dataset(dsId, columns, hduname)
+    dataset = get_hdu_type_dataset(dsId, columns, hduname)
 
     # Sets table header info
     dataset.tables[hduname].set_header_info(header, header_comments)
@@ -149,4 +149,21 @@ def get_gti_dataset_from_stingray_gti(st_gtis):
     dataset = get_empty_dataset("GTI_DS")
     gti_table = DsHelper.get_gti_table_from_stingray_gti(st_gtis)
     dataset.tables["GTI"] = gti_table
+    return dataset
+
+
+# Returns a new dataset with LIGHTCURVE table from Stingray lcurve
+def get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments, hduname='RATE', column='TIME'):
+    lc_columns = [column, hduname, "ERROR"]
+
+    dataset = get_hdu_type_dataset("LIGHTCURVE", lc_columns, hduname)
+
+    hdu_table = dataset.tables[hduname]
+    hdu_table.set_header_info(header, header_comments)
+    hdu_table.columns[lc_columns[0]].add_values(lcurve["time"])
+    hdu_table.columns[lc_columns[1]].add_values(lcurve["lc"])
+    hdu_table.columns[lc_columns[2]].add_values(lcurve["elc"])
+
+    dataset.tables["GTI"] = DsHelper.get_gti_table_from_stingray_gti(lcurve["GTI"])
+
     return dataset

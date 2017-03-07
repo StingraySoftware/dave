@@ -2,6 +2,7 @@
 function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass) {
 
   var currentObj = this;
+
   this.id = id;
   this.plotId = "plot_" + id;
   this.plotConfig = plotConfig;
@@ -61,7 +62,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
    if ((this.plotConfig.styles.type == "ligthcurve") ||
       (this.plotConfig.styles.type == "colors_ligthcurve")){
-     this.plotConfig.dt = theBinSize;
+        var tab = getTabForSelector(this.id);
+        this.plotConfig.dt = tab.projectConfig.binSize;
    }
 
    this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
@@ -131,7 +133,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setReadyState = function (isReady) {
    this.isReady = isReady;
-   log("setReadyState plot " + this.id + " -> " + isReady);
  }
 
  this.resize = function () {

@@ -9,8 +9,8 @@
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/jquery-ui-1.12.1.min.css') }}">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/bootstrap-3.3.7.min.css') }}">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/bootstrap-theme-3.3.7.min.css') }}">
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/sb-admin-theme.css') }}">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='font-awesome-4.7.0/css/font-awesome.min.css') }}">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/sb-admin-theme.css') }}?v={{ range (1, 9999) | random }}">
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/master_page.css') }}?v={{ range (1, 9999) | random }}">
 
     <!-- Insert this line above script imports for solve Electron import issues -->
@@ -22,6 +22,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/logger-1.15.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/waiting_dialog.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/service.js') }}?v={{ range (1, 9999) | random }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/projectConfig.js') }}?v={{ range (1, 9999) | random }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/master_page.js') }}?v={{ range (1, 9999) | random }}"></script>
 
     <!-- Insert this line after script imports for solve Electron import issues -->
@@ -31,40 +32,22 @@
 
   <body>
 
+    <!-- Static navbar -->
+    {% include 'includes/nav_bar.html' %}
+
     <!-- Page Content -->
-        <div class="container fluid daveContainer">
-          <!-- Projects Row -->
-          <div class="row fill">
-            <div class="wrapper">
-              <div class="wfSelectorContainer columnDivider">
-                <div class="navbar-header">
-                  <div class="navbar-brand logotype">DAVE</div>
-                </div>
-                <div class="navbar">
-                  <ul class="nav navbar-nav side-nav">
-                      <li>
-                          <a class="loadBtn" href="#"><i class="fa fa-fw fa-file"></i>Load</a>
-                      </li>
-                      <li>
-                          <a class="filterBtn" href="#"><i class="fa fa-fw fa-filter"></i>Filter</a>
-                      </li>
-                      <li>
-                          <a class="analyzeBtn" href="#"><i class="fa fa-fw fa-area-chart"></i>Analyze</a>
-                      </li>
-                      <li>
-                          <a class="styleBtn" href="#"><i class="fa fa-fw fa-paint-brush"></i>Style</a>
-                      </li>
-                  </ul>
-                </div>
-              </div>
-              <div class="toolPanelContainer col-xs-3 columnDivider">
-                {% include 'includes/tool_panel.html' %}
-              </div>
-              {% include 'includes/output_panel.html' %}
-            </div>
-          </div>
-          <!-- /.row -->
-      </div>
+    <div class="container fluid daveContainer">
+      <!-- TAB PANELS GOES HERE -->
+    </div>
+
+    <!-- TabPanel Template -->
+    {% include 'includes/tab_panel.html' %}
+
+    <!-- ToolPanel Template -->
+    {% include 'includes/tool_panel.html' %}
+
+    <!-- OutputPanel Template -->
+    {% include 'includes/output_panel.html' %}
 
   </body>
 

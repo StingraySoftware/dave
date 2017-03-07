@@ -142,13 +142,15 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 
     time_vals = []
     count_rate = []
+    error_values = []
 
     try:
         filters = FltHelper.get_filters_clean_color_filters(filters)
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
         filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds):
+        if not DsHelper.is_events_dataset(filtered_ds) \
+            and not DsHelper.is_lightcurve_dataset(filtered_ds):
             logging.warn("Wrong dataset type")
             return None
 
@@ -156,54 +158,61 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             logging.warn("Wrong number of axis")
             return None
 
-        # Creates lightcurves by gti and joins in one
-        logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+        if DsHelper.is_events_dataset(filtered_ds):
+            # Creates lightcurves by gti and joins in one
+            logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
 
-        eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
-        if not eventlist:
-            logging.warn("Cant create eventlist from dataset")
-            return None
+            eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
+            if not eventlist:
+                logging.warn("Cant create eventlist from dataset")
+                return None
 
-        filtered_ds = None  # Dispose memory
+            filtered_ds = None  # Dispose memory
 
-        if len(eventlist.time) > 0:
-            lc = eventlist.to_lc(dt)
+            if len(eventlist.time) > 0:
+                lc = eventlist.to_lc(dt)
 
-            time_vals = lc.time
+                time_vals = lc.time
 
-            # Source lightcurve count rate
-            count_rate = lc.countrate
+                # Source lightcurve count rate
+                count_rate = lc.countrate
 
-            lc = None  # Dispose memory
+                lc = None  # Dispose memory
 
-            # Applies backgrund data to lightcurves if necessary
-            if bck_destination:
+                # Applies backgrund data to lightcurves if necessary
+                if bck_destination:
 
-                filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-                if DsHelper.is_events_dataset(filtered_bck_ds):
+                    filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
+                    if DsHelper.is_events_dataset(filtered_bck_ds):
 
-                    logging.debug("Create background lightcurve ....")
-                    bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
-                    if bck_eventlist and len(bck_eventlist.time) > 0:
-                        bck_lc = bck_eventlist.to_lc(dt)
+                        logging.debug("Create background lightcurve ....")
+                        bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
+                        if bck_eventlist and len(bck_eventlist.time) > 0:
+                            bck_lc = bck_eventlist.to_lc(dt)
 
-                        if count_rate.shape == bck_lc.countrate.shape:
-                            count_rate = count_rate - bck_lc.countrate
+                            if count_rate.shape == bck_lc.countrate.shape:
+                                count_rate = count_rate - bck_lc.countrate
+                            else:
+                                logging.warn("Background counts differs from Source counts, omiting Bck data.")
+
+                            bck_lc = None
+
                         else:
-                            logging.warn("Background counts differs from Source counts, omiting Bck data.")
+                            logging.warn("Wrong lightcurve counts for background data...")
 
-                        bck_lc = None
+                        bck_eventlist = None  # Dispose memory
+                        filtered_bck_ds = None
 
                     else:
-                        logging.warn("Wrong lightcurve counts for background data...")
+                        logging.warn("Background dataset is None!, omiting Bck data.")
 
-                    bck_eventlist = None  # Dispose memory
-                    filtered_bck_ds = None
+            eventlist = None  # Dispose memory
 
-                else:
-                    logging.warn("Background dataset is None!, omiting Bck data.")
-
-        eventlist = None  # Dispose memory
+        elif DsHelper.is_lightcurve_dataset(filtered_ds):
+            #If dataset is LIGHTCURVE type
+            time_vals = filtered_ds.tables["RATE"].columns["TIME"].values
+            count_rate = filtered_ds.tables["RATE"].columns["RATE"].values
+            error_values = filtered_ds.tables["RATE"].columns["ERROR"].values
 
     except:
         logging.error(str(sys.exc_info()))
@@ -218,6 +227,10 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     column_pi = dict()
     column_pi["values"] = count_rate
     result.append(column_pi)
+
+    column_pi_error = dict()
+    column_pi_error["error"] = error_values
+    result.append(column_pi_error)
 
     return result
 

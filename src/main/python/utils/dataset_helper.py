@@ -60,9 +60,17 @@ def find_idx_nearest_val(array, value):
 
 
 def is_events_dataset(dataset):
+    return is_hdu_dataset(dataset, "EVENTS")
+
+
+def is_lightcurve_dataset(dataset):
+    return is_hdu_dataset(dataset, "RATE")
+
+
+def is_hdu_dataset(dataset, hduname):
     if dataset:
-        if "EVENTS" in dataset.tables:
-            if "TIME" in dataset.tables["EVENTS"].columns:
+        if hduname in dataset.tables:
+            if "TIME" in dataset.tables[hduname].columns:
                 if "GTI" in dataset.tables:
                     return True
     return False

@@ -1,10 +1,14 @@
 
-function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetChangedFn, onGtiDatasetChangedFn, onFiltersChangedFn) {
+function ToolPanel (id, classSelector, container, service, onSrcDatasetChangedFn, onBckDatasetChangedFn, onGtiDatasetChangedFn, onFiltersChangedFn) {
 
   var currentObj = this;
 
+  this.id = id;
   this.classSelector = classSelector;
-  this.$html = $(this.classSelector);
+  this.$html = cloneHtmlElement(id, classSelector);
+  container.html(this.$html);
+  this.$html.show();
+
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.clearBtn = this.$html.find(".btnClear");
 
@@ -15,18 +19,20 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
 
   this.lastTimeoutId = null;
 
-  var theSrcFileSelector = new fileSelector("theSrcFileSelector", "Src File:", service.upload_form_data, this.onSrcDatasetChangedFn);
-  this.$html.find(".fileSelectorsContainer").append(theSrcFileSelector.$html);
+  this.selectors_array = [];
 
-  var theBckFileSelector = new fileSelector("theBckFileSelector", "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
-  this.$html.find(".fileSelectorsContainer").append(theBckFileSelector.$html);
+  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Src File:", service.upload_form_data, this.onSrcDatasetChangedFn);
+  this.$html.find(".fileSelectorsContainer").append(this.srcFileSelector.$html);
 
-  var theGtiFileSelector = new fileSelector("theGtiFileSelector", "Gti File:", service.upload_form_data, this.onGtiDatasetChangedFn);
-  this.$html.find(".fileSelectorsContainer").append(theGtiFileSelector.$html);
+  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
+  this.$html.find(".fileSelectorsContainer").append(this.bckFileSelector.$html);
+
+  this.gtiFileSelector = new fileSelector("theGtiFileSelector_" + this.id, "Gti File:", service.upload_form_data, this.onGtiDatasetChangedFn);
+  this.$html.find(".fileSelectorsContainer").append(this.gtiFileSelector.$html);
 
   this.clearBtn.button().bind("click", function( event ) {
       event.preventDefault();
-      sliderSelectors_clear();
+      sliderSelectors_clear(currentObj.selectors_array);
       currentObj.onSelectorValuesChanged();
   });
 
@@ -35,20 +41,24 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
     this.$html.find("." + panel).show();
   }
 
-  this.onDatasetSchemaChanged = function ( schema ) {
+  this.onDatasetSchemaChanged = function ( projectConfig ) {
 
-    sliderSelectors_remove();
+    var schema = projectConfig.schema;
+
+    currentObj.selectors_array = [];
+    currentObj.$html.find(".sliderSelector").remove();
 
     //Adds the Bin selector
-    if (theBinSelector != null){
-      theBinSelector.$html.remove();
+    if (this.binSelector != null){
+      this.binSelector.$html.remove();
     }
 
-    var minBinSize = 1;
-    var maxBinSize = 1;
-    var initValue = 1;
-    var step = 1;
     if (schema["EVENTS"] !== undefined){
+
+      var minBinSize = 1;
+      var maxBinSize = 1;
+      var initValue = 1;
+      var step = 1;
 
       //Caluculates max, min and step values for slider from time ranges
       var binSize = (schema["EVENTS"]["TIME"].max_value - schema["EVENTS"]["TIME"].min_value) / MIN_PLOT_POINTS;
@@ -70,13 +80,21 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
       step = minBinSize / 100.0; // We need at least 100 steps on slider
 
       initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+      projectConfig.binSize = initValue;
+
+      this.binSelector = new BinSelector(this.id + "_binSelector",
+                                        "BIN SIZE (" + projectConfig.timeUnit  + "):",
+                                        "From",
+                                        minBinSize, maxBinSize, step, initValue,
+                                        this.onSelectorValuesChanged);
+      this.$html.find(".selectorsContainer").append(this.binSelector.$html);
+
+    } else if (schema["RATE"] !== undefined){
+      var binDiv = $('<div class="sliderSelector binLabel">' +
+                      '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
+                    '</div>');
+      this.$html.find(".selectorsContainer").append(binDiv);
     }
-    theBinSelector = binSelector("binSelector",
-                  "BIN SIZE (" + theTimeUnit  + "):",
-                  "From",
-                  minBinSize, maxBinSize, step, initValue,
-                  this.onSelectorValuesChanged);
-    this.$html.find(".selectorsContainer").append(theBinSelector.$html);
 
     var pi_column = null;
 
@@ -92,14 +110,15 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
-               columnTitle = "TIME (" + theTimeUnit  + "):";
+               columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
             }
-            var selector = new sliderSelector(columnName,
+            var selector = new sliderSelector(this.id + "_" + columnName,
                                               columnTitle,
                                               filterData,
                                               "From", "To",
                                               column.min_value, column.max_value,
-                                              this.onSelectorValuesChanged);
+                                              this.onSelectorValuesChanged,
+                                              this.selectors_array);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
             if (tableName == "EVENTS" && columnName == "PI") {
@@ -125,12 +144,13 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
       var selectorName = selectorNames[i];
       var selectorKey = selectorName.replace(" ", "_");
       var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector" };
-      var selector = new sliderSelector("selector_" + selectorKey,
+      var selector = new sliderSelector(this.id + "_selector_" + selectorKey,
                                         selectorName + ":",
                                         filterData,
                                         "From", "To",
                                         column.min_value, column.max_value,
-                                        this.onSelectorValuesChanged);
+                                        this.onSelectorValuesChanged,
+                                        this.selectors_array);
       var min_value = increment * i;
       var max_value = min_value + increment;
       selector.setValues (min_value, max_value);
@@ -140,20 +160,24 @@ function ToolPanel (classSelector, service, onSrcDatasetChangedFn, onBckDatasetC
   }
 
   this.applyFilters = function (filters) {
-    sliderSelectors_applyFilters(filters);
+    sliderSelectors_applyFilters(filters, this.selectors_array);
   }
 
   this.getFilters = function (filters) {
-    return sliderSelectors_getFilters();
+    return sliderSelectors_getFilters(null, this.selectors_array);
   }
 
   this.onSelectorValuesChanged = function (source) {
-    if (this.lastTimeoutId != null) {
-      clearTimeout(this.lastTimeoutId);
+
+    waitingTab = getTabForSelector(currentObj.id);
+
+    if (currentObj.lastTimeoutId != null) {
+      clearTimeout(currentObj.lastTimeoutId);
     }
 
-    this.lastTimeoutId = setTimeout( function () {
-      theToolPanel.onFiltersChanged(theFilename, sliderSelectors_getFilters(source));
+    currentObj.lastTimeoutId = setTimeout( function () {
+      var filters = sliderSelectors_getFilters(source, waitingTab.toolPanel.selectors_array)
+      waitingTab.onFiltersChanged(filters);
     }, 850);
   }
 
