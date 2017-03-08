@@ -46,103 +46,104 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     log("TabPanel shown id: " + this.id);
   }
 
-  this.onSrcDatasetChanged = function ( filenames ) {
+  this.onDatasetChanged = function ( filenames, selectorKey ) {
 
     if (filenames.length == 1) {
 
-      currentObj.projectConfig.filename = filenames[0];
+      currentObj.projectConfig.setFiles(selectorKey, [], filenames[0]);
       waitingDialog.show('Getting file schema: ' + currentObj.projectConfig.filename);
-      log("onSrcDatasetChanged:" + currentObj.projectConfig.filename);
-      currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSchemaChanged, currentObj.onSchemaError, null);
+      log("onDatasetChanged " + selectorKey + ": " + currentObj.projectConfig.filename);
+      if (selectorKey == "SRC") {
+        currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSrcSchemaChanged, currentObj.onSchemaError, null);
+      } else if (selectorKey == "BCK") {
+        currentObj.service.get_dataset_schema(currentObj.projectConfig.bckFilename, currentObj.onBckSchemaChanged);
+      } else if (selectorKey == "GTI") {
+        currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
+      }
 
     } else if (filenames.length > 1){
 
-      currentObj.projectConfig.filenames = filenames;
-      currentObj.projectConfig.filename = filenames[0];
-      var params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSchemaChanged };
+      currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
+      var params = {};
+      if (selectorKey == "SRC") {
+        params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
+      } else if (selectorKey == "BCK") {
+        params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
+      } else if (selectorKey == "GTI") {
+        params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
+      }
       currentObj.onSchemaChangedMultipleFiles(null, params);
 
     } else {
-      log("onSrcDatasetChanged: No selected files..");
+      log("onDatasetChanged " + selectorKey + ": No selected files..");
     }
 
   }
 
-  this.onSchemaChanged = function ( schema, params ) {
-    log("onSchemaChanged:" + schema);
+  this.onLcDatasetChanged = function ( filenames, selectorKey ) {
 
-    if (params !== undefined && params != null){
-      currentObj.projectConfig.filenames = params.filenames;
-      currentObj.projectConfig.filename = params.filename;
-    }
+    if (filenames.length == 1) {
 
-    var jsonSchema = JSON.parse(schema);
-    if (isNull(jsonSchema.error)){
-
-      currentObj.projectConfig.schema = jsonSchema;
-
-      // Sets the time unit
-      if (!isNull(currentObj.projectConfig.schema["EVENTS"])
-          && !isNull(currentObj.projectConfig.schema["EVENTS"]["HEADER"])
-          && !isNull(currentObj.projectConfig.schema["EVENTS"]["HEADER"]["TUNIT1"])) {
-        currentObj.theTimeUnit = parseFloat(currentObj.projectConfig.schema["EVENTS"]["HEADER"]["TUNIT1"]);
+      log("onLcDatasetChanged " + selectorKey + ": " + filenames[0]);
+      currentObj.projectConfig.setFile(selectorKey, filenames[0]);
+      if (currentObj.projectConfig.hasSchema()) {
+        currentObj.refreshPlotsData();
+      } else {
+        waitingDialog.hide();
       }
 
-      // Sets the time unit
-      if (!isNull(currentObj.projectConfig.schema["RATE"])
-          && !isNull(currentObj.projectConfig.schema["RATE"]["HEADER"])
-          && !isNull(currentObj.projectConfig.schema["RATE"]["HEADER"]["TIMEDEL"])) {
-        currentObj.theBinSize = parseFloat(currentObj.projectConfig.schema["RATE"]["HEADER"]["TIMEDEL"]);
-      }
-
-      currentObj.setTitle(currentObj.projectConfig.filename);
-      currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
-      currentObj.refreshPlotsData();
-
+    } else if (filenames.length > 1){
+      log("onLcDatasetChanged " + selectorKey + ": Multifile selection not supported yet..");
+      waitingDialog.hide();
     } else {
-      log("onSchemaChanged error:" + schema);
+      log("onLcDatasetChanged " + selectorKey + ": No selected files..");
       waitingDialog.hide();
     }
+
+  }
+
+  this.onSrcSchemaChanged = function ( schema, params ) {
+    log("onSrcSchemaChanged:" + schema);
+    currentObj.onSchemaChangedWithKey("SRC", schema, params);
   }
 
   this.onBckSchemaChanged = function ( schema, params ) {
     log("onBckDatasetChanged:" + schema);
-
-    if (params !== undefined && params != null){
-      currentObj.projectConfig.bckFilenames = params.filenames;
-      currentObj.projectConfig.bckFilename = params.filename;
-    }
-
-    var jsonSchema = JSON.parse(schema);
-    if (isNull(jsonSchema.error)){
-      if (currentObj.projectConfig.schema != null) {
-        currentObj.refreshPlotsData();
-      } else {
-        waitingDialog.hide();
-      }
-    } else {
-      log("onBckSchemaChanged error:" + schema);
-      waitingDialog.hide();
-    }
+    currentObj.onSchemaChangedWithKey("BCK", schema, params);
   }
 
   this.onGtiSchemaChanged = function ( schema, params ) {
     log("onGtiSchemaChanged:" + schema);
+    currentObj.onSchemaChangedWithKey("GTI", schema, params);
+  }
 
+  this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
     if (params !== undefined && params != null){
-      currentObj.projectConfig.gtiFilenames = params.filenames;
-      currentObj.projectConfig.gtiFilename = params.filename;
+      currentObj.projectConfig.setFiles(selectorKey, params.filenames, params.filename);
     }
 
     var jsonSchema = JSON.parse(schema);
     if (isNull(jsonSchema.error)){
-      if (currentObj.projectConfig.schema != null) {
+
+      if (selectorKey == "SRC"){
+
+        currentObj.projectConfig.setSchema(jsonSchema);
+        currentObj.setTitle(currentObj.projectConfig.filename);
+        currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
         currentObj.refreshPlotsData();
+
       } else {
-        waitingDialog.hide();
+
+        if (currentObj.projectConfig.hasSchema()) {
+          currentObj.refreshPlotsData();
+        } else {
+          waitingDialog.hide();
+        }
+
       }
+
     } else {
-      log("onGtiSchemaChanged error:" + schema);
+      log("onSchemaChangedWithKey error:" + schema);
       waitingDialog.hide();
     }
   }
@@ -180,51 +181,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       waitingDialog.hide();
   }
 
-  this.onBckDatasetChanged = function ( filenames ) {
-
-    if (filenames.length == 1) {
-
-      currentObj.projectConfig.bckFilename = filenames[0];
-      waitingDialog.show('Getting file schema: ' + currentObj.projectConfig.bckFilename);
-      log("onBckDatasetChanged:" + currentObj.projectConfig.bckFilename);
-      currentObj.service.get_dataset_schema(currentObj.projectConfig.bckFilename, currentObj.onBckSchemaChanged);
-
-    } else if (filenames.length > 1){
-
-      currentObj.projectConfig.bckFilenames = filenames;
-      currentObj.projectConfig.bckFilename = filenames[0];
-      var params = { filename: this.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
-      currentObj.onSchemaChangedMultipleFiles(null, params);
-
-    } else {
-      log("onBckDatasetChanged: No selected files..");
-    }
-
-  }
-
-  this.onGtiDatasetChanged = function ( filenames ) {
-
-    if (filenames.length == 1) {
-
-      currentObj.projectConfig.gtiFilename = filenames[0];
-      waitingDialog.show('Getting file schema: ' + currentObj.projectConfig.gtiFilename);
-      log("onGtiDatasetChanged:" + currentObj.projectConfig.gtiFilename);
-      currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
-
-    } else if (filenames.length > 1){
-
-      currentObj.projectConfig.gtiFilenames = filenames;
-      currentObj.projectConfig.gtiFilename = filenames[0];
-      var params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
-      currentObj.onSchemaChangedMultipleFiles(null, params);
-
-    } else {
-      log("onGtiDatasetChanged: No selected files..");
-    }
-
-  }
-
-  this.refreshPlotsData = function (schema) {
+  this.refreshPlotsData = function () {
     currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
     currentObj.outputPanel.onDatasetValuesChanged(currentObj.projectConfig.filename, currentObj.toolPanel.getFilters());
   }
@@ -243,7 +200,14 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
 
-  this.toolPanel = new ToolPanel (this.id + "_toolPanel", "ToolPanelTemplate", this.$html.find(".toolPanelContainer"), service, this.onSrcDatasetChanged, this.onBckDatasetChanged, this.onGtiDatasetChanged, this.onFiltersChanged);
+  this.toolPanel = new ToolPanel (this.id + "_toolPanel",
+                                  "ToolPanelTemplate",
+                                  this.$html.find(".toolPanelContainer"),
+                                  service,
+                                  this.onDatasetChanged,
+                                  this.onLcDatasetChanged,
+                                  this.onFiltersChanged);
+
   this.outputPanel = new OutputPanel (this.id + "_outputPanel", "OutputPanelTemplate", ".outputPanelToolBar", this.$html.find(".outputPanelContainer"), service, this.onFiltersChangedFromPlot);
   $(window).resize(function () { currentObj.outputPanel.resize(); });
 
@@ -273,38 +237,13 @@ function getTabForSelector (selectorId) {
   for (t in tabPanels) {
     var tab = tabPanels[t];
 
-    for (i in tab.toolPanel.selectors_array) {
-      if (!isNull(tab.toolPanel.selectors_array[selectorId])) {
-          return tab;
-      }
-    }
-
-    for (i in tab.outputPanel.plots) {
-      if (tab.outputPanel.plots[i].id == selectorId) {
-          return tab;
-      }
-    }
-
-    if (tab.toolPanel.id == selectorId) {
+    if (tab.toolPanel.containsId(selectorId)) {
         return tab;
     }
 
-    if (!isNull(tab.toolPanel.binSelector) && tab.toolPanel.binSelector.id == selectorId) {
+    if (tab.outputPanel.containsId(selectorId)) {
         return tab;
     }
-
-    if (!isNull(tab.toolPanel.srcFileSelector) && tab.toolPanel.srcFileSelector.id == selectorId) {
-        return tab;
-    }
-
-    if (!isNull(tab.toolPanel.bckFileSelector) && tab.toolPanel.bckFileSelector.id == selectorId) {
-        return tab;
-    }
-
-    if (!isNull(tab.toolPanel.gtiFileSelector) && tab.toolPanel.gtiFileSelector.id == selectorId) {
-        return tab;
-    }
-
   }
 
   return null;

@@ -174,3 +174,25 @@ def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filt
     logging.debug("get_colors_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+def get_divided_lightcurve(lc0_filename, lc1_filename, target, filters, axis, dt):
+    lc0_destination = get_destination(lc0_filename, target)
+    if not lc0_destination:
+        return common_error("Invalid file or cache key for lc0 data")
+
+    lc1_destination = get_destination(lc1_filename, target)
+    if not lc1_destination:
+        return common_error("Invalid file or cache key for lc1 data")
+
+    logging.debug("get_divided_lightcurve lc0: %s" % lc0_filename)
+    logging.debug("get_divided_lightcurve lc1: %s" % lc1_filename)
+    logging.debug("get_divided_lightcurve: filters %s" % filters)
+    logging.debug("get_divided_lightcurve: axis %s" % axis)
+    logging.debug("get_divided_lightcurve: dt %f" % dt)
+
+    data = DaveEngine.get_divided_lightcurve(lc0_destination, lc1_destination, filters, axis, dt)
+
+    logging.debug("get_divided_lightcurve: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)

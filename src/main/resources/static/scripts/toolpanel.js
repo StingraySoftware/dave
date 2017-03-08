@@ -1,5 +1,12 @@
 
-function ToolPanel (id, classSelector, container, service, onSrcDatasetChangedFn, onBckDatasetChangedFn, onGtiDatasetChangedFn, onFiltersChangedFn) {
+function ToolPanel (id,
+                    classSelector,
+                    container,
+                    service,
+                    onDatasetChangedFn,
+                    onLcDatasetChangedFn,
+                    onFiltersChangedFn)
+{
 
   var currentObj = this;
 
@@ -12,29 +19,37 @@ function ToolPanel (id, classSelector, container, service, onSrcDatasetChangedFn
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.clearBtn = this.$html.find(".btnClear");
 
-  this.onSrcDatasetChangedFn = onSrcDatasetChangedFn;
-  this.onBckDatasetChangedFn = onBckDatasetChangedFn;
-  this.onGtiDatasetChangedFn = onGtiDatasetChangedFn;
+  this.onDatasetChangedFn = onDatasetChangedFn;
+  this.onLcDatasetChangedFn = onLcDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
 
   this.lastTimeoutId = null;
 
+  this.file_selectors_ids_array = [];
   this.selectors_array = [];
 
-  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Src File:", service.upload_form_data, this.onSrcDatasetChangedFn);
-  this.$html.find(".fileSelectorsContainer").append(this.srcFileSelector.$html);
+  this.addFileSelector = function (selector) {
+    this.$html.find(".fileSelectorsContainer").append(selector.$html);
+    this.file_selectors_ids_array.push(selector.id);
+  }
 
-  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Bck File:", service.upload_form_data, this.onBckDatasetChangedFn);
-  this.$html.find(".fileSelectorsContainer").append(this.bckFileSelector.$html);
+  this.showEventsSelectors = function ( panel ) {
+    this.bckFileSelector.show();
+    this.gtiFileSelector.show();
+    this.lcAFileSelector.hide();
+    this.lcBFileSelector.hide();
+    this.lcCFileSelector.hide();
+    this.lcDFileSelector.hide();
+  }
 
-  this.gtiFileSelector = new fileSelector("theGtiFileSelector_" + this.id, "Gti File:", service.upload_form_data, this.onGtiDatasetChangedFn);
-  this.$html.find(".fileSelectorsContainer").append(this.gtiFileSelector.$html);
-
-  this.clearBtn.button().bind("click", function( event ) {
-      event.preventDefault();
-      sliderSelectors_clear(currentObj.selectors_array);
-      currentObj.onSelectorValuesChanged();
-  });
+  this.showLcSelectors = function ( panel ) {
+    this.bckFileSelector.hide();
+    this.gtiFileSelector.hide();
+    this.lcAFileSelector.show();
+    this.lcBFileSelector.show();
+    this.lcCFileSelector.show();
+    this.lcDFileSelector.show();
+  }
 
   this.showPanel = function ( panel ) {
     this.$html.find(".panelContainer").hide();
@@ -54,6 +69,10 @@ function ToolPanel (id, classSelector, container, service, onSrcDatasetChangedFn
     }
 
     if (schema["EVENTS"] !== undefined){
+
+      //SRC file is an EVENTS file:
+
+      this.showEventsSelectors();
 
       var minBinSize = 1;
       var maxBinSize = 1;
@@ -90,6 +109,11 @@ function ToolPanel (id, classSelector, container, service, onSrcDatasetChangedFn
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
     } else if (schema["RATE"] !== undefined){
+
+      //SRC file is an LIGHTCURVE file:
+
+      this.showLcSelectors();
+
       var binDiv = $('<div class="sliderSelector binLabel">' +
                       '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
                     '</div>');
@@ -180,6 +204,63 @@ function ToolPanel (id, classSelector, container, service, onSrcDatasetChangedFn
       waitingTab.onFiltersChanged(filters);
     }, 850);
   }
+
+  this.containsId = function (id) {
+
+    if (this.id == id) {
+        return true;
+    }
+
+    for (i in this.selectors_array) {
+      if (!isNull(this.selectors_array[id])) {
+          return true;
+      }
+    }
+
+    for (i in this.file_selectors_ids_array) {
+      if (this.file_selectors_ids_array[i] == id) {
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+
+  //Normal file selectors, SRC is valid on both events files and lightcurves
+  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Src File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
+  this.addFileSelector(this.srcFileSelector);
+
+  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Bck File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
+  this.addFileSelector(this.bckFileSelector);
+  this.bckFileSelector.hide();
+
+  this.gtiFileSelector = new fileSelector("theGtiFileSelector_" + this.id, "Gti File:", "GTI", service.upload_form_data, this.onDatasetChangedFn);
+  this.addFileSelector(this.gtiFileSelector);
+  this.gtiFileSelector.hide();
+
+  //Lightcurve file selectors
+  this.lcAFileSelector = new fileSelector("lcAFileSelector_" + this.id, "Lc A File:", "LCA", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.addFileSelector(this.lcAFileSelector);
+  this.lcAFileSelector.hide();
+
+  this.lcBFileSelector = new fileSelector("lcBFileSelector_" + this.id, "Lc B File:", "LCB", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.addFileSelector(this.lcBFileSelector);
+  this.lcBFileSelector.hide();
+
+  this.lcCFileSelector = new fileSelector("lcCFileSelector_" + this.id, "Lc C File:", "LCC", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.addFileSelector(this.lcCFileSelector);
+  this.lcCFileSelector.hide();
+
+  this.lcDFileSelector = new fileSelector("lcDFileSelector_" + this.id, "Lc D File:", "LCD", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.addFileSelector(this.lcDFileSelector);
+  this.lcDFileSelector.hide();
+
+  this.clearBtn.button().bind("click", function( event ) {
+      event.preventDefault();
+      sliderSelectors_clear(currentObj.selectors_array);
+      currentObj.onSelectorValuesChanged();
+  });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);
 }

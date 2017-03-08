@@ -1,11 +1,12 @@
 fileSelectorCounter = 0;
 
-function fileSelector(id, label, uploadFn, onFileChangedFn) {
+function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
   var currentObj = this;
 
   this.id = id;
   this.label = label;
+  this.selectorKey = selectorKey;
   this.uploadFn = uploadFn;
   this.onFileChangedFn = onFileChangedFn;
   this.uploadInputId = 'upload_input' + fileSelectorCounter;
@@ -41,7 +42,7 @@ function fileSelector(id, label, uploadFn, onFileChangedFn) {
                                        if (jsonRes.error != undefined) {
                                          currentObj.onUploadError(jsonRes.error);
                                        } else {
-                                         currentObj.onFileChangedFn(jsonRes);
+                                         currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
                                        };
                                    },
                            currentObj.onUploadError,
@@ -57,29 +58,15 @@ function fileSelector(id, label, uploadFn, onFileChangedFn) {
      }
    }
 
+   this.show = function () {
+     this.$html.show();
+   }
+
+   this.hide = function () {
+     this.$html.hide();
+   }
+
    log ("new fileSelector id: " + id + ", label: " + label + ", inputId: " + this.uploadInputId);
 
    return this;
 }
-
-var getFileBlob = function (url, cb) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", url);
-        xhr.responseType = "blob";
-        xhr.addEventListener('load', function() {
-            cb(xhr.response);
-        });
-        xhr.send();
-};
-
-var blobToFile = function (blob, name) {
-        blob.lastModifiedDate = new Date();
-        blob.name = name;
-        return blob;
-};
-
-var getFileObject = function(filePathOrUrl, cb) {
-       getFileBlob(filePathOrUrl, function (blob) {
-          cb(blobToFile(blob, 'test.jpg'));
-       });
-};

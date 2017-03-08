@@ -76,6 +76,29 @@ function Service (base_url) {
     }
   };
 
+  this.request_divided_lightcurve = function (lc_data, fn) {
+
+    if (lc_data.lc0_filename == "" || lc_data.lc1_filename == "") {
+        log("request_divided_lightcurve call avoided, plotdata: " + JSON.stringify(lc_data));
+        fn (null);
+        return;
+    }
+
+    log("request_divided_lightcurve plot " + JSON.stringify(lc_data));
+    try {
+      $.ajax({
+         type : "POST",
+         url : thisService.base_url + "/get_divided_lightcurve",
+         data: JSON.stringify(lc_data, null, '\t'),
+         contentType: 'application/json;charset=UTF-8',
+         success: fn,
+         error: fn
+      });
+    } catch (e) {
+      fn({ "error" : e });
+    }
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {

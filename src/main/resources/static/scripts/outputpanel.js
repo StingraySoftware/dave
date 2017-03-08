@@ -19,20 +19,31 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!projectConfig.filename.endsWith(".txt")) {
 
-      var tableName = "EVENTS";
       if (!isNull(projectConfig.schema["RATE"])) {
-        tableName = "RATE";
+
+        //If fits is a Lightcurve
+        this.plots = this.getLcTablePlots(projectConfig.filename,
+                                            projectConfig.getFile("LCA"),
+                                            projectConfig.getFile("LCB"),
+                                            projectConfig.getFile("LCC"),
+                                            projectConfig.getFile("LCD"),
+                                            projectConfig.binSize,
+                                            projectConfig.timeUnit);
+      } else {
+
+        //If fits is an Events fits
+        this.plots = this.getFitsTablePlots(projectConfig.filename,
+                                            projectConfig.bckFilename,
+                                            projectConfig.gtiFilename,
+                                            projectConfig.binSize,
+                                            projectConfig.timeUnit);
       }
 
-      this.plots = this.getFitsTablePlots(projectConfig.filename,
-                                          projectConfig.bckFilename,
-                                          projectConfig.gtiFilename,
-                                          tableName,
-                                          projectConfig.binSize,
-                                          projectConfig.timeUnit);
     } else {
-      this.plots = this.getTxtTablePlots(projectConfig.filename,
-                                         projectConfig.timeUnit);
+
+        //If file has txt extension
+        this.plots = this.getTxtTablePlots(projectConfig.filename,
+                                          projectConfig.timeUnit);
     }
 
     //ADDS PLOTS TO PANEL
@@ -80,7 +91,22 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
     if (allPlotsReady) { waitingDialog.hide(); }
   }
 
-  //This aplply only while final plots are defined by team
+  this.containsId = function (id) {
+
+    if (this.id == id) {
+        return true;
+    }
+
+    for (i in this.plots) {
+      if (this.plots[i].id == id) {
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+  //This applies only while final plots are defined by team
   this.getTxtTablePlots = function ( filename, timeUnit ) {
     return [
                 new Plot(
@@ -142,34 +168,62 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
               ];
   }
 
-  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, tableName, binSize, timeUnit ) {
+  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, binSize, timeUnit ) {
 
     log("getFitsTablePlots: theBinSize: " + binSize );
 
     return [
-              /*new Plot(
-                this.id + "_time_pi_" + filename,
-                {
-                  filename: filename,
-                  styles: { type: "scatter", labels: ["TIME", "PI"] },
-                  axis: [ { table:"EVENTS", column:"TIME" } ,
-                          { table:"EVENTS", column:"PI" } ]
-                },
-                this.service.request_plot_data,
-                this.onFiltersChangedFromPlot,
-                this.onPlotReady,
-                this.$toolBar
-              ),*/
+                new Plot(
+                    this.id + "_ligthcurve_" + filename,
+                    {
+                      filename: filename,
+                      bck_filename: bck_filename,
+                      gti_filename: gti_filename,
+                      styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
+                      axis: [ { table: "EVENTS", column:"TIME" },
+                              { table: "EVENTS", column:"PI" } ]
+                    },
+                    this.service.request_lightcurve,
+                    this.onFiltersChangedFromPlot,
+                    this.onPlotReady,
+                    this.$toolBar,
+                    "fullWidth"
+                  ),
 
+                new Plot(
+                    this.id + "_colors_ligthcurve_" + filename,
+                    {
+                      filename: filename,
+                      bck_filename: bck_filename,
+                      gti_filename: gti_filename,
+                      styles: { type: "colors_ligthcurve", labels: ["TIME (" + timeUnit  + ")", "SCR", "HCR"] },
+                      axis: [ { table: "EVENTS", column:"TIME" },
+                              { table: "EVENTS", column:"SCR_HCR" } ]
+                    },
+                    this.service.request_colors_lightcurve,
+                    this.onFiltersChangedFromPlot,
+                    this.onPlotReady,
+                    this.$toolBar,
+                    "fullWidth"
+                  )
+
+              ];
+  }
+
+  this.getLcTablePlots = function ( filename, lcAfilename, lcBfilename, lcCfilename, lcDfilename, binSize, timeUnit ) {
+
+    log("getLcTablePlots: theBinSize: " + binSize );
+
+    return [
               new Plot(
                   this.id + "_ligthcurve_" + filename,
                   {
                     filename: filename,
-                    bck_filename: bck_filename,
-                    gti_filename: gti_filename,
+                    bck_filename: "",
+                    gti_filename: "",
                     styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
-                    axis: [ { table:tableName, column:"TIME" },
-                            { table:tableName, column:"PI" } ]
+                    axis: [ { table: "RATE", column:"TIME" },
+                            { table: "RATE", column:"PI" } ]
                   },
                   this.service.request_lightcurve,
                   this.onFiltersChangedFromPlot,
@@ -179,21 +233,38 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
                 ),
 
                 new Plot(
-                    this.id + "_colors_ligthcurve_" + filename,
+                    this.id + "_ab_divided_ligthcurve_" + filename,
                     {
                       filename: filename,
-                      bck_filename: bck_filename,
-                      gti_filename: gti_filename,
-                      styles: { type: "colors_ligthcurve", labels: ["TIME (" + timeUnit  + ")", "SCR", "HCR"] },
-                      axis: [ { table:tableName, column:"TIME" },
-                              { table:tableName, column:"SCR_HCR" } ]
+                      lc0_filename: lcAfilename,
+                      lc1_filename: lcBfilename,
+                      styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "A/B Count Rate(c/s)"] },
+                      axis: [ { table: "RATE", column:"TIME" },
+                              { table: "RATE", column:"PI" } ]
                     },
-                    this.service.request_colors_lightcurve,
+                    this.service.request_divided_lightcurve,
                     this.onFiltersChangedFromPlot,
                     this.onPlotReady,
                     this.$toolBar,
-                    "fullWidth"
-                  )
+                    ""
+                  ),
+
+                  new Plot(
+                      this.id + "_cd_divided_ligthcurve_" + filename,
+                      {
+                        filename: filename,
+                        lc0_filename: lcCfilename,
+                        lc1_filename: lcDfilename,
+                        styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "C/D Count Rate(c/s)"] },
+                        axis: [ { table: "RATE", column:"TIME" },
+                                { table: "RATE", column:"PI" } ]
+                      },
+                      this.service.request_divided_lightcurve,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      this.$toolBar,
+                      ""
+                    )
 
               ];
   }

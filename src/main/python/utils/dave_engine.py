@@ -7,6 +7,8 @@ import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import sys
 
+BIG_NUMBER = 9999999999999
+
 
 # get_dataset_schema: Returns the schema of a dataset of given file
 # the plot inside with a given file destination
@@ -272,7 +274,7 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
         # Creates lightcurves by gti and joins in one
         logging.debug("Create color lightcurve ....")
 
-        # Creates valid axis for lightcurve, not HCR or SCR
+        # Creates valid axis for lightcurve, not HCR or SCR
         color_axis = [dict() for i in range(2)]
         color_axis[0]["table"] = "EVENTS"
         color_axis[0]["column"] = "TIME"
@@ -352,5 +354,76 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
         hdr_values[hdr_values > BIG_NUMBER]=0
     column_hdr["values"] = hdr_values
     result.append(column_hdr)
+
+    return result
+
+
+# get_divided_lightcurve: Returns the data for the LC0 divided by LC1
+#
+# @param: lc0_destination: lightcurve 0 file destination
+# @param: lc1_destination: lightcurve 1 file destination
+# @param: filters: array with the filters to apply
+#         [{ table = "fits_table", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "fits_table", column = "TIME" },
+#            { table = "fits_table", column = "PI" } ]
+# @param: dt: The time resolution of the events.
+#
+def get_divided_lightcurve(lc0_destination, lc1_destination, filters, axis, dt):
+    time_vals = []
+    count_rate = []
+    error_values = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        filtered_ds0 = get_filtered_dataset(lc0_destination, filters, "")
+        if not DsHelper.is_lightcurve_dataset(filtered_ds0):
+            logging.warn("Wrong dataset type for lc0")
+            return None
+        count_rate_0 = np.array(filtered_ds0.tables["RATE"].columns["RATE"].values)
+
+        filtered_ds1 = get_filtered_dataset(lc1_destination, filters, "")
+        if not DsHelper.is_lightcurve_dataset(filtered_ds1):
+            logging.warn("Wrong dataset type for lc1")
+            return None
+        count_rate_1 = np.array(filtered_ds1.tables["RATE"].columns["RATE"].values)
+
+        if count_rate_0.shape == count_rate_1.shape:
+
+            time_vals = filtered_ds0.tables["RATE"].columns["TIME"].values
+
+            with np.errstate(all='ignore'): # Ignore divisions by 0 and others
+                count_rate = np.nan_to_num(count_rate_0 / count_rate_1)
+            count_rate[count_rate > BIG_NUMBER]=0
+
+            countrates[color_idx] = countrates[color_idx] - bck_lc.countrate
+        else:
+            logging.warn("Lightcurves have different shapes.")
+            return None
+
+    except:
+        logging.error(str(sys.exc_info()))
+
+    # Preapares the result
+    logging.debug("Result lightcurves ....")
+    result = []
+    column_time = dict()
+    column_time["values"] = time_vals
+    result.append(column_time)
+
+    column_pi = dict()
+    column_pi["values"] = count_rate
+    result.append(column_pi)
+
+    column_pi_error = dict()
+    column_pi_error["error"] = error_values
+    result.append(column_pi_error)
 
     return result

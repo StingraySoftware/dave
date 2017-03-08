@@ -72,6 +72,13 @@ def get_colors_lightcurve():
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
+@app.route('/get_divided_lightcurve', methods=['POST'])
+def get_divided_lightcurve():
+    return DaveEndpoint.get_divided_lightcurve(request.json['lc0_filename'],
+            request.json['lc1_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():
