@@ -5,6 +5,7 @@ import utils.plotter as Plotter
 import numpy as np
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
+import model.dataset as DataSet
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -358,52 +359,50 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
     return result
 
 
-# get_divided_lightcurve: Returns the data for the LC0 divided by LC1
+# get_divided_lightcurve_ds: Returns the data for the LC0 divided by LC1
 #
 # @param: lc0_destination: lightcurve 0 file destination
 # @param: lc1_destination: lightcurve 1 file destination
-# @param: filters: array with the filters to apply
-#         [{ table = "fits_table", column = "Time", from=0, to=10 }, ... ]
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "fits_table", column = "TIME" },
-#            { table = "fits_table", column = "PI" } ]
-# @param: dt: The time resolution of the events.
 #
-def get_divided_lightcurve(lc0_destination, lc1_destination, filters, axis, dt):
-    time_vals = []
-    count_rate = []
-    error_values = []
+def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
 
     try:
 
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
-
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-        filtered_ds0 = get_filtered_dataset(lc0_destination, filters, "")
-        if not DsHelper.is_lightcurve_dataset(filtered_ds0):
+        lc0_ds = DaveReader.get_file_dataset(lc0_destination)
+        if not DsHelper.is_lightcurve_dataset(lc0_ds):
             logging.warn("Wrong dataset type for lc0")
-            return None
-        count_rate_0 = np.array(filtered_ds0.tables["RATE"].columns["RATE"].values)
+            return ""
 
-        filtered_ds1 = get_filtered_dataset(lc1_destination, filters, "")
-        if not DsHelper.is_lightcurve_dataset(filtered_ds1):
+        count_rate_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].values)
+
+        lc1_ds = DaveReader.get_file_dataset(lc1_destination)
+        if not DsHelper.is_lightcurve_dataset(lc1_ds):
             logging.warn("Wrong dataset type for lc1")
-            return None
-        count_rate_1 = np.array(filtered_ds1.tables["RATE"].columns["RATE"].values)
+            return ""
+
+        count_rate_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].values)
 
         if count_rate_0.shape == count_rate_1.shape:
 
-            time_vals = filtered_ds0.tables["RATE"].columns["TIME"].values
+            ret_lc_ds = lc0_ds.clone(True)
 
             with np.errstate(all='ignore'): # Ignore divisions by 0 and others
                 count_rate = np.nan_to_num(count_rate_0 / count_rate_1)
             count_rate[count_rate > BIG_NUMBER]=0
 
-            countrates[color_idx] = countrates[color_idx] - bck_lc.countrate
+            ret_lc_ds.tables["RATE"].columns["RATE"].clear()
+            ret_lc_ds.tables["RATE"].columns["RATE"].add_values(count_rate) # TODO: Set error from lightcurve
+
+            lc0_ds = None  # Dispose memory
+            lc1_ds = None  # Dispose memory
+            count_rate_1 = None  # Dispose memory
+            count_rate_0 = None  # Dispose memory
+            count_rate = None  # Dispose memory
+
+            new_cache_key = DsCache.get_key(lc0_destination + "|" + lc1_destination + "|ligthcurve")
+            DsCache.add(new_cache_key, ret_lc_ds)  # Adds new cached dataset for new key
+            return new_cache_key
+
         else:
             logging.warn("Lightcurves have different shapes.")
             return None
@@ -411,19 +410,53 @@ def get_divided_lightcurve(lc0_destination, lc1_destination, filters, axis, dt):
     except:
         logging.error(str(sys.exc_info()))
 
-    # Preapares the result
-    logging.debug("Result lightcurves ....")
-    result = []
-    column_time = dict()
-    column_time["values"] = time_vals
-    result.append(column_time)
+    return ""
 
-    column_pi = dict()
-    column_pi["values"] = count_rate
-    result.append(column_pi)
 
-    column_pi_error = dict()
-    column_pi_error["error"] = error_values
-    result.append(column_pi_error)
+# get_lightcurve_ds_from_events_ds: Creates a lightcurve dataset
+# from an events dataset and stores it on DsCache, returns the cache key
+#
+# @param: destination: file destination or dataset cache key
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "fits_table", column = "TIME" },
+#            { table = "fits_table", column = "PI" } ]
+# @param: dt: The time resolution of the events.
+#
+def get_lightcurve_ds_from_events_ds(destination, axis, dt):
 
-    return result
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return ""
+
+        dataset = DaveReader.get_file_dataset(destination)
+        if DsHelper.is_events_dataset(dataset):
+            eventlist = DsHelper.get_eventlist_from_dataset(dataset, axis)
+            if not eventlist:
+                logging.warn("Cant create eventlist from dataset")
+                return ""
+
+            if len(eventlist.time) > 0:
+                lc = eventlist.to_lc(dt)
+
+                #Changes lc format to stingray_addons format
+                tmp_lc = {}
+                tmp_lc['lc'] = lc.countrate
+                tmp_lc['elc'] = []  # TODO: Get error from lightcurve
+                tmp_lc['time'] = lc.time
+                tmp_lc['GTI'] = lc.gti
+
+                lc_dataset = DataSet.get_lightcurve_dataset_from_stingray_lcurve(tmp_lc, dataset.tables["EVENTS"].header, dataset.tables["EVENTS"].header_comments,
+                                                                                "RATE", "TIME")
+                dataset = None  # Dispose memory
+                lc = None  # Dispose memory
+
+                new_cache_key = DsCache.get_key(destination + "|ligthcurve")
+                DsCache.add(new_cache_key, dataset)  # Adds new cached dataset for new key
+                return new_cache_key
+
+    except:
+        logging.error(str(sys.exc_info()))
+
+    return ""

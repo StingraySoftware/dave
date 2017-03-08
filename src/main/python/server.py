@@ -72,11 +72,16 @@ def get_colors_lightcurve():
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
-@app.route('/get_divided_lightcurve', methods=['POST'])
-def get_divided_lightcurve():
-    return DaveEndpoint.get_divided_lightcurve(request.json['lc0_filename'],
-            request.json['lc1_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']))
+@app.route('/get_divided_lightcurve_ds', methods=['POST'])
+def get_divided_lightcurve_ds():
+    return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
+            request.json['lc1_filename'], UPLOADS_TARGET)
+
+
+@app.route('/get_lightcurve_ds_from_events_ds', methods=['POST'])
+def get_lightcurve_ds_from_events_ds():
+    return DaveEndpoint.get_lightcurve_ds_from_events_ds(request.json['filename'],
+            UPLOADS_TARGET, request.json['axis'], float(request.json['dt']))
 
 
 # Receives a message from client and send it to all subscribers

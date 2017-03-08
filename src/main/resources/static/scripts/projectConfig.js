@@ -10,6 +10,7 @@ function ProjectConfig(){
   this.selectorFilenames = [];
   this.binSize = 100;
   this.timeUnit = "s";
+  this.plots = [];
 
   this.hasSchema = function (schema) {
     return this.schema != null;

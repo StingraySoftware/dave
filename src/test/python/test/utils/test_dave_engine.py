@@ -40,18 +40,31 @@ def test_get_lightcurve(s):
 
     assert not os.path.isfile(destination) or result is not None
 
+
 @given(text(min_size=1))
-def test_get_divided_lightcurve(s):
+def test_get_divided_lightcurve_ds(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_2.lc")
-    result = None
+    result = ""
+
+    if FileUtils.is_valid_file(destination):
+        result = DaveEngine.get_divided_lightcurve_ds(destination, destination)
+
+    assert not os.path.isfile(destination) or len(result) > 0
+
+
+@given(text(min_size=1))
+@example("test.evt")
+def test_get_lightcurve_ds_from_events_ds(s):
+    destination = FileUtils.get_destination(TEST_RESOURCES, s)
+    result = ""
 
     axis = [dict() for i in range(2)]
-    axis[0]["table"] = "RATE"
+    axis[0]["table"] = "EVENTS"
     axis[0]["column"] = "TIME"
-    axis[1]["table"] = "RATE"
+    axis[1]["table"] = "EVENTS"
     axis[1]["column"] = "PI"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_divided_lightcurve(destination, destination, [], axis, 16.)
+        result = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, 16.)
 
-    assert not os.path.isfile(destination) or result is not None
+    assert not os.path.isfile(destination) or len(result) > 0

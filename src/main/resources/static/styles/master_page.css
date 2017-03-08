@@ -126,7 +126,7 @@ h3
   width: 100%;
 }
 
-.infoPanel .btnShowAll
+.infoPanel .btn
 {
   float:right;
   margin-top: 12px;
@@ -218,4 +218,10 @@ h3
 .buttonsContainer{
   padding-top: 24px;
   padding-bottom: 60px;
+}
+
+.btn {
+  padding: 4px;
+  padding-top: 1px;
+  padding-bottom: 1px;
 }

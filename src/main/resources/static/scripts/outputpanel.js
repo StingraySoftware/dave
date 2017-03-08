@@ -1,16 +1,16 @@
-function OutputPanel (id, classSelector, toolBarSelector, container, service, onFiltersChangedFromPlotFn) {
+function OutputPanel (id, classSelector, container, service, onFiltersChangedFromPlotFn) {
 
   var currentObj = this;
 
   this.id = id;
   this.classSelector = classSelector;
-  this.toolBarSelector = toolBarSelector;
   this.service = service;
   this.onFiltersChangedFromPlot = onFiltersChangedFromPlotFn;
   this.$html = cloneHtmlElement(id, classSelector);
   container.html(this.$html);
   this.$html.show();
-  this.$toolBar = $(this.toolBarSelector);
+  this.$toolBar = this.$html.find(".outputPanelToolBar");
+  this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
 
 
@@ -22,13 +22,16 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
       if (!isNull(projectConfig.schema["RATE"])) {
 
         //If fits is a Lightcurve
-        this.plots = this.getLcTablePlots(projectConfig.filename,
-                                            projectConfig.getFile("LCA"),
-                                            projectConfig.getFile("LCB"),
-                                            projectConfig.getFile("LCC"),
-                                            projectConfig.getFile("LCD"),
-                                            projectConfig.binSize,
-                                            projectConfig.timeUnit);
+        if (projectConfig.plots.length == 0) {
+          var lc_SRC_plot = this.getLightCurvePlot (projectConfig.filename,
+                                                    projectConfig.binSize,
+                                                    projectConfig.timeUnit,
+                                                    "fullWidth");
+          projectConfig.plots.push(lc_SRC_plot);
+        }
+
+        this.plots = projectConfig.plots;
+
       } else {
 
         //If fits is an Events fits
@@ -47,7 +50,7 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
     }
 
     //ADDS PLOTS TO PANEL
-    for (i in this.plots) { this.$html.append(this.plots[i].$html); };
+    for (i in this.plots) { this.$body.append(this.plots[i].$html); };
     this.forceResize();
   };
 
@@ -62,7 +65,8 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
   this.onDatasetChanged = function ( projectConfig ) {
 
     // Clears output panel
-    this.$html.html("");
+    this.$body.html("");
+    this.$toolBar.html("");
 
     // Adds plots
     this.initPlots(projectConfig);
@@ -71,18 +75,18 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
     var schema = projectConfig.schema;
 
     if (!isNull(schema["EVENTS"]) && !isNull(schema["EVENTS"]["HEADER"])) {
-      var theInfoPanel = new infoPanel("infoPanel", "EVENTS HEADER:", schema["EVENTS"]["HEADER"], schema["EVENTS"]["HEADER_COMMENTS"]);
-      this.$html.append(theInfoPanel.$html);
+      var theInfoPanel = new infoPanel("infoPanel", "EVENTS HEADER:", schema["EVENTS"]["HEADER"], schema["EVENTS"]["HEADER_COMMENTS"], this.$toolBar);
+      this.$body.append(theInfoPanel.$html);
     } else if (!isNull(schema["RATE"]) && !isNull(schema["RATE"]["HEADER"])) {
-      var theInfoPanel = new infoPanel("infoPanel", "LIGHTCURVE HEADER:", schema["RATE"]["HEADER"], schema["RATE"]["HEADER_COMMENTS"]);
-      this.$html.append(theInfoPanel.$html);
+      var theInfoPanel = new infoPanel("infoPanel", "LIGHTCURVE HEADER:", schema["RATE"]["HEADER"], schema["RATE"]["HEADER_COMMENTS"], this.$toolBar);
+      this.$body.append(theInfoPanel.$html);
     }
   }
 
-  this.onDatasetValuesChanged = function ( filename, filters ) {
+  this.onDatasetValuesChanged = function ( filters ) {
     waitingDialog.show('Retrieving plots data...');
-    log("onDatasetValuesChanged:" + filename + ", filters: " + JSON.stringify(filters) );
-    for (i in this.plots) { this.plots[i].onDatasetValuesChanged( filename, filters ); };
+    log("onDatasetValuesChanged: filters: " + JSON.stringify(filters) );
+    for (i in this.plots) { this.plots[i].onDatasetValuesChanged( filters ); };
   }
 
   this.onPlotReady = function () {
@@ -210,63 +214,29 @@ function OutputPanel (id, classSelector, toolBarSelector, container, service, on
               ];
   }
 
-  this.getLcTablePlots = function ( filename, lcAfilename, lcBfilename, lcCfilename, lcDfilename, binSize, timeUnit ) {
+  this.getLightCurvePlot = function ( filename, binSize, timeUnit, cssClass ) {
 
-    log("getLcTablePlots: theBinSize: " + binSize );
-
-    return [
-              new Plot(
-                  this.id + "_ligthcurve_" + filename,
-                  {
-                    filename: filename,
-                    bck_filename: "",
-                    gti_filename: "",
-                    styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
-                    axis: [ { table: "RATE", column:"TIME" },
-                            { table: "RATE", column:"PI" } ]
-                  },
-                  this.service.request_lightcurve,
-                  this.onFiltersChangedFromPlot,
-                  this.onPlotReady,
-                  this.$toolBar,
-                  "fullWidth"
-                ),
-
-                new Plot(
-                    this.id + "_ab_divided_ligthcurve_" + filename,
-                    {
-                      filename: filename,
-                      lc0_filename: lcAfilename,
-                      lc1_filename: lcBfilename,
-                      styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "A/B Count Rate(c/s)"] },
-                      axis: [ { table: "RATE", column:"TIME" },
-                              { table: "RATE", column:"PI" } ]
-                    },
-                    this.service.request_divided_lightcurve,
-                    this.onFiltersChangedFromPlot,
-                    this.onPlotReady,
-                    this.$toolBar,
-                    ""
-                  ),
-
-                  new Plot(
-                      this.id + "_cd_divided_ligthcurve_" + filename,
+    log("getLightCurvePlot: theBinSize: " + binSize );
+    return new Plot(
+                      this.id + "_ligthcurve_" + filename,
                       {
                         filename: filename,
-                        lc0_filename: lcCfilename,
-                        lc1_filename: lcDfilename,
-                        styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "C/D Count Rate(c/s)"] },
+                        bck_filename: "",
+                        gti_filename: "",
+                        styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
                         axis: [ { table: "RATE", column:"TIME" },
                                 { table: "RATE", column:"PI" } ]
                       },
-                      this.service.request_divided_lightcurve,
+                      this.service.request_lightcurve,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       this.$toolBar,
-                      ""
-                    )
+                      cssClass
+                    );
+  }
 
-              ];
+  this.appendPlot = function (plot) {
+    this.$body.append(plot.$html);
   }
 
   log ("Output panel ready!!");

@@ -65,3 +65,8 @@ class Column:
         self.has_error_values = not (errors is None)
         if self.has_error_values:
             self.error_values.extend(errors)
+
+    def clear(self):
+        self.values = []
+        self.error_values = []
+        self.has_error_values = False;

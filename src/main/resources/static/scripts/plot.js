@@ -17,12 +17,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div style="float:right">' +
                   ' <div class="hoverinfo"></div>' +
-                  ' <button class="btnHidePlot">Hide</button>' +
-                  ' <button class="btnSave">Save</button>' +
+                  ' <button class="btn btnHidePlot">Hide</button>' +
+                  ' <button class="btn btnSave">Save</button>' +
                   '</div>' +
                 '</div>');
 
- this.btnShow = $('<button class="btnShow' + this.id + '">Show</button>');
+ this.btnShow = $('<button class="btn btnShow' + this.id + '">Show</button>');
  this.btnShow.hide();
  toolbar.append(this.btnShow);
 
@@ -45,16 +45,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  });
 
  this.btnSave.click(function( event ) {
-     currentObj.saveAsPNG();
+    currentObj.saveAsPNG();
  });
 
- this.onDatasetValuesChanged = function ( filename, filters ) {
-   if (this.plotConfig.filename == filename) {
-     this.plotConfig.filters = filters
-     if (this.isVisible) {
+ this.onDatasetValuesChanged = function ( filters ) {
+    this.plotConfig.filters = filters
+    if (this.isVisible) {
        this.refreshData();
-     }
-   }
+    }
  };
 
  this.refreshData = function () {

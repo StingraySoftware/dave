@@ -87,7 +87,14 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       log("onLcDatasetChanged " + selectorKey + ": " + filenames[0]);
       currentObj.projectConfig.setFile(selectorKey, filenames[0]);
       if (currentObj.projectConfig.hasSchema()) {
-        currentObj.refreshPlotsData();
+
+        var lcab_Added = currentObj.tryAddDividedLightCurve("LCA", "LCB", "A/B");
+        var lccd_Added = currentObj.tryAddDividedLightCurve("LCC", "LCD", "C/D");
+
+        if (!lcab_Added && ! lccd_Added) {
+          waitingDialog.hide();
+        }
+
       } else {
         waitingDialog.hide();
       }
@@ -100,6 +107,48 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       waitingDialog.hide();
     }
 
+  }
+
+  this.tryAddDividedLightCurve = function (key0, key1, newKeySufix) {
+    var data = {};
+    data.lc0_filename = currentObj.projectConfig.getFile(key0);
+    data.lc1_filename = currentObj.projectConfig.getFile(key1);
+
+    var newKey = "LC_" + newKeySufix;
+
+    if ((data.lc0_filename != "") && (data.lc1_filename != "") && (currentObj.projectConfig.getFile(newKey) == "")){
+      //Prepares newKey dataset and adds the plot to output panel
+      currentObj.service.request_divided_lightcurve_ds(data, function (result) {
+        var cache_key = JSON.parse(result);
+        log("request_divided_lightcurve_ds Result: " + newKey + " --> " + cache_key);
+        if (cache_key != "") {
+
+          currentObj.projectConfig.setFile(newKey, cache_key);
+          lc_plot = currentObj.outputPanel.getLightCurvePlot ( cache_key,
+                                                                  currentObj.projectConfig.binSize,
+                                                                  currentObj.projectConfig.timeUnit,
+                                                                  "");
+          lc_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
+          currentObj.projectConfig.plots.push(lc_plot);
+          currentObj.outputPanel.appendPlot(lc_plot);
+          lc_plot.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
+
+          //After getting A/B or C/D we can calculate the Hardness and Softnes Intensity lcs
+          if (newKeySufix == "A/B") {
+            currentObj.tryAddDividedLightCurve(newKey, "SRC", "SOFTNESS");
+          } else if (newKeySufix == "C/D") {
+            currentObj.tryAddDividedLightCurve(newKey, "SRC", "HARDNESS");
+          }
+
+        } else {
+          log("request_divided_lightcurve_ds WRONG CACHE KEY!!");
+        }
+      });
+
+      return true;
+    }
+
+    return false;
   }
 
   this.onSrcSchemaChanged = function ( schema, params ) {
@@ -129,6 +178,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
         currentObj.projectConfig.setSchema(jsonSchema);
         currentObj.setTitle(currentObj.projectConfig.filename);
+        currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
         currentObj.refreshPlotsData();
 
@@ -183,12 +233,12 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.refreshPlotsData = function () {
     currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
-    currentObj.outputPanel.onDatasetValuesChanged(currentObj.projectConfig.filename, currentObj.toolPanel.getFilters());
+    currentObj.outputPanel.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
   }
 
   this.onFiltersChanged = function (filters) {
-    log("onFiltersChanged:" + currentObj.projectConfig.filename + ", filters: " + JSON.stringify(filters));
-    currentObj.outputPanel.onDatasetValuesChanged(currentObj.projectConfig.filename, filters);
+    log("onFiltersChanged: filters: " + JSON.stringify(filters));
+    currentObj.outputPanel.onDatasetValuesChanged(filters);
   }
 
   this.onFiltersChangedFromPlot = function (filters) {
@@ -203,12 +253,17 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.toolPanel = new ToolPanel (this.id + "_toolPanel",
                                   "ToolPanelTemplate",
                                   this.$html.find(".toolPanelContainer"),
-                                  service,
+                                  this.service,
                                   this.onDatasetChanged,
                                   this.onLcDatasetChanged,
                                   this.onFiltersChanged);
 
-  this.outputPanel = new OutputPanel (this.id + "_outputPanel", "OutputPanelTemplate", ".outputPanelToolBar", this.$html.find(".outputPanelContainer"), service, this.onFiltersChangedFromPlot);
+  this.outputPanel = new OutputPanel (this.id + "_outputPanel",
+                                      "OutputPanelTemplate",
+                                      this.$html.find(".outputPanelContainer"),
+                                      this.service,
+                                      this.onFiltersChangedFromPlot);
+
   $(window).resize(function () { currentObj.outputPanel.resize(); });
 
   this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");

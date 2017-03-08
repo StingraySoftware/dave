@@ -1,5 +1,5 @@
 
-function infoPanel(id, title, header, headerComments) {
+function infoPanel(id, title, header, headerComments, toolbar) {
 
   var currentObj = this;
   this.id = id;
@@ -11,7 +11,8 @@ function infoPanel(id, title, header, headerComments) {
                        "OBS_ID", "OBS_MODE", "EXP_ID"];
 
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
-                 '<button class="btnShowAll">Show All</button>' +
+                 '<button class="btn btnShowAll">Show All</button>' +
+                 '<button class="btn btnHide">Hide</button>' +
                  '<h3>' + title + '</h3>' +
                  '<table class="properties"></table>' +
                '</div>');
@@ -21,6 +22,22 @@ function infoPanel(id, title, header, headerComments) {
   this.btnShowAll.click(function(event){
     currentObj.showAll = !currentObj.showAll;
     currentObj.redraw();
+  });
+
+  this.btnShow = $('<button class="btn btnShow' + this.id + '">Show</button>');
+  this.btnShow.hide();
+  toolbar.append(this.btnShow);
+
+  this.btnHide = this.$html.find(".btnHide");
+
+  this.btnShow.click(function(event){
+     currentObj.$html.show();
+     currentObj.btnShow.hide();
+  });
+
+  this.btnHide.click(function(event){
+     currentObj.$html.hide();
+     currentObj.btnShow.show();
   });
 
   this.getPropertyHtml = function(tag, value, comment) {

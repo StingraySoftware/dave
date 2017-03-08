@@ -76,20 +76,13 @@ function Service (base_url) {
     }
   };
 
-  this.request_divided_lightcurve = function (lc_data, fn) {
-
-    if (lc_data.lc0_filename == "" || lc_data.lc1_filename == "") {
-        log("request_divided_lightcurve call avoided, plotdata: " + JSON.stringify(lc_data));
-        fn (null);
-        return;
-    }
-
-    log("request_divided_lightcurve plot " + JSON.stringify(lc_data));
+  this.request_divided_lightcurve_ds = function (data, fn) {
+    log("request_divided_lightcurve_ds: " + JSON.stringify(data));
     try {
       $.ajax({
          type : "POST",
-         url : thisService.base_url + "/get_divided_lightcurve",
-         data: JSON.stringify(lc_data, null, '\t'),
+         url : thisService.base_url + "/get_divided_lightcurve_ds",
+         data: JSON.stringify(data, null, '\t'),
          contentType: 'application/json;charset=UTF-8',
          success: fn,
          error: fn

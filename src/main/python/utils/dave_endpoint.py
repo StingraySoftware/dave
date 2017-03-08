@@ -176,7 +176,7 @@ def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filt
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_divided_lightcurve(lc0_filename, lc1_filename, target, filters, axis, dt):
+def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -185,14 +185,27 @@ def get_divided_lightcurve(lc0_filename, lc1_filename, target, filters, axis, dt
     if not lc1_destination:
         return common_error("Invalid file or cache key for lc1 data")
 
-    logging.debug("get_divided_lightcurve lc0: %s" % lc0_filename)
-    logging.debug("get_divided_lightcurve lc1: %s" % lc1_filename)
-    logging.debug("get_divided_lightcurve: filters %s" % filters)
-    logging.debug("get_divided_lightcurve: axis %s" % axis)
-    logging.debug("get_divided_lightcurve: dt %f" % dt)
+    logging.debug("get_divided_lightcurve_ds lc0: %s" % lc0_filename)
+    logging.debug("get_divided_lightcurve_ds lc1: %s" % lc1_filename)
 
-    data = DaveEngine.get_divided_lightcurve(lc0_destination, lc1_destination, filters, axis, dt)
+    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination)
 
-    logging.debug("get_divided_lightcurve: Finish!")
+    logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
 
-    return json.dumps(data, cls=NPEncoder)
+    return json.dumps(cache_key, cls=NPEncoder)
+
+
+def get_lightcurve_ds_from_events_ds(filename, target, axis, dt):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
+
+    logging.debug("get_lightcurve_ds_from_events_ds filename: %s" % filename)
+    logging.debug("get_lightcurve_ds_from_events_ds: axis %s" % axis)
+    logging.debug("get_lightcurve_ds_from_events_ds: dt %f" % dt)
+
+    cache_key = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, dt)
+
+    logging.debug("get_lightcurve_ds_from_events_ds: Finish! cache_key ->  %s" % cache_key)
+
+    return json.dumps(cache_key, cls=NPEncoder)
