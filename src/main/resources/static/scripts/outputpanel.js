@@ -26,7 +26,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
           var lc_SRC_plot = this.getLightCurvePlot (projectConfig.filename,
                                                     projectConfig.binSize,
                                                     projectConfig.timeUnit,
-                                                    "fullWidth");
+                                                    "fullWidth", false);
           projectConfig.plots.push(lc_SRC_plot);
         }
 
@@ -214,7 +214,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
               ];
   }
 
-  this.getLightCurvePlot = function ( filename, binSize, timeUnit, cssClass ) {
+  this.getLightCurvePlot = function ( filename, binSize, timeUnit, cssClass, switchable ) {
 
     log("getLightCurvePlot: theBinSize: " + binSize );
     return new Plot(
@@ -231,7 +231,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       this.$toolBar,
-                      cssClass
+                      cssClass,
+                      switchable
                     );
   }
 

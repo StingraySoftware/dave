@@ -127,7 +127,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
           lc_plot = currentObj.outputPanel.getLightCurvePlot ( cache_key,
                                                                   currentObj.projectConfig.binSize,
                                                                   currentObj.projectConfig.timeUnit,
-                                                                  "");
+                                                                  "", newKeySufix == "HARDNESS");
           lc_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
           currentObj.projectConfig.plots.push(lc_plot);
           currentObj.outputPanel.appendPlot(lc_plot);
