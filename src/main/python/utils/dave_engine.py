@@ -359,6 +359,75 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
     return result
 
 
+# get_joined_lightcurves: Returns the joined data of LC0 and LC1
+#
+# @param: lc0_destination: lightcurve 0 file destination
+# @param: lc1_destination: lightcurve 1 file destination
+# @param: filters: array with the filters to apply
+#         [{ table = "fits_table", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "fits_table", column = "TIME" },
+#            { table = "fits_table", column = "PI" } ]
+# @param: dt: The time resolution of the events.
+#
+def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
+
+    time_vals = []
+    count_rate_0 = []
+    count_rate_1 = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        lc0_ds = get_filtered_dataset(lc0_destination, filters)
+        if not DsHelper.is_lightcurve_dataset(lc0_ds):
+            logging.warn("Wrong dataset type for lc0")
+            return None
+
+        lc1_ds = get_filtered_dataset(lc1_destination, filters)
+        if not DsHelper.is_lightcurve_dataset(lc1_ds):
+            logging.warn("Wrong dataset type for lc1")
+            return None
+
+        #  Problaby here we can use a stronger checking
+        if len(lc0_ds.tables["RATE"].columns["TIME"].values) == len(lc1_ds.tables["RATE"].columns["TIME"].values):
+
+            time_vals = lc0_ds.tables["RATE"].columns["TIME"].values
+            count_rate_0 = lc0_ds.tables["RATE"].columns["RATE"].values
+            count_rate_1 = lc1_ds.tables["RATE"].columns["RATE"].values
+
+        else:
+            logging.warn("Lightcurves have different durations.")
+            return None
+
+    except:
+        logging.error(str(sys.exc_info()))
+
+    # Preapares the result
+    logging.debug("Result joined lightcurves ....")
+    result = []
+
+    column_lc0 = dict()
+    column_lc0["values"] = count_rate_0
+    result.append(column_lc0)
+
+    column_lc1 = dict()
+    column_lc1["values"] = count_rate_1
+    result.append(column_lc1)
+
+    column_time = dict()
+    column_time["values"] = time_vals
+    result.append(column_time)
+
+    return result
+
+
 # get_divided_lightcurve_ds: Returns the data for the LC0 divided by LC1
 #
 # @param: lc0_destination: lightcurve 0 file destination

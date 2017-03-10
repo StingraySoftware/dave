@@ -71,11 +71,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.refreshData = function () {
    this.setReadyState(false);
 
-   if ((this.plotConfig.styles.type == "ligthcurve") ||
-      (this.plotConfig.styles.type == "colors_ligthcurve")){
-        var tab = getTabForSelector(this.id);
-        this.plotConfig.dt = tab.projectConfig.binSize;
-   }
+   var tab = getTabForSelector(this.id);
+   this.plotConfig.dt = tab.projectConfig.binSize;
 
    this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
  }
@@ -114,6 +111,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
+                                        currentObj.plotConfig.styles.labels[coords.x],
+                                        currentObj.plotConfig.styles.labels[coords.y],
+                                        'Amplitude<br>Map');
+   } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
+      plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values,
                                         data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],

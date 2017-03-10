@@ -127,7 +127,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
           lc_plot = currentObj.outputPanel.getLightCurvePlot ( cache_key,
                                                                   currentObj.projectConfig.binSize,
                                                                   currentObj.projectConfig.timeUnit,
-                                                                  "", newKeySufix == "HARDNESS");
+                                                                  "", false);
           lc_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
           currentObj.projectConfig.plots.push(lc_plot);
           currentObj.outputPanel.appendPlot(lc_plot);
@@ -135,9 +135,31 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
           //After getting A/B or C/D we can calculate the Hardness and Softnes Intensity lcs
           if (newKeySufix == "A/B") {
-            currentObj.tryAddDividedLightCurve(newKey, "SRC", "SOFTNESS");
+
+            lc_src_filename = currentObj.projectConfig.getFile("SRC");
+            lc_softness_plot = currentObj.outputPanel.getJoinedLightCurvesPlot ( lc_src_filename,
+                                                                        cache_key,
+                                                                        currentObj.projectConfig.binSize,
+                                                                        currentObj.projectConfig.timeUnit,
+                                                                        "", false);
+            lc_softness_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
+            currentObj.projectConfig.plots.push(lc_softness_plot);
+            currentObj.outputPanel.appendPlot(lc_softness_plot);
+            lc_softness_plot.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
+
           } else if (newKeySufix == "C/D") {
-            currentObj.tryAddDividedLightCurve(newKey, "SRC", "HARDNESS");
+
+            lc_src_filename = currentObj.projectConfig.getFile("SRC");
+            lc_hardness_plot = currentObj.outputPanel.getJoinedLightCurvesPlot ( lc_src_filename,
+                                                                        cache_key,
+                                                                        currentObj.projectConfig.binSize,
+                                                                        currentObj.projectConfig.timeUnit,
+                                                                        "", true);
+            lc_hardness_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
+            currentObj.projectConfig.plots.push(lc_hardness_plot);
+            currentObj.outputPanel.appendPlot(lc_hardness_plot);
+            lc_hardness_plot.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
+
           }
 
         } else {

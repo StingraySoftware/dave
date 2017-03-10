@@ -89,7 +89,38 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
         }
 }
 
-function get_plotdiv_scatter(x_values, y_values, color_array, x_label, y_label, color_label) {
+function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) {
+
+  return {
+      data: [
+              {
+                type : 'scatter',
+                x : x_values,
+                y : y_values,
+                mode : "markers",
+                marker : {
+                      size : 6,
+                      opacity : 0.8
+                    }
+              }
+            ],
+      layout : {
+                 title : '',
+                 hovermode: 'closest',
+                 xaxis : {
+                           title : x_label,
+                           titlefont : DEFAULT_TITLE_FONT
+                         },
+                 yaxis: {
+                           title : y_label,
+                           titlefont : DEFAULT_TITLE_FONT
+                       },
+                 margin: DEFAULT_MARGINS
+              }
+      }
+}
+
+function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label) {
 
   return {
       data: [

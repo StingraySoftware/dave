@@ -76,6 +76,22 @@ function Service (base_url) {
     }
   };
 
+  this.request_joined_lightcurves = function (lc_data, fn) {
+    log("request_joined_lightcurves plot " + JSON.stringify(lc_data));
+    try {
+      $.ajax({
+         type : "POST",
+         url : thisService.base_url + "/get_joined_lightcurves",
+         data: JSON.stringify(lc_data, null, '\t'),
+         contentType: 'application/json;charset=UTF-8',
+         success: fn,
+         error: fn
+      });
+    } catch (e) {
+      fn({ "error" : e });
+    }
+  };
+
   this.request_divided_lightcurve_ds = function (data, fn) {
     log("request_divided_lightcurve_ds: " + JSON.stringify(data));
     try {

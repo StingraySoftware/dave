@@ -24,7 +24,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
         //If fits is a Lightcurve
         if (projectConfig.plots.length == 0) {
           var lc_SRC_plot = this.getLightCurvePlot (projectConfig.filename,
-                                                    projectConfig.binSize,
                                                     projectConfig.timeUnit,
                                                     "fullWidth", false);
           projectConfig.plots.push(lc_SRC_plot);
@@ -38,7 +37,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
         this.plots = this.getFitsTablePlots(projectConfig.filename,
                                             projectConfig.bckFilename,
                                             projectConfig.gtiFilename,
-                                            projectConfig.binSize,
                                             projectConfig.timeUnit);
       }
 
@@ -160,7 +158,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                   this.id + "_Time_Frecuency_" + filename,
                   {
                     filename: filename,
-                    styles: { type: "scatter", labels: ["Time (" + timeUnit  + ")", "Frequency"] },
+                    styles: { type: "scatter_colored", labels: ["Time (" + timeUnit  + ")", "Frequency"] },
                     axis: [ { table:"txt_table", column:"Time" } ,
                             { table:"txt_table", column:"Rate" } ]
                   },
@@ -172,9 +170,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
               ];
   }
 
-  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, binSize, timeUnit ) {
+  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, timeUnit ) {
 
-    log("getFitsTablePlots: theBinSize: " + binSize );
+    log("getFitsTablePlots: filename: " + filename );
 
     return [
                 new Plot(
@@ -214,9 +212,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
               ];
   }
 
-  this.getLightCurvePlot = function ( filename, binSize, timeUnit, cssClass, switchable ) {
+  this.getLightCurvePlot = function ( filename, timeUnit, cssClass, switchable ) {
 
-    log("getLightCurvePlot: theBinSize: " + binSize );
+    log("getLightCurvePlot: filename: " + filename );
     return new Plot(
                       this.id + "_ligthcurve_" + filename,
                       {
@@ -228,6 +226,27 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 { table: "RATE", column:"PI" } ]
                       },
                       this.service.request_lightcurve,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      this.$toolBar,
+                      cssClass,
+                      switchable
+                    );
+  }
+
+  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, timeUnit, cssClass, switchable ) {
+
+    log("getJoinedLightCurvesPlot: lc0_filename: " + lc0_filename + ", lc0_filename: " + lc1_filename);
+    return new Plot(
+                      this.id + "_ligthcurve_" + lc0_filename + "_" + lc1_filename,
+                      {
+                        lc0_filename: lc0_filename,
+                        lc1_filename: lc1_filename,
+                        styles: { type: "scatter", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
+                        axis: [ { table: "RATE", column:"TIME" },
+                                { table: "RATE", column:"PI" } ]
+                      },
+                      this.service.request_joined_lightcurves,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       this.$toolBar,
