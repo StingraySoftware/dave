@@ -62,7 +62,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.onDatasetValuesChanged = function ( filters ) {
-    this.plotConfig.filters = filters
+    this.applyValidFilters(filters);
+
     if (this.isVisible) {
        this.refreshData();
     }
@@ -114,17 +115,20 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map');
+
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values,
                                         data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map');
+
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
      plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                   [], [],
                                   currentObj.plotConfig.styles.labels[coords.x],
                                   currentObj.plotConfig.styles.labels[coords.y]);
+
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[coords.x].values, data[coords.y].values, data[2].values,
                                    [], [], [],
@@ -246,6 +250,36 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      });
    }
 
+ }
+
+ this.applyValidFilters = function (filters) {
+   if (!isNull(this.plotConfig.mandatoryFilters)) {
+
+     //Sets only valid filters: Valid filters is a filter without source, or
+     //filter specified on mandatoryFilters
+     validFilters = [];
+     for (f in filters) {
+       var filter = filters[f];
+       if (filter != null) {
+         if (!isNull(filter.source)) {
+           for (mf in this.plotConfig.mandatoryFilters) {
+             var mfilter = this.plotConfig.mandatoryFilters[mf];
+             if (filter.source == mfilter.source
+                  && filter.table == mfilter.table
+                  && filter.column == mfilter.column) {
+                    validFilters.push(filter);
+                  }
+           }
+         } else if (isNull(filter.source)) {
+           validFilters.push(filter);
+         }
+       }
+     }
+
+     this.plotConfig.filters = validFilters;
+   } else {
+     this.plotConfig.filters = filters;
+   }
  }
 
  log ("new plot id: " + this.id);

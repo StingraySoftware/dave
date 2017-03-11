@@ -184,24 +184,22 @@ function ToolPanel (id,
   }
 
   this.applyFilters = function (filters) {
-    sliderSelectors_applyFilters(filters, this.selectors_array);
+    sliderSelectors_applyFilters(filters, currentObj.selectors_array);
   }
 
-  this.getFilters = function (filters) {
-    return sliderSelectors_getFilters(null, this.selectors_array);
+  this.getFilters = function () {
+    return sliderSelectors_getFilters(null, currentObj.selectors_array);
   }
 
   this.onSelectorValuesChanged = function (source) {
-
-    waitingTab = getTabForSelector(currentObj.id);
 
     if (currentObj.lastTimeoutId != null) {
       clearTimeout(currentObj.lastTimeoutId);
     }
 
     currentObj.lastTimeoutId = setTimeout( function () {
-      var filters = sliderSelectors_getFilters(source, waitingTab.toolPanel.selectors_array)
-      waitingTab.onFiltersChanged(filters);
+      var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
+      getTabForSelector(currentObj.id).onFiltersChanged(filters);
     }, 850);
   }
 

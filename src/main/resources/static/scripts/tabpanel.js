@@ -1,5 +1,4 @@
 var tabPanels = [];
-var waitingTab = null;
 
 function addTabPanel(navBarList, panelContainer){
   tab = new TabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer);
@@ -88,8 +87,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       currentObj.projectConfig.setFile(selectorKey, filenames[0]);
       if (currentObj.projectConfig.hasSchema()) {
 
-        var lcab_Added = currentObj.tryAddDividedLightCurve("LCA", "LCB", "A/B");
-        var lccd_Added = currentObj.tryAddDividedLightCurve("LCC", "LCD", "C/D");
+        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCA", "LCB", "A/B", currentObj.projectConfig);
+        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCC", "LCD", "C/D", currentObj.projectConfig);
 
         if (!lcab_Added && ! lccd_Added) {
           waitingDialog.hide();
@@ -107,70 +106,6 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       waitingDialog.hide();
     }
 
-  }
-
-  this.tryAddDividedLightCurve = function (key0, key1, newKeySufix) {
-    var data = {};
-    data.lc0_filename = currentObj.projectConfig.getFile(key0);
-    data.lc1_filename = currentObj.projectConfig.getFile(key1);
-
-    var newKey = "LC_" + newKeySufix;
-
-    if ((data.lc0_filename != "") && (data.lc1_filename != "") && (currentObj.projectConfig.getFile(newKey) == "")){
-      //Prepares newKey dataset and adds the plot to output panel
-      currentObj.service.request_divided_lightcurve_ds(data, function (result) {
-        var cache_key = JSON.parse(result);
-        log("request_divided_lightcurve_ds Result: " + newKey + " --> " + cache_key);
-        if (cache_key != "") {
-
-          currentObj.projectConfig.setFile(newKey, cache_key);
-          lc_plot = currentObj.outputPanel.getLightCurvePlot ( cache_key,
-                                                                  currentObj.projectConfig.binSize,
-                                                                  currentObj.projectConfig.timeUnit,
-                                                                  "", false);
-          lc_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
-          currentObj.projectConfig.plots.push(lc_plot);
-          currentObj.outputPanel.appendPlot(lc_plot);
-          lc_plot.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
-
-          //After getting A/B or C/D we can calculate the Hardness and Softnes Intensity lcs
-          if (newKeySufix == "A/B") {
-
-            lc_src_filename = currentObj.projectConfig.getFile("SRC");
-            lc_softness_plot = currentObj.outputPanel.getJoinedLightCurvesPlot ( lc_src_filename,
-                                                                        cache_key,
-                                                                        currentObj.projectConfig.binSize,
-                                                                        currentObj.projectConfig.timeUnit,
-                                                                        "", false);
-            lc_softness_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
-            currentObj.projectConfig.plots.push(lc_softness_plot);
-            currentObj.outputPanel.appendPlot(lc_softness_plot);
-            lc_softness_plot.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
-
-          } else if (newKeySufix == "C/D") {
-
-            lc_src_filename = currentObj.projectConfig.getFile("SRC");
-            lc_hardness_plot = currentObj.outputPanel.getJoinedLightCurvesPlot ( lc_src_filename,
-                                                                        cache_key,
-                                                                        currentObj.projectConfig.binSize,
-                                                                        currentObj.projectConfig.timeUnit,
-                                                                        "", true);
-            lc_hardness_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
-            currentObj.projectConfig.plots.push(lc_hardness_plot);
-            currentObj.outputPanel.appendPlot(lc_hardness_plot);
-            lc_hardness_plot.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
-
-          }
-
-        } else {
-          log("request_divided_lightcurve_ds WRONG CACHE KEY!!");
-        }
-      });
-
-      return true;
-    }
-
-    return false;
   }
 
   this.onSrcSchemaChanged = function ( schema, params ) {
@@ -255,7 +190,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.refreshPlotsData = function () {
     currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
-    currentObj.outputPanel.onDatasetValuesChanged(currentObj.toolPanel.getFilters());
+    currentObj.outputPanel.onDatasetValuesChanged();
   }
 
   this.onFiltersChanged = function (filters) {
@@ -284,7 +219,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                       "OutputPanelTemplate",
                                       this.$html.find(".outputPanelContainer"),
                                       this.service,
-                                      this.onFiltersChangedFromPlot);
+                                      this.onFiltersChangedFromPlot,
+                                      this.toolPanel.getFilters );
 
   $(window).resize(function () { currentObj.outputPanel.resize(); });
 
@@ -300,7 +236,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     currentObj.show();
   });
 
-  navBarList.prepend(this.$navItem);
+  this.$navItem.insertBefore(".addTabPanelLi");
   panelContainer.append(this.$html);
   this.show();
 

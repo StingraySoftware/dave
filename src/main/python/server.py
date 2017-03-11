@@ -79,6 +79,13 @@ def get_joined_lightcurves():
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
+@app.route('/get_joined_lightcurves_from_colors', methods=['POST'])
+def get_joined_lightcurves_from_colors():
+    return DaveEndpoint.get_joined_lightcurves_from_colors(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
+
+
 @app.route('/get_divided_lightcurve_ds', methods=['POST'])
 def get_divided_lightcurve_ds():
     return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],

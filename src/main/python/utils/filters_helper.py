@@ -1,12 +1,14 @@
 import math
 import copy
 
-def createFilter(table, column, from_val, to_val):
+def createFilter(table, column, from_val, to_val, source=None):
     filter = dict()
     filter["table"] = table
     filter["column"] = column
     filter["from"] = from_val
     filter["to"] = to_val
+    if source:
+        filter["source"] = source
     return filter
 
 
@@ -55,3 +57,14 @@ def get_filters_from_color_filters(filters, color_column_name, column_name):
             ret_filters.append(new_filter)
 
     return ret_filters
+
+
+# Returns the color keys from a given filters
+def get_color_keys_from_filters(filters):
+    ret_keys = []
+    for filter in filters:
+        if "source" in filter:
+            # This filter is a color filter
+            ret_keys.append(filter["column"])
+
+    return ret_keys
