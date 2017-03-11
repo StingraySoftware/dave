@@ -151,7 +151,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                             ["SRC Count Rate", "C/D Count Rate(c/s)"],
                                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_C" },
                                                               { source: "ColorSelector", table:"EVENTS", column:"Color_D" } ],
-                                                            "", false )
+                                                            "", true )
 
               ];
   }
@@ -178,7 +178,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, labels, sources, cssClass, switchable ) {
+  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, labels, cssClass, switchable ) {
 
     log("getJoinedLightCurvesPlot: lc0_filename: " + lc0_filename + ", lc0_filename: " + lc1_filename);
     return new Plot(
