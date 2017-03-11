@@ -50,8 +50,8 @@ def get_destination(filename, target):
             logging.error("Invalid file or not found in cache filename %s" % filename)
             return None
         else:
-            destination = filename  # Filename represents only a joined dataset key, not real file
-
+            destination = filename # Filename represents only a joined dataset key, not a real file
+            
     return destination
 
 
