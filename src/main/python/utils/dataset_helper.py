@@ -200,9 +200,14 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, g
 
         if is_valid_gti:
             start_event_idx = find_idx_nearest_val(ev_list, start)
-            end_event_idx = find_idx_nearest_val(ev_list, end)
+            if (ev_list[start_event_idx] < start and start_event_idx < len(ev_list) - 1):
+                start_event_idx = start_event_idx + 1
 
-            if end_event_idx > start_event_idx:
+            end_event_idx = find_idx_nearest_val(ev_list, end)
+            if (ev_list[end_event_idx] > end and end_event_idx > 0):
+                end_event_idx = end_event_idx - 1
+
+            if end_event_idx >= start_event_idx:
                 # The GTI has ended, so lets insert it on dataset
 
                 gti_table.columns["START"].add_value(start)
@@ -218,4 +223,4 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, g
                     hdu_table.columns[ad_column].add_values(values)
 
             else:
-                logging.warn("Wrong indexes for %s" % gti_index)
+                logging.info("No data point in GTI # %s: GTI (from, to)=(%f, %f); event list (from, to)=(%d, %d)" % (gti_index, start, end, start_event_idx, end_event_idx))
