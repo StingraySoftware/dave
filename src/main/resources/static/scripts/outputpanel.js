@@ -142,7 +142,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                             ["SRC Count Rate", "A/B Count Rate(c/s)"],
                                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
                                                               { source: "ColorSelector", table:"EVENTS", column:"Color_B" } ],
-                                                            "", false ),
+                                                            "", true ),
 
                   this.getJoinedLightCurvesFromColorsPlot ( filename,
                                                             bck_filename,
@@ -256,7 +256,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             lc_softness_plot = currentObj.getJoinedLightCurvesPlot ( lc_src_filename,
                                                                       cache_key,
                                                                       ["SRC Count Rate(c/s)", newKeySufix + " Count Rate(c/s)"],
-                                                                      "", false);
+                                                                      "", true);
             projectConfig.plots.push(lc_softness_plot);
             currentObj.appendPlot(lc_softness_plot);
 
