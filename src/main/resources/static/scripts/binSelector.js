@@ -1,7 +1,5 @@
 
-var theBinSelector = null;
-
-function binSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn) {
+function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn) {
 
   var currentObj = this;
   this.id = id;
@@ -14,8 +12,6 @@ function binSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   this.value = initValue;
   this.step = step;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
-
-  theBinSelector = this;
 
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
                   '<h3>' + title + '</h3>' +
@@ -44,8 +40,9 @@ function binSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
          step: this.step,
          slide: function( event, ui ) {
            var sliderId = event.target.id.replace("slider-", "");
-           theBinSelector.setValues( ui.values[ 0 ], "slider");
-           theBinSelector.onSelectorValuesChanged();
+           var tab = getTabForSelector(sliderId);
+           tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
+           tab.toolPanel.binSelector.onSelectorValuesChanged();
          }
      });
 
@@ -57,9 +54,11 @@ function binSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
        this.slider.slider('values', 0, this.value);
      }
 
-     theBinSize = this.value;
-
-     log("New BinSize set: " + theBinSize);
+     var tab = getTabForSelector(this.id);
+     if (!isNull(tab)) {
+       tab.projectConfig.binSize = this.value;
+       log("New BinSize set: " + tab.projectConfig.binSize);
+     }
    }
 
    //Init from-to values

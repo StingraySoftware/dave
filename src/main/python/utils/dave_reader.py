@@ -8,8 +8,10 @@ import numpy as np
 from astropy.io import fits
 from stingray.io import load_events_and_gtis
 from stingray.gti import _get_gti_from_extension
+from utils.stingray_addons import lcurve_from_fits
 import utils.dataset_cache as DsCache
 
+gtistring='GTI,STDGTI,STDGTI04'
 
 def get_file_dataset(destination):
 
@@ -46,9 +48,23 @@ def get_file_dataset(destination):
         # dataset = get_fits_dataset(destination, ds_id, table_ids)
         # return dataset
 
-        dataset = get_fits_dataset_with_stingray(destination, dsId='FITS',
-                                           hduname='EVENTS', column='TIME',
-                                           gtistring='GTI,STDGTI,STDGTI04')
+        # Opening Fits
+        hdulist = fits.open(destination)
+
+        if 'EVENTS' in hdulist:
+            # If EVENTS extension found, consider the Fits as EVENTS Fits
+            dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
+                                               hduname='EVENTS', column='TIME',
+                                               gtistring=gtistring)
+
+        elif 'RATE' in hdulist:
+            # If RATE extension found, consider the Fits as LIGHTCURVE Fits
+            dataset = get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
+                                                        column='TIME', gtistring=gtistring)
+
+        else:
+            # If not EVENTS or RATE extension found, consider the Fits as GTI Fits
+            dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring)
 
         if dataset:
             DsCache.add(destination, dataset)
@@ -116,20 +132,12 @@ def get_fits_table_column_names(hdulist, table_id):
 
 # Returns a dataset containin HDU table and GTI table
 # with the Fits data using Stingray library
-def get_fits_dataset_with_stingray(destination, dsId='FITS',
+def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                    hduname='EVENTS', column='TIME',
                                    gtistring='GTI,STDGTI'):
 
-    # Opening Fits
-    hdulist = fits.open(destination)
-
-    if hduname not in hdulist:
-        # If not EVENTS extension found, consider the Fits as GTI Fits
-        st_gtis = _get_gti_from_extension(hdulist, gtistring)
-        return DataSet.get_gti_dataset_from_stingray_gti(st_gtis)
-
     # Gets columns from fits hdu table
-    logging.debug("Reading Fits columns")
+    logging.debug("Reading Events Fits columns")
     columns = get_fits_table_column_names(hdulist, hduname)
 
     # Gets FITS header properties
@@ -154,7 +162,7 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
             additional_columns.append(columns[i])
 
     # Reads fits data
-    logging.debug("Reading Fits columns's data")
+    logging.debug("Reading Events Fits columns's data")
     fits_data = load_events_and_gtis(destination, additional_columns=additional_columns,
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
@@ -162,13 +170,53 @@ def get_fits_dataset_with_stingray(destination, dsId='FITS',
     gti_start = fits_data.gti_list[:, 0] - events_start_time
     gti_end = fits_data.gti_list[:, 1] - events_start_time
 
-    logging.debug("Read fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
+    logging.debug("Read Events fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
 
     event_values = fits_data.ev_list - events_start_time
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments, fits_data.additional_data, event_values,
                                                 gti_start, gti_end, None, None, hduname, column)
 
-    logging.debug("Read fits with stingray file successfully: %s" % destination)
+    logging.debug("Read Events fits with stingray file successfully: %s" % destination)
+
+    return dataset
+
+
+# Returns a dataset containing GTI table using Stingray library
+def get_gti_fits_dataset_with_stingray(hdulist, gtistring='GTI,STDGTI'):
+    st_gtis = _get_gti_from_extension(hdulist, gtistring)
+    return DataSet.get_gti_dataset_from_stingray_gti(st_gtis)
+
+
+# Returns a dataset containin LIGHTCURVE table and GTI table
+# with the Fits data using Stingray library
+def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
+                                            column='TIME', gtistring='GTI,STDGTI'):
+
+    #Check if HDUCLAS1 = LIGHTCURVE column exists
+    logging.debug("Reading Lightcurve Fits columns")
+    if "HDUCLAS1" not in hdulist[hduname].header:
+        logging.warn("HDUCLAS1 not found in header: " + hduname)
+        return None
+
+    if hdulist[hduname].header["HDUCLAS1"] != "LIGHTCURVE":
+        logging.warn("HDUCLAS1 is not LIGHTCURVE")
+        return None
+
+    # Gets FITS header properties
+    header = dict()
+    header_comments = dict()
+    for header_column in hdulist[hduname].header:
+        header[header_column] = str(hdulist[hduname].header[header_column])
+        header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
+
+    lcurve = lcurve_from_fits(destination, gtistring=gtistring,
+                             timecolumn=column, ratecolumn=None, ratehdu=1,
+                             fracexp_limit=0.9)
+
+    dataset = DataSet.get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments,
+                                                                    hduname, column)
+
+    logging.debug("Read Lightcurve fits with stingray file successfully: %s" % destination)
 
     return dataset

@@ -1,7 +1,8 @@
 
-function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass) {
+function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable) {
 
   var currentObj = this;
+
   this.id = id;
   this.plotId = "plot_" + id;
   this.plotConfig = plotConfig;
@@ -10,23 +11,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.onPlotReady = onPlotReadyFn;
   this.isVisible = true;
   this.isReady = true;
+  this.isSwitched = false;
   this.cssClass = (cssClass != undefined) ? cssClass : "";
+  this.switchable = (switchable != undefined) ? switchable : false;
 
   this.$html = $('<div class="plotContainer ' + this.id + ' ' + this.cssClass + '">' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div style="float:right">' +
                   ' <div class="hoverinfo"></div>' +
-                  ' <button class="btnHidePlot">Hide</button>' +
-                  ' <button class="btnSave">Save</button>' +
+                  ' <button class="btn btnHidePlot">Hide</button>' +
+                  ' <button class="btn btnSave">Save</button>' +
+                  ' <button class="btn btnSwitch">Switch</button>' +
                   '</div>' +
                 '</div>');
 
- this.btnShow = $('<button class="btnShow' + this.id + '">Show</button>');
+ this.btnShow = $('<button class="btn btnShow' + this.id + '">Show</button>');
  this.btnShow.hide();
  toolbar.append(this.btnShow);
 
  this.btnHide = this.$html.find(".btnHidePlot");
  this.btnSave = this.$html.find(".btnSave");
+ this.btnSwitch = this.$html.find(".btnSwitch");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
 
@@ -44,25 +49,31 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  });
 
  this.btnSave.click(function( event ) {
-     currentObj.saveAsPNG();
+    currentObj.saveAsPNG();
  });
 
- this.onDatasetValuesChanged = function ( filename, filters ) {
-   if (this.plotConfig.filename == filename) {
-     this.plotConfig.filters = filters
-     if (this.isVisible) {
+ if (switchable) {
+   this.btnSwitch.click(function(event){
+      currentObj.isSwitched = !currentObj.isSwitched;
+      currentObj.refreshData();
+   });
+ } else {
+   this.btnSwitch.hide();
+ }
+
+ this.onDatasetValuesChanged = function ( filters ) {
+    this.applyValidFilters(filters);
+
+    if (this.isVisible) {
        this.refreshData();
-     }
-   }
+    }
  };
 
  this.refreshData = function () {
    this.setReadyState(false);
 
-   if ((this.plotConfig.styles.type == "ligthcurve") ||
-      (this.plotConfig.styles.type == "colors_ligthcurve")){
-     this.plotConfig.dt = theBinSize;
-   }
+   var tab = getTabForSelector(this.id);
+   this.plotConfig.dt = tab.projectConfig.binSize;
 
    this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
  }
@@ -81,35 +92,48 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      return;
    }
 
+   var coords = { x: 0, y: 1};
+   if (currentObj.isSwitched){
+     coords = { x: 1, y: 0};
+   }
+
    if (currentObj.plotConfig.styles.type == "2d") {
-      plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,
-                                    data[0].error_values, data[1].error_values,
-                                    currentObj.plotConfig.styles.labels[0],
-                                    currentObj.plotConfig.styles.labels[1])
+      plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
+                                    data[coords.x].error_values, data[coords.y].error_values,
+                                    currentObj.plotConfig.styles.labels[coords.x],
+                                    currentObj.plotConfig.styles.labels[coords.y])
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
-      plotlyConfig = get_plotdiv_xyz(data[0].values, data[1].values, data[2].values,
-                                    data[0].error_values, data[1].error_values, data[2].error_values,
-                                    currentObj.plotConfig.styles.labels[0],
-                                    currentObj.plotConfig.styles.labels[1],
+      plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
+                                    data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
+                                    currentObj.plotConfig.styles.labels[coords.x],
+                                    currentObj.plotConfig.styles.labels[coords.y],
                                     data[3].values);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
-      plotlyConfig = get_plotdiv_scatter(data[0].values, data[1].values,
-                                        data[2].values,
-                                        currentObj.plotConfig.styles.labels[0],
-                                        currentObj.plotConfig.styles.labels[1],
+      plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
+                                        currentObj.plotConfig.styles.labels[coords.x],
+                                        currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map');
+
+   } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
+      plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values,
+                                        data[2].values,
+                                        currentObj.plotConfig.styles.labels[coords.x],
+                                        currentObj.plotConfig.styles.labels[coords.y],
+                                        'Amplitude<br>Map');
+
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-      plotlyConfig = get_plotdiv_xy(data[0].values, data[1].values,
-                                   [], [],
-                                   currentObj.plotConfig.styles.labels[0],
-                                   currentObj.plotConfig.styles.labels[1]);
+     plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
+                                  [], [],
+                                  currentObj.plotConfig.styles.labels[coords.x],
+                                  currentObj.plotConfig.styles.labels[coords.y]);
+
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
-      plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
+      plotlyConfig = get_plotdiv_xyy(data[coords.x].values, data[coords.y].values, data[2].values,
                                    [], [], [],
-                                   currentObj.plotConfig.styles.labels[0],
-                                   currentObj.plotConfig.styles.labels[1],
+                                   currentObj.plotConfig.styles.labels[coords.x],
+                                   currentObj.plotConfig.styles.labels[coords.y],
                                    currentObj.plotConfig.styles.labels[2]);
    }
 
@@ -131,7 +155,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setReadyState = function (isReady) {
    this.isReady = isReady;
-   log("setReadyState plot " + this.id + " -> " + isReady);
  }
 
  this.resize = function () {
@@ -227,6 +250,36 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      });
    }
 
+ }
+
+ this.applyValidFilters = function (filters) {
+   if (!isNull(this.plotConfig.mandatoryFilters)) {
+
+     //Sets only valid filters: Valid filters is a filter without source, or
+     //filter specified on mandatoryFilters
+     validFilters = [];
+     for (f in filters) {
+       var filter = filters[f];
+       if (filter != null) {
+         if (!isNull(filter.source)) {
+           for (mf in this.plotConfig.mandatoryFilters) {
+             var mfilter = this.plotConfig.mandatoryFilters[mf];
+             if (filter.source == mfilter.source
+                  && filter.table == mfilter.table
+                  && filter.column == mfilter.column) {
+                    validFilters.push(filter);
+                  }
+           }
+         } else if (isNull(filter.source)) {
+           validFilters.push(filter);
+         }
+       }
+     }
+
+     this.plotConfig.filters = validFilters;
+   } else {
+     this.plotConfig.filters = filters;
+   }
  }
 
  log ("new plot id: " + this.id);

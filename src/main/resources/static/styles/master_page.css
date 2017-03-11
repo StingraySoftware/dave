@@ -8,7 +8,6 @@ html,body,.container {
     height: 100%;
     width: 100%;
     margin: 0;
-    background-color: #ffffff;
 }
 
 h3
@@ -16,14 +15,15 @@ h3
   font-size: 1.2em;
 }
 
-.logotype {
-    font-family: Furore;
-    color: #DD4814;
-    font-size: 20px;
-    padding: 15px 25px 40px 35px;
-    background-color: #222;
-    width: 220%;
-    margin: 0px 0px 0px -20px;
+.navbar-static-top {
+  background-color: #222;
+  margin-bottom: 0px;
+}
+
+.navbar .navbar-brand {
+  font-family: Furore;
+  color: #DD4814;
+  font-size: 20px;
 }
 
 .side-nav {
@@ -98,6 +98,7 @@ h3
   padding: 0;
   padding-left: 15px;
   padding-bottom: 60px;
+  background-color: #ffffff;
 }
 
 .daveContainer .columnDivider
@@ -125,7 +126,7 @@ h3
   width: 100%;
 }
 
-.infoPanel .btnShowAll
+.infoPanel .btn
 {
   float:right;
   margin-top: 12px;
@@ -217,4 +218,10 @@ h3
 .buttonsContainer{
   padding-top: 24px;
   padding-bottom: 60px;
+}
+
+.btn {
+  padding: 4px;
+  padding-top: 1px;
+  padding-bottom: 1px;
 }

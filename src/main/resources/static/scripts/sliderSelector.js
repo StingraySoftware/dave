@@ -1,7 +1,5 @@
 
-var sliderSelectors_array = [];
-
-function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn) {
+function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array) {
 
   var currentObj = this;
   this.id = id;
@@ -16,7 +14,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
 
-  sliderSelectors_array[this.id] = this;
+  selectors_array[this.id] = this;
 
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
                   '<h3>' + title +
@@ -48,6 +46,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   //Prepares switchBox
   this.switchBox.click( function ( event ) {
     var switchId = event.target.id.replace("switch_", "");
+    var sliderSelectors_array = getTabForSelector(switchId).toolPanel.selectors_array;
     sliderSelectors_array[switchId].setEnabled (!sliderSelectors_array[switchId].enabled);
     sliderSelectors_array[switchId].onSelectorValuesChanged();
   });
@@ -60,6 +59,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          values: [ fromValue, toValue ],
          slide: function( event, ui ) {
            var sliderId = event.target.id.replace("slider-", "");
+           var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
            var sliderWdg = sliderSelectors_array[sliderId];
            sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
            sliderWdg.onSelectorValuesChanged(sliderWdg.filterData.source);
@@ -73,9 +73,10 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
        var step = 1.0;
        if (this.filterData.column == "TIME") {
-           step = parseFloat(theBinSize);
-           this.fromValue = Math.floor (from / theBinSize) * theBinSize;
-           this.toValue = Math.floor (to / theBinSize) * theBinSize;
+           var binSize = getTabForSelector(this.id).projectConfig.binSize;
+           step = parseFloat(binSize);
+           this.fromValue = Math.floor (from / binSize) * binSize;
+           this.toValue = Math.floor (to / binSize) * binSize;
        }
 
        this.fromValue = Math.floor(from);
@@ -136,21 +137,17 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
 
 //STATIC SLIDER_SELECTOR METHODS
-function sliderSelectors_remove (){
-  sliderSelectors_array = [];
-  $(".sliderSelector").remove();
-}
 
-function sliderSelectors_clear () {
-  for (i in sliderSelectors_array) {
-    sliderSelectors_array[i].setEnabled (false);
+function sliderSelectors_clear (selectors_array) {
+  for (i in selectors_array) {
+    selectors_array[i].setEnabled (false);
   }
 }
 
-function sliderSelectors_getFilters (source) {
+function sliderSelectors_getFilters (source, selectors_array) {
   var filters = [];
-  for (i in sliderSelectors_array) {
-    var filter = sliderSelectors_array[i].getFilter();
+  for (i in selectors_array) {
+    var filter = selectors_array[i].getFilter();
     if (filter != null) {
       /*if (!isNull(source)) {
         if (!isNull(filter.source) && filter.source == source) {
@@ -166,10 +163,10 @@ function sliderSelectors_getFilters (source) {
   return filters;
 }
 
-function sliderSelectors_applyFilters (filters) {
+function sliderSelectors_applyFilters (filters, selectors_array) {
   for (f in filters) {
-    for (i in sliderSelectors_array) {
-      sliderSelectors_array[i].applyFilter(filters[f]);
+    for (i in selectors_array) {
+      selectors_array[i].applyFilter(filters[f]);
     }
   }
 }

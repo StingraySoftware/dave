@@ -1,0 +1,31 @@
+
+<div class="TabPanel TabPanelTemplate row fill" style="display:none">
+  <div class="wrapper">
+    <div class="wfSelectorContainer columnDivider">
+      <div class="navbar">
+        <ul class="nav navbar-nav side-nav">
+            <li>
+                <a class="loadBtn" href="#"><i class="fa fa-fw fa-file"></i>Load</a>
+            </li>
+            <li>
+                <a class="filterBtn" href="#"><i class="fa fa-fw fa-filter"></i>Filter</a>
+            </li>
+            <li>
+                <a class="analyzeBtn" href="#"><i class="fa fa-fw fa-area-chart"></i>Analyze</a>
+            </li>
+            <li>
+                <a class="styleBtn" href="#"><i class="fa fa-fw fa-paint-brush"></i>Style</a>
+            </li>
+        </ul>
+      </div>
+    </div>
+    <div class="toolPanelContainer col-xs-3 columnDivider">
+      toolPanelTemplate Goes here
+    </div>
+    <div class="outputPanelContainer col-xs-8 height_100">
+      outputPanelTemplate Goes here
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabpanel.js') }}?v={{ range (1, 9999) | random }}"></script>

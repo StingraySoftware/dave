@@ -72,6 +72,32 @@ def get_colors_lightcurve():
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
+@app.route('/get_joined_lightcurves', methods=['POST'])
+def get_joined_lightcurves():
+    return DaveEndpoint.get_joined_lightcurves(request.json['lc0_filename'],
+            request.json['lc1_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
+
+
+@app.route('/get_joined_lightcurves_from_colors', methods=['POST'])
+def get_joined_lightcurves_from_colors():
+    return DaveEndpoint.get_joined_lightcurves_from_colors(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']))
+
+
+@app.route('/get_divided_lightcurve_ds', methods=['POST'])
+def get_divided_lightcurve_ds():
+    return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
+            request.json['lc1_filename'], UPLOADS_TARGET)
+
+
+@app.route('/get_lightcurve_ds_from_events_ds', methods=['POST'])
+def get_lightcurve_ds_from_events_ds():
+    return DaveEndpoint.get_lightcurve_ds_from_events_ds(request.json['filename'],
+            UPLOADS_TARGET, request.json['axis'], float(request.json['dt']))
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():

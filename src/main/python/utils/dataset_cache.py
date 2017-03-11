@@ -1,4 +1,5 @@
 import hashlib
+from random import randint
 
 cached_datasets = dict()
 
@@ -32,6 +33,6 @@ def remove(destination):
 
 def get_key(value):
     m = hashlib.md5()
-    m.update(str(value).encode('utf-8'))
+    m.update(str(value + str(randint(0,99999))).encode('utf-8'))
     ugly_key = str(m.digest())
     return "".join(e for e in ugly_key if e.isalnum())

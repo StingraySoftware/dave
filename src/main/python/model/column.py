@@ -1,4 +1,6 @@
 import copy
+import numbers
+import numpy as np
 
 class Column:
     id = ""
@@ -18,13 +20,13 @@ class Column:
         self.add_list_to_schema("error_", self.error_values, schema)
         return schema
 
-    def add_list_to_schema(self, list_prefix, list, schema):
-        count = len(list)
-        if (count > 0):
+    def add_list_to_schema(self, list_prefix, dlist, schema):
+        count = len(dlist)
+        if (count > 0 and isinstance(dlist[0], numbers.Number)):
             schema[list_prefix + "count"] = count
-            schema[list_prefix + "min_value"] = min(list)
-            schema[list_prefix + "max_value"] = max(list)
-            schema[list_prefix + "avg_value"] = float(sum(list)) / count
+            schema[list_prefix + "min_value"] = min(dlist)
+            schema[list_prefix + "max_value"] = max(dlist)
+            schema[list_prefix + "avg_value"] = float(sum(dlist)) / count
         else:
             schema[list_prefix + "count"] = 0
             schema[list_prefix + "min_value"] = 0
@@ -55,13 +57,18 @@ class Column:
             return 0
 
     def add_value(self, value, error=None):
-        self.values.extend([value])
-        self.has_error_values = not (error is None)
-        if self.has_error_values:
-            self.error_values.extend([error])
+        if error is None:
+            self.add_values([value])
+        else:
+            self.add_values([value], [error])
 
     def add_values(self, values, errors=None):
-        self.values.extend(values)
+        self.values.extend(np.nan_to_num(values))
         self.has_error_values = not (errors is None)
         if self.has_error_values:
-            self.error_values.extend(errors)
+            self.error_values.extend(np.nan_to_num(errors))
+
+    def clear(self):
+        self.values = []
+        self.error_values = []
+        self.has_error_values = False;

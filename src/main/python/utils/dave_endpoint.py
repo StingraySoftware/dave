@@ -50,8 +50,8 @@ def get_destination(filename, target):
             logging.error("Invalid file or not found in cache filename %s" % filename)
             return None
         else:
-            destination = filename  # Filename represents only a joined dataset key, not real file
-
+            destination = filename # Filename represents only a joined dataset key, not a real file
+            
     return destination
 
 
@@ -174,3 +174,91 @@ def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filt
     logging.debug("get_colors_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt):
+    lc0_destination = get_destination(lc0_filename, target)
+    if not lc0_destination:
+        return common_error("Invalid file or cache key for lc0 data")
+
+    lc1_destination = get_destination(lc1_filename, target)
+    if not lc1_destination:
+        return common_error("Invalid file or cache key for lc1 data")
+
+    logging.debug("get_joined_lightcurves lc0: %s" % lc0_filename)
+    logging.debug("get_joined_lightcurves lc1: %s" % lc1_filename)
+    logging.debug("get_joined_lightcurves: filters %s" % filters)
+    logging.debug("get_joined_lightcurves: axis %s" % axis)
+    logging.debug("get_joined_lightcurves: dt %f" % dt)
+
+    data = DaveEngine.get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt)
+
+    logging.debug("get_joined_lightcurves: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_joined_lightcurves_from_colors(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_joined_lightcurves_from_colors src: %s" % src_filename)
+    logging.debug("get_joined_lightcurves_from_colors bck: %s" % bck_filename)
+    logging.debug("get_joined_lightcurves_from_colors gti: %s" % gti_filename)
+    logging.debug("get_joined_lightcurves_from_colors: filters %s" % filters)
+    logging.debug("get_joined_lightcurves_from_colors: axis %s" % axis)
+    logging.debug("get_joined_lightcurves_from_colors: dt %f" % dt)
+
+    data = DaveEngine.get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt)
+
+    logging.debug("get_joined_lightcurves_from_colors: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
+    lc0_destination = get_destination(lc0_filename, target)
+    if not lc0_destination:
+        return common_error("Invalid file or cache key for lc0 data")
+
+    lc1_destination = get_destination(lc1_filename, target)
+    if not lc1_destination:
+        return common_error("Invalid file or cache key for lc1 data")
+
+    logging.debug("get_divided_lightcurve_ds lc0: %s" % lc0_filename)
+    logging.debug("get_divided_lightcurve_ds lc1: %s" % lc1_filename)
+
+    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination)
+
+    logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
+
+    return json.dumps(cache_key, cls=NPEncoder)
+
+
+def get_lightcurve_ds_from_events_ds(filename, target, axis, dt):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
+
+    logging.debug("get_lightcurve_ds_from_events_ds filename: %s" % filename)
+    logging.debug("get_lightcurve_ds_from_events_ds: axis %s" % axis)
+    logging.debug("get_lightcurve_ds_from_events_ds: dt %f" % dt)
+
+    cache_key = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, dt)
+
+    logging.debug("get_lightcurve_ds_from_events_ds: Finish! cache_key ->  %s" % cache_key)
+
+    return json.dumps(cache_key, cls=NPEncoder)
