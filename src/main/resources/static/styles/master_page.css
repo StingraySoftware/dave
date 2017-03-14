@@ -101,11 +101,6 @@ h3
   background-color: #ffffff;
 }
 
-.outputPanelToolBar .btn {
-  margin-right: 2px;
-  margin-bottom: 2px;
-}
-
 .daveContainer .columnDivider
 {
   border-right: 1px solid black;
@@ -167,14 +162,14 @@ h3
   padding: 0;
 }
 
+.plotContainer.plotSelected
+{
+  border: 1px solid #ff0000;
+}
+
 .plotContainer .plot{
   overflow: hidden;
   height: 305px;
-}
-
-.plotContainer .btnHidePlot
-{
-  top: 0;
 }
 
 .plotContainer .hoverinfo
@@ -236,6 +231,8 @@ h3
 }
 
 .btn {
+  margin-right: 2px;
+  margin-bottom: 2px;
   padding: 4px;
   padding-top: 1px;
   padding-bottom: 1px;

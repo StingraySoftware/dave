@@ -16,13 +16,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.switchable = (switchable != undefined) ? switchable : false;
   this.data = null;
 
-  this.$html = $('<div class="plotContainer ' + this.id + ' ' + this.cssClass + '">' +
+  this.$html = $('<div id="' + this.id + '" class="plotContainer ' + this.cssClass + '">' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
-                  ' <div class="hoverinfo"></div>' +
-                  ' <button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                  ' <button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
-                  ' <button class="btn btn-default btnSwitch"><i class="fa fa-retweet" aria-hidden="true"></i></button>' +
+                    '<div class="hoverinfo"></div>' +
+                    '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
                 '</div>');
 
@@ -32,7 +31,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.btnHide = this.$html.find(".btnHidePlot");
  this.btnSave = this.$html.find(".btnSave");
- this.btnSwitch = this.$html.find(".btnSwitch");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
 
@@ -55,12 +53,23 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  });
 
  if (switchable) {
+   //If switchable adds Switch button to plot
+   this.btnSwitch = $('<button class="btn btn-default btnSwitch"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
+   this.$html.find(".plotTools").append(this.btnSwitch);
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
       currentObj.refreshData();
    });
- } else {
-   this.btnSwitch.remove();
+ }
+
+ if (!isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable) {
+   //If plot is lightcurve adds Select button to plot
+   this.btnSelect = $('<button class="btn btn-default btnSelect"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
+   this.$html.find(".plotTools").append(this.btnSelect);
+   this.btnSelect.click(function(event){
+     currentObj.$html.toggleClass("plotSelected");
+     OnPlotSelected();
+   });
  }
 
  this.onDatasetValuesChanged = function ( filters ) {
@@ -293,4 +302,35 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  log ("new plot id: " + this.id);
 
  return this;
+}
+
+//Static plot METHODS
+function OnPlotSelected () {
+
+  var $selectedPlots = $(".plotSelected");
+  if ($selectedPlots.length > 1){
+
+    log("OnPlotSelected: Multiple plots selected!");
+    var selectedPlots = [];
+
+    //For each plot element find its plot object in all tabs outputpanels
+    $selectedPlots.each(function(){
+      var tab = getTabForSelector(this.id);
+      if (tab != null) {
+        var plot = tab.outputPanel.getPlotById(this.id);
+        if (plot != null) {
+          log("OnPlotSelected: Got plot id: " + this.id);
+          selectedPlots.push(plot);
+        }
+      }
+    })
+
+    if (selectedPlots.length > 1) {
+      onMultiplePlotsSelected(selectedPlots); // master_page.js method
+    }
+  }
+}
+
+function ClearSelectedPlots () {
+  $(".plotSelected").removeClass("plotSelected");
 }

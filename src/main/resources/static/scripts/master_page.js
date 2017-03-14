@@ -36,3 +36,16 @@ function onServerMessageReceived (msg) {
 function isNull (value) {
   return (value === undefined) || (value == null);
 }
+
+function onMultiplePlotsSelected(selectedPlots) {
+  log("onMultiplePlotsSelected: selectedPlots -> " + selectedPlots.length);
+
+  waitingDialog.show('Preparing new tab ...');
+
+  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), selectedPlots);
+
+  setTimeout( function () {
+    ClearSelectedPlots();
+    waitingDialog.hide();
+  }, 850);
+}

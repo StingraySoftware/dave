@@ -7,6 +7,7 @@ from hypothesis.strategies import text
 import utils.dave_engine as DaveEngine
 import utils.file_utils as FileUtils
 import utils.dave_reader as DaveReader
+import utils.filters_helper as FltHelper
 
 
 @given(text(min_size=1))
@@ -84,6 +85,27 @@ def test_get_power_density_spectrum(s):
     axis[1]["column"] = "PI"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16.)
+        result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16., 1, 0, 'leahy')
+
+    assert not os.path.isfile(destination) or result is not None
+
+
+@given(text(min_size=1))
+def test_get_cross_spectrum(s):
+    destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
+    result = None
+
+    axis = [dict() for i in range(2)]
+    axis[0]["table"] = "EVENTS"
+    axis[0]["column"] = "TIME"
+    axis[1]["table"] = "EVENTS"
+    axis[1]["column"] = "PI"
+
+    filter = FltHelper.createTimeFilter(0.0, 225.0)  # Cross Spectra requires a single Good Time Interval
+
+    if FileUtils.is_valid_file(destination):
+        result = DaveEngine.get_cross_spectrum(destination, "", "", [filter], axis, 16.,
+                                               destination, "", "", [filter], axis, 16.,
+                                               1, 0, 'leahy')
 
     assert not os.path.isfile(destination) or result is not None

@@ -296,3 +296,64 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_power_density_spectrum: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, axis1, dt1,
+                       src_filename2, bck_filename2, gti_filename2, filters2, axis2, dt2,
+                       target, nsegm, segm_size, norm):
+
+   src_destination1 = get_destination(src_filename1, target)
+   if not src_destination1:
+       return common_error("Invalid file or cache key for source data 1")
+
+   bck_destination1 = ""
+   if bck_filename1:
+       bck_destination1 = get_destination(bck_filename1, target)
+       if not bck_destination1:
+           return common_error("Invalid file or cache key for backgrund data 1")
+
+   gti_destination1 = ""
+   if gti_filename1:
+       gti_destination1 = get_destination(gti_filename1, target)
+       if not gti_destination1:
+           return common_error("Invalid file or cache key for gti data 1")
+
+   src_destination2 = get_destination(src_filename2, target)
+   if not src_destination2:
+       return common_error("Invalid file or cache key for source data 2")
+
+   bck_destination2 = ""
+   if bck_filename2:
+       bck_destination2 = get_destination(bck_filename2, target)
+       if not bck_destination2:
+           return common_error("Invalid file or cache key for backgrund data 2")
+
+   gti_destination2 = ""
+   if gti_filename2:
+       gti_destination2 = get_destination(gti_filename2, target)
+       if not gti_destination2:
+           return common_error("Invalid file or cache key for gti data 2")
+
+   logging.debug("get_cross_spectrum src 1: %s" % src_filename1)
+   logging.debug("get_cross_spectrum bck 1: %s" % bck_filename1)
+   logging.debug("get_cross_spectrum gti 1: %s" % gti_filename1)
+   logging.debug("get_cross_spectrum: filters 1 %s" % filters1)
+   logging.debug("get_cross_spectrum: axis 1 %s" % axis1)
+   logging.debug("get_cross_spectrum: dt 1 %f" % dt1)
+   logging.debug("get_cross_spectrum src 2: %s" % src_filename2)
+   logging.debug("get_cross_spectrum bck 2: %s" % bck_filename2)
+   logging.debug("get_cross_spectrum gti 2: %s" % gti_filename2)
+   logging.debug("get_cross_spectrum: filters 2 %s" % filters2)
+   logging.debug("get_cross_spectrum: axis 2 %s" % axis2)
+   logging.debug("get_cross_spectrum: dt 2 %f" % dt2)
+   logging.debug("get_cross_spectrum: nsegm %f" % nsegm)
+   logging.debug("get_cross_spectrum: segm_size %f" % segm_size)
+   logging.debug("get_cross_spectrum: norm %s" % norm)
+
+   data = DaveEngine.get_power_density_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
+                                                src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
+                                                nsegm, segm_size, norm)
+
+   logging.debug("get_cross_spectrum: Finish!")
+
+   return json.dumps(data, cls=NPEncoder)

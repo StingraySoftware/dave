@@ -104,6 +104,17 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return false;
   }
 
+  this.getPlotById = function (id) {
+
+    for (i in this.plots) {
+      if (this.plots[i].id == id) {
+          return this.plots[i];
+      }
+    }
+
+    return null;
+  }
+
   this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, timeUnit ) {
 
     log("getFitsTablePlots: filename: " + filename );
@@ -186,7 +197,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
+                        styles: { type: "ligthcurve",
+                                  labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
+                                  selectable: true },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:"PI" } ]
                       },

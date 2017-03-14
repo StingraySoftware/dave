@@ -7,6 +7,8 @@ import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray import Powerspectrum, AveragedPowerspectrum
+from stingray import Crossspectrum, AveragedCrossspectrum
+from stingray.gti import cross_two_gtis
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -148,7 +150,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             # Creates lightcurves by gti and joins in one
             logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
 
-            lc = get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt)
+            lc = get_lightcurve_from_events_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt)
             filtered_ds = None  # Dispose memory
 
             if lc:
@@ -202,7 +204,7 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
 
         # Creates lightcurves array applying bck and gtis from each color
         logging.debug("Create color lightcurves ....")
-        lightcurves = get_lightcurves_from_datasets_array(filtered_datasets, color_keys, count_column_name, color_axis, bck_destination, filters, gti_destination, dt)
+        lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, color_axis, bck_destination, filters, gti_destination, dt)
         filtered_datasets = None  # Dispose memory
 
         # Preapares the result
@@ -298,7 +300,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
         filtered_ds = get_filtered_dataset(src_destination, clean_filters, gti_destination)
 
         # Creates src lightcurve applying bck and gtis
-        src_lc = get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, clean_filters, gti_destination, dt)
+        src_lc = get_lightcurve_from_events_dataset(filtered_ds, axis, bck_destination, clean_filters, gti_destination, dt)
         if not src_lc:
             logging.warn("Cant create lc_src")
             return None
@@ -310,7 +312,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
 
         # Creates lightcurves array applying bck and gtis from each color
         logging.debug("Create color lightcurves ....")
-        lightcurves = get_lightcurves_from_datasets_array(filtered_datasets, color_keys, count_column_name, color_axis, bck_destination, filters, gti_destination, dt)
+        lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, color_axis, bck_destination, filters, gti_destination, dt)
         filtered_datasets = None  # Dispose memory
 
         if len(lightcurves) == 2:
@@ -400,7 +402,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
             return ""
 
         dataset = DaveReader.get_file_dataset(destination)
-        lc = get_lightcurve_from_dataset(dataset, axis, "", [], "", dt)
+        lc = get_lightcurve_from_events_dataset(dataset, axis, "", [], "", dt)
 
         if lc:
             #Changes lc format to stingray_addons format
@@ -436,6 +438,9 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
 #           [{ table = "EVENTS", column = "TIME" },
 #            { table = "EVENTS", column = "PI" } ]
 # @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
 #
 def get_power_density_spectrum(src_destination, bck_destination, gti_destination, filters, axis, dt, nsegm, segm_size, norm):
 
@@ -456,64 +461,159 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
         if segm_size == 0:
             segm_size = None
 
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds) \
-            and not DsHelper.is_lightcurve_dataset(filtered_ds):
-            logging.warn("Wrong dataset type")
+        # Creates the lightcurve
+        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, axis, dt)
+        if not lc:
+            logging.warn("Can't create lightcurve")
             return None
 
         # Prepares GTI if passed
-        gti = None
-        if gti_destination:
-            gti_dataset = DaveReader.get_file_dataset(gti_destination)
-            if gti_dataset:
-                gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
-                logging.debug("Load GTI success")
+        gti = load_gti_from_destination (gti_destination)
 
-        lc = None
+        # Creates the power density spectrum
+        logging.debug("Create power density spectrum")
 
-        if DsHelper.is_events_dataset(filtered_ds):
-            # Creates lightcurves by gti and joins in one
-            logging.debug("Create lightcurve from evt dataset... Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+        if nsegm < 30:
+            pds = Powerspectrum(lc, norm=norm, gti=gti)
+        else:
+            pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
-            lc = get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt)
-            filtered_ds = None  # Dispose memory
+        if pds:
+            freq = pds.freq
+            power = pds.power
 
-        elif DsHelper.is_lightcurve_dataset(filtered_ds):
-            #If dataset is LIGHTCURVE type
-            logging.debug("Create lightcurve from lc dataset")
-            lc = DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, axis, gti=gti)
+            duration = [lc.tseg]
+            warnmsg = [""]
+            if not gti and DsHelper.hasGTIGaps(lc.time):
+                warnmsg = ["GTI gaps found on LC"]
 
-        if lc:
-            # Creates the power density spectrum
-            logging.debug("Create power density spectrum")
+            pds = None  # Dispose memory
 
-            if nsegm < 30:
-                pds = Powerspectrum(lc, norm=norm, gti=gti)
-            else:
-                pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
-
-            if pds:
-                freq = pds.freq
-                power = pds.power
-
-                duration = [lc.tseg]
-                warnmsg = [""]
-                if not gti and DsHelper.hasGTIGaps(lc.time):
-                    warnmsg = ["GTI gaps found on LC"]
-
-                pds = None  # Dispose memory
-
-            lc = None  # Dispose memory
+        lc = None  # Dispose memory
 
     except:
         logging.error(str(sys.exc_info()))
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
+    result = push_to_results_array([], freq)
+    result = push_to_results_array(result, power)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
+    return result
+
+
+# get_cross_spectrum: Returns the XS of two given datasets
+#
+# @param: src_destination1: source file destination
+# @param: bck_destination1: background file destination, is optional
+# @param: gti_destination1: gti file destination, is optional
+# @param: filters1: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis1: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PI" } ]
+# @param: dt1: The time resolution of the events.
+# @param: src_destination2: source file destination
+# @param: bck_destination2: background file destination, is optional
+# @param: gti_destination2: gti file destination, is optional
+# @param: filters2: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis2: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PI" } ]
+# @param: dt2: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) cross spectrum.
+#
+def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
+                       src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
+                       nsegm, segm_size, norm):
+
+    freq = []
+    power = []
+    duration = []
+    warnmsg = []
+
+    try:
+        if len(axis1) != 2:
+            logging.warn("Wrong number of axis 1")
+            return None
+
+        if len(axis2) != 2:
+            logging.warn("Wrong number of axis 1")
+            return None
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            logging.warn("Wrong normalization")
+            return None
+
+        if segm_size == 0:
+            segm_size = None
+
+        # Creates the lightcurve 1
+        lc1 = get_lightcurve_any_dataset(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1)
+        if not lc1:
+            logging.warn("Cant create lightcurve 1")
+            return None
+
+        # Prepares GTI1 if passed
+        gti1 = load_gti_from_destination (gti_destination1)
+
+        # Creates the lightcurve 2
+        lc2 = get_lightcurve_any_dataset(src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2)
+        if not lc2:
+            logging.warn("Cant create lightcurve 2")
+            return None
+
+        # Prepares GTI2 if passed
+        gti2 = load_gti_from_destination (gti_destination2)
+
+        # Join gtis in one gti
+        gti = None
+        if gti1 and gti2:
+            gti = cross_two_gtis(gti1, gti2)
+        elif gti1 and not gti2:
+            gti = gti1
+        elif not gti1 and gti2:
+            gti = gti2
+
+        # Cross Spectra requires a single Good Time Interval
+        if gti and gti.shape[0] != 1:
+            logging.warn("Non-averaged Cross Spectra need "
+                            "a single Good Time Interval")
+            return None
+
+        # Creates the cross spectrum
+        logging.debug("Create cross spectrum")
+
+        if nsegm < 30:
+            xs = Crossspectrum(lc1=lc1, lc2=lc2, norm=norm, gti=gti)
+        else:
+            xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
+
+        if xs:
+            freq = xs.freq
+            power = xs.power
+
+            duration = [lc1.tseg, lc2.tseg]
+            warnmsg = []
+            if not gti1 and DsHelper.hasGTIGaps(lc1.time):
+                warnmsg.append("GTI gaps found on LC 1")
+            if not gti2 and DsHelper.hasGTIGaps(lc2.time):
+                warnmsg.append("GTI gaps found on LC 2")
+
+            xs = None  # Dispose memory
+
+        lc1 = None  # Dispose memory
+        lc2 = None  # Dispose memory
+
+    except:
+        logging.error(str(sys.exc_info()))
+
+    # Preapares the result
+    logging.debug("Result cross spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
     result = push_to_results_array(result, power)
     result = push_to_results_array(result, duration)
@@ -583,7 +683,30 @@ def get_color_axis_for_ds():
     return color_axis
 
 
-def get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt):
+def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, axis, dt):
+    filters = FltHelper.get_filters_clean_color_filters(filters)
+    filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+    filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+    if not DsHelper.is_events_dataset(filtered_ds) \
+        and not DsHelper.is_lightcurve_dataset(filtered_ds):
+        logging.warn("Wrong dataset type")
+        return None
+
+    if DsHelper.is_events_dataset(filtered_ds):
+        # Creates lightcurves by gti and joins in one
+        logging.debug("Create lightcurve from evt dataset... Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+        return get_lightcurve_from_events_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt)
+
+    elif DsHelper.is_lightcurve_dataset(filtered_ds):
+        #If dataset is LIGHTCURVE type
+        logging.debug("Create lightcurve from lc dataset")
+        return DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, axis, gti=gti)
+
+    return None
+
+
+def get_lightcurve_from_events_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt):
     eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_ds, axis)
     if not eventlist or len(eventlist.time) == 0:
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
@@ -597,11 +720,11 @@ def get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, filters, gti
     return lc
 
 
-def get_lightcurves_from_datasets_array (datasets_array, color_keys, count_column_name, color_axis, bck_destination, filters, gti_destination, dt):
+def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, count_column_name, color_axis, bck_destination, filters, gti_destination, dt):
     lightcurves = []
     for color_idx in range(len(color_keys)):
         color_filters = FltHelper.get_filters_from_color_filters(filters, color_keys[color_idx], count_column_name)
-        lc = get_lightcurve_from_dataset(datasets_array[color_idx], color_axis, bck_destination, color_filters, gti_destination, dt)
+        lc = get_lightcurve_from_events_dataset(datasets_array[color_idx], color_axis, bck_destination, color_filters, gti_destination, dt)
         lightcurves.append(lc)
     return lightcurves
 
@@ -632,3 +755,13 @@ def apply_background_to_lc(lc, bck_destination, filters, axis, gti_destination, 
         logging.warn("Background dataset is None!, omiting Bck data.")
 
     return lc
+
+
+def load_gti_from_destination (gti_destination):
+    gti = None
+    if gti_destination:
+        gti_dataset = DaveReader.get_file_dataset(gti_destination)
+        if gti_dataset:
+            gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
+            logging.debug("Load GTI success")
+    return gti
