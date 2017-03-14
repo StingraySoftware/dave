@@ -350,9 +350,9 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    logging.debug("get_cross_spectrum: segm_size %f" % segm_size)
    logging.debug("get_cross_spectrum: norm %s" % norm)
 
-   data = DaveEngine.get_power_density_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
-                                                src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
-                                                nsegm, segm_size, norm)
+   data = DaveEngine.get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
+                                        src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
+                                        nsegm, segm_size, norm)
 
    logging.debug("get_cross_spectrum: Finish!")
 

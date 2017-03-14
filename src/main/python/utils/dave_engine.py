@@ -701,6 +701,7 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
     elif DsHelper.is_lightcurve_dataset(filtered_ds):
         #If dataset is LIGHTCURVE type
         logging.debug("Create lightcurve from lc dataset")
+        gti = load_gti_from_destination (gti_destination)
         return DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, axis, gti=gti)
 
     return None
