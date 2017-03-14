@@ -143,6 +143,32 @@ def join_gti_tables(gti_table_0, gti_table_1):
     return get_gti_table_from_stingray_gti(joined_gti)
 
 
+#Returns True if there is a GAP in the time_vals values
+def hasGTIGaps(time_vals):
+
+    trigger_ratio = 100;  # The ratio of elapsed time versus prev elapsed for triggering a gap
+
+    if len(time_vals > 1):
+        prev_val = time_vals[0]
+        elapsed_avg = 0
+        for val in time_vals:
+            elapsed = val - prev_val
+            prev_val = val
+
+            if elapsed_avg > 0:
+                ratio = elapsed / elapsed_avg
+                if ratio > trigger_ratio:
+                    return True
+
+                # Calulates the ne elapsed_avg with the latest 5 vals
+                elapsed_avg += (elapsed - elapsed_avg) * 0.2
+
+            else:
+                elapsed_avg = elapsed
+
+    return False
+
+
 # Returns a list of columns excluding passed columnName
 def get_additional_column_names(columns, column):
     additional_columns = []

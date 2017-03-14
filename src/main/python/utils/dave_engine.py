@@ -442,6 +442,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
     freq = []
     power = []
     duration = []
+    warnmsg = []
 
     try:
         if len(axis) != 2:
@@ -470,6 +471,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
             gti_dataset = DaveReader.get_file_dataset(gti_destination)
             if gti_dataset:
                 gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
+                logging.debug("Load GTI success")
 
         lc = None
 
@@ -497,7 +499,11 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
             if pds:
                 freq = pds.freq
                 power = pds.power
+
                 duration = [lc.tseg]
+                warnmsg = [""]
+                if DsHelper.hasGTIGaps(lc.time):
+                    warnmsg = ["GTI gaps found on LC"]
 
                 pds = None  # Dispose memory
 
@@ -511,6 +517,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
     result = push_to_results_array([], freq)
     result = push_to_results_array(result, power)
     result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
     return result
 
 

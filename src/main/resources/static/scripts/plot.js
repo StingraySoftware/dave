@@ -4,7 +4,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   var currentObj = this;
 
   this.id = id.replace(/\./g,'');
-  this.plotId = "plot_" + id;
+  this.plotId = "plot_" + this.id;
   this.plotConfig = plotConfig;
   this.getDataFromServerFn = getDataFromServerFn;
   this.onFiltersChanged = onFiltersChangedFn;
@@ -20,13 +20,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
                   ' <div class="hoverinfo"></div>' +
-                  ' <button class="btn btnHidePlot">Hide</button>' +
-                  ' <button class="btn btnSave">Save</button>' +
-                  ' <button class="btn btnSwitch">Switch</button>' +
+                  ' <button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                  ' <button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                  ' <button class="btn btn-default btnSwitch"><i class="fa fa-retweet" aria-hidden="true"></i></button>' +
                   '</div>' +
                 '</div>');
 
- this.btnShow = $('<button class="btn btnShow' + this.id + '">Show</button>');
+ this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
  this.btnShow.hide();
  toolbar.append(this.btnShow);
 
@@ -46,7 +46,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.btnHide.click(function(event){
     currentObj.isVisible = false;
     currentObj.$html.hide();
-    currentObj.btnShow.html("Show " + currentObj.plotConfig.styles.title);
+    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + currentObj.plotConfig.styles.title);
     currentObj.btnShow.show();
  });
 

@@ -17,13 +17,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.settingsPanel.hide();
   this.$html.prepend(this.settingsPanel);
 
-  this.btnSettings = $('<button class="btn btnSettings' + this.id + '">Settings</button>');
+  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '"><i class="fa fa-cog" aria-hidden="true"></i></button>');
   this.$html.find(".plotTools").append(this.btnSettings);
   this.btnSettings.click(function(event){
     currentObj.showSettings();
   });
 
-  this.btnBack = $('<button class="btn btnBack' + this.id + '">Back</button>');
+  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
   this.btnBack.hide();
   this.$html.find(".plotTools").append(this.btnBack);
   this.btnBack.click(function(event){
@@ -136,6 +136,18 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     }
   }
 
+  this.setReadyState = function (isReady) {
+    this.isReady = isReady;
+    if (isReady && (this.data != null)) {
+      this.$html.find(".plotTools").find(".btnWarn").remove();
+      var warnmsg = this.getWarnMsg();
+      if (warnmsg != ""){
+          this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg + '</button>');
+          this.$html.find(".plotTools").prepend(this.btnWarn);
+      }
+    }
+  }
+
   this.getDuration = function (){
     var duration = 0;
     if (this.data != null) {
@@ -144,6 +156,16 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       }
     }
     return duration;
+  }
+
+  this.getWarnMsg = function (){
+    var warnmsg = "";
+    if (this.data != null) {
+      if (this.data[3].values.length > 0) {
+        warnmsg = this.data[3].values[0];
+      }
+    }
+    return warnmsg;
   }
 
   log ("new PDSPlot id: " + this.id);
