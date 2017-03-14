@@ -502,7 +502,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
                 duration = [lc.tseg]
                 warnmsg = [""]
-                if DsHelper.hasGTIGaps(lc.time):
+                if not gti and DsHelper.hasGTIGaps(lc.time):
                     warnmsg = ["GTI gaps found on LC"]
 
                 pds = None  # Dispose memory
