@@ -87,6 +87,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       currentObj.projectConfig.setFile(selectorKey, filenames[0]);
       if (currentObj.projectConfig.hasSchema()) {
 
+        currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
+
         var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCA", "LCB", "A/B", currentObj.projectConfig);
         var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCC", "LCD", "C/D", currentObj.projectConfig);
 

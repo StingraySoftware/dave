@@ -1,17 +1,18 @@
 import numpy as np
 
 from stingray.events import EventList
+from stingray import Lightcurve
 from stingray.gti import join_gtis
 from model.table import Table
 import bisect
 import utils.dave_logger as logging
 
 
-# Returns an Stingray EventList from a given dataset
-def get_eventlist_from_dataset(dataset, axis):
+# Returns an Stingray EventList from a given events dataset
+def get_eventlist_from_evt_dataset(dataset, axis):
 
     if not is_events_dataset(dataset):
-        logging.warn("get_eventlist_from_dataset: dataset is not a events dataset instance")
+        logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
     # Extract axis values
@@ -26,6 +27,28 @@ def get_eventlist_from_dataset(dataset, axis):
         return EventList(time_data, gti=gti, pi=pi_data)
     else:
         return EventList(time_data, pi=pi_data)
+
+
+# Returns an Stingray Lightcurve from a given lightcurve dataset
+def get_lightcurve_from_lc_dataset(dataset, axis, gti=None):
+
+    if not is_lightcurve_dataset(dataset):
+        logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
+        return None
+
+    # Extract axis values
+    time_data = np.array(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
+    counts = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
+
+    # Extract GTIs
+    if not gti:
+        gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
+
+    # Returns the EventList
+    if len(gti) > 0:
+        return Lightcurve(time_data, counts, input_counts=True, gti=gti)
+    else:
+        return Lightcurve(time_data, counts, input_counts=True)
 
 
 def get_empty_gti_table():

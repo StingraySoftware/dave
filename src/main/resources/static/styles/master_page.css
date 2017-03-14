@@ -101,6 +101,11 @@ h3
   background-color: #ffffff;
 }
 
+.outputPanelToolBar .btn {
+  margin-right: 2px;
+  margin-bottom: 2px;
+}
+
 .daveContainer .columnDivider
 {
   border-right: 1px solid black;
@@ -178,6 +183,16 @@ h3
   margin-top: 4px;
   float:left;
   font-size: 0.7em;
+}
+
+.plotContainer .plotTools
+{
+  float:right;
+}
+
+.plotContainer .settings
+{
+  padding: 24px;
 }
 
 .fullWidth

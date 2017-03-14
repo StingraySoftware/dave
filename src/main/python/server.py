@@ -98,6 +98,14 @@ def get_lightcurve_ds_from_events_ds():
             UPLOADS_TARGET, request.json['axis'], float(request.json['dt']))
 
 
+@app.route('/get_power_density_spectrum', methods=['POST'])
+def get_power_density_spectrum():
+    return DaveEndpoint.get_power_density_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']), request.json['norm'])
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():

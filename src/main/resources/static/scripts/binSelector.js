@@ -2,7 +2,7 @@
 function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn) {
 
   var currentObj = this;
-  this.id = id;
+  this.id = id.replace(/\./g,'');
   this.title = title;
   this.fromLabel = fromLabel;
   this.initFromValue = fromValue;
@@ -26,6 +26,11 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   this.fromInput = this.$html.find("#from_" + this.id);
   this.slider = this.$html.find("#slider-" + this.id);
 
+  this.setTitle = function (title) {
+    this.title = title;
+    this.$html.find("h3").first().html(title);
+  }
+
   this.inputChanged = function ( event ) {
     currentObj.setValues( currentObj.fromInput.val() );
     currentObj.onSelectorValuesChanged();
@@ -41,8 +46,10 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
          slide: function( event, ui ) {
            var sliderId = event.target.id.replace("slider-", "");
            var tab = getTabForSelector(sliderId);
-           tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
-           tab.toolPanel.binSelector.onSelectorValuesChanged();
+           if (tab != null){
+             tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
+             tab.toolPanel.binSelector.onSelectorValuesChanged();
+           }
          }
      });
 

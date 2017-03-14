@@ -6,6 +6,7 @@ import numpy as np
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
+from stingray import Powerspectrum, AveragedPowerspectrum
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -73,16 +74,20 @@ def get_plot_data(destination, filters, styles, axis):
 
     # Config checking
     if "type" not in styles:
-        return "No plot type specified on styles"
+        logging.warn("No plot type specified on styles")
+        return None
 
     if "labels" not in styles:
-        return "No plot labels specified on styles"
+        logging.warn("No plot labels specified on styles")
+        return None
 
     if len(styles["labels"]) < 2:
-        return "Wrong number of labels specified on styles"
+        logging.warn("Wrong number of labels specified on styles")
+        return None
 
     if len(axis) < 2:
-        return "Wrong number of axis"
+        logging.warn("Wrong number of axis")
+        return None
 
     # Plot type mode
     if styles["type"] == "2d":
@@ -91,18 +96,20 @@ def get_plot_data(destination, filters, styles, axis):
     elif styles["type"] == "3d":
 
         if len(styles["labels"]) < 3:
-            return "Wrong number of labels specified on styles"
+            logging.warn("Wrong number of labels specified on styles")
+            return None
 
         if len(axis) < 3:
-            return "Wrong number of axis"
+            logging.warn("Wrong number of axis")
+            return None
 
         return Plotter.get_plotdiv_xyz(filtered_ds, axis)
 
     elif styles["type"] == "scatter":
         return Plotter.get_plotdiv_scatter(filtered_ds, axis)
 
-    else:
-        return "Wrong plot type specified on styles"
+    logging.warn("Wrong plot type specified on styles")
+    return None
 
 
 # get_lightcurve: Returns the data for the Lightcurve
@@ -145,11 +152,10 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             filtered_ds = None  # Dispose memory
 
             if lc:
-                logging.debug("Result time: " + str(len(lc.time)))
                 time_vals = lc.time
                 count_rate = lc.countrate
                 error_values = []  # TODO: Implement error values on Stingray
-                #lc = None  # Dispose memory
+                lc = None  # Dispose memory
 
         elif DsHelper.is_lightcurve_dataset(filtered_ds):
             #If dataset is LIGHTCURVE type
@@ -419,6 +425,95 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
     return ""
 
 
+# get_power_density_spectrum: Returns the PDS of a given dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PI" } ]
+# @param: dt: The time resolution of the events.
+#
+def get_power_density_spectrum(src_destination, bck_destination, gti_destination, filters, axis, dt, nsegm, segm_size, norm):
+
+    freq = []
+    power = []
+    duration = []
+
+    try:
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            logging.warn("Wrong normalization")
+            return None
+
+        if segm_size == 0:
+            segm_size = None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+        if not DsHelper.is_events_dataset(filtered_ds) \
+            and not DsHelper.is_lightcurve_dataset(filtered_ds):
+            logging.warn("Wrong dataset type")
+            return None
+
+        # Prepares GTI if passed
+        gti = None
+        if gti_destination:
+            gti_dataset = DaveReader.get_file_dataset(gti_destination)
+            if gti_dataset:
+                gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
+
+        lc = None
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            # Creates lightcurves by gti and joins in one
+            logging.debug("Create lightcurve from evt dataset... Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+
+            lc = get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt)
+            filtered_ds = None  # Dispose memory
+
+        elif DsHelper.is_lightcurve_dataset(filtered_ds):
+            #If dataset is LIGHTCURVE type
+            logging.debug("Create lightcurve from lc dataset")
+            lc = DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, axis, gti=gti)
+
+        if lc:
+            # Creates the power density spectrum
+            logging.debug("Create power density spectrum")
+
+            if nsegm < 30:
+                pds = Powerspectrum(lc, norm=norm, gti=gti)
+            else:
+                pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+
+            if pds:
+                freq = pds.freq
+                power = pds.power
+                duration = [lc.tseg]
+
+                pds = None  # Dispose memory
+
+            lc = None  # Dispose memory
+
+    except:
+        logging.error(str(sys.exc_info()))
+
+    # Preapares the result
+    logging.debug("Result power density spectrum .... " + str(len(freq)))
+    result = push_to_results_array([], freq)
+    result = push_to_results_array(result, power)
+    result = push_to_results_array(result, duration)
+    return result
+
+
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
 
 def get_filtered_dataset(destination, filters, gti_destination=""):
@@ -482,7 +577,7 @@ def get_color_axis_for_ds():
 
 
 def get_lightcurve_from_dataset(filtered_ds, axis, bck_destination, filters, gti_destination, dt):
-    eventlist = DsHelper.get_eventlist_from_dataset(filtered_ds, axis)
+    eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_ds, axis)
     if not eventlist or len(eventlist.time) == 0:
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
         return None
@@ -509,7 +604,7 @@ def apply_background_to_lc(lc, bck_destination, filters, axis, gti_destination, 
     if DsHelper.is_events_dataset(filtered_bck_ds):
 
         logging.debug("Create background lightcurve ....")
-        bck_eventlist = DsHelper.get_eventlist_from_dataset(filtered_bck_ds, axis)
+        bck_eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_bck_ds, axis)
         if bck_eventlist and len(bck_eventlist.time) > 0:
             bck_lc = bck_eventlist.to_lc(dt)
 

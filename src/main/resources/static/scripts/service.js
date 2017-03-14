@@ -124,6 +124,22 @@ function Service (base_url) {
     }
   };
 
+  this.request_power_density_spectrum = function (data, fn) {
+    log("request_power_density_spectrum plot " + JSON.stringify(data));
+    try {
+      $.ajax({
+         type : "POST",
+         url : thisService.base_url + "/get_power_density_spectrum",
+         data: JSON.stringify(data, null, '\t'),
+         contentType: 'application/json;charset=UTF-8',
+         success: fn,
+         error: fn
+      });
+    } catch (e) {
+      fn({ "error" : e });
+    }
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {

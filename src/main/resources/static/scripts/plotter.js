@@ -7,7 +7,7 @@ var DEFAULT_TITLE_FONT = {
 
 var DEFAULT_MARGINS = { b : 42, r : 12, l: 64, t: 24 }
 
-function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, x_label, y_label){
+function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, x_label, y_label, title){
 
     return {
         data: [
@@ -29,7 +29,7 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, x_la
                 }
               ],
         layout : {
-                   title : '',
+                   title : !isNull(title) ? title : '',
                    hovermode: 'closest',
                    xaxis : {
                              title : x_label,
@@ -83,13 +83,13 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                 }
               ],
         layout : {
-                   title : title,
+                   title : !isNull(title) ? title : '',
                    margin: DEFAULT_MARGINS
                 }
         }
 }
 
-function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) {
+function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
 
   return {
       data: [
@@ -105,7 +105,7 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) 
               }
             ],
       layout : {
-                 title : '',
+                 title : !isNull(title) ? title : '',
                  hovermode: 'closest',
                  xaxis : {
                            title : x_label,
@@ -120,7 +120,7 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) 
       }
 }
 
-function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label) {
+function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label, title) {
 
   return {
       data: [
@@ -143,7 +143,7 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
               }
             ],
       layout : {
-                 title : '',
+                 title : !isNull(title) ? title : '',
                  hovermode: 'closest',
                  xaxis : {
                            title : x_label,
@@ -161,7 +161,7 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
 
 function get_plotdiv_xyy(x_values, y0_values, y1_values,
                           x_error_values, y0_error_values, y1_error_values,
-                          x_label, y0_label, y1_label){
+                          x_label, y0_label, y1_label, title){
 
     return {
         data: [
@@ -201,7 +201,7 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                 }
               ],
         layout : {
-                   title : '',
+                   title : !isNull(title) ? title : '',
                    hovermode: 'closest',
                    xaxis : {
                              title : x_label,

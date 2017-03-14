@@ -24,7 +24,7 @@ function infoPanel(id, title, header, headerComments, toolbar) {
     currentObj.redraw();
   });
 
-  this.btnShow = $('<button class="btn btnShow' + this.id + '">Show</button>');
+  this.btnShow = $('<button class="btn btnShow' + this.id + '">Show Header</button>');
   this.btnShow.hide();
   toolbar.append(this.btnShow);
 

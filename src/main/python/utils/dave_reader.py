@@ -28,15 +28,15 @@ def get_file_dataset(destination):
 
     if file_extension.find("ASCII") == 0:
 
-        table_id = "txt_table"
-        header_names = ["Time", "Rate", "color1", "color2"]
+        table_id = "EVENTS"
+        header_names = ["TIME", "PI", "Color1", "Color2"]
         dataset = get_txt_dataset(destination, table_id, header_names)
 
         table = dataset.tables[table_id]
-        table.add_columns(["Amplitude"])
-        numValues = len(table.columns["Time"].values)
+        table.add_columns(["AMPLITUDE"])
+        numValues = len(table.columns["TIME"].values)
         random_values = np.random.uniform(-1, 1, size=numValues)
-        table.columns["Amplitude"].values = random_values
+        table.columns["AMPLITUDE"].values = random_values
 
         DsCache.add(destination, dataset)
         return dataset
@@ -78,7 +78,7 @@ def get_file_dataset(destination):
 def get_txt_dataset(destination, table_id, header_names):
 
     data = np.loadtxt(destination)
-    dataset = DataSet.get_dataset(table_id, table_id, header_names)
+    dataset = DataSet.get_hdu_type_dataset(table_id, header_names, hduname="EVENTS")
 
     # Column1, Column1Err, Column2, Column2Err .. header order expected
     for i in range(len(header_names)):

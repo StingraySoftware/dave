@@ -3,7 +3,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
   var currentObj = this;
 
-  this.id = id;
+  this.id = id.replace(/\./g,'');
   this.plotId = "plot_" + id;
   this.plotConfig = plotConfig;
   this.getDataFromServerFn = getDataFromServerFn;
@@ -14,10 +14,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.isSwitched = false;
   this.cssClass = (cssClass != undefined) ? cssClass : "";
   this.switchable = (switchable != undefined) ? switchable : false;
+  this.data = null;
 
   this.$html = $('<div class="plotContainer ' + this.id + ' ' + this.cssClass + '">' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
-                  '<div style="float:right">' +
+                  '<div class="plotTools">' +
                   ' <div class="hoverinfo"></div>' +
                   ' <button class="btn btnHidePlot">Hide</button>' +
                   ' <button class="btn btnSave">Save</button>' +
@@ -45,6 +46,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.btnHide.click(function(event){
     currentObj.isVisible = false;
     currentObj.$html.hide();
+    currentObj.btnShow.html("Show " + currentObj.plotConfig.styles.title);
     currentObj.btnShow.show();
  });
 
@@ -58,7 +60,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       currentObj.refreshData();
    });
  } else {
-   this.btnSwitch.hide();
+   this.btnSwitch.remove();
  }
 
  this.onDatasetValuesChanged = function ( filters ) {
@@ -90,6 +92,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      currentObj.setReadyState(true);
      currentObj.onPlotReady();
      return;
+   } else {
+     currentObj.data = data;
    }
 
    var coords = { x: 0, y: 1};
@@ -101,7 +105,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
                                     currentObj.plotConfig.styles.labels[coords.x],
-                                    currentObj.plotConfig.styles.labels[coords.y])
+                                    currentObj.plotConfig.styles.labels[coords.y],
+                                    currentObj.plotConfig.styles.title)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
       plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
@@ -114,27 +119,30 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
-                                        'Amplitude<br>Map');
+                                        currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values,
                                         data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
-                                        'Amplitude<br>Map');
+                                        'Amplitude<br>Map',
+                                        currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
      plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                   [], [],
                                   currentObj.plotConfig.styles.labels[coords.x],
-                                  currentObj.plotConfig.styles.labels[coords.y]);
+                                  currentObj.plotConfig.styles.labels[coords.y],
+                                  currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[coords.x].values, data[coords.y].values, data[2].values,
                                    [], [], [],
                                    currentObj.plotConfig.styles.labels[coords.x],
                                    currentObj.plotConfig.styles.labels[coords.y],
-                                   currentObj.plotConfig.styles.labels[2]);
+                                   currentObj.plotConfig.styles.labels[2],
+                                   currentObj.plotConfig.styles.title);
    }
 
    if (plotlyConfig != null) {

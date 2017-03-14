@@ -22,11 +22,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
       //If fits is a Lightcurve
       if (projectConfig.plots.length == 0) {
-        var lc_SRC_plot = this.getLightCurvePlot (projectConfig.filename,
-                                                  "", "", "RATE",
-                                                  projectConfig.timeUnit,
-                                                  "fullWidth", false);
-        projectConfig.plots.push(lc_SRC_plot);
+        this.addLightcurveAndPdsPlots ("SRC",
+                                      projectConfig.filename, "", "",
+                                      "RATE", "RATE", projectConfig,
+                                      "fullWidth", false);
       }
 
       this.plots = projectConfig.plots;
@@ -110,6 +109,24 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     log("getFitsTablePlots: filename: " + filename );
 
     return [
+              new Plot(
+                        this.id + "_plot_" + filename,
+                        {
+                          filename: filename,
+                          bck_filename: bck_filename,
+                          gti_filename: gti_filename,
+                          styles: { type: "2d", labels: ["TIME (" + timeUnit  + ")", "PI"] },
+                          axis: [ { table: "EVENTS", column:"TIME" },
+                                  { table: "EVENTS", column:"PI" } ]
+                        },
+                        this.service.request_plot_data,
+                        this.onFiltersChangedFromPlot,
+                        this.onPlotReady,
+                        this.$toolBar,
+                        "fullWidth",
+                        false
+                      ),
+
                 this.getLightCurvePlot ( filename,
                                         bck_filename,
                                         gti_filename,
@@ -151,23 +168,27 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                             ["SRC Count Rate", "C/D Count Rate(c/s)"],
                                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_C" },
                                                               { source: "ColorSelector", table:"EVENTS", column:"Color_D" } ],
-                                                            "", true )
+                                                            "", true ),
 
+                  this.getPDSPlot ( filename,
+                                    bck_filename,
+                                    gti_filename,
+                                    "EVENTS", "PI", "fullWidth" )
               ];
   }
 
-  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, columnName, timeUnit, cssClass, switchable ) {
+  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, timeUnit, cssClass, switchable ) {
 
     log("getLightCurvePlot: filename: " + filename );
     return new Plot(
-                      this.id + "_ligthcurve_" + filename,
+                      this.id + "_ligthcurve_" + filename + "_" + (new Date()).getTime(),
                       {
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve", labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"] },
-                        axis: [ { table: columnName, column:"TIME" },
-                                { table: columnName, column:"PI" } ]
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:"PI" } ]
                       },
                       this.service.request_lightcurve,
                       this.onFiltersChangedFromPlot,
@@ -182,7 +203,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getJoinedLightCurvesPlot: lc0_filename: " + lc0_filename + ", lc0_filename: " + lc1_filename);
     return new Plot(
-                      this.id + "_ligthcurve_" + lc0_filename + "_" + lc1_filename,
+                      this.id + "_ligthcurve_" + lc0_filename + "_" + lc1_filename + "_" + (new Date()).getTime(),
                       {
                         lc0_filename: lc0_filename,
                         lc1_filename: lc1_filename,
@@ -199,7 +220,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getJoinedLightCurvesFromColorsPlot = function ( filename, bck_filename, gti_filename, columnName, labels, mandatoryFilters, cssClass, switchable ) {
+  this.getJoinedLightCurvesFromColorsPlot = function ( filename, bck_filename, gti_filename, tableName, labels, mandatoryFilters, cssClass, switchable ) {
 
     log("getJoinedLightCurvesFromColorsPlot: filename: " + filename );
     return new Plot(
@@ -209,8 +230,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
                         styles: { type: "scatter", labels: labels },
-                        axis: [ { table: columnName, column:"TIME" },
-                                { table: columnName, column:"PI" } ],
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:"PI" } ],
                         mandatoryFilters: mandatoryFilters,
                       },
                       this.service.request_joined_lightcurves_from_colors,
@@ -219,6 +240,28 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.$toolBar,
                       cssClass,
                       switchable
+                    );
+  }
+
+  this.getPDSPlot = function ( filename, bck_filename, gti_filename, tableName, columnName, cssClass ) {
+
+    log("getPDSPlot: filename: " + filename );
+    return new PDSPlot(
+                      this.id + "_pds_" + filename + "_" + (new Date()).getTime(),
+                      {
+                        filename: filename,
+                        bck_filename: bck_filename,
+                        gti_filename: gti_filename,
+                        styles: { type: "ligthcurve", labels: ["Frequency", "Power"] },
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:columnName } ]
+                      },
+                      this.service.request_power_density_spectrum,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      this.$toolBar,
+                      cssClass,
+                      false
                     );
   }
 
@@ -237,19 +280,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
         if (cache_key != "") {
 
           projectConfig.setFile(newKey, cache_key);
-          lc_plot = currentObj.getLightCurvePlot ( cache_key, "", "",
-                                                  "RATE",
-                                                  projectConfig.timeUnit,
-                                                  "", false);
-          lc_plot.plotConfig.styles.labels[1] = newKeySufix + " Count Rate(c/s)";
-          projectConfig.plots.push(lc_plot);
-          currentObj.appendPlot(lc_plot);
-
-
+          currentObj.addLightcurveAndPdsPlots (newKeySufix, cache_key, "", "", "RATE", "PI", projectConfig);
 
           //After getting A/B or C/D we can calculate the Hardness and Softnes Intensity lcs
 
-          lc_src_filename = projectConfig.getFile("SRC");
+          var lc_src_filename = projectConfig.getFile("SRC");
 
           if (newKeySufix == "A/B") {
 
@@ -282,9 +317,32 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return false;
   }
 
-  this.appendPlot = function (plot) {
+  this.addLightcurveAndPdsPlots = function (titlePrefix, filename, bck_filename, gti_filename, tableName, columnName, projectConfig, cssClass, refreshData){
+    var lc_plot = currentObj.getLightCurvePlot ( filename, bck_filename, gti_filename,
+                                                tableName,
+                                                projectConfig.timeUnit,
+                                                cssClass, false);
+
+    var mustRefreshData = isNull(refreshData) || refreshData;
+
+    lc_plot.plotConfig.styles.title = titlePrefix + " LC";
+    projectConfig.plots.push(lc_plot);
+    currentObj.appendPlot(lc_plot, mustRefreshData);
+
+    var pds_plot = this.getPDSPlot ( filename, bck_filename, gti_filename,
+                                    tableName, columnName, cssClass );
+    pds_plot.plotConfig.styles.title = titlePrefix + " PDS";
+    projectConfig.plots.push(pds_plot);
+    currentObj.appendPlot(pds_plot, mustRefreshData);
+
+    return [lc_plot, pds_plot];
+  }
+
+  this.appendPlot = function (plot, refreshData) {
     this.$body.append(plot.$html);
-    plot.onDatasetValuesChanged(this.getFilters());
+    if (isNull(refreshData) || refreshData) {
+      plot.onDatasetValuesChanged(this.getFilters());
+    }
   }
 
   log ("Output panel ready!!");
