@@ -9,15 +9,15 @@ import utils.dave_logger as logging
 
 
 # Returns an Stingray EventList from a given events dataset
-def get_eventlist_from_evt_dataset(dataset, axis):
+def get_eventlist_from_evt_dataset(dataset):
 
     if not is_events_dataset(dataset):
         logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
     # Extract axis values
-    time_data = np.array(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-    pi_data = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
+    time_data = np.array(dataset.tables["EVENTS"].columns["TIME"].values)
+    pi_data = np.array(dataset.tables["EVENTS"].columns["PI"].values)
 
     # Extract GTIs
     gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
@@ -30,15 +30,15 @@ def get_eventlist_from_evt_dataset(dataset, axis):
 
 
 # Returns an Stingray Lightcurve from a given lightcurve dataset
-def get_lightcurve_from_lc_dataset(dataset, axis, gti=None):
+def get_lightcurve_from_lc_dataset(dataset, gti=None):
 
     if not is_lightcurve_dataset(dataset):
         logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
     # Extract axis values
-    time_data = np.array(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-    counts = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
+    time_data = np.array(dataset.tables["RATE"].columns["TIME"].values)
+    counts = np.array(dataset.tables["RATE"].columns["RATE"].values)
 
     # Extract GTIs
     if not gti:
@@ -53,7 +53,7 @@ def get_lightcurve_from_lc_dataset(dataset, axis, gti=None):
 
 def get_empty_gti_table():
     table = Table("GTI")
-    table.add_columns(["START", "STOP"])
+    table.add_columns(["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"])
     return table
 
 

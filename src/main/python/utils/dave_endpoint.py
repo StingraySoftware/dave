@@ -25,7 +25,7 @@ def upload(files, target):
             return common_error("Error uploading file...")
 
         if not FileUtils.is_valid_file(destination):
-            return common_error("File extension is not supported...")
+            return common_error("File format is not supported...")
 
         logging.info("Uploaded filename: %s" % destination)
         SessionHelper.add_uploaded_file_to_session(file.filename)
@@ -93,25 +93,35 @@ def common_error(error):
     return json.dumps(dict(error=error))
 
 
-def get_plot_data(filename, target, filters, styles, axis):
-    destination = get_destination(filename, target)
-    if not destination:
-        return common_error("Invalid file or cache key")
+def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, styles, axis):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
 
-    logging.debug("get_plot_data: %s" % filename)
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_plot_data src: %s" % src_filename)
+    logging.debug("get_plot_data bck: %s" % bck_filename)
+    logging.debug("get_plot_data gti: %s" % gti_filename)
     logging.debug("get_plot_data: filters %s" % filters)
     logging.debug("get_plot_data: styles %s" % styles)
     logging.debug("get_plot_data: axis %s" % axis)
 
-    data = DaveEngine.get_plot_data(destination, filters, styles, axis)
-
-    logging.debug("get_plot_data: json.dumps...")
-
-    jsonData = json.dumps(data, cls=NPEncoder)
+    data = DaveEngine.get_plot_data(src_destination, bck_destination, gti_destination, filters, styles, axis)
 
     logging.debug("get_plot_data: Finish!")
 
-    return jsonData
+    return json.dumps(data, cls=NPEncoder)
 
 
 def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):

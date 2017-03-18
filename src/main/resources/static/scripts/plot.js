@@ -83,6 +83,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.refreshData = function () {
    this.setReadyState(false);
 
+   if (isNull(this.getDataFromServerFn)) {
+      log("Avoid request data, no service function setted, Plot" + currentObj.id);
+      return;
+   }
+
    var tab = getTabForSelector(this.id);
    this.plotConfig.dt = tab.projectConfig.binSize;
 
@@ -102,8 +107,18 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      currentObj.onPlotReady();
      return;
    } else {
-     currentObj.data = data;
+     currentObj.setData(data);
    }
+ }
+
+ this.setData = function ( data ) {
+
+   if (isNull(data)) {
+     log("setData wrong passed data!, plot" + currentObj.id);
+     return;
+   }
+
+   currentObj.data = data;
 
    var coords = { x: 0, y: 1};
    if (currentObj.isSwitched){
@@ -113,6 +128,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
+                                    currentObj.getWtiRanges(data),
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     currentObj.plotConfig.styles.title)
@@ -139,15 +155,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-     plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
-                                  [], [],
-                                  currentObj.plotConfig.styles.labels[coords.x],
-                                  currentObj.plotConfig.styles.labels[coords.y],
-                                  currentObj.plotConfig.styles.title);
+      plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
+                                          [], [], currentObj.getWtiRanges(data),
+                                          currentObj.plotConfig.styles.labels[coords.x],
+                                          currentObj.plotConfig.styles.labels[coords.y],
+                                          currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[coords.x].values, data[coords.y].values, data[2].values,
-                                   [], [], [],
+                                   [], [], [], currentObj.getWtiRanges(data),
                                    currentObj.plotConfig.styles.labels[coords.x],
                                    currentObj.plotConfig.styles.labels[coords.y],
                                    currentObj.plotConfig.styles.labels[2],
@@ -297,6 +313,66 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    } else {
      this.plotConfig.filters = filters;
    }
+ }
+
+ this.getWtiRanges = function (data) {
+
+   //Prepares Wrong Time Intervals for background highlight
+
+   if (data[0].values.length == 0) {
+      return [];
+   }
+
+   var wti_x_ranges = [];
+   var last_x = data[0].values[data[0].values.length - 1];
+   var x = data[0].values[0];
+   var totalElapsed = last_x - x;
+   var prevX = x - 1;
+   var prevY = 0;
+   var prevPrevX = x - 2;
+   var trigger_ratio = 10;  // The ratio of elapsed time versus prev elapsed for triggering a gap
+   var elapsed_avg = 0;
+
+   for (i in data[0].values) {
+
+       x = data[0].values[i];
+       y = data[1].values[i];
+       var elapsed = x - prevX;
+
+       if (y > 0){
+         if (elapsed_avg > 0) {
+           var ratio = elapsed / elapsed_avg;
+
+           if (prevX > prevPrevX && prevPrevX > 0 && elapsed_avg != 1) {
+             if (ratio > trigger_ratio) {
+               //Looks that we are outside a GTI
+               //Sets range start to end, x is the end index of the gti
+               var wtiStart = prevX + (prevX - prevPrevX)/2;
+               var wtiStop = x - (prevX - prevPrevX)/2;
+               if (totalElapsed / (wtiStop - wtiStart) < trigger_ratio) {
+                 // If WTI is at least the tenth part of total time
+                 wti_x_ranges.push([wtiStart, wtiStop]);
+               }
+             }
+           }
+
+           // Calulates the ne elapsed_avg with the latest 5 vals, avoid break avg with gaps
+           if (ratio < trigger_ratio || elapsed_avg == 1) {
+             elapsed_avg += (elapsed - elapsed_avg) * 0.2;
+           }
+
+         } else {
+           elapsed_avg = elapsed;
+         }
+
+         prevPrevX = prevX;
+         prevX = x;
+       }
+
+       prevY = y;
+   }
+
+   return wti_x_ranges;
  }
 
  log ("new plot id: " + this.id);

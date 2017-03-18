@@ -25,12 +25,6 @@ def test_get_eventlist_from_evt_dataset(s):
     if not dataset:
         return None
 
-    axis = [dict() for i in range(2)]
-    axis[0]["table"] = "EVENTS"
-    axis[0]["column"] = "TIME"
-    axis[1]["table"] = "EVENTS"
-    axis[1]["column"] = "PI"
-
-    eventList = DsHelper.get_eventlist_from_evt_dataset(dataset, axis)
+    eventList = DsHelper.get_eventlist_from_evt_dataset(dataset)
 
     assert not os.path.isfile(destination) or len(eventList.time) > 0

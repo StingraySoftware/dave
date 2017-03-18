@@ -54,7 +54,8 @@ def append_file_to_dataset():
 
 @app.route('/get_plot_data', methods=['POST'])
 def get_plot_data():
-    return DaveEndpoint.get_plot_data(request.json['filename'], UPLOADS_TARGET,
+    return DaveEndpoint.get_plot_data(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 

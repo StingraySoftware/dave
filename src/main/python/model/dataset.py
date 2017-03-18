@@ -108,9 +108,7 @@ def get_hdu_type_dataset(dsId, columns, hduname="EVENTS"):
 
     # Fills Hdu table
     dataset.add_table(hduname, columns)
-
-    gti_columns = ["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"]
-    dataset.add_table("GTI", gti_columns)
+    dataset.tables["GTI"] = DsHelper.get_empty_gti_table()
 
     return dataset
 
