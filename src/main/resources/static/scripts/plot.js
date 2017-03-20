@@ -130,7 +130,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
-                                    currentObj.getWtiRanges(data),
+                                    currentObj.detectWtiRangesFromData(data),
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     currentObj.plotConfig.styles.title)
@@ -158,14 +158,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
       plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
-                                          [], [], currentObj.getWtiRanges(data),
+                                          [], [], currentObj.detectWtiRangesFromData(data),
                                           currentObj.plotConfig.styles.labels[coords.x],
                                           currentObj.plotConfig.styles.labels[coords.y],
                                           currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[coords.x].values, data[coords.y].values, data[2].values,
-                                   [], [], [], currentObj.getWtiRanges(data),
+                                   [], [], [], currentObj.detectWtiRangesFromData(data),
                                    currentObj.plotConfig.styles.labels[coords.x],
                                    currentObj.plotConfig.styles.labels[coords.y],
                                    currentObj.plotConfig.styles.labels[2],
@@ -320,12 +320,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
   this.getLegendTextForPoint = function (coords) {
    var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
-
-   var labelY = this.plotConfig.styles.labels[swcoords.y];
-   if (!isNull(coords.label)) {
-     labelY = coords.label;
-   }
-
+   var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
    var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + coords.x;
    var infotextfory = labelY + ': ' + coords.y;
    var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0';
@@ -341,7 +336,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      error_y_string= "+/-" + (coords.error_y).toString();
    }
 
-   return infotextforx  + error_x_string + spacesup + infotextfory + error_y_string;
+   return infotextforx + error_x_string + spacesup + infotextfory + error_y_string;
   }
 
   this.setLegendText = function (text) {
@@ -364,7 +359,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        Plotly.deleteTraces(currentObj.plotElem, i - 1);
        newaddedTraces --;
      } catch (e) {
-       log("deleteTraces: ERROR ex: " + e);
+       //log("deleteTraces: ERROR ex: " + e);
      }
    }
 
@@ -437,7 +432,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
   }
 
-  this.getWtiRanges = function (data) {
+  this.detectWtiRangesFromData = function (data) {
 
    //Prepares Wrong Time Intervals for background highlight
 
