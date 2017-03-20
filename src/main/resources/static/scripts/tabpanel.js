@@ -205,6 +205,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     currentObj.toolPanel.applyFilters(filters);
   }
 
+  this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
+    currentObj.outputPanel.broadcastEventToPlots(evt_name, evt_data, senderId);
+  }
+
 
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");

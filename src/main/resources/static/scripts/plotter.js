@@ -13,6 +13,7 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_
         data: [
                 {
                   type : 'scatter',
+                  showlegend : false,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y_values,
@@ -141,6 +142,7 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
       data: [
               {
                 type : 'scatter',
+                showlegend : false,
                 x : x_values,
                 y : y_values,
                 mode : "markers",

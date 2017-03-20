@@ -115,6 +115,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return null;
   }
 
+  this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
+    for (i in this.plots) {
+      this.plots[i].receivePlotEvent(evt_name, evt_data, senderId);
+    }
+  }
+
   this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, timeUnit ) {
 
     log("getFitsTablePlots: filename: " + filename );

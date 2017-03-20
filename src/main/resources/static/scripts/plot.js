@@ -15,6 +15,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.cssClass = (cssClass != undefined) ? cssClass : "";
   this.switchable = (switchable != undefined) ? switchable : false;
   this.data = null;
+  this.tracesCount = 0;
+  this.addedTraces = 0;
+  this.minX = 0;
+  this.minY = 0;
 
   this.$html = $('<div id="' + this.id + '" class="plotContainer ' + this.cssClass + '">' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
@@ -44,7 +48,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.btnHide.click(function(event){
     currentObj.isVisible = false;
     currentObj.$html.hide();
-    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + currentObj.plotConfig.styles.title);
+    var btnShowText = "";
+    if (!isNull(currentObj.plotConfig.styles.title)) {
+      btnShowText = currentObj.plotConfig.styles.title;
+    }
+    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
     currentObj.btnShow.show();
  });
 
@@ -119,11 +127,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
 
    currentObj.data = data;
-
-   var coords = { x: 0, y: 1};
-   if (currentObj.isSwitched){
-     coords = { x: 1, y: 0};
-   }
+   currentObj.updateMinCoords();
+   var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
 
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
@@ -173,6 +178,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (plotlyConfig != null) {
      Plotly.newPlot(currentObj.plotId, plotlyConfig.data, plotlyConfig.layout);
      currentObj.plotElem = currentObj.$html.find(".plot")[0];
+     this.tracesCount = plotlyConfig.data.length;
      currentObj.registerPlotEvents()
      currentObj.resize();
      log("onPlotReceived plot " + currentObj.id);
@@ -238,54 +244,182 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
          }
       }
 
-     });
+      })
+    }
 
-     this.plotElem.on('plotly_hover', function(data){
-          var infotextforx = data.points.map(function(d){
-            return ('x : '+d.x);
-          });
+    this.plotElem.on('plotly_hover', function(data){
+      var coords = currentObj.getCoordsFromPlotlyHoverEvent(data);
+      if (coords != null){
+        currentObj.onHover(coords);
 
-          var infotextfory = data.points.map(function(d){
-            return ('y : '+d.y.toPrecision(6));
-          });
+        var evt_data = currentObj.getSwitchedCoords({ x: coords.x, y: coords.y });
+        evt_data.labels = currentObj.plotConfig.styles.labels;
+        currentObj.sendPlotEvent('on_hover', evt_data);
+      }
 
-          var pt = data.points[0];
-          var ptNumber = pt.pointNumber;
-          var trace = pt.data;
+    }).on('plotly_unhover', function(data){
+      currentObj.onUnHover();
+      currentObj.sendPlotEvent('on_unhover', {});
+    });
+  }
 
-          var error_x_string = "";
-          var error_y_string = "";
-          if (ptNumber < trace.error_x.array.length) {
-            error_x_string= "+/-" + (trace.error_x.array[ptNumber]).toString();
-            error_y_string= "+/-" + (trace.error_y.array[ptNumber]).toString();
-          }
+  this.getCoordsFromPlotlyHoverEvent = function (data){
+   if (data.points.length == 1) {
+     var pt = data.points[0];
+     var error_x = null;
+     var error_y = null;
+     if (!isNull(pt.data.error_x) && pt.pointNumber < pt.data.error_x.array.length) {
+       error_x = pt.data.error_x.array[pt.pointNumber];
+       error_y = pt.data.error_y.array[pt.pointNumber];
+     }
+     return { x: pt.x, y: pt.y, error_x: error_x, error_y: error_y };
+   }
+   return null;
+  }
 
-          var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
-          var spacesdown= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0' ;
+  this.getNearestCoordsFromEvent = function (evt_data){
+    var coords = this.getSwitchedCoords( { x: 0, y: 1} );
 
-          currentObj.$hoverinfo.html(infotextforx  + error_x_string + spacesup + infotextfory + error_y_string);
+    if (this.data != null && this.plotConfig.styles.labels[coords.x].startsWith(evt_data.labels[0])) {
+      var x = closest(this.data[coords.x].values, evt_data.x);
+      var idx = this.data[coords.x].values.indexOf(x);
+      var y = this.data[coords.y].values[idx];
 
-     }).on('plotly_unhover', function(data){
-         currentObj.$hoverinfo.html("");
-     });
+      return { x: x, y: y, error_x: null, error_y: null };
+    }
+
+    return null;
+  }
+
+  this.updateMinCoords = function (){
+    if (this.data != null) {
+      var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+      this.minX = Math.min.apply(null, this.data[coords.x].values);
+      this.minY = Math.min.apply(null, this.data[coords.y].values);
+    }
+  }
+
+  this.getSwitchedCoords = function (coords) {
+    if (this.isSwitched){
+      var x = coords.x;
+      coords.x = coords.y;
+      coords.y = x;
+    }
+    return coords;
+  }
+
+  this.onHover = function (coords){
+   if (coords != null) {
+     this.setLegendText( this.getLegendTextForPoint(coords) );
+     this.showCross(coords.x, coords.y);
+   }
+  }
+
+  this.onUnHover = function (){
+   this.setLegendText("");
+   this.hideCrosses();
+  }
+
+  this.getLegendTextForPoint = function (coords) {
+   var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
+
+   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + coords.x;
+   var infotextfory = this.plotConfig.styles.labels[swcoords.y] + ': ' + coords.y;
+   var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0';
+   var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
+   var idx = this.data[swcoords.x].values.indexOf(coords.x);
+
+   var error_x_string = "";
+   var error_y_string = "";
+   if (!isNull(coords.error_x)) {
+     error_x_string= "+/-" + (coords.error_x).toString();
+   } else {
+     //Tries to get error from data
+     if (!isNull(this.data[swcoords.x].error_values)
+          && this.data[swcoords.x].error_values > idx
+          && this.data[swcoords.x].error_values[idx] != 0) {
+       error_x_string= "+/-" + (this.data[swcoords.x].error_values[idx]).toString();
+     }
    }
 
-   this.saveAsPNG = function () {
-
-     html2canvas(this.plotElem, {
-         onrendered: function(canvas) {
-             theCanvas = canvas;
-             // Convert and download as image
-             Canvas2Image.saveAsPNG(canvas);
-             // Clean up
-             //document.body.removeChild(canvas);
-         }
-     });
+   if (!isNull(coords.error_y)){
+     error_y_string= "+/-" + (coords.error_y).toString();
+   } else {
+     //Tries to get error from data
+     if (!isNull(this.data[swcoords.y].error_values)
+          && this.data[swcoords.y].error_values > idx
+          && this.data[swcoords.Y].error_values[idx] != 0) {
+       error_y_string= "+/-" + (this.data[swcoords.y].error_values[idx]).toString();
+     }
    }
 
- }
+   return infotextforx  + error_x_string + spacesup + infotextfory + error_y_string;
+  }
 
- this.applyValidFilters = function (filters) {
+  this.setLegendText = function (text) {
+   this.$hoverinfo.html(text);
+  }
+
+  this.showCross = function (x, y){
+   Plotly.addTraces(this.plotElem, { x: [x, x], y: [this.minY, y], showlegend: false, line: {color: '#dd4814'}, hoverinfo: "none" });
+   Plotly.addTraces(this.plotElem, { x: [this.minX, x], y: [y, y], showlegend: false, line: {color: '#dd4814'}, hoverinfo: "none" });
+   this.addedTraces += 2;
+   //log("showCross: addedTraces: " + this.addedTraces);
+  }
+
+  this.hideCrosses = function (){
+
+   var newaddedTraces = this.addedTraces;
+   //log("hideCrosses: addedTraces: " + this.addedTraces + ", tracesCount: " + this.tracesCount);
+   for (i = this.addedTraces + this.tracesCount; i > this.tracesCount; i--) {
+     try {
+       Plotly.deleteTraces(currentObj.plotElem, i - 1);
+       newaddedTraces --;
+     } catch (e) {
+       log("deleteTraces: ERROR ex: " + e);
+     }
+   }
+
+   this.addedTraces = newaddedTraces;
+  }
+
+  this.sendPlotEvent = function (evt_name, evt_data) {
+    //Sends event to all plots inside the tab
+    var tab = getTabForSelector(this.id);
+    if (tab != null) {
+      tab.broadcastEventToPlots(evt_name, evt_data, this.id);
+    }
+  }
+
+  this.receivePlotEvent = function (evt_name, evt_data, senderId) {
+   if (this.plotElem != null && this.isVisible && this.id != senderId) {
+     switch (evt_name) {
+          case 'on_hover':
+              this.onHover(this.getNearestCoordsFromEvent(evt_data));
+              break;
+          case 'on_unhover':
+              this.onUnHover();
+              break;
+          default:
+              log("receivePlotEvent: Unhandled event: " + evt_name);
+      }
+   }
+  }
+
+  this.saveAsPNG = function () {
+
+   html2canvas(this.plotElem, {
+       onrendered: function(canvas) {
+           theCanvas = canvas;
+           // Convert and download as image
+           Canvas2Image.saveAsPNG(canvas);
+           // Clean up
+           //document.body.removeChild(canvas);
+       }
+   });
+  }
+
+  this.applyValidFilters = function (filters) {
    if (!isNull(this.plotConfig.mandatoryFilters)) {
 
      //Sets only valid filters: Valid filters is a filter without source, or
@@ -313,9 +447,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    } else {
      this.plotConfig.filters = filters;
    }
- }
+  }
 
- this.getWtiRanges = function (data) {
+  this.getWtiRanges = function (data) {
 
    //Prepares Wrong Time Intervals for background highlight
 
@@ -373,11 +507,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
 
    return wti_x_ranges;
- }
+  }
 
- log ("new plot id: " + this.id);
+  log ("new plot id: " + this.id);
 
- return this;
+  return this;
 }
 
 //Static plot METHODS
