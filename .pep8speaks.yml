@@ -1,4 +1,4 @@
 pycodestyle:
-   max-line-length: 120
-   ignore:  # Errors and warnings to ignore
-     - w391 # trailing empty lines. More a test than anything else, can be removed.
+  max-line-length: 120
+  ignore: # Errors and warnings to ignore
+    - W391 # trailing empty lines. More a test than anything else, can be removed.
