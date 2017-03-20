@@ -136,6 +136,17 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     }
   }
 
+  this.getPlotConfig = function (data) {
+    var plotConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
+                                        [], [], currentObj.detectWtiRangesFromData(data),
+                                        currentObj.plotConfig.styles.labels[0],
+                                        currentObj.plotConfig.styles.labels[1],
+                                        currentObj.plotConfig.styles.title);
+    plotConfig.layout.xaxis.type = 'log';
+    plotConfig.layout.xaxis.autorange = true;
+    return plotConfig;
+  }
+
   this.setReadyState = function (isReady) {
     this.isReady = isReady;
     if (isReady && (this.data != null)) {
