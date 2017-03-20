@@ -103,19 +103,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.onPlotDataReceived = function ( data ) {
-
-   var plotlyConfig = null;
-
-   log("onPlotReceived passed data!, plot" + currentObj.id);
+   log("onPlotDataReceived passed data!, plot" + currentObj.id);
    data = JSON.parse(data);
 
-   if (data == null) {
-     log("onPlotReceived wrong data!, plot" + currentObj.id);
+   if (data != null) {
+     currentObj.setData(data);
+   } else {
+     log("onPlotDataReceived wrong data!, plot" + currentObj.id);
      currentObj.setReadyState(true);
      currentObj.onPlotReady();
-     return;
-   } else {
-     currentObj.setData(data);
    }
  }
 
@@ -130,6 +126,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.updateMinCoords();
    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
 
+   var plotlyConfig = null;
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
@@ -175,21 +172,22 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.plotConfig.styles.title);
    }
 
-   if (plotlyConfig != null) {
-     Plotly.newPlot(currentObj.plotId, plotlyConfig.data, plotlyConfig.layout);
-     currentObj.plotElem = currentObj.$html.find(".plot")[0];
-     this.tracesCount = plotlyConfig.data.length;
-     currentObj.registerPlotEvents()
-     currentObj.resize();
-     log("onPlotReceived plot " + currentObj.id);
-
-   } else {
-
-     log("onPlotReceived ERROR: WRONG PLOT CONFIG! plot " + currentObj.id);
-   }
-
+   currentObj.redrawPlot(plotlyConfig);
    currentObj.setReadyState(true);
    currentObj.onPlotReady();
+ }
+
+ this.redrawPlot = function (plotlyConfig) {
+   if (plotlyConfig != null) {
+     Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+     this.plotElem = this.$html.find(".plot")[0];
+     this.tracesCount = plotlyConfig.data.length;
+     this.registerPlotEvents()
+     this.resize();
+
+   } else {
+     log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
+   }
  }
 
  this.setReadyState = function (isReady) {
