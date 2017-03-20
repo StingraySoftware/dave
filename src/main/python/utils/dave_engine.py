@@ -191,7 +191,7 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
 
         count_column_name = "PI"
         color_keys = FltHelper.get_color_keys_from_filters(filters)
-        filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
+        filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)  # Wow, this line is really really long..........
         color_axis = get_color_axis_for_ds()
 
         # Creates lightcurves array applying bck and gtis from each color
