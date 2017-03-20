@@ -11,8 +11,8 @@ function infoPanel(id, title, header, headerComments, toolbar) {
                        "OBS_ID", "OBS_MODE", "EXP_ID"];
 
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
-                 '<button class="btn btnShowAll">Show All</button>' +
-                 '<button class="btn btnHide">Hide</button>' +
+                 '<button class="btn btn-default btnShowAll"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>' +
+                 '<button class="btn btn-default btnHide"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
                  '<h3>' + title + '</h3>' +
                  '<table class="properties"></table>' +
                '</div>');
@@ -24,7 +24,7 @@ function infoPanel(id, title, header, headerComments, toolbar) {
     currentObj.redraw();
   });
 
-  this.btnShow = $('<button class="btn btnShow' + this.id + '">Show</button>');
+  this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> Header</button>');
   this.btnShow.hide();
   toolbar.append(this.btnShow);
 

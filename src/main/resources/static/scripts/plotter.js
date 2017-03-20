@@ -7,12 +7,13 @@ var DEFAULT_TITLE_FONT = {
 
 var DEFAULT_MARGINS = { b : 42, r : 12, l: 64, t: 24 }
 
-function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, x_label, y_label){
+function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
 
     return {
         data: [
                 {
                   type : 'scatter',
+                  showlegend : false,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y_values,
@@ -29,7 +30,7 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, x_la
                 }
               ],
         layout : {
-                   title : '',
+                   title : !isNull(title) ? title : '',
                    hovermode: 'closest',
                    xaxis : {
                              title : x_label,
@@ -40,7 +41,53 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, x_la
                              titlefont : DEFAULT_TITLE_FONT
                          },
                   dragmode:'select',
-                  margin: DEFAULT_MARGINS
+                  margin: DEFAULT_MARGINS,
+                  shapes: getShapesFromWti (wti_x_ranges)
+                }
+        }
+}
+
+function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
+
+    return {
+        data: [
+                {
+                  type : 'scatter',
+                  showlegend : false,
+                  hoverinfo : 'none',
+                  connectgaps : false,
+                  x : x_values,
+                  y : y_values,
+                  error_x : {
+                             type : 'data',
+                             array : x_error_values,
+                             visible : true
+                          },
+                  error_y : {
+                             type : 'data',
+                             array : y_error_values,
+                             visible : true
+                          },
+                  line : {
+                          shape	:	'hvh',
+                          color : '#1f77b4'
+                        }
+                }
+              ],
+        layout : {
+                   title : !isNull(title) ? title : '',
+                   hovermode: 'closest',
+                   xaxis : {
+                             title : x_label,
+                             titlefont : DEFAULT_TITLE_FONT
+                           },
+                   yaxis: {
+                             title : y_label,
+                             titlefont : DEFAULT_TITLE_FONT
+                         },
+                  dragmode:'select',
+                  margin: DEFAULT_MARGINS,
+                  shapes: getShapesFromWti (wti_x_ranges)
                 }
         }
 }
@@ -83,18 +130,19 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                 }
               ],
         layout : {
-                   title : title,
+                   title : !isNull(title) ? title : '',
                    margin: DEFAULT_MARGINS
                 }
         }
 }
 
-function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) {
+function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
 
   return {
       data: [
               {
                 type : 'scatter',
+                showlegend : false,
                 x : x_values,
                 y : y_values,
                 mode : "markers",
@@ -105,7 +153,7 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) 
               }
             ],
       layout : {
-                 title : '',
+                 title : !isNull(title) ? title : '',
                  hovermode: 'closest',
                  xaxis : {
                            title : x_label,
@@ -120,7 +168,7 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, color_label) 
       }
 }
 
-function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label) {
+function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label, title) {
 
   return {
       data: [
@@ -143,7 +191,7 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
               }
             ],
       layout : {
-                 title : '',
+                 title : !isNull(title) ? title : '',
                  hovermode: 'closest',
                  xaxis : {
                            title : x_label,
@@ -161,12 +209,13 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
 
 function get_plotdiv_xyy(x_values, y0_values, y1_values,
                           x_error_values, y0_error_values, y1_error_values,
-                          x_label, y0_label, y1_label){
+                          wti_x_ranges, x_label, y0_label, y1_label, title){
 
     return {
         data: [
                 {
                   type : 'scatter',
+                  showlegend : false,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y0_values,
@@ -185,6 +234,7 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                 {
                   type : 'scatter',
                   hoverinfo : 'none',
+                  showlegend : false,
                   x : x_values,
                   y : y1_values,
                   error_x : {
@@ -201,14 +251,43 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                 }
               ],
         layout : {
-                   title : '',
+                   title : !isNull(title) ? title : '',
                    hovermode: 'closest',
                    xaxis : {
                              title : x_label,
                              titlefont : DEFAULT_TITLE_FONT
                            },
                   dragmode:'select',
-                  margin: DEFAULT_MARGINS
+                  margin: DEFAULT_MARGINS,
+                  shapes: getShapesFromWti (wti_x_ranges)
                 }
         }
+}
+
+//Return the ploty shapes for higlight the WRONG TIME INTERVALS
+function getShapesFromWti (wti_x_ranges) {
+  var wti_shapes = [];
+
+  for (i in wti_x_ranges) {
+    var wti_range = wti_x_ranges[i];
+    var wti_shape = {
+                      type: 'rect',
+                      // x-reference is assigned to the x-values
+                      xref: 'x',
+                      // y-reference is assigned to the plot paper [0,1]
+                      yref: 'paper',
+                      x0: wti_range[0],
+                      y0: 0,
+                      x1: wti_range[1],
+                      y1: 1,
+                      fillcolor: '#dd4814',
+                      opacity: 0.2,
+                      line: {
+                          width: 0
+                      }
+                  };
+    wti_shapes.push(wti_shape);
+  }
+
+  return wti_shapes;
 }

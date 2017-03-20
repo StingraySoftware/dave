@@ -33,24 +33,13 @@ function Service (base_url) {
       .fail(errorFn);
   };
 
-  this.request_plot_data = function (plot_data, fn) {
-    log("request_plot_data plot " + JSON.stringify(plot_data));
-    $.ajax({
-       type : "POST",
-       url : thisService.base_url + "/get_plot_data",
-       data: JSON.stringify(plot_data, null, '\t'),
-       contentType: 'application/json;charset=UTF-8',
-       success: fn
-    });
-  };
-
-  this.request_lightcurve = function (lc_data, fn) {
-    log("request_lightcurve plot " + JSON.stringify(lc_data));
+  this.make_ajax_call = function (callName, data, fn) {
+    log(callName + " plot " + JSON.stringify(data));
     try {
       $.ajax({
          type : "POST",
-         url : thisService.base_url + "/get_lightcurve",
-         data: JSON.stringify(lc_data, null, '\t'),
+         url : thisService.base_url + "/" + callName,
+         data: JSON.stringify(data, null, '\t'),
          contentType: 'application/json;charset=UTF-8',
          success: fn,
          error: fn
@@ -60,68 +49,36 @@ function Service (base_url) {
     }
   };
 
-  this.request_colors_lightcurve = function (lc_data, fn) {
-    log("request_colors_lightcurve plot " + JSON.stringify(lc_data));
-    try {
-      $.ajax({
-         type : "POST",
-         url : thisService.base_url + "/get_colors_lightcurve",
-         data: JSON.stringify(lc_data, null, '\t'),
-         contentType: 'application/json;charset=UTF-8',
-         success: fn,
-         error: fn
-      });
-    } catch (e) {
-      fn({ "error" : e });
-    }
+  this.request_plot_data = function (data, fn) {
+    thisService.make_ajax_call("get_plot_data", data, fn);
+  };
+
+  this.request_lightcurve = function (data, fn) {
+    thisService.make_ajax_call("get_lightcurve", data, fn);
+  };
+
+  this.request_colors_lightcurve = function (data, fn) {
+    thisService.make_ajax_call("get_colors_lightcurve", data, fn);
   };
 
   this.request_joined_lightcurves_from_colors = function (data, fn) {
-    log("request_joined_lightcurves_from_colors plot " + JSON.stringify(data));
-    try {
-      $.ajax({
-         type : "POST",
-         url : thisService.base_url + "/get_joined_lightcurves_from_colors",
-         data: JSON.stringify(data, null, '\t'),
-         contentType: 'application/json;charset=UTF-8',
-         success: fn,
-         error: fn
-      });
-    } catch (e) {
-      fn({ "error" : e });
-    }
+    thisService.make_ajax_call("get_joined_lightcurves_from_colors", data, fn);
   };
 
-  this.request_joined_lightcurves = function (lc_data, fn) {
-    log("request_joined_lightcurves plot " + JSON.stringify(lc_data));
-    try {
-      $.ajax({
-         type : "POST",
-         url : thisService.base_url + "/get_joined_lightcurves",
-         data: JSON.stringify(lc_data, null, '\t'),
-         contentType: 'application/json;charset=UTF-8',
-         success: fn,
-         error: fn
-      });
-    } catch (e) {
-      fn({ "error" : e });
-    }
+  this.request_joined_lightcurves = function (data, fn) {
+    thisService.make_ajax_call("get_joined_lightcurves", data, fn);
   };
 
   this.request_divided_lightcurve_ds = function (data, fn) {
-    log("request_divided_lightcurve_ds: " + JSON.stringify(data));
-    try {
-      $.ajax({
-         type : "POST",
-         url : thisService.base_url + "/get_divided_lightcurve_ds",
-         data: JSON.stringify(data, null, '\t'),
-         contentType: 'application/json;charset=UTF-8',
-         success: fn,
-         error: fn
-      });
-    } catch (e) {
-      fn({ "error" : e });
-    }
+    thisService.make_ajax_call("get_divided_lightcurve_ds", data, fn);
+  };
+
+  this.request_power_density_spectrum = function (data, fn) {
+    thisService.make_ajax_call("get_power_density_spectrum", data, fn);
+  };
+
+  this.request_cross_spectrum = function (data, fn) {
+    thisService.make_ajax_call("get_cross_spectrum", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

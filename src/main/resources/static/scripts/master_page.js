@@ -36,3 +36,24 @@ function onServerMessageReceived (msg) {
 function isNull (value) {
   return (value === undefined) || (value == null);
 }
+
+function closest(arr, closestTo){
+    var closest = Math.max.apply(null, arr);
+    for(var i = 0; i < arr.length; i++){
+        if(arr[i] >= closestTo && arr[i] < closest) closest = arr[i];
+    }
+    return closest;
+}
+
+function onMultiplePlotsSelected(selectedPlots) {
+  log("onMultiplePlotsSelected: selectedPlots -> " + selectedPlots.length);
+
+  waitingDialog.show('Preparing new tab ...');
+
+  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), selectedPlots);
+
+  setTimeout( function () {
+    ClearSelectedPlots();
+    waitingDialog.hide();
+  }, 850);
+}

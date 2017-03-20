@@ -33,6 +33,19 @@ function ToolPanel (id,
     this.file_selectors_ids_array.push(selector.id);
   }
 
+  this.clearFileSelectors = function () {
+    this.$html.find(".fileSelectorsContainer").html("");
+    this.file_selectors_ids_array = [];
+  }
+
+  this.addSelectedFile = function (label, filename) {
+    var $selectedFile = $('<div class="fileSelector">' +
+                            '<h3>' + label + '</h3>' +
+                            '<label class="fileBtn">' + filename + '</label>' +
+                          '</div>');
+     this.$html.find(".fileSelectorsContainer").append($selectedFile);
+  }
+
   this.showEventsSelectors = function ( panel ) {
     this.bckFileSelector.show();
     this.gtiFileSelector.show();

@@ -162,14 +162,14 @@ h3
   padding: 0;
 }
 
+.plotContainer.plotSelected
+{
+  border: 1px solid #ff0000;
+}
+
 .plotContainer .plot{
   overflow: hidden;
   height: 305px;
-}
-
-.plotContainer .btnHidePlot
-{
-  top: 0;
 }
 
 .plotContainer .hoverinfo
@@ -178,6 +178,16 @@ h3
   margin-top: 4px;
   float:left;
   font-size: 0.7em;
+}
+
+.plotContainer .plotTools
+{
+  float:right;
+}
+
+.plotContainer .settings
+{
+  padding: 24px;
 }
 
 .fullWidth
@@ -221,6 +231,8 @@ h3
 }
 
 .btn {
+  margin-right: 2px;
+  margin-bottom: 2px;
   padding: 4px;
   padding-top: 1px;
   padding-bottom: 1px;

@@ -25,7 +25,7 @@ def upload(files, target):
             return common_error("Error uploading file...")
 
         if not FileUtils.is_valid_file(destination):
-            return common_error("File extension is not supported...")
+            return common_error("File format is not supported...")
 
         logging.info("Uploaded filename: %s" % destination)
         SessionHelper.add_uploaded_file_to_session(file.filename)
@@ -51,7 +51,7 @@ def get_destination(filename, target):
             return None
         else:
             destination = filename # Filename represents only a joined dataset key, not a real file
-            
+
     return destination
 
 
@@ -93,25 +93,35 @@ def common_error(error):
     return json.dumps(dict(error=error))
 
 
-def get_plot_data(filename, target, filters, styles, axis):
-    destination = get_destination(filename, target)
-    if not destination:
-        return common_error("Invalid file or cache key")
+def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, styles, axis):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
 
-    logging.debug("get_plot_data: %s" % filename)
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_plot_data src: %s" % src_filename)
+    logging.debug("get_plot_data bck: %s" % bck_filename)
+    logging.debug("get_plot_data gti: %s" % gti_filename)
     logging.debug("get_plot_data: filters %s" % filters)
     logging.debug("get_plot_data: styles %s" % styles)
     logging.debug("get_plot_data: axis %s" % axis)
 
-    data = DaveEngine.get_plot_data(destination, filters, styles, axis)
-
-    logging.debug("get_plot_data: json.dumps...")
-
-    jsonData = json.dumps(data, cls=NPEncoder)
+    data = DaveEngine.get_plot_data(src_destination, bck_destination, gti_destination, filters, styles, axis)
 
     logging.debug("get_plot_data: Finish!")
 
-    return jsonData
+    return json.dumps(data, cls=NPEncoder)
 
 
 def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
@@ -262,3 +272,98 @@ def get_lightcurve_ds_from_events_ds(filename, target, axis, dt):
     logging.debug("get_lightcurve_ds_from_events_ds: Finish! cache_key ->  %s" % cache_key)
 
     return json.dumps(cache_key, cls=NPEncoder)
+
+
+def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target, filters, axis, dt, nsegm, segm_size, norm):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_power_density_spectrum src: %s" % src_filename)
+    logging.debug("get_power_density_spectrum bck: %s" % bck_filename)
+    logging.debug("get_power_density_spectrum gti: %s" % gti_filename)
+    logging.debug("get_power_density_spectrum: filters %s" % filters)
+    logging.debug("get_power_density_spectrum: axis %s" % axis)
+    logging.debug("get_power_density_spectrum: dt %f" % dt)
+    logging.debug("get_power_density_spectrum: nsegm %f" % nsegm)
+    logging.debug("get_power_density_spectrum: segm_size %f" % segm_size)
+    logging.debug("get_power_density_spectrum: norm %s" % norm)
+
+    data = DaveEngine.get_power_density_spectrum(src_destination, bck_destination, gti_destination, filters, axis, dt, nsegm, segm_size, norm)
+
+    logging.debug("get_power_density_spectrum: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, axis1, dt1,
+                       src_filename2, bck_filename2, gti_filename2, filters2, axis2, dt2,
+                       target, nsegm, segm_size, norm):
+
+   src_destination1 = get_destination(src_filename1, target)
+   if not src_destination1:
+       return common_error("Invalid file or cache key for source data 1")
+
+   bck_destination1 = ""
+   if bck_filename1:
+       bck_destination1 = get_destination(bck_filename1, target)
+       if not bck_destination1:
+           return common_error("Invalid file or cache key for backgrund data 1")
+
+   gti_destination1 = ""
+   if gti_filename1:
+       gti_destination1 = get_destination(gti_filename1, target)
+       if not gti_destination1:
+           return common_error("Invalid file or cache key for gti data 1")
+
+   src_destination2 = get_destination(src_filename2, target)
+   if not src_destination2:
+       return common_error("Invalid file or cache key for source data 2")
+
+   bck_destination2 = ""
+   if bck_filename2:
+       bck_destination2 = get_destination(bck_filename2, target)
+       if not bck_destination2:
+           return common_error("Invalid file or cache key for backgrund data 2")
+
+   gti_destination2 = ""
+   if gti_filename2:
+       gti_destination2 = get_destination(gti_filename2, target)
+       if not gti_destination2:
+           return common_error("Invalid file or cache key for gti data 2")
+
+   logging.debug("get_cross_spectrum src 1: %s" % src_filename1)
+   logging.debug("get_cross_spectrum bck 1: %s" % bck_filename1)
+   logging.debug("get_cross_spectrum gti 1: %s" % gti_filename1)
+   logging.debug("get_cross_spectrum: filters 1 %s" % filters1)
+   logging.debug("get_cross_spectrum: axis 1 %s" % axis1)
+   logging.debug("get_cross_spectrum: dt 1 %f" % dt1)
+   logging.debug("get_cross_spectrum src 2: %s" % src_filename2)
+   logging.debug("get_cross_spectrum bck 2: %s" % bck_filename2)
+   logging.debug("get_cross_spectrum gti 2: %s" % gti_filename2)
+   logging.debug("get_cross_spectrum: filters 2 %s" % filters2)
+   logging.debug("get_cross_spectrum: axis 2 %s" % axis2)
+   logging.debug("get_cross_spectrum: dt 2 %f" % dt2)
+   logging.debug("get_cross_spectrum: nsegm %f" % nsegm)
+   logging.debug("get_cross_spectrum: segm_size %f" % segm_size)
+   logging.debug("get_cross_spectrum: norm %s" % norm)
+
+   data = DaveEngine.get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
+                                        src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
+                                        nsegm, segm_size, norm)
+
+   logging.debug("get_cross_spectrum: Finish!")
+
+   return json.dumps(data, cls=NPEncoder)

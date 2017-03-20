@@ -54,7 +54,8 @@ def append_file_to_dataset():
 
 @app.route('/get_plot_data', methods=['POST'])
 def get_plot_data():
-    return DaveEndpoint.get_plot_data(request.json['filename'], UPLOADS_TARGET,
+    return DaveEndpoint.get_plot_data(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 
@@ -96,6 +97,24 @@ def get_divided_lightcurve_ds():
 def get_lightcurve_ds_from_events_ds():
     return DaveEndpoint.get_lightcurve_ds_from_events_ds(request.json['filename'],
             UPLOADS_TARGET, request.json['axis'], float(request.json['dt']))
+
+
+@app.route('/get_power_density_spectrum', methods=['POST'])
+def get_power_density_spectrum():
+    return DaveEndpoint.get_power_density_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']), request.json['norm'])
+
+
+@app.route('/get_cross_spectrum', methods=['POST'])
+def get_cross_spectrum():
+    return DaveEndpoint.get_cross_spectrum(request.json['filename1'],
+            request.json['bck_filename1'], request.json['gti_filename1'],
+            request.json['filters1'], request.json['axis1'], float(request.json['dt1']),
+            request.json['filename2'], request.json['bck_filename2'], request.json['gti_filename2'],
+            request.json['filters2'], request.json['axis2'], float(request.json['dt2']),
+            UPLOADS_TARGET, float(request.json['nsegm']), float(request.json['segment_size']), request.json['norm'])
 
 
 # Receives a message from client and send it to all subscribers

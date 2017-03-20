@@ -1,22 +1,23 @@
 import numpy as np
 
 from stingray.events import EventList
+from stingray import Lightcurve
 from stingray.gti import join_gtis
 from model.table import Table
 import bisect
 import utils.dave_logger as logging
 
 
-# Returns an Stingray EventList from a given dataset
-def get_eventlist_from_dataset(dataset, axis):
+# Returns an Stingray EventList from a given events dataset
+def get_eventlist_from_evt_dataset(dataset):
 
     if not is_events_dataset(dataset):
-        logging.warn("get_eventlist_from_dataset: dataset is not a events dataset instance")
+        logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
     # Extract axis values
-    time_data = np.array(dataset.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-    pi_data = np.array(dataset.tables[axis[1]["table"]].columns[axis[1]["column"]].values)
+    time_data = np.array(dataset.tables["EVENTS"].columns["TIME"].values)
+    pi_data = np.array(dataset.tables["EVENTS"].columns["PI"].values)
 
     # Extract GTIs
     gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
@@ -28,9 +29,31 @@ def get_eventlist_from_dataset(dataset, axis):
         return EventList(time_data, pi=pi_data)
 
 
+# Returns an Stingray Lightcurve from a given lightcurve dataset
+def get_lightcurve_from_lc_dataset(dataset, gti=None):
+
+    if not is_lightcurve_dataset(dataset):
+        logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
+        return None
+
+    # Extract axis values
+    time_data = np.array(dataset.tables["RATE"].columns["TIME"].values)
+    counts = np.array(dataset.tables["RATE"].columns["RATE"].values)
+
+    # Extract GTIs
+    if not gti:
+        gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
+
+    # Returns the EventList
+    if len(gti) > 0:
+        return Lightcurve(time_data, counts, input_counts=True, gti=gti)
+    else:
+        return Lightcurve(time_data, counts, input_counts=True)
+
+
 def get_empty_gti_table():
     table = Table("GTI")
-    table.add_columns(["START", "STOP"])
+    table.add_columns(["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"])
     return table
 
 
@@ -118,6 +141,32 @@ def join_gti_tables(gti_table_0, gti_table_1):
     joined_gti = join_gtis(gti_0, gti_1)
 
     return get_gti_table_from_stingray_gti(joined_gti)
+
+
+#Returns True if there is a GAP in the time_vals values
+def hasGTIGaps(time_vals):
+
+    trigger_ratio = 100;  # The ratio of elapsed time versus prev elapsed for triggering a gap
+
+    if len(time_vals > 1):
+        prev_val = time_vals[0]
+        elapsed_avg = 0
+        for val in time_vals:
+            elapsed = val - prev_val
+            prev_val = val
+
+            if elapsed_avg > 0:
+                ratio = elapsed / elapsed_avg
+                if ratio > trigger_ratio:
+                    return True
+
+                # Calulates the ne elapsed_avg with the latest 5 vals
+                elapsed_avg += (elapsed - elapsed_avg) * 0.2
+
+            else:
+                elapsed_avg = elapsed
+
+    return False
 
 
 # Returns a list of columns excluding passed columnName

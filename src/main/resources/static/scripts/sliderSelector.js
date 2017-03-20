@@ -2,7 +2,7 @@
 function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array) {
 
   var currentObj = this;
-  this.id = id;
+  this.id = id.replace(/\./g,'');
   this.title = title;
   this.filterData = filterData;
   this.fromLabel = fromLabel;
