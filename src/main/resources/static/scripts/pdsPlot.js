@@ -142,8 +142,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         currentObj.plotConfig.styles.labels[0],
                                         currentObj.plotConfig.styles.labels[1],
                                         currentObj.plotConfig.styles.title);
-    plotConfig.layout.xaxis.type = 'log';
-    plotConfig.layout.xaxis.autorange = true;
+    plotConfig.layout.yaxis.type = 'log';
+    plotConfig.layout.yaxis.autorange = true;
     return plotConfig;
   }
 
