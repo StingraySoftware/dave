@@ -215,6 +215,7 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
         data: [
                 {
                   type : 'scatter',
+                  showlegend : false,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y0_values,
@@ -233,6 +234,7 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                 {
                   type : 'scatter',
                   hoverinfo : 'none',
+                  showlegend : false,
                   x : x_values,
                   y : y1_values,
                   error_x : {

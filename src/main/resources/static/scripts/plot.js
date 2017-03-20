@@ -270,7 +270,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        error_x = pt.data.error_x.array[pt.pointNumber];
        error_y = pt.data.error_y.array[pt.pointNumber];
      }
-     return { x: pt.x, y: pt.y, error_x: error_x, error_y: error_y };
+     return { x: pt.x, y: pt.y, error_x: error_x, error_y: error_y, label: pt.data.name };
    }
    return null;
   }
@@ -321,8 +321,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getLegendTextForPoint = function (coords) {
    var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
 
+   var labelY = this.plotConfig.styles.labels[swcoords.y];
+   if (!isNull(coords.label)) {
+     labelY = coords.label;
+   }
+
    var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + coords.x;
-   var infotextfory = this.plotConfig.styles.labels[swcoords.y] + ': ' + coords.y;
+   var infotextfory = labelY + ': ' + coords.y;
    var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0';
    var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
    var idx = this.data[swcoords.x].values.indexOf(coords.x);
@@ -331,24 +336,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    var error_y_string = "";
    if (!isNull(coords.error_x)) {
      error_x_string= "+/-" + (coords.error_x).toString();
-   } else {
-     //Tries to get error from data
-     if (!isNull(this.data[swcoords.x].error_values)
-          && this.data[swcoords.x].error_values > idx
-          && this.data[swcoords.x].error_values[idx] != 0) {
-       error_x_string= "+/-" + (this.data[swcoords.x].error_values[idx]).toString();
-     }
    }
-
    if (!isNull(coords.error_y)){
      error_y_string= "+/-" + (coords.error_y).toString();
-   } else {
-     //Tries to get error from data
-     if (!isNull(this.data[swcoords.y].error_values)
-          && this.data[swcoords.y].error_values > idx
-          && this.data[swcoords.Y].error_values[idx] != 0) {
-       error_y_string= "+/-" + (this.data[swcoords.y].error_values[idx]).toString();
-     }
    }
 
    return infotextforx  + error_x_string + spacesup + infotextfory + error_y_string;
