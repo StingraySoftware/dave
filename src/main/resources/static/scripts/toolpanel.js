@@ -222,6 +222,10 @@ function ToolPanel (id,
         return true;
     }
 
+    if (!isNull(this.binSelector) && this.binSelector.id == id) {
+        return true;
+    }
+
     for (i in this.selectors_array) {
       if (!isNull(this.selectors_array[id])) {
           return true;
