@@ -5,7 +5,9 @@ function ToolPanel (id,
                     service,
                     onDatasetChangedFn,
                     onLcDatasetChangedFn,
-                    onFiltersChangedFn)
+                    onFiltersChangedFn,
+                    undoHistoryFn,
+                    resetHistoryFn)
 {
 
   var currentObj = this;
@@ -18,10 +20,13 @@ function ToolPanel (id,
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.clearBtn = this.$html.find(".btnClear");
+  this.undoBtn = this.$html.find(".btnUndo");
 
   this.onDatasetChangedFn = onDatasetChangedFn;
   this.onLcDatasetChangedFn = onLcDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
+  this.undoHistory = undoHistoryFn;
+  this.resetHistory = resetHistoryFn;
 
   this.lastTimeoutId = null;
 
@@ -200,6 +205,10 @@ function ToolPanel (id,
     sliderSelectors_applyFilters(filters, currentObj.selectors_array);
   }
 
+  this.setFilters = function (filters) {
+    sliderSelectors_setFilters(filters, currentObj.selectors_array);
+  }
+
   this.getFilters = function () {
     return sliderSelectors_getFilters(null, currentObj.selectors_array);
   }
@@ -271,10 +280,12 @@ function ToolPanel (id,
   this.addFileSelector(this.lcDFileSelector);
   this.lcDFileSelector.hide();
 
-  this.clearBtn.button().bind("click", function( event ) {
-      event.preventDefault();
-      sliderSelectors_clear(currentObj.selectors_array);
-      currentObj.onSelectorValuesChanged();
+  this.clearBtn.bind("click", function( event ) {
+      currentObj.resetHistory();
+  });
+
+  this.undoBtn.bind("click", function( event ) {
+      currentObj.undoHistory();
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

@@ -17,6 +17,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.$html = cloneHtmlElement(id, classSelector);
   this.$navItem = $('<li><a class="' + navItemClass + '" href="#">Tab ' + tabPanels.length + '</a></li>')
 
+  this.actionsHistory = [];
+  this.prevAction = null;
+
   this.projectConfig = new ProjectConfig();
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
@@ -141,6 +144,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
         currentObj.refreshPlotsData();
 
+        //Reset History and add default filters
+        currentObj.actionsHistory = [];
+        currentObj.addToHistory("filters", currentObj.toolPanel.getFilters());
+
       } else {
 
         if (currentObj.projectConfig.hasSchema()) {
@@ -197,6 +204,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.onFiltersChanged = function (filters) {
     log("onFiltersChanged: filters: " + JSON.stringify(filters));
+    currentObj.addToHistory("filters", filters);
     currentObj.outputPanel.onDatasetValuesChanged(filters);
   }
 
@@ -209,6 +217,61 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     currentObj.outputPanel.broadcastEventToPlots(evt_name, evt_data, senderId);
   }
 
+  this.addToHistory = function (actionType, actionData){
+      //Adds a action to actionsHistory, uses { obj } for cloning data (new obj reference)
+      if (currentObj.prevAction != null) {
+        currentObj.actionsHistory.push( $.extend(true, {}, currentObj.prevAction) );
+      }
+      currentObj.toolPanel.undoBtn.prop('disabled', (currentObj.prevAction == null));
+      //Stores a action on prevAction tmp var, uses $.extend for cloning data (new obj reference)
+      currentObj.prevAction = { type: actionType, actionData: $.extend(true, [], actionData), binSize: this.projectConfig.binSize };
+  }
+
+  this.undoHistory = function () {
+    if (currentObj.actionsHistory.length > 0) {
+      currentObj.applyAction(currentObj.actionsHistory.pop());
+    }
+  }
+
+  this.resetHistory = function () {
+    if (currentObj.actionsHistory.length > 0) {
+      var action = currentObj.actionsHistory[0];
+      currentObj.actionsHistory = []; // Clears action history keeping default state
+      currentObj.applyAction(action);
+      currentObj.prevAction = null;
+      currentObj.addToHistory(action);
+    } else {
+      currentObj.applyAction(currentObj.prevAction);
+    }
+  }
+
+  this.applyAction = function (action){
+    if (action != null){
+      switch (action.type) {
+           case 'filters':
+               var filters = action.actionData;
+               currentObj.toolPanel.setFilters(filters);
+               currentObj.setBinSize(action.binSize);
+               currentObj.outputPanel.onDatasetValuesChanged(filters);
+               break;
+
+           default:
+               log("undoHistory: Unknown action type: " + action.type + ", Tab.id: " + currentObj.id);
+       }
+
+       currentObj.prevAction = $.extend(true, [], action);
+       currentObj.toolPanel.undoBtn.prop('disabled', currentObj.actionsHistory.length == 0);
+    }
+  }
+
+  this.setBinSize = function (binSize) {
+    if (!isNull(binSize) && binSize != currentObj.projectConfig.binSize) {
+      currentObj.projectConfig.binSize = binSize;
+      if (currentObj.toolPanel.binSelector != null){
+        currentObj.toolPanel.binSelector.setValues(binSize);
+      }
+    }
+  }
 
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
@@ -219,7 +282,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                   this.service,
                                   this.onDatasetChanged,
                                   this.onLcDatasetChanged,
-                                  this.onFiltersChanged);
+                                  this.onFiltersChanged,
+                                  this.undoHistory,
+                                  this.resetHistory);
 
   this.outputPanel = new OutputPanel (this.id + "_outputPanel",
                                       "OutputPanelTemplate",

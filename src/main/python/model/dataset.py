@@ -1,5 +1,6 @@
 from model.table import Table
 import utils.dataset_helper as DsHelper
+import utils.filters_helper as FltHelper
 import utils.dave_logger as logging
 import time
 
@@ -38,15 +39,17 @@ class DataSet:
 
         filtered_dataset = self.clone()
 
+        time_filter = FltHelper.get_time_filter(filters)  # Firts filter by time for reducing arrays length
+        if time_filter:
+            filtered_dataset = self.apply_time_filter(time_filter, time_filter["table"])
+
         for filter in filters:
             table_id = filter["table"]
-            if table_id in filtered_dataset.tables:
-                if table_id == "EVENTS" and filter["column"] == "TIME":
-                    filtered_dataset = self.apply_time_filter(filter)
-                else:
+            if table_id not in ["EVENTS", "RATE"] or filter["column"] != "TIME":  # Exclude time filter
+                if table_id in filtered_dataset.tables:
                     filtered_dataset.tables[table_id] = filtered_dataset.tables[table_id].apply_filter(filter)
-            else:
-                logging.error("dataset.apply_filters wrong table_id: %s" % table_id)
+                else:
+                    logging.error("dataset.apply_filters wrong table_id: %s" % table_id)
 
         return filtered_dataset
 

@@ -100,6 +100,16 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
      }
    }
 
+   this.setFilter = function (filter) {
+     if (this.filterData.table == filter.table
+          && this.filterData.column == filter.column) {
+        this.setValues( filter.from, filter.to );
+        this.setEnabled (true);
+        return true;
+     }
+     return false;
+   }
+
    this.applyFilter = function (filter) {
      if (this.filterData.table == filter.table
           && this.filterData.column == filter.column
@@ -138,12 +148,6 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
 //STATIC SLIDER_SELECTOR METHODS
 
-function sliderSelectors_clear (selectors_array) {
-  for (i in selectors_array) {
-    selectors_array[i].setEnabled (false);
-  }
-}
-
 function sliderSelectors_getFilters (source, selectors_array) {
   var filters = [];
   for (i in selectors_array) {
@@ -167,6 +171,19 @@ function sliderSelectors_applyFilters (filters, selectors_array) {
   for (f in filters) {
     for (i in selectors_array) {
       selectors_array[i].applyFilter(filters[f]);
+    }
+  }
+}
+
+function sliderSelectors_setFilters (filters, selectors_array) {
+  for (i in selectors_array) {
+    var filterSetted = false;
+    for (f in filters) {
+      filterSetted = selectors_array[i].setFilter(filters[f]);
+      if (filterSetted) {break;}
+    }
+    if (!filterSetted) {
+      selectors_array[i].setEnabled(false);
     }
   }
 }

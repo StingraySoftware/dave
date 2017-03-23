@@ -86,7 +86,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.onPlotReady = function () {
     var allPlotsReady = true;
     for (i in currentObj.plots) { allPlotsReady = allPlotsReady && currentObj.plots[i].isReady; };
-    if (allPlotsReady) { waitingDialog.hide(); }
+    if (allPlotsReady) {
+      currentObj.$body.sortable({
+        revert: true
+      });
+      waitingDialog.hide();
+    }
   }
 
   this.containsId = function (id) {

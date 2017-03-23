@@ -746,7 +746,8 @@ def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, coun
     for color_idx in range(len(color_keys)):
         color_filters = FltHelper.get_filters_from_color_filters(filters, color_keys[color_idx], count_column_name)
         lc = get_lightcurve_from_events_dataset(datasets_array[color_idx], bck_destination, color_filters, gti_destination, dt)
-        lightcurves.append(lc)
+        if lc:
+            lightcurves.append(lc)
     return lightcurves
 
 

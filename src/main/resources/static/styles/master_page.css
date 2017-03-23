@@ -152,6 +152,7 @@ h3
 
 .plotContainer
 {
+  position: relative;
   float:left;
   width: 48%;
   border: 1px solid #afafaf;
@@ -174,10 +175,12 @@ h3
 
 .plotContainer .hoverinfo
 {
-  margin-right: 24px;
-  margin-top: 4px;
-  float:left;
+  margin-left: 12px;
+  margin-right: 12px;
+  margin-top: 0px;
+  float: left;
   font-size: 0.7em;
+  max-width: 60%;
 }
 
 .plotContainer .plotTools
