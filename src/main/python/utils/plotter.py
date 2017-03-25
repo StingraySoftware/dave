@@ -32,6 +32,7 @@ def get_plotdiv_scatter(dataset, axis):
 
 
 def build_data_list(dataset, axis):
+    axis = get_axis_with_gtis(axis)
     data = []
     for i in range(len(axis)):
         table_name = axis[i]["table"]
@@ -44,3 +45,11 @@ def build_data_list(dataset, axis):
         else:
             logging.error("Accessing unknown table: %s" % table_name)
     return data
+
+def get_axis_with_gtis (axis):
+    for i in range(len(axis)):
+        # If TIME in axis append GTIs
+        if axis[i]["table"] in ["EVENTS", "RATE"] and axis[i]["column"] == "TIME":
+            axis = np.append(axis, [{"table":"GTI", "column":"START"}])
+            axis = np.append(axis, [{"table":"GTI", "column":"STOP"}])
+    return axis

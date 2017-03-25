@@ -191,6 +191,13 @@ h3
 .plotContainer .settings
 {
   padding: 24px;
+  overflow-x: scroll;
+  overflow-y: scroll;
+}
+
+.plotContainer .settings h3
+{
+  margin-top: 12px
 }
 
 .fullWidth

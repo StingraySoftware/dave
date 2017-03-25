@@ -143,6 +143,8 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     time_vals = []
     count_rate = []
     error_values = []
+    gti_start_values = []
+    gti_stop_values = []
 
     try:
         if len(axis) != 2:
@@ -153,17 +155,12 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
         filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds) \
-            and not DsHelper.is_lightcurve_dataset(filtered_ds):
-            logging.warn("Wrong dataset type")
-            return None
 
         if DsHelper.is_events_dataset(filtered_ds):
             # Creates lightcurves by gti and joins in one
             logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
 
             lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt)
-            filtered_ds = None  # Dispose memory
 
             if lc:
                 time_vals = lc.time
@@ -177,6 +174,15 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             count_rate = filtered_ds.tables["RATE"].columns["RATE"].values
             error_values = filtered_ds.tables["RATE"].columns["ERROR"].values
 
+        else:
+            logging.warn("Wrong dataset type")
+            return None
+
+        #Sets gtis ranges
+        gti_start_values = filtered_ds.tables["GTI"].columns["START"].values
+        gti_stop_values = filtered_ds.tables["GTI"].columns["STOP"].values
+        filtered_ds = None  # Dispose memory
+
     except:
         logging.error(getException('get_lightcurve'))
 
@@ -185,6 +191,8 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     result = push_to_results_array([], time_vals)
     result = push_to_results_array(result, count_rate)
     result = push_to_results_array(result, error_values)
+    result = push_to_results_array(result, gti_start_values)
+    result = push_to_results_array(result, gti_stop_values)
     return result
 
 
@@ -208,10 +216,15 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
 
     try:
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+        gti_start_values = []
+        gti_stop_values = []
 
         count_column_name = "PI"
         color_keys = FltHelper.get_color_keys_from_filters(filters)
         filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
+        if len(filtered_datasets) > 0:
+            gti_start_values = filtered_datasets[0].tables["GTI"].columns["START"].values
+            gti_stop_values = filtered_datasets[0].tables["GTI"].columns["STOP"].values
 
         # Creates lightcurves array applying bck and gtis from each color
         logging.debug("Create color lightcurves ....")
@@ -225,6 +238,8 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
                 result = push_to_results_array([], lightcurves[0].time)
                 result = push_divided_values_to_results_array(result, lightcurves[0].countrate, lightcurves[1].countrate)
                 result = push_divided_values_to_results_array(result, lightcurves[2].countrate, lightcurves[3].countrate)
+                result = push_to_results_array(result, gti_start_values)
+                result = push_to_results_array(result, gti_stop_values)
                 return result
 
     except:
@@ -494,7 +509,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
             duration = [lc.tseg]
             warnmsg = [""]
-            if not gti and DsHelper.hasGTIGaps(lc.time):
+            if gti != None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
                 warnmsg = ["GTI gaps found on LC"]
 
             pds = None  # Dispose memory
@@ -503,6 +518,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
     except:
         logging.error(getException('get_power_density_spectrum'))
+        warnmsg = [str(sys.exc_info()[1])]
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
@@ -584,15 +600,17 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
         # Join gtis in one gti
         gti = None
-        if gti1 and gti2:
+        gti1_valid = gti1 != None and len(gti1) > 0
+        gti2_valid = gti2 != None and len(gti2) > 0
+        if gti1_valid and gti2_valid:
             gti = cross_two_gtis(gti1, gti2)
-        elif gti1 and not gti2:
+        elif gti1_valid and not gti2_valid:
             gti = gti1
-        elif not gti1 and gti2:
+        elif not gti1_valid and gti2_valid:
             gti = gti2
 
         # Cross Spectra requires a single Good Time Interval
-        if gti and gti.shape[0] != 1:
+        if gti != None and gti.shape[0] != 1:
             logging.warn("Non-averaged Cross Spectra need "
                             "a single Good Time Interval")
             return None
@@ -617,9 +635,9 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
-            if not gti1 and DsHelper.hasGTIGaps(lc1.time):
+            if gti1 != None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
                 warnmsg.append("GTI gaps found on LC 1")
-            if not gti2 and DsHelper.hasGTIGaps(lc2.time):
+            if gti2 != None and len(gti2) == 0 and DsHelper.hasGTIGaps(lc2.time):
                 warnmsg.append("GTI gaps found on LC 2")
 
             xs = None  # Dispose memory
@@ -629,7 +647,8 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     except:
         logging.error(getException('get_cross_spectrum'))
-
+        warnmsg = [str(sys.exc_info()[1])]
+        
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
