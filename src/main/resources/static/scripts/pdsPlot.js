@@ -308,7 +308,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       this.$html.find(".plotTools").find(".btnWarn").remove();
       var warnmsg = this.getWarnMsg();
       if (warnmsg != ""){
-          this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg + '</button>');
+          this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><div>' +
+                              '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg +
+                            '</div></button>');
           this.$html.find(".plotTools").prepend(this.btnWarn);
       }
     }

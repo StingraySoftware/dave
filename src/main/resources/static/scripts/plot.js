@@ -430,7 +430,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.applyValidFilters = function (filters) {
-   if (!isNull(this.plotConfig.mandatoryFilters)) {
+   if (!isNull(this.plotConfig.mandatoryFilters)
+        && this.plotConfig.mandatoryFilters.length > 0) {
 
      //Sets only valid filters: Valid filters is a filter without source, or
      //filter specified on mandatoryFilters
@@ -444,7 +445,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
              if (filter.source == mfilter.source
                   && filter.table == mfilter.table
                   && filter.column == mfilter.column) {
-                    validFilters.push(filter);
+                    if (!isNull(mfilter.replaceColumn)){
+                      var replacedFilter = $.extend(true, {}, filter);
+                      replacedFilter.column = mfilter.replaceColumn;
+                      delete replacedFilter.source;
+                      validFilters.push(replacedFilter);
+                    } else {
+                      validFilters.push(filter);
+                    }
                   }
            }
          } else if (isNull(filter.source)) {
@@ -470,22 +478,23 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       && gti_stop.length > 0
       && gti_start.length == gti_stop.length) {
 
-      var last = -1;
-      var lastEventTime = timevals[timevals.length -1];
+      //var last = -1;
       for (i in gti_start){
         if (i > 0) {
           if (gti_stop[i - 1] < gti_start[i]) {
             wti_ranges.push([gti_stop[i - 1], gti_start[i]]);
           }
-          last = gti_stop[i];
-        } else if (gti_start[0] > timevals[0]) {
+          //last = gti_stop[i];
+        } /*else if (gti_start[0] > timevals[0]) {
+            //This adds WTI range before first event
             wti_ranges.push([timevals[0], gti_start[0]]);
-        }
+        }*/
       }
 
+      /* This adds WTI range after last event
       if (last > timevals[timevals.length -1]) {
         wti_ranges.push([timevals[timevals.length -1], last]);
-      }
+      }*/
    }
 
    return wti_ranges;

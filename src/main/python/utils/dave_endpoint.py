@@ -155,7 +155,7 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
+def get_color_color_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -172,16 +172,16 @@ def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filt
         if not gti_destination:
             return common_error("Invalid file or cache key for gti data")
 
-    logging.debug("get_colors_lightcurve src: %s" % src_filename)
-    logging.debug("get_colors_lightcurve bck: %s" % bck_filename)
-    logging.debug("get_colors_lightcurve gti: %s" % gti_filename)
-    logging.debug("get_colors_lightcurve: filters %s" % filters)
-    logging.debug("get_colors_lightcurve: axis %s" % axis)
-    logging.debug("get_colors_lightcurve: dt %f" % dt)
+    logging.debug("get_color_color_lightcurve src: %s" % src_filename)
+    logging.debug("get_color_color_lightcurve bck: %s" % bck_filename)
+    logging.debug("get_color_color_lightcurve gti: %s" % gti_filename)
+    logging.debug("get_color_color_lightcurve: filters %s" % filters)
+    logging.debug("get_color_color_lightcurve: axis %s" % axis)
+    logging.debug("get_color_color_lightcurve: dt %f" % dt)
 
-    data = DaveEngine.get_colors_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
+    data = DaveEngine.get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
 
-    logging.debug("get_colors_lightcurve: Finish!")
+    logging.debug("get_color_color_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 

@@ -62,13 +62,16 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.initPlots(projectConfig);
 
     // Adds FITS info if found
-    var schema = projectConfig.schema;
+    if (!isNull(projectConfig.schema["EVENTS"])) {
+      this.addInfoPanel( "EVENTS HEADER:", "EVENTS", projectConfig.schema );
+    } else if (!isNull(projectConfig.schema["RATE"])) {
+      this.addInfoPanel( "LIGHTCURVE HEADER:", "RATE", projectConfig.schema );
+    }
+  }
 
-    if (!isNull(schema["EVENTS"]) && !isNull(schema["EVENTS"]["HEADER"])) {
-      var theInfoPanel = new infoPanel("infoPanel", "EVENTS HEADER:", schema["EVENTS"]["HEADER"], schema["EVENTS"]["HEADER_COMMENTS"], this.$toolBar);
-      this.$body.append(theInfoPanel.$html);
-    } else if (!isNull(schema["RATE"]) && !isNull(schema["RATE"]["HEADER"])) {
-      var theInfoPanel = new infoPanel("infoPanel", "LIGHTCURVE HEADER:", schema["RATE"]["HEADER"], schema["RATE"]["HEADER_COMMENTS"], this.$toolBar);
+  this.addInfoPanel = function ( title, tableName, schema ) {
+    if (!isNull(schema[tableName]["HEADER"])) {
+      var theInfoPanel = new infoPanel("infoPanel", title, schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
       this.$body.append(theInfoPanel.$html);
     }
   }
@@ -126,6 +129,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     }
   }
 
+  //RETURN THE PLOTS ARRAY FOR AN EVENTS FITS
   this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, timeUnit ) {
 
     log("getFitsTablePlots: filename: " + filename );
@@ -137,7 +141,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                           filename: filename,
                           bck_filename: bck_filename,
                           gti_filename: gti_filename,
-                          styles: { type: "2d", labels: ["TIME (" + timeUnit  + ")", "PI"] },
+                          styles: { type: "2d",
+                                    labels: ["TIME (" + timeUnit  + ")", "PI"] },
                           axis: [ { table: "EVENTS", column:"TIME" },
                                   { table: "EVENTS", column:"PI" } ]
                         },
@@ -149,57 +154,115 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         false
                       ),
 
-                this.getLightCurvePlot ( filename,
+              this.getLightCurvePlot ( filename,
                                         bck_filename,
                                         gti_filename,
                                         "EVENTS",
-                                        timeUnit,
-                                        "fullWidth",
-                                        false ),
+                                        ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
+                                        [], "fullWidth", false ),
 
-                new Plot(
-                    this.id + "_colors_ligthcurve_" + filename,
-                    {
-                      filename: filename,
-                      bck_filename: bck_filename,
-                      gti_filename: gti_filename,
-                      styles: { type: "colors_ligthcurve", labels: ["TIME (" + timeUnit  + ")", "SCR", "HCR"] },
-                      axis: [ { table: "EVENTS", column:"TIME" },
-                              { table: "EVENTS", column:"SCR_HCR" } ]
-                    },
-                    this.service.request_colors_lightcurve,
-                    this.onFiltersChangedFromPlot,
-                    this.onPlotReady,
-                    this.$toolBar,
-                    "fullWidth"
-                  ),
+              this.getPDSPlot ( filename,
+                                  bck_filename,
+                                  gti_filename,
+                                  "EVENTS", "PI", "fullWidth" ),
 
-                  this.getJoinedLightCurvesFromColorsPlot ( filename,
-                                                            bck_filename,
-                                                            gti_filename,
-                                                            "EVENTS",
-                                                            ["SRC Count Rate", "A/B Count Rate(c/s)"],
-                                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
-                                                              { source: "ColorSelector", table:"EVENTS", column:"Color_B" } ],
-                                                            "", true ),
+              this.getLightCurvePlot ( filename,
+                                        bck_filename,
+                                        gti_filename,
+                                        "EVENTS",
+                                        ["TIME (" + timeUnit  + ")", "A Count Rate(c/s)"],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumn: "PI" } ],
+                                        "", false ),
 
-                  this.getJoinedLightCurvesFromColorsPlot ( filename,
-                                                            bck_filename,
-                                                            gti_filename,
-                                                            "EVENTS",
-                                                            ["SRC Count Rate", "C/D Count Rate(c/s)"],
-                                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_C" },
-                                                              { source: "ColorSelector", table:"EVENTS", column:"Color_D" } ],
-                                                            "", true ),
+              this.getPDSPlot ( filename,
+                                  bck_filename,
+                                  gti_filename,
+                                  "EVENTS", "PI", "", "Color A",
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumn: "PI" } ]),
 
-                  this.getPDSPlot ( filename,
-                                    bck_filename,
-                                    gti_filename,
-                                    "EVENTS", "PI", "fullWidth" )
-              ];
+              this.getLightCurvePlot ( filename,
+                                        bck_filename,
+                                        gti_filename,
+                                        "EVENTS",
+                                        ["TIME (" + timeUnit  + ")", "B Count Rate(c/s)"],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumn: "PI" } ],
+                                        "", false ),
+
+              this.getPDSPlot ( filename,
+                                  bck_filename,
+                                  gti_filename,
+                                  "EVENTS", "PI", "", "Color B",
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumn: "PI" } ]),
+
+              this.getLightCurvePlot ( filename,
+                                        bck_filename,
+                                        gti_filename,
+                                        "EVENTS",
+                                        ["TIME (" + timeUnit  + ")", "C Count Rate(c/s)"],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumn: "PI" } ],
+                                        "", false ),
+
+              this.getPDSPlot ( filename,
+                                  bck_filename,
+                                  gti_filename,
+                                  "EVENTS", "PI", "", "Color C",
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumn: "PI" } ]),
+
+              this.getLightCurvePlot ( filename,
+                                        bck_filename,
+                                        gti_filename,
+                                        "EVENTS",
+                                        ["TIME (" + timeUnit  + ")", "D Count Rate(c/s)"],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PI" } ],
+                                        "", false ),
+
+              this.getPDSPlot ( filename,
+                                  bck_filename,
+                                  gti_filename,
+                                  "EVENTS", "PI", "", "Color D",
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PI" } ]),
+
+              this.getJoinedLightCurvesFromColorsPlot ( filename,
+                                                        bck_filename,
+                                                        gti_filename,
+                                                        "EVENTS",
+                                                        ["SRC Count Rate", "A/B Count Rate(c/s)"],
+                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_B" } ],
+                                                        "", true ),
+
+              this.getJoinedLightCurvesFromColorsPlot ( filename,
+                                                        bck_filename,
+                                                        gti_filename,
+                                                        "EVENTS",
+                                                        ["SRC Count Rate", "C/D Count Rate(c/s)"],
+                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_C" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_D" } ],
+                                                        "", true ),
+
+              new Plot(
+                        this.id + "_colors_ligthcurve_" + filename,
+                        {
+                          filename: filename,
+                          bck_filename: bck_filename,
+                          gti_filename: gti_filename,
+                          styles: { type: "colors_ligthcurve",
+                                    labels: ["TIME (" + timeUnit  + ")", "SCR", "HCR"],
+                                    title: "COLOR_COLOR"
+                                  },
+                          axis: [ { table: "EVENTS", column:"TIME" },
+                                  { table: "EVENTS", column:"SCR_HCR" } ]
+                        },
+                        this.service.request_color_color_lightcurve,
+                        this.onFiltersChangedFromPlot,
+                        this.onPlotReady,
+                        this.$toolBar,
+                        "fullWidth"
+                    )
+          ];
   }
 
-  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, timeUnit, cssClass, switchable ) {
+  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, mandatoryFilters, cssClass, switchable ) {
 
     log("getLightCurvePlot: filename: " + filename );
     return new Plot(
@@ -209,10 +272,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
-                                  labels: ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
-                                  selectable: true },
+                                  labels: labels,
+                                  selectable: true
+                                },
                         axis: [ { table: tableName, column:"TIME" },
-                                { table: tableName, column:"PI" } ]
+                                { table: tableName, column:"PI" } ],
+                        mandatoryFilters: mandatoryFilters,
                       },
                       this.service.request_lightcurve,
                       this.onFiltersChangedFromPlot,
@@ -267,7 +332,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getPDSPlot = function ( filename, bck_filename, gti_filename, tableName, columnName, cssClass ) {
+  this.getPDSPlot = function ( filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
 
     log("getPDSPlot: filename: " + filename );
     return new PDSPlot(
@@ -276,9 +341,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "ligthcurve", labels: ["Frequency", "Power"] },
+                        styles: { type: "ligthcurve", labels: ["Frequency", "Power"], title: title },
                         axis: [ { table: tableName, column:"TIME" },
-                                { table: tableName, column:columnName } ]
+                                { table: tableName, column:columnName } ],
+                        mandatoryFilters: mandatoryFilters,
                       },
                       this.service.request_power_density_spectrum,
                       this.onFiltersChangedFromPlot,
@@ -344,8 +410,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.addLightcurveAndPdsPlots = function (titlePrefix, filename, bck_filename, gti_filename, tableName, columnName, projectConfig, cssClass, refreshData){
     var lc_plot = currentObj.getLightCurvePlot ( filename, bck_filename, gti_filename,
                                                 tableName,
-                                                projectConfig.timeUnit,
-                                                cssClass, false);
+                                                ["TIME (" + projectConfig.timeUnit  + ")", "Count Rate(c/s)"],
+                                                [], cssClass, false);
 
     var mustRefreshData = isNull(refreshData) || refreshData;
 

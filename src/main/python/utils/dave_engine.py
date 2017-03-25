@@ -196,7 +196,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     return result
 
 
-# get_colors_lightcurve: Returns the data for the Lightcurve
+# get_color_color_lightcurve: Returns the data for the Color Color Lightcurve
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -208,7 +208,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 #            { table = "EVENTS", column = "PI" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_colors_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
+def get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
@@ -227,12 +227,12 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
             gti_stop_values = filtered_datasets[0].tables["GTI"].columns["STOP"].values
 
         # Creates lightcurves array applying bck and gtis from each color
-        logging.debug("Create color lightcurves ....")
+        logging.debug("Create color color lightcurves ....")
         lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, bck_destination, filters, gti_destination, dt)
         filtered_datasets = None  # Dispose memory
 
         # Preapares the result
-        logging.debug("Result color lightcurves ....")
+        logging.debug("Result color color lightcurves ....")
         if len(lightcurves) == 4:
             if lightcurves[0]:
                 result = push_to_results_array([], lightcurves[0].time)
@@ -243,7 +243,7 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
                 return result
 
     except:
-        logging.error(getException('get_colors_lightcurve'))
+        logging.error(getException('get_color_color_lightcurve'))
 
     return None
 
@@ -648,7 +648,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     except:
         logging.error(getException('get_cross_spectrum'))
         warnmsg = [str(sys.exc_info()[1])]
-        
+
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)

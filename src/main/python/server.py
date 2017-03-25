@@ -66,9 +66,9 @@ def get_lightcurve():
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
-@app.route('/get_colors_lightcurve', methods=['POST'])
-def get_colors_lightcurve():
-    return DaveEndpoint.get_colors_lightcurve(request.json['filename'],
+@app.route('/get_color_color_lightcurve', methods=['POST'])
+def get_color_color_lightcurve():
+    return DaveEndpoint.get_color_color_lightcurve(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
