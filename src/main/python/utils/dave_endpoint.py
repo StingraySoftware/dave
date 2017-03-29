@@ -19,15 +19,21 @@ def upload(files, target):
 
     for file in files:
 
-        destination = FileUtils.save_file(file, target)
+        # Looks if same filename was previously uploaded
+        if not FileUtils.file_exist(target, file.filename):
+            destination = FileUtils.save_file(target, file)
 
-        if not destination:
-            return common_error("Error uploading file...")
+            if not destination:
+                return common_error("Error uploading file...")
 
-        if not FileUtils.is_valid_file(destination):
-            return common_error("File format is not supported...")
+            if not FileUtils.is_valid_file(destination):
+                return common_error("File format is not supported...")
 
-        logging.info("Uploaded filename: %s" % destination)
+            logging.info("Uploaded filename: %s" % destination)
+        else:
+            destination = FileUtils.get_destination(target, file.filename)
+            logging.info("Previously uploaded filename: %s" % destination)
+
         SessionHelper.add_uploaded_file_to_session(file.filename)
         filenames.append(file.filename)
 
@@ -58,7 +64,7 @@ def get_destination(filename, target):
 def get_dataset_schema(filename, target):
     destination = get_destination(filename, target)
     if not destination:
-        return common_error("Invalid file or cache key")
+        return common_error("Invalid file or cache key, filename: %s" % filename)
 
     schema = DaveEngine.get_dataset_schema(destination)
     return json.dumps(schema, cls=NPEncoder)
@@ -87,6 +93,31 @@ def append_file_to_dataset(filename, nextfile, target):
     new_filename = DaveEngine.append_file_to_dataset(destination, next_destination)
 
     return json.dumps(new_filename)
+
+
+# apply_rmf_file_to_dataset: Applies and Rmf file to an events dataset
+#                            Creates a new column E with Enery data on dataset
+# @param: filename: filename or dataset cache key
+# @param: rmf_filename: rmf file to apply
+#
+def apply_rmf_file_to_dataset(filename, rmf_filename, target):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
+
+    if not rmf_filename:
+        return common_error(error="No rmf_filename setted")
+
+    if not SessionHelper.is_file_uploaded(rmf_filename):
+        return common_error("Rmf file not uploaded")
+
+    rmf_destination = FileUtils.get_destination(target, rmf_filename)
+    if not FileUtils.is_valid_file(rmf_destination):
+        return common_error("Invalid RMF file")
+
+    result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination)
+
+    return json.dumps(dict(success=result))
 
 
 def common_error(error):

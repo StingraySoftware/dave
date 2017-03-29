@@ -11,6 +11,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.initToValue = toValue;
   this.fromValue = fromValue;
   this.toValue = toValue;
+  this.maxRange = this.initToValue - this.initFromValue;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
 
@@ -68,11 +69,30 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    //Set values method
    this.setValues = function (from, to, source) {
+
        from = Math.min(Math.max(parseFloat(from), this.initFromValue), this.initToValue)
        to = Math.min(Math.max(parseFloat(to), this.initFromValue), this.initToValue)
+       if (to < from) {
+          var swap = from;
+          from = to;
+          to = swap;
+       }
+
+       var moveSlider = source != "slider";
+       // Fits values to max range
+       if ((to - from) > this.maxRange){
+          if (this.toValue != Math.ceil(to)) {
+            //ToValue was changed
+            from = to - this.maxRange;
+          } else {
+            to = from + this.maxRange;
+          }
+          moveSlider = true;
+       }
 
        var step = 1.0;
        if (this.filterData.column == "TIME") {
+          //Fixes values to binSize steps
            var binSize = getTabForSelector(this.id).projectConfig.binSize;
            step = parseFloat(binSize);
            this.fromValue = Math.floor (from / binSize) * binSize;
@@ -83,7 +103,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.toValue = Math.ceil(to);
        this.fromInput.val( this.fromValue );
        this.toInput.val( this.toValue );
-       if (source != "slider") {
+       if (moveSlider) {
          this.slider.slider('values', 0, this.fromValue);
          this.slider.slider('values', 1, this.toValue);
        }
@@ -131,6 +151,14 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.switchBox.switchClass("fa-minus-square", "fa-plus-square");
        this.setValues( this.initFromValue, this.initToValue );
        this.container.fadeOut();
+     }
+   }
+
+   this.setMaxRange = function (maxRange) {
+     if (maxRange < this.maxRange) {
+       this.maxRange = maxRange;
+       var toValueInc = (this.initToValue - this.initFromValue) * (maxRange/(this.initToValue - this.initFromValue));
+       this.setValues( this.initFromValue, this.initFromValue + toValueInc );
      }
    }
 

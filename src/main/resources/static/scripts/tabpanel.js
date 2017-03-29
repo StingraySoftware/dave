@@ -53,14 +53,17 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     if (filenames.length == 1) {
 
       currentObj.projectConfig.setFiles(selectorKey, [], filenames[0]);
-      waitingDialog.show('Getting file schema: ' + currentObj.projectConfig.filename);
-      log("onDatasetChanged " + selectorKey + ": " + currentObj.projectConfig.filename);
+      waitingDialog.show('Getting file schema: ' + filenames[0]);
+      log("onDatasetChanged " + selectorKey + ": " + filenames[0]);
       if (selectorKey == "SRC") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSrcSchemaChanged, currentObj.onSchemaError, null);
       } else if (selectorKey == "BCK") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.bckFilename, currentObj.onBckSchemaChanged);
       } else if (selectorKey == "GTI") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
+      } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
+        waitingDialog.show('Appliying RMF: ' + filenames[0]);
+        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
       }
 
     } else if (filenames.length > 1){
@@ -73,6 +76,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
       } else if (selectorKey == "GTI") {
         params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
+      } else if (selectorKey == "RMF") {
+        log("onDatasetChanged: RMF files doesn't support mulple selection!");
+        return;
       }
       currentObj.onSchemaChangedMultipleFiles(null, params);
 
@@ -126,6 +132,27 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.onGtiSchemaChanged = function ( schema, params ) {
     log("onGtiSchemaChanged:" + schema);
     currentObj.onSchemaChangedWithKey("GTI", schema, params);
+  }
+
+  this.onRmfApplied = function ( result ) {
+    result = JSON.parse(result);
+    if (!isNull(result.success) && result.success){
+      log("onRmfApplied: Success!");
+      var energyPlot = currentObj.outputPanel.getPlot (this.id + "_energy_" + currentObj.projectConfig.filename,
+                                                        currentObj.projectConfig.filename,
+                                                        currentObj.projectConfig.bckFilename,
+                                                        currentObj.projectConfig.gtiFilename,
+                                                        { type: "2d",
+                                                          labels: ["TIME (" + currentObj.projectConfig.timeUnit  + ")", "ENERGY"] },
+                                                        [ { table: "EVENTS", column:"TIME" },
+                                                          { table: "EVENTS", column:"E" } ] )
+
+      currentObj.outputPanel.plots.push(energyPlot);                                                    
+      currentObj.outputPanel.prependPlot(energyPlot, true);
+    } else {
+      log("onRmfApplied error:" + JSON.stringify(result));
+      waitingDialog.hide();
+    }
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {

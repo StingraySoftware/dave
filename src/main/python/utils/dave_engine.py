@@ -59,6 +59,49 @@ def append_file_to_dataset(destination, next_destination):
     return ""
 
 
+# apply_rmf_file_to_dataset: Appends Fits data to a dataset
+#
+# @param: destination: file destination or dataset cache key
+# @param: rmf_destination: file destination of file to append
+#
+def apply_rmf_file_to_dataset(destination, rmf_destination):
+    try:
+        dataset = DaveReader.get_file_dataset(destination)
+        if DsHelper.is_events_dataset(dataset):
+            rmf_dataset = DaveReader.get_file_dataset(rmf_destination)
+            if DsHelper.is_rmf_dataset(rmf_dataset):
+                # Applies rmf data to dataset
+                events_table = dataset.tables["EVENTS"]
+                rmf_table = rmf_dataset.tables["EBOUNDS"]
+
+                if "PHA" not in events_table.columns:
+                    logging.warn('apply_rmf_file_to_dataset: PHA column not found!')
+                    return False
+
+                pha_data = events_table.columns["PHA"].values
+                pi_data = events_table.columns["PI"].values
+
+                e_avg_data = dict((channel, (min + max)/2) for channel, min, max in zip(rmf_table.columns["CHANNEL"].values,
+                                                                                    rmf_table.columns["E_MIN"].values,
+                                                                                    rmf_table.columns["E_MAX"].values))
+                e_values = []
+                for i in range(len(pha_data)):
+                    if pha_data[i] in e_avg_data:
+                        e_values.append(pi_data[i] * e_avg_data[pha_data[i]])
+                    else:
+                        e_values.append(0)
+
+                events_table.add_columns(["E"])
+                events_table.columns["E"].add_values(e_values)
+
+                DsCache.remove_with_prefix("FILTERED") # Removes all filtered datasets from cache
+                DsCache.add(destination, dataset) # Stores dataset on cache
+                return len(events_table.columns["E"].values) == len(events_table.columns["PI"].values)
+    except:
+        logging.error(getException('apply_rmf_file_to_dataset'))
+    return False
+
+
 # get_plot_data: Returns the data for a plot
 #
 # @param: src_destination: source file destination
@@ -663,6 +706,13 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
 
 def get_filtered_dataset(destination, filters, gti_destination=""):
+
+    # Try to get filtered dataset from cache
+    cache_key = "FILTERED_" + DsCache.get_key(destination + gti_destination + str(filters), True)
+    if DsCache.contains(cache_key):
+        logging.debug("Returned cached filtered dataset, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        return DsCache.get(cache_key)
+
     dataset = DaveReader.get_file_dataset(destination)
     if not dataset:
         logging.warn("get_filtered_dataset: destination specified but not loadable.")
@@ -678,7 +728,12 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         else:
             logging.warn("get_filtered_dataset: Gti_destination specified but not loadable.")
 
-    return dataset.apply_filters(filters)
+    filtered_ds = dataset.apply_filters(filters)
+    if filtered_ds:
+        logging.debug("Add filtered_ds to cache, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        DsCache.add(cache_key, filtered_ds)
+
+    return filtered_ds
 
 
 def get_color_filtered_dataset(destination, filters, color_column_name, column_name, gti_destination=""):

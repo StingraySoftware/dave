@@ -49,18 +49,22 @@ def get_file_dataset(destination):
         # return dataset
 
         # Opening Fits
-        hdulist = fits.open(destination)
+        hdulist = fits.open(destination, memmap=True)
 
         if 'EVENTS' in hdulist:
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                                hduname='EVENTS', column='TIME',
-                                               gtistring=gtistring)
+                                               gtistring=gtistring, extra_colums=['PI', "PHA"])
 
         elif 'RATE' in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
             dataset = get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
                                                         column='TIME', gtistring=gtistring)
+
+        elif 'EBOUNDS' in hdulist:
+            # If EBOUNDS extension found, consider the Fits as RMF Fits
+            dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
 
         else:
             # If not EVENTS or RATE extension found, consider the Fits as GTI Fits
@@ -93,29 +97,33 @@ def get_txt_dataset(destination, table_id, header_names):
 
 
 # Returns a dataset by reading a Fits file, returns all tables
-def get_fits_dataset(destination, dsId, table_ids):
-    hdulist = fits.open(destination)
+def get_fits_dataset(hdulist, dsId, table_ids):
     dataset = DataSet.get_empty_dataset(dsId)
 
     for t in range(len(hdulist)):
-
         if isinstance(hdulist[t], fits.hdu.table.BinTableHDU):
-            table_id = table_ids[t]
-            header_names = hdulist[t].columns.names
-            tbdata = hdulist[t].data
-            dataset.add_table(table_id, header_names)
+            if hdulist[t].name in table_ids:
+                table_id = hdulist[t].name
 
-            for i in range(len(header_names)):
-                header_name = header_names[i]
-                dataset.tables[table_id].columns[header_name].values.append(tbdata.field(i))
+                header_names = hdulist[t].columns.names
+                tbdata = hdulist[t].data
+                dataset.add_table(table_id, header_names)
 
+                header, header_comments = get_header(hdulist, table_id)
+                dataset.tables[table_id].set_header_info(header, header_comments)
+
+                for i in range(len(header_names)):
+                    header_name = header_names[i]
+                    dataset.tables[table_id].columns[header_name].add_values(tbdata.field(i))
+            else:
+                logging.warn("Ignored table data: %s" % hdulist[t].name)
         else:
             logging.warn("No valid data on: %s" % t)
             logging.warn("Type of Data: %s" % type(hdulist[t]))
 
     hdulist.close()
 
-    logging.debug("Read fits file successfully: %s" % destination)
+    logging.debug("Read fits file successfully: %s" % dsId)
 
     return dataset
 
@@ -134,18 +142,13 @@ def get_fits_table_column_names(hdulist, table_id):
 # with the Fits data using Stingray library
 def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                    hduname='EVENTS', column='TIME',
-                                   gtistring='GTI,STDGTI'):
+                                   gtistring='GTI,STDGTI', extra_colums=[]):
 
     # Gets columns from fits hdu table
     logging.debug("Reading Events Fits columns")
     columns = get_fits_table_column_names(hdulist, hduname)
 
-    # Gets FITS header properties
-    header = dict()
-    header_comments = dict()
-    for header_column in hdulist[hduname].header:
-        header[header_column] = str(hdulist[hduname].header[header_column])
-        header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
+    header, header_comments = get_header(hdulist, hduname)
 
     # Gets start time of observation
     events_start_time = 0
@@ -159,7 +162,8 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
     additional_columns = []
     for i in range(len(columns)):
         if columns[i] != column:
-            additional_columns.append(columns[i])
+            if len(extra_colums) == 0 or columns[i] in extra_colums:
+                additional_columns.append(columns[i])
 
     # Reads fits data
     logging.debug("Reading Events Fits columns's data")
@@ -203,12 +207,7 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
         logging.warn("HDUCLAS1 is not LIGHTCURVE")
         return None
 
-    # Gets FITS header properties
-    header = dict()
-    header_comments = dict()
-    for header_column in hdulist[hduname].header:
-        header[header_column] = str(hdulist[hduname].header[header_column])
-        header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
+    header, header_comments = get_header(hdulist, hduname)
 
     lcurve = lcurve_from_fits(destination, gtistring=gtistring,
                              timecolumn=column, ratecolumn=None, ratehdu=1,
@@ -220,3 +219,14 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
     logging.debug("Read Lightcurve fits with stingray file successfully: %s" % destination)
 
     return dataset
+
+
+# Gets FITS header properties
+def get_header(hdulist, hduname):
+    header = dict()
+    header_comments = dict()
+    for header_column in hdulist[hduname].header:
+        header[header_column] = str(hdulist[hduname].header[header_column])
+        header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
+
+    return header, header_comments

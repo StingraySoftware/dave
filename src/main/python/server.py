@@ -52,6 +52,11 @@ def append_file_to_dataset():
     return DaveEndpoint.append_file_to_dataset(request.args['filename'], request.args['nextfile'], UPLOADS_TARGET)
 
 
+@app.route('/apply_rmf_file_to_dataset', methods=['GET'])
+def apply_rmf_file_to_dataset():
+    return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], UPLOADS_TARGET)
+
+
 @app.route('/get_plot_data', methods=['POST'])
 def get_plot_data():
     return DaveEndpoint.get_plot_data(request.json['filename'],

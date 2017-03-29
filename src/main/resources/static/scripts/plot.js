@@ -130,6 +130,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (data != null) {
      currentObj.setData(data);
    } else {
+     currentObj.showWarn("Wrong data received");
      log("onPlotDataReceived wrong data!, plot" + currentObj.id);
      currentObj.setReadyState(true);
      currentObj.onPlotReady();
@@ -138,7 +139,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setData = function ( data ) {
 
+   currentObj.showWarn("");
+
    if (isNull(data)) {
+     currentObj.showWarn("Wrong data received");
      log("setData wrong passed data!, plot" + currentObj.id);
      return;
    }
@@ -148,6 +152,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
    var plotlyConfig = currentObj.getPlotConfig(data);
    currentObj.redrawPlot(plotlyConfig);
+
+   if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
+     currentObj.showWarn("Empty plot data");
+   }
 
    currentObj.setReadyState(true);
    currentObj.onPlotReady();
@@ -218,6 +226,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      this.resize();
 
    } else {
+     this.showWarn("Wrong plot config");
      log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
    }
  }
@@ -372,6 +381,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
   this.setLegendText = function (text) {
    this.$hoverinfo.html(text);
+  }
+
+  this.showWarn = function (warnmsg) {
+    this.$html.find(".plotTools").find(".btnWarn").remove();
+    if (warnmsg != ""){
+      this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><div>' +
+                         '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg +
+                        '</div></button>');
+      if (warnmsg.length > 50) {
+        this.btnWarn.addClass("bigWarnBtn");
+      }
+      this.$html.find(".plotTools").prepend(this.btnWarn);
+    }
   }
 
   this.showCross = function (x, y){

@@ -281,7 +281,7 @@ function getShapesFromWti (wti_x_ranges) {
                       x1: wti_range[1],
                       y1: 1,
                       fillcolor: '#dd4814',
-                      opacity: 0.2,
+                      opacity: 0.1,
                       line: {
                           width: 0
                       }

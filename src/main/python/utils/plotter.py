@@ -37,11 +37,15 @@ def build_data_list(dataset, axis):
     for i in range(len(axis)):
         table_name = axis[i]["table"]
         if table_name in dataset.tables:
-            column = dataset.tables[table_name].columns[axis[i]["column"]]
-            column_data = dict()
-            column_data["values"] = column.values
-            column_data["error_values"] = column.error_values
-            data = np.append(data, [column_data])
+            column_name = axis[i]["column"]
+            if column_name in dataset.tables[table_name].columns:
+                column = dataset.tables[table_name].columns[column_name]
+                column_data = dict()
+                column_data["values"] = column.values
+                column_data["error_values"] = column.error_values
+                data = np.append(data, [column_data])
+            else:
+                logging.error("Accessing unknown column: %s" % column_name)
         else:
             logging.error("Accessing unknown table: %s" % table_name)
     return data

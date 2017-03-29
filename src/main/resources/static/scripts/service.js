@@ -33,6 +33,12 @@ function Service (base_url) {
       .fail(errorFn);
   };
 
+  this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
+    $.get( thisService.base_url + "/apply_rmf_file_to_dataset", { filename: filename, rmf_filename: rmf_filename } )
+      .done(fn)
+      .fail(fn);
+  };
+
   this.make_ajax_call = function (callName, data, fn) {
     log(callName + " plot " + JSON.stringify(data));
     try {
@@ -56,7 +62,7 @@ function Service (base_url) {
   this.request_lightcurve = function (data, fn) {
     thisService.make_ajax_call("get_lightcurve", data, fn);
   };
-  
+
   this.request_color_color_lightcurve = function (data, fn) {
     thisService.make_ajax_call("get_color_color_lightcurve", data, fn);
   };

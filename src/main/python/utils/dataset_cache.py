@@ -5,34 +5,50 @@ cached_datasets = dict()
 
 
 # DATASET CACHE METHODS
-def add(destination, dataset):
-    cached_datasets[destination] = dataset
+def add(key, dataset):
+    cached_datasets[key] = dataset
 
 
-def contains(destination):
-    if destination in cached_datasets:
+def contains(key):
+    if key in cached_datasets:
         return True
 
     return False
 
 
-def get(destination):
-    if destination in cached_datasets:
-        return cached_datasets[destination]
+def get(key):
+    if key in cached_datasets:
+        return cached_datasets[key]
 
     return None
 
 
-def remove(destination):
-    if destination in cached_datasets:
-        cached_datasets.pop(destination, None)
+def remove(key):
+    if key in cached_datasets:
+        cached_datasets.pop(key, None)
         return True
 
     return False
 
 
-def get_key(value):
+def remove_with_prefix(key_prefix):
+    remove_keys = []
+    for key in cached_datasets:
+        if key.startswith(key_prefix):
+            remove_keys.append(key)
+    for key in remove_keys:
+        remove(key)
+
+
+def get_key(value, strict=False):
     m = hashlib.md5()
-    m.update(str(value + str(randint(0,99999))).encode('utf-8'))
+    if strict:
+        m.update(str(value).encode('utf-8'))
+    else:
+        m.update(str(value + str(randint(0,99999))).encode('utf-8'))
     ugly_key = str(m.digest())
     return "".join(e for e in ugly_key if e.isalnum())
+
+
+def count():
+    return len(cached_datasets)

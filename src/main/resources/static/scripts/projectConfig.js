@@ -7,6 +7,7 @@ function ProjectConfig(){
   this.bckFilenames = [];
   this.gtiFilename = "";
   this.gtiFilenames = [];
+  this.rmfFilename = "";
   this.selectorFilenames = [];
   this.binSize = 100;
   this.timeUnit = "s";
@@ -49,7 +50,10 @@ function ProjectConfig(){
     } else if (selectorKey == "GTI") {
       this.gtiFilenames = filenames;
       this.gtiFilename = filename;
+    } else if (selectorKey == "RMF") {
+      this.rmfFilename = filename;
     }
+
   }
 
   this.setFile = function (selectorKey, filename) {

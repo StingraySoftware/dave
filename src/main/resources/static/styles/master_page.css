@@ -249,18 +249,21 @@ h3
 }
 
 .btnWarn {
-  width: 73%;
   white-space: normal;
   font-size: 0.7em;
   margin-top: -2px;
   margin-bottom: -2px;
 }
 
+.bigWarnBtn {
+  width: 73%;
+}
+
 .btnWarn div {
   height: 100%;
 }
 
-.fullWidth .btnWarn {
+.fullWidth .btnWarn, .fileSelector .btnWarn {
   width: auto;
   white-space: nowrap;
   font-size: 1em;
