@@ -221,7 +221,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
           ];
   }
 
-  this.getPlot = function (id, filename, bck_filename, gti_filename, styles, axis, fn) {
+  this.getPlot = function (id, filename, bck_filename, gti_filename, styles, axis, fn, cssClass) {
     return new Plot(
               id,
               {
@@ -235,7 +235,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
               this.onFiltersChangedFromPlot,
               this.onPlotReady,
               this.$toolBar,
-              "fullWidth",
+              (isNull(cssClass)) ? "fullWidth" : cssClass,
               false
             );
   }

@@ -145,10 +145,22 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                                         { type: "2d",
                                                           labels: ["TIME (" + currentObj.projectConfig.timeUnit  + ")", "ENERGY"] },
                                                         [ { table: "EVENTS", column:"TIME" },
-                                                          { table: "EVENTS", column:"E" } ] )
+                                                          { table: "EVENTS", column:"E" } ],
+                                                        null, "");
 
-      currentObj.outputPanel.plots.push(energyPlot);                                                    
+      currentObj.outputPanel.plots.push(energyPlot);
       currentObj.outputPanel.prependPlot(energyPlot, true);
+
+      var rmfPlot = currentObj.outputPanel.getPlot (this.id + "_rmf_" + currentObj.projectConfig.rmfFilename,
+                                                        currentObj.projectConfig.rmfFilename, "", "",
+                                                        { type: "2d",
+                                                          labels: ["CHANNEL", "E_MIN"] },
+                                                        [ { table: "EBOUNDS", column:"CHANNEL" },
+                                                          { table: "EBOUNDS", column:"E_MIN" } ],
+                                                        null, "");
+
+      currentObj.outputPanel.plots.push(rmfPlot);
+      currentObj.outputPanel.prependPlot(rmfPlot, true);
     } else {
       log("onRmfApplied error:" + JSON.stringify(result));
       waitingDialog.hide();

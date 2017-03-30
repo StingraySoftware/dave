@@ -121,9 +121,6 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         filters = FltHelper.get_filters_clean_color_filters(filters)
 
         filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds):
-            logging.warn("Wrong dataset type")
-            return None
 
         # Config checking
         if "type" not in styles:

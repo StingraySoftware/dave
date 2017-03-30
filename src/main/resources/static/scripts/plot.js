@@ -171,7 +171,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (currentObj.plotConfig.styles.type == "2d") {
       return get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
-                                    currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values),
+                                    (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     currentObj.plotConfig.styles.title)
@@ -199,7 +199,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
       return get_plotdiv_lightcurve(data[0].values, data[1].values,
                                           [], data[2].values,
-                                          currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values),
+                                          (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                           currentObj.plotConfig.styles.labels[coords.x],
                                           currentObj.plotConfig.styles.labels[coords.y],
                                           currentObj.plotConfig.styles.title);
@@ -207,7 +207,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       return get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
-                                   currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values),
+                                   (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                    currentObj.plotConfig.styles.labels[coords.x],
                                    currentObj.plotConfig.styles.labels[coords.y],
                                    currentObj.plotConfig.styles.labels[2],
