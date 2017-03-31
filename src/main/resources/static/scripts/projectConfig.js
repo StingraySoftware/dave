@@ -8,6 +8,7 @@ function ProjectConfig(){
   this.gtiFilename = "";
   this.gtiFilenames = [];
   this.rmfFilename = "";
+  this.arfFilename = "";
   this.selectorFilenames = [];
   this.binSize = 100;
   this.timeUnit = "s";
@@ -52,8 +53,9 @@ function ProjectConfig(){
       this.gtiFilename = filename;
     } else if (selectorKey == "RMF") {
       this.rmfFilename = filename;
+    } else if (selectorKey == "ARF") {
+      this.arfFilename = filename;
     }
-
   }
 
   this.setFile = function (selectorKey, filename) {

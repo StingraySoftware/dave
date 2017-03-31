@@ -57,6 +57,7 @@ function ToolPanel (id,
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
     this.rmfFileSelector.show();
+    this.arfFileSelector.show();
     this.lcAFileSelector.hide();
     this.lcBFileSelector.hide();
     this.lcCFileSelector.hide();
@@ -67,6 +68,7 @@ function ToolPanel (id,
     this.bckFileSelector.hide();
     this.gtiFileSelector.hide();
     this.rmfFileSelector.hide();
+    this.arfFileSelector.hide();
     this.lcAFileSelector.show();
     this.lcBFileSelector.show();
     this.lcCFileSelector.show();
@@ -100,8 +102,9 @@ function ToolPanel (id,
       this.showEventsSelectors();
 
       if (isNull(schema["EVENTS"]["PHA"])){
-          //PHA Column doesn't exist, show we can't apply RMF files
+          //PHA Column doesn't exist, show we can't apply RMF or ARF files
           this.rmfFileSelector.disable("PHA column not found in SRC file");
+          this.arfFileSelector.disable("PHA column not found in SRC file");
       }
 
       var minBinSize = 1;
@@ -297,6 +300,10 @@ function ToolPanel (id,
   this.rmfFileSelector = new fileSelector("theRmfFileSelector_" + this.id, "Rmf File:", "RMF", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.rmfFileSelector);
   this.rmfFileSelector.hide();
+
+  this.arfFileSelector = new fileSelector("theArfFileSelector_" + this.id, "Arf File:", "ARF", service.upload_form_data, this.onDatasetChangedFn);
+  this.addFileSelector(this.arfFileSelector);
+  this.arfFileSelector.hide();
 
   //Lightcurve file selectors
   this.lcAFileSelector = new fileSelector("lcAFileSelector_" + this.id, "Lc A File:", "LCA", service.upload_form_data, this.onLcDatasetChangedFn);

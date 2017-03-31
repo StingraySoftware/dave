@@ -155,6 +155,36 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
     return json.dumps(data, cls=NPEncoder)
 
 
+def get_histogram(src_filename, bck_filename, gti_filename, target, filters, axis):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_histogram src: %s" % src_filename)
+    logging.debug("get_histogram bck: %s" % bck_filename)
+    logging.debug("get_histogram gti: %s" % gti_filename)
+    logging.debug("get_histogram: filters %s" % filters)
+    logging.debug("get_histogram: axis %s" % axis)
+
+    data = DaveEngine.get_histogram(src_destination, bck_destination, gti_destination, filters, axis)
+
+    logging.debug("get_histogram: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
 def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -398,3 +428,25 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    logging.debug("get_cross_spectrum: Finish!")
 
    return json.dumps(data, cls=NPEncoder)
+
+
+def get_datasets_product(filename1, axis1, filename2, axis2, common_axis, target):
+    destination1 = get_destination(filename1, target)
+    if not destination1:
+        return common_error("Invalid file or cache key for filename 1")
+
+    destination2 = get_destination(filename2, target)
+    if not destination2:
+        return common_error("Invalid file or cache key for filename 2")
+
+    logging.debug("get_datasets_product file 1: %s" % filename1)
+    logging.debug("get_datasets_product: axis 1 %s" % axis1)
+    logging.debug("get_datasets_product file 2: %s" % filename2)
+    logging.debug("get_datasets_product: axis 2 %s" % axis2)
+    logging.debug("get_datasets_product: common_axis %s" % common_axis)
+
+    data = DaveEngine.get_datasets_product(destination1, axis1, destination2, axis2, common_axis)
+
+    logging.debug("get_datasets_product: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)

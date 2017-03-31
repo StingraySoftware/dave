@@ -59,6 +59,10 @@ function Service (base_url) {
     thisService.make_ajax_call("get_plot_data", data, fn);
   };
 
+  this.request_histogram = function (data, fn) {
+    thisService.make_ajax_call("get_histogram", data, fn);
+  };
+
   this.request_lightcurve = function (data, fn) {
     thisService.make_ajax_call("get_lightcurve", data, fn);
   };
@@ -85,6 +89,10 @@ function Service (base_url) {
 
   this.request_cross_spectrum = function (data, fn) {
     thisService.make_ajax_call("get_cross_spectrum", data, fn);
+  };
+
+  this.request_datasets_product  = function ( data, fn ) {
+    thisService.make_ajax_call("get_datasets_product", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

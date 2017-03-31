@@ -124,6 +124,20 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                             [ { table: "EVENTS", column:"TIME" },
                               { table: "EVENTS", column:"PI" } ]),
 
+              this.getPlot (this.id + "_piVsCounts_" + filename,
+                            filename, bck_filename, gti_filename,
+                            { type: "2d",
+                              labels: ["PI (keV)", "Counts"] },
+                            [ { table: "EVENTS", column:"PI" } ],
+                            this.service.request_histogram, ""),
+
+              this.getPlot (this.id + "_phaVsCounts_" + filename,
+                            filename, bck_filename, gti_filename,
+                            { type: "2d",
+                              labels: ["Channel (keV)", "Counts"] },
+                            [ { table: "EVENTS", column:"PHA" } ],
+                            this.service.request_histogram, ""),
+
               this.getLightCurvePlot ( filename,
                                         bck_filename,
                                         gti_filename,
@@ -393,15 +407,111 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return [lc_plot, pds_plot];
   }
 
-  this.appendPlot = function (plot, refreshData) {
-    this.$body.append(plot.$html);
-    if (isNull(refreshData) || refreshData) {
-      plot.onDatasetValuesChanged(this.getFilters());
-    }
+  this.addRmfPlots = function (projectConfig){
+    var rmfPlot = this.getPlot (this.id + "_rmf_" + projectConfig.rmfFilename,
+                                projectConfig.rmfFilename, "", "",
+                                { type: "2d",
+                                  labels: ["CHANNEL", "Energy (keV)"] },
+                                [ { table: "EBOUNDS", column:"CHANNEL" },
+                                  { table: "EBOUNDS", column:"E_MIN" } ],
+                                null, "");
+
+    this.plots.push(rmfPlot);
+    this.appendPlot(rmfPlot, true);
+
+    var energyPlot = this.getPlot (this.id + "_energy_" + projectConfig.filename,
+                                  projectConfig.filename,
+                                  projectConfig.bckFilename,
+                                  projectConfig.gtiFilename,
+                                  { type: "2d",
+                                    labels: ["TIME (" + projectConfig.timeUnit  + ")", "Energy (keV)"] },
+                                  [ { table: "EVENTS", column:"TIME" },
+                                    { table: "EVENTS", column:"E" } ],
+                                  null, "");
+
+    this.plots.push(energyPlot);
+    this.appendPlot(energyPlot, true);
+
+    this.tryAddRmfArfProductPlot(projectConfig);
   }
 
-  this.prependPlot = function (plot, refreshData) {
-    this.$body.prepend(plot.$html);
+  this.addArfPlots = function (projectConfig){
+    var arfPlot = this.getPlot (this.id + "_arf_" + projectConfig.arfFilename,
+                                projectConfig.arfFilename, "", "",
+                                { type: "2d",
+                                  labels: ["Energy (keV)", "Effective area (cm^2)"] },
+                                [ { table: "SPECRESP", column:"ENERG_LO" },
+                                  { table: "SPECRESP", column:"SPECRESP" } ],
+                                null, "");
+
+    this.plots.push(arfPlot);
+    this.appendPlot(arfPlot, true);
+
+    this.tryAddRmfArfProductPlot(projectConfig);
+  }
+
+  this.tryAddRmfArfProductPlot = function (projectConfig) {
+    this.tryAddProductPlot("RMF",
+                            [ { table: "EBOUNDS", column:"CHANNEL" },
+                              { table: "EBOUNDS", column:"E_MIN" } ], 0,
+                            "ARF",
+                            [ { table: "SPECRESP", column:"ENERG_LO" },
+                              { table: "SPECRESP", column:"SPECRESP" } ], 1,
+                            [ { table: "EBOUNDS", column:"E_MIN" },
+                              { table: "SPECRESP", column:"ENERG_LO" } ],
+                            "INPUT SPECTRUM",
+                            ["Energy (keV)", "Normalized counts s^-1 keV^-1"],
+                            projectConfig);
+  }
+
+  this.tryAddProductPlot = function (key1, axis1, axis1Idx, key2, axis2, axis2Idx, common_axis, title, labels, projectConfig) {
+    var data = {};
+    data.filename1 = projectConfig.getFile(key1);
+    data.filename2 = projectConfig.getFile(key2);
+    data.axis1 = axis1;
+    data.axis2 = axis2;
+    data.common_axis = common_axis;
+
+    var newKey = key1 + "_X_" + key2;
+
+    if ((data.filename1 != "") && (data.filename2 != "") && (projectConfig.getFile(newKey) == "")){
+
+      //Prepares newKey from product dataset and adds the plot to output panel
+      currentObj.service.request_datasets_product(data, function (result) {
+        var cache_key = JSON.parse(result);
+        log("request_datasets_product Result: " + newKey + " --> " + cache_key);
+        if (cache_key != "") {
+
+          projectConfig.setFile(newKey, cache_key);
+
+          var prodTableName = common_axis[0]["table"] + "_X_" + common_axis[1]["table"];
+          var prodColumnX = common_axis[0]["column"] + "_X_" + common_axis[1]["column"];
+          var prodColumnProd = axis1[axis1Idx]["column"] + "_X_" + axis2[axis2Idx]["column"];
+
+          var prodPlot = currentObj.getPlot (currentObj.id + newKey,
+                                      cache_key, "", "",
+                                      { type: "2d",
+                                        labels: labels,
+                                        title: title},
+                                      [ { table: prodTableName, column:prodColumnX },
+                                        { table: prodTableName, column:prodColumnProd } ],
+                                      null, "");
+
+          currentObj.plots.push(prodPlot);
+          currentObj.appendPlot(prodPlot, true);
+        } else {
+          log("tryAddProductPlot WRONG CACHE KEY!!");
+        }
+      });
+
+      return true;
+    }
+
+    return false;
+  }
+
+  this.appendPlot = function (plot, refreshData) {
+    this.$body.append(plot.$html);
     if (isNull(refreshData) || refreshData) {
       plot.onDatasetValuesChanged(this.getFilters());
     }

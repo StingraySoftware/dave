@@ -308,7 +308,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      if (this.tracesCount == 1 || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
        var error_x = null;
        var error_y = null;
-       if (!isNull(pt.data.error_x) && pt.pointNumber < pt.data.error_x.array.length) {
+       if (!isNull(pt.data.error_x)
+          && !isNull(pt.data.error_x.array)
+          && pt.pointNumber < pt.data.error_x.array.length) {
          error_x = pt.data.error_x.array[pt.pointNumber];
          error_y = pt.data.error_y.array[pt.pointNumber];
        }
@@ -364,10 +366,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.getLegendTextForPoint = function (coords) {
+   if (coords == null) { return ""; }
    var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
    var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
-   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + coords.x.toFixed(3);
-   var infotextfory = labelY + ': ' + coords.y.toFixed(3);
+   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+   var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
    var error_x_string = "";
    var error_y_string = "";
    if (!isNull(coords.error_x)) {

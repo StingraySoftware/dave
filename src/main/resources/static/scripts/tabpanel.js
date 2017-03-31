@@ -63,7 +63,12 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
         waitingDialog.show('Appliying RMF: ' + filenames[0]);
+        currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
+      } else if ((selectorKey == "ARF") && currentObj.projectConfig.hasSchema()) {
+        waitingDialog.show('Appliying ARF: ' + filenames[0]);
+        currentObj.projectConfig.setFile("ARF", filenames[0]);
+        currentObj.onArfUploaded();
       }
 
     } else if (filenames.length > 1){
@@ -77,7 +82,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       } else if (selectorKey == "GTI") {
         params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
       } else if (selectorKey == "RMF") {
-        log("onDatasetChanged: RMF files doesn't support mulple selection!");
+        log("onDatasetChanged: RMF files doesn't support multiple selection!");
+        return;
+      } else if (selectorKey == "ARF") {
+        log("onDatasetChanged: ARF files doesn't support multiple selection!");
         return;
       }
       currentObj.onSchemaChangedMultipleFiles(null, params);
@@ -138,33 +146,16 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     result = JSON.parse(result);
     if (!isNull(result.success) && result.success){
       log("onRmfApplied: Success!");
-      var energyPlot = currentObj.outputPanel.getPlot (this.id + "_energy_" + currentObj.projectConfig.filename,
-                                                        currentObj.projectConfig.filename,
-                                                        currentObj.projectConfig.bckFilename,
-                                                        currentObj.projectConfig.gtiFilename,
-                                                        { type: "2d",
-                                                          labels: ["TIME (" + currentObj.projectConfig.timeUnit  + ")", "ENERGY"] },
-                                                        [ { table: "EVENTS", column:"TIME" },
-                                                          { table: "EVENTS", column:"E" } ],
-                                                        null, "");
-
-      currentObj.outputPanel.plots.push(energyPlot);
-      currentObj.outputPanel.prependPlot(energyPlot, true);
-
-      var rmfPlot = currentObj.outputPanel.getPlot (this.id + "_rmf_" + currentObj.projectConfig.rmfFilename,
-                                                        currentObj.projectConfig.rmfFilename, "", "",
-                                                        { type: "2d",
-                                                          labels: ["CHANNEL", "E_MIN"] },
-                                                        [ { table: "EBOUNDS", column:"CHANNEL" },
-                                                          { table: "EBOUNDS", column:"E_MIN" } ],
-                                                        null, "");
-
-      currentObj.outputPanel.plots.push(rmfPlot);
-      currentObj.outputPanel.prependPlot(rmfPlot, true);
+      currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
     } else {
       log("onRmfApplied error:" + JSON.stringify(result));
       waitingDialog.hide();
     }
+  }
+
+  this.onArfUploaded = function () {
+    log("onArfUploaded:");
+    currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
