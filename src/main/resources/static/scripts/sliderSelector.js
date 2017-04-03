@@ -11,6 +11,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.initToValue = toValue;
   this.fromValue = fromValue;
   this.toValue = toValue;
+  this.maxRange = this.initToValue - this.initFromValue;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
 
@@ -68,11 +69,30 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    //Set values method
    this.setValues = function (from, to, source) {
+
        from = Math.min(Math.max(parseFloat(from), this.initFromValue), this.initToValue)
        to = Math.min(Math.max(parseFloat(to), this.initFromValue), this.initToValue)
+       if (to < from) {
+          var swap = from;
+          from = to;
+          to = swap;
+       }
+
+       var moveSlider = source != "slider";
+       // Fits values to max range
+       if ((to - from) > this.maxRange){
+          if (this.toValue != Math.ceil(to)) {
+            //ToValue was changed
+            from = to - this.maxRange;
+          } else {
+            to = from + this.maxRange;
+          }
+          moveSlider = true;
+       }
 
        var step = 1.0;
        if (this.filterData.column == "TIME") {
+          //Fixes values to binSize steps
            var binSize = getTabForSelector(this.id).projectConfig.binSize;
            step = parseFloat(binSize);
            this.fromValue = Math.floor (from / binSize) * binSize;
@@ -83,7 +103,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.toValue = Math.ceil(to);
        this.fromInput.val( this.fromValue );
        this.toInput.val( this.toValue );
-       if (source != "slider") {
+       if (moveSlider) {
          this.slider.slider('values', 0, this.fromValue);
          this.slider.slider('values', 1, this.toValue);
        }
@@ -98,6 +118,16 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
      } else {
         return null;
      }
+   }
+
+   this.setFilter = function (filter) {
+     if (this.filterData.table == filter.table
+          && this.filterData.column == filter.column) {
+        this.setValues( filter.from, filter.to );
+        this.setEnabled (true);
+        return true;
+     }
+     return false;
    }
 
    this.applyFilter = function (filter) {
@@ -124,6 +154,14 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
      }
    }
 
+   this.setMaxRange = function (maxRange) {
+     if (maxRange < this.maxRange) {
+       this.maxRange = maxRange;
+       var toValueInc = (this.initToValue - this.initFromValue) * (maxRange/(this.initToValue - this.initFromValue));
+       this.setValues( this.initFromValue, this.initFromValue + toValueInc );
+     }
+   }
+
    //Init from-to values
    this.setValues( this.initFromValue, this.initToValue );
 
@@ -137,12 +175,6 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
 
 //STATIC SLIDER_SELECTOR METHODS
-
-function sliderSelectors_clear (selectors_array) {
-  for (i in selectors_array) {
-    selectors_array[i].setEnabled (false);
-  }
-}
 
 function sliderSelectors_getFilters (source, selectors_array) {
   var filters = [];
@@ -167,6 +199,19 @@ function sliderSelectors_applyFilters (filters, selectors_array) {
   for (f in filters) {
     for (i in selectors_array) {
       selectors_array[i].applyFilter(filters[f]);
+    }
+  }
+}
+
+function sliderSelectors_setFilters (filters, selectors_array) {
+  for (i in selectors_array) {
+    var filterSetted = false;
+    for (f in filters) {
+      filterSetted = selectors_array[i].setFilter(filters[f]);
+      if (filterSetted) {break;}
+    }
+    if (!filterSetted) {
+      selectors_array[i].setEnabled(false);
     }
   }
 }

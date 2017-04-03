@@ -6,7 +6,8 @@ def add_uploaded_file_to_session(filename):
     if 'uploaded_filenames' not in session:
         session['uploaded_filenames'] = []
 
-    session['uploaded_filenames'].extend([filename])
+    if filename not in session['uploaded_filenames']:
+        session['uploaded_filenames'].extend([filename])
 
 
 def is_file_uploaded(filename):

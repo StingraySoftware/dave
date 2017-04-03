@@ -5,7 +5,9 @@ function ToolPanel (id,
                     service,
                     onDatasetChangedFn,
                     onLcDatasetChangedFn,
-                    onFiltersChangedFn)
+                    onFiltersChangedFn,
+                    undoHistoryFn,
+                    resetHistoryFn)
 {
 
   var currentObj = this;
@@ -18,12 +20,17 @@ function ToolPanel (id,
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.clearBtn = this.$html.find(".btnClear");
+  this.undoBtn = this.$html.find(".btnUndo");
+  this.autoRefreshBtn = this.$html.find(".btnAutoRefresh");
 
   this.onDatasetChangedFn = onDatasetChangedFn;
   this.onLcDatasetChangedFn = onLcDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
+  this.undoHistory = undoHistoryFn;
+  this.resetHistory = resetHistoryFn;
 
   this.lastTimeoutId = null;
+  this.autoRefresh = true;
 
   this.file_selectors_ids_array = [];
   this.selectors_array = [];
@@ -49,6 +56,8 @@ function ToolPanel (id,
   this.showEventsSelectors = function ( panel ) {
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
+    this.rmfFileSelector.show();
+    this.arfFileSelector.show();
     this.lcAFileSelector.hide();
     this.lcBFileSelector.hide();
     this.lcCFileSelector.hide();
@@ -58,6 +67,8 @@ function ToolPanel (id,
   this.showLcSelectors = function ( panel ) {
     this.bckFileSelector.hide();
     this.gtiFileSelector.hide();
+    this.rmfFileSelector.hide();
+    this.arfFileSelector.hide();
     this.lcAFileSelector.show();
     this.lcBFileSelector.show();
     this.lcCFileSelector.show();
@@ -81,11 +92,20 @@ function ToolPanel (id,
       this.binSelector.$html.remove();
     }
 
+    var maxTimeRange = -1;
+    var timeRatio = 1;
+
     if (schema["EVENTS"] !== undefined){
 
       //SRC file is an EVENTS file:
 
       this.showEventsSelectors();
+
+      if (isNull(schema["EVENTS"]["PHA"])){
+          //PHA Column doesn't exist, show we can't apply RMF or ARF files
+          this.rmfFileSelector.disable("PHA column not found in SRC file");
+          this.arfFileSelector.disable("PHA column not found in SRC file");
+      }
 
       var minBinSize = 1;
       var maxBinSize = 1;
@@ -93,7 +113,13 @@ function ToolPanel (id,
       var step = 1;
 
       //Caluculates max, min and step values for slider from time ranges
-      var binSize = (schema["EVENTS"]["TIME"].max_value - schema["EVENTS"]["TIME"].min_value) / MIN_PLOT_POINTS;
+      var timeColumn = schema["EVENTS"]["TIME"];
+      maxTimeRange = timeColumn.max_value - timeColumn.min_value;
+      if (timeColumn.count > MAX_PLOT_POINTS) {
+        timeRatio = MAX_PLOT_POINTS / timeColumn.count;
+        maxTimeRange *= timeRatio;
+      }
+      var binSize = maxTimeRange / MIN_PLOT_POINTS;
       var multiplier = 1;
 
       //If binSize is smaller than 1.0 find the divisor
@@ -131,6 +157,13 @@ function ToolPanel (id,
                       '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
                     '</div>');
       this.$html.find(".selectorsContainer").append(binDiv);
+
+      var timeColumn = schema["RATE"]["TIME"];
+      maxTimeRange = timeColumn.max_value - timeColumn.min_value;
+      if (timeColumn.count > MAX_PLOT_POINTS) {
+        timeRatio = MAX_PLOT_POINTS / timeColumn.count;
+        maxTimeRange *= timeRatio;
+      }
     }
 
     var pi_column = null;
@@ -158,6 +191,11 @@ function ToolPanel (id,
                                               this.selectors_array);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
+            if ((columnName == "TIME") && (timeRatio < 1)) { //If full events were cropped to MAX_PLOT_POINTS
+                selector.setMaxRange(maxTimeRange);
+                selector.setEnabled (true);
+            }
+
             if (tableName == "EVENTS" && columnName == "PI") {
               pi_column = column;
             }
@@ -176,7 +214,7 @@ function ToolPanel (id,
 
   this.createColorSelectors = function (column) {
     var selectorNames = ["Color A", "Color B", "Color C", "Color D"];
-    var increment = column.max_value * (1 / selectorNames.length);
+    var increment = (column.max_value - column.min_value) * (1 / selectorNames.length);
     for (i in selectorNames) {
       var selectorName = selectorNames[i];
       var selectorKey = selectorName.replace(" ", "_");
@@ -188,7 +226,7 @@ function ToolPanel (id,
                                         column.min_value, column.max_value,
                                         this.onSelectorValuesChanged,
                                         this.selectors_array);
-      var min_value = increment * i;
+      var min_value = column.min_value + (increment * i);
       var max_value = min_value + increment;
       selector.setValues (min_value, max_value);
       selector.setEnabled (true);
@@ -200,25 +238,34 @@ function ToolPanel (id,
     sliderSelectors_applyFilters(filters, currentObj.selectors_array);
   }
 
+  this.setFilters = function (filters) {
+    sliderSelectors_setFilters(filters, currentObj.selectors_array);
+  }
+
   this.getFilters = function () {
     return sliderSelectors_getFilters(null, currentObj.selectors_array);
   }
 
   this.onSelectorValuesChanged = function (source) {
+    if (currentObj.autoRefresh) {
+      if (currentObj.lastTimeoutId != null) {
+        clearTimeout(currentObj.lastTimeoutId);
+      }
 
-    if (currentObj.lastTimeoutId != null) {
-      clearTimeout(currentObj.lastTimeoutId);
+      currentObj.lastTimeoutId = setTimeout( function () {
+        var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
+        getTabForSelector(currentObj.id).onFiltersChanged(filters);
+      }, 850);
     }
-
-    currentObj.lastTimeoutId = setTimeout( function () {
-      var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
-      getTabForSelector(currentObj.id).onFiltersChanged(filters);
-    }, 850);
   }
 
   this.containsId = function (id) {
 
     if (this.id == id) {
+        return true;
+    }
+
+    if (!isNull(this.binSelector) && this.binSelector.id == id) {
         return true;
     }
 
@@ -250,6 +297,14 @@ function ToolPanel (id,
   this.addFileSelector(this.gtiFileSelector);
   this.gtiFileSelector.hide();
 
+  this.rmfFileSelector = new fileSelector("theRmfFileSelector_" + this.id, "Rmf File:", "RMF", service.upload_form_data, this.onDatasetChangedFn);
+  this.addFileSelector(this.rmfFileSelector);
+  this.rmfFileSelector.hide();
+
+  this.arfFileSelector = new fileSelector("theArfFileSelector_" + this.id, "Arf File:", "ARF", service.upload_form_data, this.onDatasetChangedFn);
+  this.addFileSelector(this.arfFileSelector);
+  this.arfFileSelector.hide();
+
   //Lightcurve file selectors
   this.lcAFileSelector = new fileSelector("lcAFileSelector_" + this.id, "Lc A File:", "LCA", service.upload_form_data, this.onLcDatasetChangedFn);
   this.addFileSelector(this.lcAFileSelector);
@@ -267,10 +322,20 @@ function ToolPanel (id,
   this.addFileSelector(this.lcDFileSelector);
   this.lcDFileSelector.hide();
 
-  this.clearBtn.button().bind("click", function( event ) {
-      event.preventDefault();
-      sliderSelectors_clear(currentObj.selectors_array);
-      currentObj.onSelectorValuesChanged();
+  this.clearBtn.bind("click", function( event ) {
+      currentObj.resetHistory();
+  });
+
+  this.undoBtn.bind("click", function( event ) {
+      currentObj.undoHistory();
+  });
+
+  this.autoRefreshBtn.bind("click", function( event ) {
+      currentObj.autoRefreshBtn.toggleClass("btn-success");
+      currentObj.autoRefresh = currentObj.autoRefreshBtn.hasClass("btn-success");
+      if (currentObj.autoRefresh) {
+        currentObj.onSelectorValuesChanged();
+      }
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

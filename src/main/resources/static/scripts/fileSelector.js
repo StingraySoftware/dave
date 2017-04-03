@@ -66,6 +66,12 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      this.$html.hide();
    }
 
+   this.disable = function (msg) {
+     this.$html.find("label").html('<a href="#" class="btn btn-danger btnWarn"><div>' +
+                                     '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
+                                   '</div></a>');
+   }
+
    log ("new fileSelector id: " + id + ", label: " + label + ", inputId: " + this.uploadInputId);
 
    return this;

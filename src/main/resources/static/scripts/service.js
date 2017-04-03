@@ -33,6 +33,12 @@ function Service (base_url) {
       .fail(errorFn);
   };
 
+  this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
+    $.get( thisService.base_url + "/apply_rmf_file_to_dataset", { filename: filename, rmf_filename: rmf_filename } )
+      .done(fn)
+      .fail(fn);
+  };
+
   this.make_ajax_call = function (callName, data, fn) {
     log(callName + " plot " + JSON.stringify(data));
     try {
@@ -53,12 +59,16 @@ function Service (base_url) {
     thisService.make_ajax_call("get_plot_data", data, fn);
   };
 
+  this.request_histogram = function (data, fn) {
+    thisService.make_ajax_call("get_histogram", data, fn);
+  };
+
   this.request_lightcurve = function (data, fn) {
     thisService.make_ajax_call("get_lightcurve", data, fn);
   };
 
-  this.request_colors_lightcurve = function (data, fn) {
-    thisService.make_ajax_call("get_colors_lightcurve", data, fn);
+  this.request_color_color_lightcurve = function (data, fn) {
+    thisService.make_ajax_call("get_color_color_lightcurve", data, fn);
   };
 
   this.request_joined_lightcurves_from_colors = function (data, fn) {
@@ -79,6 +89,10 @@ function Service (base_url) {
 
   this.request_cross_spectrum = function (data, fn) {
     thisService.make_ajax_call("get_cross_spectrum", data, fn);
+  };
+
+  this.request_datasets_product  = function ( data, fn ) {
+    thisService.make_ajax_call("get_datasets_product", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

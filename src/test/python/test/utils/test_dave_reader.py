@@ -30,7 +30,8 @@ def test_get_fits_dataset_lc(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_2.lc")
     ds_id = "fits_table"
     table_ids = ["Primary", "RATE", "STDGTI"]
-    dataset = DaveReader.get_fits_dataset(destination, ds_id, table_ids)
+    hdulist = fits.open(destination)
+    dataset = DaveReader.get_fits_dataset(hdulist, ds_id, table_ids)
     assert dataset
     assert len(dataset.tables) == 2
     assert table_ids[1] in dataset.tables
@@ -53,7 +54,8 @@ def test_get_fits_dataset_evt(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
     ds_id = "fits_table"
     table_ids = ["Primary", "EVENTS", "GTI"]
-    dataset = DaveReader.get_fits_dataset(destination, ds_id, table_ids)
+    hdulist = fits.open(destination)
+    dataset = DaveReader.get_fits_dataset(hdulist, ds_id, table_ids)
     assert dataset
     assert len(dataset.tables) == 2
     assert table_ids[1] in dataset.tables
@@ -93,7 +95,8 @@ def test_get_file_dataset(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_2.lc")
     ds_id = "fits_table"
     table_ids = ["Primary", "RATE", "STDGTI"]
-    dataset = DaveReader.get_fits_dataset(destination, ds_id, table_ids)
+    hdulist = fits.open(destination)
+    dataset = DaveReader.get_fits_dataset(hdulist, ds_id, table_ids)
     assert dataset
     assert len(dataset.tables) == 2
     assert table_ids[1] in dataset.tables

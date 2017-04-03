@@ -1,5 +1,7 @@
 # from: http://flask.pocoo.org/snippets/116/
 #
+# THIS FILE IS FOR SENDING EVENTS TO DAVE GUI LOGGER
+#
 # Make sure your gevent version is >= 1.0
 import gevent
 from gevent.wsgi import WSGIServer

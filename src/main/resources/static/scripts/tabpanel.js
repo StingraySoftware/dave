@@ -17,6 +17,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.$html = cloneHtmlElement(id, classSelector);
   this.$navItem = $('<li><a class="' + navItemClass + '" href="#">Tab ' + tabPanels.length + '</a></li>')
 
+  this.actionsHistory = [];
+  this.prevAction = null;
+
   this.projectConfig = new ProjectConfig();
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
@@ -50,14 +53,22 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     if (filenames.length == 1) {
 
       currentObj.projectConfig.setFiles(selectorKey, [], filenames[0]);
-      waitingDialog.show('Getting file schema: ' + currentObj.projectConfig.filename);
-      log("onDatasetChanged " + selectorKey + ": " + currentObj.projectConfig.filename);
+      waitingDialog.show('Getting file schema: ' + filenames[0]);
+      log("onDatasetChanged " + selectorKey + ": " + filenames[0]);
       if (selectorKey == "SRC") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSrcSchemaChanged, currentObj.onSchemaError, null);
       } else if (selectorKey == "BCK") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.bckFilename, currentObj.onBckSchemaChanged);
       } else if (selectorKey == "GTI") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
+      } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
+        waitingDialog.show('Appliying RMF: ' + filenames[0]);
+        currentObj.projectConfig.setFile("RMF", filenames[0]);
+        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
+      } else if ((selectorKey == "ARF") && currentObj.projectConfig.hasSchema()) {
+        waitingDialog.show('Appliying ARF: ' + filenames[0]);
+        currentObj.projectConfig.setFile("ARF", filenames[0]);
+        currentObj.onArfUploaded();
       }
 
     } else if (filenames.length > 1){
@@ -70,6 +81,12 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
       } else if (selectorKey == "GTI") {
         params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
+      } else if (selectorKey == "RMF") {
+        log("onDatasetChanged: RMF files doesn't support multiple selection!");
+        return;
+      } else if (selectorKey == "ARF") {
+        log("onDatasetChanged: ARF files doesn't support multiple selection!");
+        return;
       }
       currentObj.onSchemaChangedMultipleFiles(null, params);
 
@@ -125,6 +142,22 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     currentObj.onSchemaChangedWithKey("GTI", schema, params);
   }
 
+  this.onRmfApplied = function ( result ) {
+    result = JSON.parse(result);
+    if (!isNull(result.success) && result.success){
+      log("onRmfApplied: Success!");
+      currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+    } else {
+      log("onRmfApplied error:" + JSON.stringify(result));
+      waitingDialog.hide();
+    }
+  }
+
+  this.onArfUploaded = function () {
+    log("onArfUploaded:");
+    currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
+  }
+
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
     if (params !== undefined && params != null){
       currentObj.projectConfig.setFiles(selectorKey, params.filenames, params.filename);
@@ -140,6 +173,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
         currentObj.refreshPlotsData();
+
+        //Reset History and add default filters
+        currentObj.actionsHistory = [];
+        currentObj.addToHistory("filters", currentObj.toolPanel.getFilters());
 
       } else {
 
@@ -197,6 +234,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.onFiltersChanged = function (filters) {
     log("onFiltersChanged: filters: " + JSON.stringify(filters));
+    currentObj.addToHistory("filters", filters);
     currentObj.outputPanel.onDatasetValuesChanged(filters);
   }
 
@@ -209,6 +247,61 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     currentObj.outputPanel.broadcastEventToPlots(evt_name, evt_data, senderId);
   }
 
+  this.addToHistory = function (actionType, actionData){
+      //Adds a action to actionsHistory, uses { obj } for cloning data (new obj reference)
+      if (currentObj.prevAction != null) {
+        currentObj.actionsHistory.push( $.extend(true, {}, currentObj.prevAction) );
+      }
+      currentObj.toolPanel.undoBtn.prop('disabled', (currentObj.prevAction == null));
+      //Stores a action on prevAction tmp var, uses $.extend for cloning data (new obj reference)
+      currentObj.prevAction = { type: actionType, actionData: $.extend(true, [], actionData), binSize: this.projectConfig.binSize };
+  }
+
+  this.undoHistory = function () {
+    if (currentObj.actionsHistory.length > 0) {
+      currentObj.applyAction(currentObj.actionsHistory.pop());
+    }
+  }
+
+  this.resetHistory = function () {
+    if (currentObj.actionsHistory.length > 0) {
+      var action = currentObj.actionsHistory[0];
+      currentObj.actionsHistory = []; // Clears action history keeping default state
+      currentObj.applyAction(action);
+      currentObj.prevAction = null;
+      currentObj.addToHistory(action);
+    } else {
+      currentObj.applyAction(currentObj.prevAction);
+    }
+  }
+
+  this.applyAction = function (action){
+    if (action != null){
+      switch (action.type) {
+           case 'filters':
+               var filters = action.actionData;
+               currentObj.toolPanel.setFilters(filters);
+               currentObj.setBinSize(action.binSize);
+               currentObj.outputPanel.onDatasetValuesChanged(filters);
+               break;
+
+           default:
+               log("undoHistory: Unknown action type: " + action.type + ", Tab.id: " + currentObj.id);
+       }
+
+       currentObj.prevAction = $.extend(true, [], action);
+       currentObj.toolPanel.undoBtn.prop('disabled', currentObj.actionsHistory.length == 0);
+    }
+  }
+
+  this.setBinSize = function (binSize) {
+    if (!isNull(binSize) && binSize != currentObj.projectConfig.binSize) {
+      currentObj.projectConfig.binSize = binSize;
+      if (currentObj.toolPanel.binSelector != null){
+        currentObj.toolPanel.binSelector.setValues(binSize);
+      }
+    }
+  }
 
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
@@ -219,7 +312,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                   this.service,
                                   this.onDatasetChanged,
                                   this.onLcDatasetChanged,
-                                  this.onFiltersChanged);
+                                  this.onFiltersChanged,
+                                  this.undoHistory,
+                                  this.resetHistory);
 
   this.outputPanel = new OutputPanel (this.id + "_outputPanel",
                                       "OutputPanelTemplate",

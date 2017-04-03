@@ -152,6 +152,7 @@ h3
 
 .plotContainer
 {
+  position: relative;
   float:left;
   width: 48%;
   border: 1px solid #afafaf;
@@ -174,10 +175,12 @@ h3
 
 .plotContainer .hoverinfo
 {
-  margin-right: 24px;
-  margin-top: 4px;
-  float:left;
+  margin-left: 12px;
+  margin-right: 12px;
+  margin-top: 0px;
+  float: left;
   font-size: 0.7em;
+  max-width: 60%;
 }
 
 .plotContainer .plotTools
@@ -188,6 +191,13 @@ h3
 .plotContainer .settings
 {
   padding: 24px;
+  overflow-x: scroll;
+  overflow-y: scroll;
+}
+
+.plotContainer .settings h3
+{
+  margin-top: 12px
 }
 
 .fullWidth
@@ -236,4 +246,25 @@ h3
   padding: 4px;
   padding-top: 1px;
   padding-bottom: 1px;
+}
+
+.btnWarn {
+  white-space: normal;
+  font-size: 0.7em;
+  margin-top: -2px;
+  margin-bottom: -2px;
+}
+
+.bigWarnBtn {
+  width: 73%;
+}
+
+.btnWarn div {
+  height: 100%;
+}
+
+.fullWidth .btnWarn, .fileSelector .btnWarn {
+  width: auto;
+  white-space: nowrap;
+  font-size: 1em;
 }

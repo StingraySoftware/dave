@@ -19,15 +19,21 @@ def upload(files, target):
 
     for file in files:
 
-        destination = FileUtils.save_file(file, target)
+        # Looks if same filename was previously uploaded
+        if not FileUtils.file_exist(target, file.filename):
+            destination = FileUtils.save_file(target, file)
 
-        if not destination:
-            return common_error("Error uploading file...")
+            if not destination:
+                return common_error("Error uploading file...")
 
-        if not FileUtils.is_valid_file(destination):
-            return common_error("File format is not supported...")
+            if not FileUtils.is_valid_file(destination):
+                return common_error("File format is not supported...")
 
-        logging.info("Uploaded filename: %s" % destination)
+            logging.info("Uploaded filename: %s" % destination)
+        else:
+            destination = FileUtils.get_destination(target, file.filename)
+            logging.info("Previously uploaded filename: %s" % destination)
+
         SessionHelper.add_uploaded_file_to_session(file.filename)
         filenames.append(file.filename)
 
@@ -58,7 +64,7 @@ def get_destination(filename, target):
 def get_dataset_schema(filename, target):
     destination = get_destination(filename, target)
     if not destination:
-        return common_error("Invalid file or cache key")
+        return common_error("Invalid file or cache key, filename: %s" % filename)
 
     schema = DaveEngine.get_dataset_schema(destination)
     return json.dumps(schema, cls=NPEncoder)
@@ -87,6 +93,31 @@ def append_file_to_dataset(filename, nextfile, target):
     new_filename = DaveEngine.append_file_to_dataset(destination, next_destination)
 
     return json.dumps(new_filename)
+
+
+# apply_rmf_file_to_dataset: Applies and Rmf file to an events dataset
+#                            Creates a new column E with Enery data on dataset
+# @param: filename: filename or dataset cache key
+# @param: rmf_filename: rmf file to apply
+#
+def apply_rmf_file_to_dataset(filename, rmf_filename, target):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key")
+
+    if not rmf_filename:
+        return common_error(error="No rmf_filename setted")
+
+    if not SessionHelper.is_file_uploaded(rmf_filename):
+        return common_error("Rmf file not uploaded")
+
+    rmf_destination = FileUtils.get_destination(target, rmf_filename)
+    if not FileUtils.is_valid_file(rmf_destination):
+        return common_error("Invalid RMF file")
+
+    result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination)
+
+    return json.dumps(dict(success=result))
 
 
 def common_error(error):
@@ -124,6 +155,36 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
     return json.dumps(data, cls=NPEncoder)
 
 
+def get_histogram(src_filename, bck_filename, gti_filename, target, filters, axis):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_histogram src: %s" % src_filename)
+    logging.debug("get_histogram bck: %s" % bck_filename)
+    logging.debug("get_histogram gti: %s" % gti_filename)
+    logging.debug("get_histogram: filters %s" % filters)
+    logging.debug("get_histogram: axis %s" % axis)
+
+    data = DaveEngine.get_histogram(src_destination, bck_destination, gti_destination, filters, axis)
+
+    logging.debug("get_histogram: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
 def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -155,7 +216,7 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
+def get_color_color_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -172,16 +233,16 @@ def get_colors_lightcurve(src_filename, bck_filename, gti_filename, target, filt
         if not gti_destination:
             return common_error("Invalid file or cache key for gti data")
 
-    logging.debug("get_colors_lightcurve src: %s" % src_filename)
-    logging.debug("get_colors_lightcurve bck: %s" % bck_filename)
-    logging.debug("get_colors_lightcurve gti: %s" % gti_filename)
-    logging.debug("get_colors_lightcurve: filters %s" % filters)
-    logging.debug("get_colors_lightcurve: axis %s" % axis)
-    logging.debug("get_colors_lightcurve: dt %f" % dt)
+    logging.debug("get_color_color_lightcurve src: %s" % src_filename)
+    logging.debug("get_color_color_lightcurve bck: %s" % bck_filename)
+    logging.debug("get_color_color_lightcurve gti: %s" % gti_filename)
+    logging.debug("get_color_color_lightcurve: filters %s" % filters)
+    logging.debug("get_color_color_lightcurve: axis %s" % axis)
+    logging.debug("get_color_color_lightcurve: dt %f" % dt)
 
-    data = DaveEngine.get_colors_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
+    data = DaveEngine.get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
 
-    logging.debug("get_colors_lightcurve: Finish!")
+    logging.debug("get_color_color_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 
@@ -367,3 +428,25 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    logging.debug("get_cross_spectrum: Finish!")
 
    return json.dumps(data, cls=NPEncoder)
+
+
+def get_datasets_product(filename1, axis1, filename2, axis2, common_axis, target):
+    destination1 = get_destination(filename1, target)
+    if not destination1:
+        return common_error("Invalid file or cache key for filename 1")
+
+    destination2 = get_destination(filename2, target)
+    if not destination2:
+        return common_error("Invalid file or cache key for filename 2")
+
+    logging.debug("get_datasets_product file 1: %s" % filename1)
+    logging.debug("get_datasets_product: axis 1 %s" % axis1)
+    logging.debug("get_datasets_product file 2: %s" % filename2)
+    logging.debug("get_datasets_product: axis 2 %s" % axis2)
+    logging.debug("get_datasets_product: common_axis %s" % common_axis)
+
+    data = DaveEngine.get_datasets_product(destination1, axis1, destination2, axis2, common_axis)
+
+    logging.debug("get_datasets_product: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)

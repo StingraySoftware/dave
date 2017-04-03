@@ -19,14 +19,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.addedTraces = 0;
   this.minX = 0;
   this.minY = 0;
+  this.maxX = 0;
+  this.maxY = 0;
 
   this.$html = $('<div id="' + this.id + '" class="plotContainer ' + this.cssClass + '">' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
-                    '<div class="hoverinfo"></div>' +
                     '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnFullScreen">' +
+                      '<i class="fa ' + ((this.cssClass == "fullWidth") ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
+                    '</button>' +
                     '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
+                  '<div class="hoverinfo"></div>' +
                 '</div>');
 
  this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
@@ -34,6 +39,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  toolbar.append(this.btnShow);
 
  this.btnHide = this.$html.find(".btnHidePlot");
+ this.btnFullScreen = this.$html.find(".btnFullScreen");
  this.btnSave = this.$html.find(".btnSave");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
@@ -55,6 +61,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
     currentObj.btnShow.show();
  });
+
+ this.btnFullScreen.click(function( event ) {
+   if (currentObj.$html.hasClass("fullWidth")) {
+     currentObj.btnFullScreen.find("i").switchClass( "fa-compress", "fa-arrows-alt");
+   } else {
+     currentObj.btnFullScreen.find("i").switchClass( "fa-arrows-alt", "fa-compress");
+   }
+   currentObj.$html.toggleClass("fullWidth");
+   currentObj.resize();
+ });
+
+ this.updateFullscreenBtn = function () {
+
+ }
+ this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
     currentObj.saveAsPNG();
@@ -109,6 +130,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (data != null) {
      currentObj.setData(data);
    } else {
+     currentObj.showWarn("Wrong data received");
      log("onPlotDataReceived wrong data!, plot" + currentObj.id);
      currentObj.setReadyState(true);
      currentObj.onPlotReady();
@@ -117,19 +139,30 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setData = function ( data ) {
 
+   currentObj.showWarn("");
+
    if (isNull(data)) {
+     currentObj.showWarn("Wrong data received");
      log("setData wrong passed data!, plot" + currentObj.id);
      return;
    }
 
-   currentObj.data = data;
-   currentObj.updateMinCoords();
+   currentObj.data = currentObj.prepareData(data);
+   currentObj.updateMinMaxCoords();
 
    var plotlyConfig = currentObj.getPlotConfig(data);
    currentObj.redrawPlot(plotlyConfig);
-   
+
+   if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
+     currentObj.showWarn("Empty plot data");
+   }
+
    currentObj.setReadyState(true);
    currentObj.onPlotReady();
+ }
+
+ this.prepareData = function (data) {
+   return data; //This method is just for being overriden if necessary
  }
 
  this.getPlotConfig = function (data) {
@@ -138,7 +171,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (currentObj.plotConfig.styles.type == "2d") {
       return get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
-                                    currentObj.detectWtiRangesFromData(data),
+                                    (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     currentObj.plotConfig.styles.title)
@@ -157,8 +190,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
-      return get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values,
-                                        data[2].values,
+      return get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map',
@@ -166,14 +198,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
       return get_plotdiv_lightcurve(data[0].values, data[1].values,
-                                          [], [], currentObj.detectWtiRangesFromData(data),
+                                          [], data[2].values,
+                                          (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                           currentObj.plotConfig.styles.labels[coords.x],
                                           currentObj.plotConfig.styles.labels[coords.y],
                                           currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
-      return get_plotdiv_xyy(data[coords.x].values, data[coords.y].values, data[2].values,
-                                   [], [], [], currentObj.detectWtiRangesFromData(data),
+      return get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
+                                   [], [], [],
+                                   (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                    currentObj.plotConfig.styles.labels[coords.x],
                                    currentObj.plotConfig.styles.labels[coords.y],
                                    currentObj.plotConfig.styles.labels[2],
@@ -192,6 +226,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      this.resize();
 
    } else {
+     this.showWarn("Wrong plot config");
      log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
    }
  }
@@ -270,13 +305,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getCoordsFromPlotlyHoverEvent = function (data){
    if (data.points.length == 1) {
      var pt = data.points[0];
-     var error_x = null;
-     var error_y = null;
-     if (!isNull(pt.data.error_x) && pt.pointNumber < pt.data.error_x.array.length) {
-       error_x = pt.data.error_x.array[pt.pointNumber];
-       error_y = pt.data.error_y.array[pt.pointNumber];
+     if (this.tracesCount == 1 || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
+       var error_x = null;
+       var error_y = null;
+       if (!isNull(pt.data.error_x)
+          && !isNull(pt.data.error_x.array)
+          && pt.pointNumber < pt.data.error_x.array.length) {
+         error_x = pt.data.error_x.array[pt.pointNumber];
+         error_y = pt.data.error_y.array[pt.pointNumber];
+       }
+       return { x: pt.x, y: pt.y, error_x: error_x, error_y: error_y, label: pt.data.name };
      }
-     return { x: pt.x, y: pt.y, error_x: error_x, error_y: error_y, label: pt.data.name };
    }
    return null;
   }
@@ -295,11 +334,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     return null;
   }
 
-  this.updateMinCoords = function (){
+  this.updateMinMaxCoords = function (){
     if (this.data != null) {
       var coords = this.getSwitchedCoords( { x: 0, y: 1} );
       this.minX = Math.min.apply(null, this.data[coords.x].values);
       this.minY = Math.min.apply(null, this.data[coords.y].values);
+      this.maxX = Math.max.apply(null, this.data[coords.x].values);
+      this.maxY = Math.max.apply(null, this.data[coords.y].values);
     }
   }
 
@@ -325,41 +366,47 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.getLegendTextForPoint = function (coords) {
+   if (coords == null) { return ""; }
    var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
    var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
-   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + coords.x;
-   var infotextfory = labelY + ': ' + coords.y;
-   var spacesup= '\xa0\xa0\xa0\xa0\xa0\xa0\xa0';
-   var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
-   var idx = this.data[swcoords.x].values.indexOf(coords.x);
-
+   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+   var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
    var error_x_string = "";
    var error_y_string = "";
    if (!isNull(coords.error_x)) {
-     error_x_string= "+/-" + (coords.error_x).toString();
+     error_x_string= "+/-" + coords.error_x.toFixed(3);
    }
    if (!isNull(coords.error_y)){
-     error_y_string= "+/-" + (coords.error_y).toString();
+     error_y_string= "+/-" + coords.error_y.toFixed(3);
    }
-
-   return infotextforx + error_x_string + spacesup + infotextfory + error_y_string;
+   return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
   }
 
   this.setLegendText = function (text) {
    this.$hoverinfo.html(text);
   }
 
+  this.showWarn = function (warnmsg) {
+    this.$html.find(".plotTools").find(".btnWarn").remove();
+    if (warnmsg != ""){
+      this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><div>' +
+                         '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg +
+                        '</div></button>');
+      if (warnmsg.length > 50) {
+        this.btnWarn.addClass("bigWarnBtn");
+      }
+      this.$html.find(".plotTools").prepend(this.btnWarn);
+    }
+  }
+
   this.showCross = function (x, y){
-   Plotly.addTraces(this.plotElem, { x: [x, x], y: [this.minY, y], showlegend: false, line: {color: '#dd4814'}, hoverinfo: "none" });
-   Plotly.addTraces(this.plotElem, { x: [this.minX, x], y: [y, y], showlegend: false, line: {color: '#dd4814'}, hoverinfo: "none" });
+   Plotly.addTraces(this.plotElem, getCrossLine ([x, x], [this.minY, this.maxY]));
+   Plotly.addTraces(this.plotElem, getCrossLine ([this.minX, this.maxX], [y, y]));
    this.addedTraces += 2;
-   //log("showCross: addedTraces: " + this.addedTraces);
   }
 
   this.hideCrosses = function (){
-
    var newaddedTraces = this.addedTraces;
-   //log("hideCrosses: addedTraces: " + this.addedTraces + ", tracesCount: " + this.tracesCount);
    for (i = this.addedTraces + this.tracesCount; i > this.tracesCount; i--) {
      try {
        Plotly.deleteTraces(currentObj.plotElem, i - 1);
@@ -368,7 +415,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        //log("deleteTraces: ERROR ex: " + e);
      }
    }
-
    this.addedTraces = newaddedTraces;
   }
 
@@ -390,7 +436,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
               this.onUnHover();
               break;
           default:
-              log("receivePlotEvent: Unhandled event: " + evt_name);
+              log("receivePlotEvent: Unhandled event: " + evt_name + ", Plot.id: " + this.id);
       }
    }
   }
@@ -409,7 +455,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.applyValidFilters = function (filters) {
-   if (!isNull(this.plotConfig.mandatoryFilters)) {
+   if (!isNull(this.plotConfig.mandatoryFilters)
+        && this.plotConfig.mandatoryFilters.length > 0) {
 
      //Sets only valid filters: Valid filters is a filter without source, or
      //filter specified on mandatoryFilters
@@ -423,7 +470,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
              if (filter.source == mfilter.source
                   && filter.table == mfilter.table
                   && filter.column == mfilter.column) {
-                    validFilters.push(filter);
+                    if (!isNull(mfilter.replaceColumn)){
+                      var replacedFilter = $.extend(true, {}, filter);
+                      replacedFilter.column = mfilter.replaceColumn;
+                      delete replacedFilter.source;
+                      validFilters.push(replacedFilter);
+                    } else {
+                      validFilters.push(filter);
+                    }
                   }
            }
          } else if (isNull(filter.source)) {
@@ -438,6 +492,41 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
   }
 
+  this.getWtiRangesFromGtis = function (gti_start, gti_stop, timevals) {
+
+   //Prepares Wrong Time Intervals for background highlight
+   var wti_ranges = [];
+
+   if (!isNull(gti_start) && !isNull(gti_stop) && !isNull(timevals)
+      && timevals.length > 0
+      && gti_start.length > 0
+      && gti_stop.length > 0
+      && gti_start.length == gti_stop.length) {
+
+      //var last = -1;
+      for (i in gti_start){
+        if (i > 0) {
+          if (gti_stop[i - 1] < gti_start[i]) {
+            wti_ranges.push([gti_stop[i - 1], gti_start[i]]);
+          }
+          //last = gti_stop[i];
+        } /*else if (gti_start[0] > timevals[0]) {
+            //This adds WTI range before first event
+            wti_ranges.push([timevals[0], gti_start[0]]);
+        }*/
+      }
+
+      /* This adds WTI range after last event
+      if (last > timevals[timevals.length -1]) {
+        wti_ranges.push([timevals[timevals.length -1], last]);
+      }*/
+   }
+
+   return wti_ranges;
+  }
+
+  /*
+  // detectWtiRangesFromData IS NOT USED, JUST KEEPED FOR POSIBLE FURTHER USE
   this.detectWtiRangesFromData = function (data) {
 
    //Prepares Wrong Time Intervals for background highlight
@@ -496,7 +585,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
 
    return wti_x_ranges;
-  }
+  }// --END detectWtiRangesFromData IS NOT USED, JUST KEEPED FOR POSIBLE FURTHER USE
+  */
 
   log ("new plot id: " + this.id);
 

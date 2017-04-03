@@ -99,6 +99,15 @@ def is_hdu_dataset(dataset, hduname):
     return False
 
 
+def is_rmf_dataset(dataset):
+    if dataset:
+        if "EBOUNDS" in dataset.tables:
+            if "CHANNEL" in dataset.tables["EBOUNDS"].columns:
+                return True
+
+    return False
+
+
 def is_gti_dataset(dataset):
     if dataset:
         if "GTI" in dataset.tables:

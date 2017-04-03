@@ -3,6 +3,7 @@ import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
 import utils.plotter as Plotter
 import numpy as np
+import copy
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
@@ -59,6 +60,49 @@ def append_file_to_dataset(destination, next_destination):
     return ""
 
 
+# apply_rmf_file_to_dataset: Appends Fits data to a dataset
+#
+# @param: destination: file destination or dataset cache key
+# @param: rmf_destination: file destination of file to append
+#
+def apply_rmf_file_to_dataset(destination, rmf_destination):
+    try:
+        dataset = DaveReader.get_file_dataset(destination)
+        if DsHelper.is_events_dataset(dataset):
+            rmf_dataset = DaveReader.get_file_dataset(rmf_destination)
+            if DsHelper.is_rmf_dataset(rmf_dataset):
+                # Applies rmf data to dataset
+                events_table = dataset.tables["EVENTS"]
+                rmf_table = rmf_dataset.tables["EBOUNDS"]
+
+                if "PHA" not in events_table.columns:
+                    logging.warn('apply_rmf_file_to_dataset: PHA column not found!')
+                    return False
+
+                pha_data = events_table.columns["PHA"].values
+                pi_data = events_table.columns["PI"].values
+
+                e_avg_data = dict((channel, (min + max)/2) for channel, min, max in zip(rmf_table.columns["CHANNEL"].values,
+                                                                                    rmf_table.columns["E_MIN"].values,
+                                                                                    rmf_table.columns["E_MAX"].values))
+                e_values = []
+                for i in range(len(pha_data)):
+                    if pha_data[i] in e_avg_data:
+                        e_values.append(pi_data[i] * e_avg_data[pha_data[i]])
+                    else:
+                        e_values.append(0)
+
+                events_table.add_columns(["E"])
+                events_table.columns["E"].add_values(e_values)
+
+                DsCache.remove_with_prefix("FILTERED") # Removes all filtered datasets from cache
+                DsCache.add(destination, dataset) # Stores dataset on cache
+                return len(events_table.columns["E"].values) == len(events_table.columns["PI"].values)
+    except:
+        logging.error(getException('apply_rmf_file_to_dataset'))
+    return False
+
+
 # get_plot_data: Returns the data for a plot
 #
 # @param: src_destination: source file destination
@@ -78,9 +122,6 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         filters = FltHelper.get_filters_clean_color_filters(filters)
 
         filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds):
-            logging.warn("Wrong dataset type")
-            return None
 
         # Config checking
         if "type" not in styles:
@@ -126,6 +167,62 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
     return None
 
 
+# get_histogram: Returns data for the histogram of passed axis
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "PHA" }]
+#
+def get_histogram(src_destination, bck_destination, gti_destination, filters, axis):
+
+    axis_values = []
+    counts = []
+
+    try:
+        if len(axis) != 1:
+            logging.warn("Wrong number of axis")
+            return None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            # Counts channel hits
+            if not check_axis_in_dataset(filtered_ds, axis):
+                logging.warn('get_histogram: Wrong axis for this dataset')
+                return None
+            axis_data = filtered_ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values
+
+            counted_data = dict()
+            for axis_value in axis_data:
+                if not axis_value in counted_data:
+                    counted_data[axis_value] = 0
+                    axis_values.append(axis_value)
+                counted_data[axis_value] += 1
+
+            axis_values = np.sort(axis_values)
+            counts = np.array([counted_data[axis_value] for axis_value in axis_values])
+
+        else:
+            logging.warn("Wrong dataset type")
+            return None
+
+        filtered_ds = None  # Dispose memory
+
+    except:
+        logging.error(getException('get_histogram'))
+
+    # Preapares the result
+    result = push_to_results_array([], axis_values)
+    result = push_to_results_array(result, counts)
+    return result
+
+
 # get_lightcurve: Returns the data for the Lightcurve
 #
 # @param: src_destination: source file destination
@@ -143,6 +240,8 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     time_vals = []
     count_rate = []
     error_values = []
+    gti_start_values = []
+    gti_stop_values = []
 
     try:
         if len(axis) != 2:
@@ -153,17 +252,12 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
         filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-        if not DsHelper.is_events_dataset(filtered_ds) \
-            and not DsHelper.is_lightcurve_dataset(filtered_ds):
-            logging.warn("Wrong dataset type")
-            return None
 
         if DsHelper.is_events_dataset(filtered_ds):
             # Creates lightcurves by gti and joins in one
             logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
 
             lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt)
-            filtered_ds = None  # Dispose memory
 
             if lc:
                 time_vals = lc.time
@@ -177,6 +271,15 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             count_rate = filtered_ds.tables["RATE"].columns["RATE"].values
             error_values = filtered_ds.tables["RATE"].columns["ERROR"].values
 
+        else:
+            logging.warn("Wrong dataset type")
+            return None
+
+        #Sets gtis ranges
+        gti_start_values = filtered_ds.tables["GTI"].columns["START"].values
+        gti_stop_values = filtered_ds.tables["GTI"].columns["STOP"].values
+        filtered_ds = None  # Dispose memory
+
     except:
         logging.error(getException('get_lightcurve'))
 
@@ -185,10 +288,12 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     result = push_to_results_array([], time_vals)
     result = push_to_results_array(result, count_rate)
     result = push_to_results_array(result, error_values)
+    result = push_to_results_array(result, gti_start_values)
+    result = push_to_results_array(result, gti_stop_values)
     return result
 
 
-# get_colors_lightcurve: Returns the data for the Lightcurve
+# get_color_color_lightcurve: Returns the data for the Color Color Lightcurve
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -200,7 +305,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 #            { table = "EVENTS", column = "PI" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_colors_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
+def get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
@@ -208,27 +313,34 @@ def get_colors_lightcurve(src_destination, bck_destination, gti_destination, fil
 
     try:
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+        gti_start_values = []
+        gti_stop_values = []
 
         count_column_name = "PI"
         color_keys = FltHelper.get_color_keys_from_filters(filters)
         filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
+        if len(filtered_datasets) > 0:
+            gti_start_values = filtered_datasets[0].tables["GTI"].columns["START"].values
+            gti_stop_values = filtered_datasets[0].tables["GTI"].columns["STOP"].values
 
         # Creates lightcurves array applying bck and gtis from each color
-        logging.debug("Create color lightcurves ....")
+        logging.debug("Create color color lightcurves ....")
         lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, bck_destination, filters, gti_destination, dt)
         filtered_datasets = None  # Dispose memory
 
         # Preapares the result
-        logging.debug("Result color lightcurves ....")
+        logging.debug("Result color color lightcurves ....")
         if len(lightcurves) == 4:
             if lightcurves[0]:
                 result = push_to_results_array([], lightcurves[0].time)
                 result = push_divided_values_to_results_array(result, lightcurves[0].countrate, lightcurves[1].countrate)
                 result = push_divided_values_to_results_array(result, lightcurves[2].countrate, lightcurves[3].countrate)
+                result = push_to_results_array(result, gti_start_values)
+                result = push_to_results_array(result, gti_stop_values)
                 return result
 
     except:
-        logging.error(getException('get_colors_lightcurve'))
+        logging.error(getException('get_color_color_lightcurve'))
 
     return None
 
@@ -494,7 +606,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
             duration = [lc.tseg]
             warnmsg = [""]
-            if not gti and DsHelper.hasGTIGaps(lc.time):
+            if gti != None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
                 warnmsg = ["GTI gaps found on LC"]
 
             pds = None  # Dispose memory
@@ -503,6 +615,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
     except:
         logging.error(getException('get_power_density_spectrum'))
+        warnmsg = [str(sys.exc_info()[1])]
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
@@ -584,15 +697,17 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
         # Join gtis in one gti
         gti = None
-        if gti1 and gti2:
+        gti1_valid = gti1 != None and len(gti1) > 0
+        gti2_valid = gti2 != None and len(gti2) > 0
+        if gti1_valid and gti2_valid:
             gti = cross_two_gtis(gti1, gti2)
-        elif gti1 and not gti2:
+        elif gti1_valid and not gti2_valid:
             gti = gti1
-        elif not gti1 and gti2:
+        elif not gti1_valid and gti2_valid:
             gti = gti2
 
         # Cross Spectra requires a single Good Time Interval
-        if gti and gti.shape[0] != 1:
+        if gti != None and gti.shape[0] != 1:
             logging.warn("Non-averaged Cross Spectra need "
                             "a single Good Time Interval")
             return None
@@ -617,9 +732,9 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
-            if not gti1 and DsHelper.hasGTIGaps(lc1.time):
+            if gti1 != None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
                 warnmsg.append("GTI gaps found on LC 1")
-            if not gti2 and DsHelper.hasGTIGaps(lc2.time):
+            if gti2 != None and len(gti2) == 0 and DsHelper.hasGTIGaps(lc2.time):
                 warnmsg.append("GTI gaps found on LC 2")
 
             xs = None  # Dispose memory
@@ -629,6 +744,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     except:
         logging.error(getException('get_cross_spectrum'))
+        warnmsg = [str(sys.exc_info()[1])]
 
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
@@ -641,9 +757,94 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     return result
 
 
+# get_datasets_product: Returns a ds key of a new dataset resulting as a product of two datasets
+#
+# @param: destination1: dataset 1 file destination
+# @param: axis1: array with the column names to use in ploting
+#           [ { table: "EBOUNDS", column:"CHANNEL" },
+#               { table: "EBOUNDS", column:"E_MIN" } ]
+# @param: destination2: dataset 2 file destination
+# @param: axis2: array with the column names to use in ploting
+#          [ { table: "SPECRESP", column:"ENERG_LO" },
+#           { table: "SPECRESP", column:"SPECRESP" } ]
+# @param: common_axis: array with the common column names used for join and apply product, first axis from table 1
+#           [{ table: "SPECRESP", column:"ENERG_LO" },
+#            { table: "EBOUNDS", column:"E_MIN" } ]
+#
+def get_datasets_product(destination1, axis1, destination2, axis2, common_axis):
+    try:
+        if len(axis1) != 2:
+            logging.warn("Wrong number of axis 1")
+            return ""
+
+        if len(axis2) != 2:
+            logging.warn("Wrong number of axis 2")
+            return ""
+
+        if len(common_axis) != 2:
+            logging.warn("Wrong number of common axis")
+            return ""
+
+        dataset1 = DaveReader.get_file_dataset(destination1)
+        if not check_axis_in_dataset(dataset1, axis1):
+            logging.warn('get_datasets_product: Wrong axis1 for this dataset1')
+            return ""
+
+        dataset2 = DaveReader.get_file_dataset(destination2)
+        if not check_axis_in_dataset(dataset2, axis2):
+            logging.warn('get_datasets_product: Wrong axis2 for this dataset2')
+            return ""
+
+        axis_a = exclude_axis(axis1, common_axis[0])
+        column_a = dataset1.tables[axis_a["table"]].columns[axis_a["column"]].values
+        common_col_a = dataset1.tables[common_axis[0]["table"]].columns[common_axis[0]["column"]].values
+
+        axis_b = exclude_axis(axis2, common_axis[1])
+        column_b = dataset2.tables[axis_b["table"]].columns[axis_b["column"]].values
+        common_col_b = dataset2.tables[common_axis[1]["table"]].columns[common_axis[1]["column"]].values
+
+        column_prod = []
+        column_x = []
+        if len(column_a) > len(column_b):
+            column_prod = copy.copy(column_a)
+            column_x = copy.copy(common_col_a)
+            for i in range(len(column_b)):
+                column_prod[i] *= column_b[i]
+        else:
+            column_prod = copy.copy(column_b)
+            column_x = copy.copy(common_col_b)
+            for i in range(len(column_a)):
+                column_prod[i] *= column_a[i]
+
+        prod_table_name = common_axis[0]["table"] + "_X_" + common_axis[1]["table"]
+        prod_column_x_name = common_axis[0]["column"] + "_X_" + common_axis[1]["column"]
+        prod_column_prod_name = axis_a["column"] + "_X_" + axis_b["column"]
+
+        prod_ds = DataSet.get_dataset(prod_table_name, prod_table_name, [ prod_column_x_name, prod_column_prod_name ])
+        prod_ds.add_table(prod_table_name, [ prod_column_x_name, prod_column_prod_name ])
+        prod_ds.tables[prod_table_name].columns[prod_column_x_name].add_values(column_x)
+        prod_ds.tables[prod_table_name].columns[prod_column_prod_name].add_values(column_prod)
+
+        new_cache_key = DsCache.get_key(prod_table_name)
+        DsCache.add(new_cache_key, prod_ds)  # Adds new cached dataset for new key
+        return new_cache_key
+
+    except:
+        logging.error(getException('get_datasets_product'))
+
+    return ""
+
+
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
 
 def get_filtered_dataset(destination, filters, gti_destination=""):
+
+    # Try to get filtered dataset from cache
+    cache_key = "FILTERED_" + DsCache.get_key(destination + gti_destination + str(filters), True)
+    if DsCache.contains(cache_key):
+        logging.debug("Returned cached filtered dataset, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        return DsCache.get(cache_key)
+
     dataset = DaveReader.get_file_dataset(destination)
     if not dataset:
         logging.warn("get_filtered_dataset: destination specified but not loadable.")
@@ -659,7 +860,12 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         else:
             logging.warn("get_filtered_dataset: Gti_destination specified but not loadable.")
 
-    return dataset.apply_filters(filters)
+    filtered_ds = dataset.apply_filters(filters)
+    if filtered_ds:
+        logging.debug("Add filtered_ds to cache, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        DsCache.add(cache_key, filtered_ds)
+
+    return filtered_ds
 
 
 def get_color_filtered_dataset(destination, filters, color_column_name, column_name, gti_destination=""):
@@ -701,6 +907,27 @@ def get_color_axis_for_ds():
     color_axis[1]["table"] = "EVENTS"
     color_axis[1]["column"] = "PI"
     return color_axis
+
+
+def check_axis_in_dataset (dataset, axis):
+    for i in range(len(axis)):
+        if axis[i]["table"] not in dataset.tables:
+            logging.warn('check_axis_in_dataset: ' + axis[i]["table"] + ' table not found!')
+            return False
+
+        if axis[i]["column"] not in dataset.tables[axis[i]["table"]].columns:
+            logging.warn('check_axis_in_dataset: ' + axis[i]["column"] + ' column not found!')
+            return False
+    return True
+
+
+# exclude_axis: Returns first found axis from axis list
+# where column differs from filter_axis.column
+def exclude_axis(axis, filter_axis):
+    for i in range(len(axis)):
+        if axis[i]["column"] != filter_axis["column"]:
+            return axis[i]
+    return None
 
 
 def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt):
@@ -746,7 +973,8 @@ def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, coun
     for color_idx in range(len(color_keys)):
         color_filters = FltHelper.get_filters_from_color_filters(filters, color_keys[color_idx], count_column_name)
         lc = get_lightcurve_from_events_dataset(datasets_array[color_idx], bck_destination, color_filters, gti_destination, dt)
-        lightcurves.append(lc)
+        if lc:
+            lightcurves.append(lc)
     return lightcurves
 
 

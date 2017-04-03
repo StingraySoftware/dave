@@ -31,19 +31,23 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Prepares Cross Spectrum Plot data and sends it to xsPlot
         var xsPlot = currentObj.outputPanel.plots[currentObj.xsPlotIdx];
         if (xsPlot.isVisible) {
-          xsPlot.setData([ data[0], data[1], data[4], data[5] ]);
+          //PDSPlot Params req: freq, power, duration, warnmsg
+          //Clones array data for allowing changes on data withot affecting othe plotsdata
+          xsPlot.setData($.extend(true, [], [ data[0], data[1], data[4], data[5] ]));
         }
 
         //Prepares TimeLag Plot data and sends it to timeLagPlot
         var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
         if (timeLagPlot.isVisible) {
-          timeLagPlot.setData([ data[0], data[2], data[4], data[5] ]);
+          //Lightcurve Params req: freq, time_lag, error_values, gti_start, gti_stop
+          timeLagPlot.setData($.extend(true, [], [ data[0], data[2], [], [], [] ]));
         }
 
         //Prepares Coherence Plot data and sends it to coherencePlot
         var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
         if (coherencePlot.isVisible) {
-          coherencePlot.setData([ data[0], data[3].values[0], data[3].values[1], data[4], data[5] ]);
+          //ColorLc Params req: freq, color_A, color_B, gti_start, gti_stop
+          coherencePlot.setData($.extend(true, [], [ data[0], data[3].values[0], data[3].values[1], [], [] ]));
         }
 
       }
