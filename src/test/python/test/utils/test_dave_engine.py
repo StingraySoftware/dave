@@ -34,7 +34,7 @@ def test_get_lightcurve(s):
     axis[0]["table"] = "EVENTS"
     axis[0]["column"] = "TIME"
     axis[1]["table"] = "EVENTS"
-    axis[1]["column"] = "PI"
+    axis[1]["column"] = "PHA"
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16.)
@@ -63,7 +63,7 @@ def test_get_lightcurve_ds_from_events_ds(s):
     axis[0]["table"] = "EVENTS"
     axis[0]["column"] = "TIME"
     axis[1]["table"] = "EVENTS"
-    axis[1]["column"] = "PI"
+    axis[1]["column"] = "PHA"
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, 16.)
@@ -82,7 +82,7 @@ def test_get_power_density_spectrum(s):
     axis[0]["table"] = "EVENTS"
     axis[0]["column"] = "TIME"
     axis[1]["table"] = "EVENTS"
-    axis[1]["column"] = "PI"
+    axis[1]["column"] = "PHA"
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16., 1, 0, 'leahy')
@@ -99,7 +99,7 @@ def test_get_cross_spectrum(s):
     axis[0]["table"] = "EVENTS"
     axis[0]["column"] = "TIME"
     axis[1]["table"] = "EVENTS"
-    axis[1]["column"] = "PI"
+    axis[1]["column"] = "PHA"
 
     filter = FltHelper.createTimeFilter(0.0, 225.0)  # Cross Spectra requires a single Good Time Interval
 

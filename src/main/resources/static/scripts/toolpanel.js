@@ -196,7 +196,7 @@ function ToolPanel (id,
                 selector.setEnabled (true);
             }
 
-            if (tableName == "EVENTS" && columnName == "PI") {
+            if (tableName == "EVENTS" && columnName == "PHA") {
               pi_column = column;
             }
           }
