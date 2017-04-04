@@ -63,7 +63,7 @@ def append_file_to_dataset(destination, next_destination):
 # apply_rmf_file_to_dataset: Appends Fits data to a dataset
 #
 # @param: destination: file destination or dataset cache key
-# @param: rmf_destination: file destination of file to append
+# @param: rmf_destination: file destination of file to apply
 #
 def apply_rmf_file_to_dataset(destination, rmf_destination):
     try:
@@ -80,7 +80,6 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                     return False
 
                 pha_data = events_table.columns["PHA"].values
-                pi_data = events_table.columns["PI"].values
 
                 e_avg_data = dict((channel, (min + max)/2) for channel, min, max in zip(rmf_table.columns["CHANNEL"].values,
                                                                                     rmf_table.columns["E_MIN"].values,
@@ -88,7 +87,7 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                 e_values = []
                 for i in range(len(pha_data)):
                     if pha_data[i] in e_avg_data:
-                        e_values.append(pi_data[i] * e_avg_data[pha_data[i]])
+                        e_values.append(e_avg_data[pha_data[i]])
                     else:
                         e_values.append(0)
 
@@ -97,7 +96,7 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
 
                 DsCache.remove_with_prefix("FILTERED") # Removes all filtered datasets from cache
                 DsCache.add(destination, dataset) # Stores dataset on cache
-                return len(events_table.columns["E"].values) == len(events_table.columns["PI"].values)
+                return len(events_table.columns["E"].values) == len(pha_data)
     except:
         logging.error(getException('apply_rmf_file_to_dataset'))
     return False
@@ -197,15 +196,7 @@ def get_histogram(src_destination, bck_destination, gti_destination, filters, ax
                 logging.warn('get_histogram: Wrong axis for this dataset')
                 return None
             axis_data = filtered_ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values
-
-            counted_data = dict()
-            for axis_value in axis_data:
-                if not axis_value in counted_data:
-                    counted_data[axis_value] = 0
-                    axis_values.append(axis_value)
-                counted_data[axis_value] += 1
-
-            axis_values = np.sort(axis_values)
+            counted_data, axis_values = DsHelper.get_histogram(axis_data)
             counts = np.array([counted_data[axis_value] for axis_value in axis_values])
 
         else:
@@ -232,7 +223,7 @@ def get_histogram(src_destination, bck_destination, gti_destination, filters, ax
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
 def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
@@ -302,7 +293,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
 def get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
@@ -316,7 +307,7 @@ def get_color_color_lightcurve(src_destination, bck_destination, gti_destination
         gti_start_values = []
         gti_stop_values = []
 
-        count_column_name = "PI"
+        count_column_name = "PHA"
         color_keys = FltHelper.get_color_keys_from_filters(filters)
         filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
         if len(filtered_datasets) > 0:
@@ -353,7 +344,7 @@ def get_color_color_lightcurve(src_destination, bck_destination, gti_destination
 #         [{ table = "RATE", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "RATE", column = "TIME" },
-#            { table = "RATE", column = "PI" } ]
+#            { table = "RATE", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
 def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
@@ -406,7 +397,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
 def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt):
@@ -428,7 +419,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
             logging.warn("Cant create lc_src")
             return None
 
-        count_column_name = "PI"
+        count_column_name = "PHA"
         color_keys = FltHelper.get_color_keys_from_filters(filters)
         filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
 
@@ -512,7 +503,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
 # @param: destination: file destination or dataset cache key
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
 def get_lightcurve_ds_from_events_ds(destination, axis, dt):
@@ -558,7 +549,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
@@ -635,7 +626,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: axis1: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt1: The time resolution of the events.
 # @param: src_destination2: source file destination
 # @param: bck_destination2: background file destination, is optional
@@ -644,7 +635,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: axis2: array with the column names to use in ploting
 #           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PI" } ]
+#            { table = "EVENTS", column = "PHA" } ]
 # @param: dt2: The time resolution of the events.
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
@@ -757,82 +748,65 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     return result
 
 
-# get_datasets_product: Returns a ds key of a new dataset resulting as a product of two datasets
+# get_unfolded_spectrum:
+# Returns a energy array with a linked energy_spectrum array and
+# a unfolded_spectrum array
 #
-# @param: destination1: dataset 1 file destination
-# @param: axis1: array with the column names to use in ploting
-#           [ { table: "EBOUNDS", column:"CHANNEL" },
-#               { table: "EBOUNDS", column:"E_MIN" } ]
-# @param: destination2: dataset 2 file destination
-# @param: axis2: array with the column names to use in ploting
-#          [ { table: "SPECRESP", column:"ENERG_LO" },
-#           { table: "SPECRESP", column:"SPECRESP" } ]
-# @param: common_axis: array with the common column names used for join and apply product, first axis from table 1
-#           [{ table: "SPECRESP", column:"ENERG_LO" },
-#            { table: "EBOUNDS", column:"E_MIN" } ]
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: arf_destination: file destination of file to apply
 #
-def get_datasets_product(destination1, axis1, destination2, axis2, common_axis):
+def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, filters, arf_destination):
+
+    energy_arr = []
+    energy_spectrum_arr =[]
+    unfolded_spectrum_arr = []
+
     try:
-        if len(axis1) != 2:
-            logging.warn("Wrong number of axis 1")
-            return ""
 
-        if len(axis2) != 2:
-            logging.warn("Wrong number of axis 2")
-            return ""
+        filters = FltHelper.get_filters_clean_color_filters(filters)
 
-        if len(common_axis) != 2:
-            logging.warn("Wrong number of common axis")
-            return ""
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
 
-        dataset1 = DaveReader.get_file_dataset(destination1)
-        if not check_axis_in_dataset(dataset1, axis1):
-            logging.warn('get_datasets_product: Wrong axis1 for this dataset1')
-            return ""
+        if DsHelper.is_events_dataset(filtered_ds):
+            arf_dataset = DaveReader.get_file_dataset(arf_destination)
+            if DsHelper.is_arf_dataset(arf_dataset):
+                # Applies arf data to dataset
+                events_table = filtered_ds.tables["EVENTS"]
 
-        dataset2 = DaveReader.get_file_dataset(destination2)
-        if not check_axis_in_dataset(dataset2, axis2):
-            logging.warn('get_datasets_product: Wrong axis2 for this dataset2')
-            return ""
+                if "E" not in events_table.columns:
+                    logging.warn('get_unfolded_spectrum: E column not found!')
+                    return False
 
-        axis_a = exclude_axis(axis1, common_axis[0])
-        column_a = dataset1.tables[axis_a["table"]].columns[axis_a["column"]].values
-        common_col_a = dataset1.tables[common_axis[0]["table"]].columns[common_axis[0]["column"]].values
+                e_histogram, e_values = DsHelper.get_histogram(events_table.columns["E"].values)
 
-        axis_b = exclude_axis(axis2, common_axis[1])
-        column_b = dataset2.tables[axis_b["table"]].columns[axis_b["column"]].values
-        common_col_b = dataset2.tables[common_axis[1]["table"]].columns[common_axis[1]["column"]].values
+                arf_table = arf_dataset.tables["SPECRESP"]
+                arf_effective_area_array = arf_table.columns["SPECRESP"].values;
+                arf_e_avg_array = [((min + max)/2) for min, max in zip(arf_table.columns["ENERG_LO"].values,
+                                                                       arf_table.columns["ENERG_HI"].values)]
 
-        column_prod = []
-        column_x = []
-        if len(column_a) > len(column_b):
-            column_prod = copy.copy(column_a)
-            column_x = copy.copy(common_col_a)
-            for i in range(len(column_b)):
-                column_prod[i] *= column_b[i]
-        else:
-            column_prod = copy.copy(column_b)
-            column_x = copy.copy(common_col_b)
-            for i in range(len(column_a)):
-                column_prod[i] *= column_a[i]
+                exposure_time = DsHelper.get_exposure_time(filtered_ds.tables["GTI"])
 
-        prod_table_name = common_axis[0]["table"] + "_X_" + common_axis[1]["table"]
-        prod_column_x_name = common_axis[0]["column"] + "_X_" + common_axis[1]["column"]
-        prod_column_prod_name = axis_a["column"] + "_X_" + axis_b["column"]
-
-        prod_ds = DataSet.get_dataset(prod_table_name, prod_table_name, [ prod_column_x_name, prod_column_prod_name ])
-        prod_ds.add_table(prod_table_name, [ prod_column_x_name, prod_column_prod_name ])
-        prod_ds.tables[prod_table_name].columns[prod_column_x_name].add_values(column_x)
-        prod_ds.tables[prod_table_name].columns[prod_column_prod_name].add_values(column_prod)
-
-        new_cache_key = DsCache.get_key(prod_table_name)
-        DsCache.add(new_cache_key, prod_ds)  # Adds new cached dataset for new key
-        return new_cache_key
+                for i in range(len(e_values)):
+                    energy = e_values[i]
+                    counts = e_histogram[energy]
+                    idx = DsHelper.find_idx_nearest_val(arf_e_avg_array, energy)
+                    energy_arr.append(energy)
+                    norm_count = (counts / energy) / exposure_time
+                    energy_spectrum_arr.append(norm_count)
+                    unfolded_spectrum_arr.append(norm_count / arf_effective_area_array[idx])
 
     except:
-        logging.error(getException('get_datasets_product'))
+        logging.error(getException('get_unfolded_spectrum'))
 
-    return ""
+    # Preapares the result
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array(result, energy_spectrum_arr)
+    result = push_to_results_array(result, unfolded_spectrum_arr)
+    return result
 
 
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
@@ -905,7 +879,7 @@ def get_color_axis_for_ds():
     color_axis[0]["table"] = "EVENTS"
     color_axis[0]["column"] = "TIME"
     color_axis[1]["table"] = "EVENTS"
-    color_axis[1]["column"] = "PI"
+    color_axis[1]["column"] = "PHA"
     return color_axis
 
 

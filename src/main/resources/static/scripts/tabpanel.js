@@ -62,11 +62,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       } else if (selectorKey == "GTI") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Appliying RMF: ' + filenames[0]);
+        waitingDialog.show('Applying RMF: ' + filenames[0]);
         currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
       } else if ((selectorKey == "ARF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Appliying ARF: ' + filenames[0]);
+        waitingDialog.show('Applying ARF: ' + filenames[0]);
         currentObj.projectConfig.setFile("ARF", filenames[0]);
         currentObj.onArfUploaded();
       }

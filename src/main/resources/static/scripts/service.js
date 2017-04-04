@@ -91,8 +91,8 @@ function Service (base_url) {
     thisService.make_ajax_call("get_cross_spectrum", data, fn);
   };
 
-  this.request_datasets_product  = function ( data, fn ) {
-    thisService.make_ajax_call("get_datasets_product", data, fn);
+  this.request_unfolded_spectrum  = function ( data, fn ) {
+    thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {
