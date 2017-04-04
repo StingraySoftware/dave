@@ -137,7 +137,14 @@ function ToolPanel (id,
       maxBinSize = binSize;
       step = minBinSize / 100.0; // We need at least 100 steps on slider
 
-      initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+      if (projectConfig.minBinSize > 0) {
+        initValue = projectConfig.minBinSize;
+        minBinSize = projectConfig.minBinSize;
+        step = projectConfig.minBinSize;
+      } else {
+        initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+      }
+
       projectConfig.binSize = initValue;
 
       this.binSelector = new BinSelector(this.id + "_binSelector",

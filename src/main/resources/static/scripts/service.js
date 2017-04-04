@@ -67,10 +67,6 @@ function Service (base_url) {
     thisService.make_ajax_call("get_lightcurve", data, fn);
   };
 
-  this.request_color_color_lightcurve = function (data, fn) {
-    thisService.make_ajax_call("get_color_color_lightcurve", data, fn);
-  };
-
   this.request_joined_lightcurves_from_colors = function (data, fn) {
     thisService.make_ajax_call("get_joined_lightcurves_from_colors", data, fn);
   };

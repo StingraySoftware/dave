@@ -36,11 +36,17 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       this.plots = this.getFitsTablePlots(projectConfig.filename,
                                           projectConfig.bckFilename,
                                           projectConfig.gtiFilename,
-                                          projectConfig.timeUnit);
+                                          projectConfig.timeUnit,
+                                          projectConfig);
     }
 
     //ADDS PLOTS TO PANEL
-    for (i in this.plots) { this.$body.append(this.plots[i].$html); };
+    for (i in this.plots) {
+      this.$body.append(this.plots[i].$html);
+      if (i > 5) {
+        this.plots[i].hide();
+      }
+    };
     this.forceResize();
   };
 
@@ -112,9 +118,21 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   //RETURN THE PLOTS ARRAY FOR AN EVENTS FITS
-  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, timeUnit ) {
+  this.getFitsTablePlots = function ( filename, bck_filename, gti_filename, timeUnit, projectConfig ) {
 
     log("getFitsTablePlots: filename: " + filename );
+
+    baLcPlot = this.getLightCurvePlot ( "", "", "", "EVENTS",
+                                      ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
+                                      "B/A LC",
+                                      [], "fullWidth", false );
+    baLcPlot.getDataFromServerFn = null;
+
+    dcLcPlot = this.getLightCurvePlot ( "", "", "", "EVENTS",
+                                      ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
+                                      "D/C LC",
+                                      [], "fullWidth", false );
+    dcLcPlot.getDataFromServerFn = null;
 
     return [
               this.getLightCurvePlot ( filename,
@@ -122,27 +140,62 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                       gti_filename,
                                       "EVENTS",
                                       ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
+                                      "SRC LC",
                                       [], "fullWidth", false ),
 
-              /*this.getPlot (this.id + "_phaVsCounts_" + filename,
-                            filename, bck_filename, gti_filename,
-                            { type: "2d",
-                              labels: ["Channel", "Counts"] },
-                            [ { table: "EVENTS", column:"PHA" } ],
-                            this.service.request_histogram, ""),*/
+              baLcPlot,
+
+              dcLcPlot,
+
+              this.getJoinedLightCurvesFromColorsPlot ( filename,
+                                                        bck_filename,
+                                                        gti_filename,
+                                                        "EVENTS",
+                                                        ["D/C Count Rate(c/s)", "B/A Count Rate(c/s)"], "D/C vs B/A",
+                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_C" } ],
+                                                        "fullWidth", true ),
+
+              this.getJoinedLightCurvesFromColorsPlot ( filename,
+                                                        bck_filename,
+                                                        gti_filename,
+                                                        "EVENTS",
+                                                        ["SRC Count Rate", "B/A Count Rate(c/s)"], "B/A vs SRC",
+                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_A" } ],
+                                                        "", true, baLcPlot.id ),
+
+              this.getJoinedLightCurvesFromColorsPlot ( filename,
+                                                        bck_filename,
+                                                        gti_filename,
+                                                        "EVENTS",
+                                                        ["SRC Count Rate", "D/C Count Rate(c/s)"], "D/C vs SRC",
+                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
+                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_C" } ],
+                                                        "", true, dcLcPlot.id ),
+
+              this.getPDSPlot ( projectConfig,
+                                  filename,
+                                  bck_filename,
+                                  gti_filename,
+                                  "EVENTS", "PHA", "fullWidth", "SRC PDS" ),
 
               this.getLightCurvePlot ( filename,
                                         bck_filename,
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
+                                        "A LC",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumn: "PHA" } ],
                                         "", false ),
 
-              this.getPDSPlot ( filename,
+              this.getPDSPlot ( projectConfig,
+                                  filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "Color A",
+                                  "EVENTS", "PHA", "", "A PDS",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumn: "PHA" } ]),
 
               this.getLightCurvePlot ( filename,
@@ -150,13 +203,15 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
+                                        "B LC",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumn: "PHA" } ],
                                         "", false ),
 
-              this.getPDSPlot ( filename,
+              this.getPDSPlot ( projectConfig,
+                                  filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "Color B",
+                                  "EVENTS", "PHA", "", "B PDS",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumn: "PHA" } ]),
 
               this.getLightCurvePlot ( filename,
@@ -164,13 +219,15 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
+                                        "C LC",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumn: "PHA" } ],
                                         "", false ),
 
-              this.getPDSPlot ( filename,
+              this.getPDSPlot ( projectConfig,
+                                  filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "Color C",
+                                  "EVENTS", "PHA", "", "C PDS",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumn: "PHA" } ]),
 
               this.getLightCurvePlot ( filename,
@@ -178,46 +235,24 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
+                                        "D LC",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PHA" } ],
                                         "", false ),
 
-              this.getPDSPlot ( filename,
+              this.getPDSPlot ( projectConfig,
+                                  filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "Color D",
+                                  "EVENTS", "PHA", "", "D PDS",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PHA" } ]),
 
-              this.getJoinedLightCurvesFromColorsPlot ( filename,
-                                                        bck_filename,
-                                                        gti_filename,
-                                                        "EVENTS",
-                                                        ["SRC Count Rate", "B/A Count Rate(c/s)"],
-                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
-                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_A" } ],
-                                                        "", true ),
-
-              this.getJoinedLightCurvesFromColorsPlot ( filename,
-                                                        bck_filename,
-                                                        gti_filename,
-                                                        "EVENTS",
-                                                        ["SRC Count Rate", "D/C Count Rate(c/s)"],
-                                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
-                                                          { source: "ColorSelector", table:"EVENTS", column:"Color_C" } ],
-                                                        "", true ),
-
-              this.getPlot (this.id + "_colors_ligthcurve_" + filename,
+              this.getPlot (this.id + "_phaVsCounts_" + filename,
                             filename, bck_filename, gti_filename,
-                            { type: "colors_ligthcurve",
-                              labels: ["TIME (" + timeUnit  + ")", "SCR", "HCR"],
-                              title: "Color Ratio LC" },
-                            [ { table: "EVENTS", column:"TIME" },
-                                    { table: "EVENTS", column:"SCR_HCR" } ],
-                            this.service.request_color_color_lightcurve),
-
-              this.getPDSPlot ( filename,
-                                  bck_filename,
-                                  gti_filename,
-                                  "EVENTS", "PHA", "fullWidth" )
+                            { type: "2d",
+                              labels: ["Channel", "Counts"],
+                              title: "Channel counts" },
+                            [ { table: "EVENTS", column:"PHA" } ],
+                            this.service.request_histogram, "")
           ];
   }
 
@@ -240,7 +275,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             );
   }
 
-  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, mandatoryFilters, cssClass, switchable ) {
+  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable ) {
 
     log("getLightCurvePlot: filename: " + filename );
     return new Plot(
@@ -251,6 +286,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
                                   labels: labels,
+                                  title: title,
                                   selectable: true
                                 },
                         axis: [ { table: tableName, column:"TIME" },
@@ -287,21 +323,24 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getJoinedLightCurvesFromColorsPlot = function ( filename, bck_filename, gti_filename, tableName, labels, mandatoryFilters, cssClass, switchable ) {
+  this.getJoinedLightCurvesFromColorsPlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable, linkedPlotId ) {
 
     log("getJoinedLightCurvesFromColorsPlot: filename: " + filename );
+    var id = (this.id + "_joinedLcByColors_" + filename + "_" + (new Date()).getTime()).replace(/\./g,'');
     return new Plot(
-                      this.id + "_joinedLcByColors_" + filename + "_" + (new Date()).getTime(),
+                      id,
                       {
+                        id: id,
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "scatter", labels: labels },
+                        styles: { type: "scatter", labels: labels, title: title },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:"PHA" } ],
                         mandatoryFilters: mandatoryFilters,
+                        linkedPlotId: (isNull(linkedPlotId)) ? null : linkedPlotId
                       },
-                      this.service.request_joined_lightcurves_from_colors,
+                      (isNull(linkedPlotId)) ? this.service.request_joined_lightcurves_from_colors : this.getJoinedLightCurvesFromColorsDataFromServer,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       this.$toolBar,
@@ -310,7 +349,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getPDSPlot = function ( filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
+  this.getPDSPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
 
     log("getPDSPlot: filename: " + filename );
     return new PDSPlot(
@@ -329,7 +368,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.onPlotReady,
                       this.$toolBar,
                       cssClass,
-                      false
+                      false,
+                      projectConfig
                     );
   }
 
@@ -352,8 +392,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
           currentObj.addLightcurveAndPdsPlots (newKeySufix, cache_key, "", "", "RATE", "PHA", projectConfig);
 
           //After getting A/B or C/D we can calculate the Hardness and Softnes Intensity lcs
-
-          if ((newKeySufix == "A/B") || (newKeySufix == "C/D")) {
+          if ((newKeySufix == "B/A") || (newKeySufix == "D/C")) {
 
             joined_lc_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("SRC"),
                                                                       cache_key,
@@ -361,6 +400,18 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
             currentObj.appendPlot(joined_lc_plot);
+
+            //After getting A/B and C/D we can calculate the color to color plot
+            if ((projectConfig.getFile("LC_B/A") != "")
+                  && (projectConfig.getFile("LC_D/C") != "")){
+
+                var abcd_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("LC_B/A"),
+                                                                      projectConfig.getFile("LC_D/C"),
+                                                                      ["B/A Count Rate(c/s)", "D/C Color Ratio"],
+                                                                      "", true);
+                projectConfig.plots.push(abcd_plot);
+                currentObj.appendPlot(abcd_plot);
+            }
           }
         } else {
           log("request_divided_lightcurve_ds WRONG CACHE KEY!!");
@@ -376,20 +427,20 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.addLightcurveAndPdsPlots = function (titlePrefix, filename, bck_filename, gti_filename, tableName, columnName, projectConfig, cssClass, refreshData){
     var mustRefreshData = isNull(refreshData) || refreshData;
 
-    var yLabel = ((titlePrefix == "A/B") || (titlePrefix == "C/D")) ? "Color Ratio" : "Count Rate(c/s)";
+    var yLabel = ((titlePrefix == "B/A") || (titlePrefix == "D/C")) ? "Color Ratio" : "Count Rate(c/s)";
 
     var lc_plot = currentObj.getLightCurvePlot ( filename, bck_filename, gti_filename,
                                                 tableName,
                                                 ["TIME (" + projectConfig.timeUnit  + ")", yLabel],
+                                                titlePrefix + " LC",
                                                 [], cssClass, false);
-    lc_plot.plotConfig.styles.title = titlePrefix + " LC";
     projectConfig.plots.push(lc_plot);
     currentObj.appendPlot(lc_plot, mustRefreshData);
 
     var pds_plot = null;
-    if ((titlePrefix != "A/B") && (titlePrefix != "C/D")) {
-      pds_plot = this.getPDSPlot ( filename, bck_filename, gti_filename,
-                                      tableName, columnName, cssClass );
+    if ((titlePrefix != "B/A") && (titlePrefix != "D/C")) {
+      pds_plot = this.getPDSPlot ( projectConfig, filename, bck_filename, gti_filename,
+                                      tableName, columnName, cssClass, titlePrefix + " PDS" );
       pds_plot.plotConfig.styles.title = titlePrefix + " PDS";
       projectConfig.plots.push(pds_plot);
       currentObj.appendPlot(pds_plot, mustRefreshData);
@@ -483,6 +534,28 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     return false;
   }
+
+  this.getJoinedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
+
+    log("OutputPanel getJoinedLightCurvesFromColorsDataFromServer...");
+
+    currentObj.service.request_joined_lightcurves_from_colors(paramsData, function( jsdata ) {
+      data = JSON.parse(jsdata);
+
+      var joinedLcPlot = currentObj.getPlotById(paramsData.id);
+      if (joinedLcPlot.isVisible) {
+        joinedLcPlot.setData((!isNull(data)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
+      }
+
+      if (!isNull(paramsData.linkedPlotId)) {
+        var joinedLcTimePlot = currentObj.getPlotById(paramsData.linkedPlotId);
+        if (joinedLcTimePlot.isVisible) {
+          joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
+        }
+      }
+    });
+
+  };
 
   this.getUnfoldedSpectrumDataFromServer = function (paramsData, fn) {
 
