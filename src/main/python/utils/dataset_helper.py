@@ -2,7 +2,7 @@ import numpy as np
 
 from stingray.events import EventList
 from stingray import Lightcurve
-from stingray.gti import join_gtis
+from stingray.gti import join_gtis, gti_len
 from model.table import Table
 import bisect
 import utils.dave_logger as logging
@@ -17,7 +17,7 @@ def get_eventlist_from_evt_dataset(dataset):
 
     # Extract axis values
     time_data = np.array(dataset.tables["EVENTS"].columns["TIME"].values)
-    pi_data = np.array(dataset.tables["EVENTS"].columns["PI"].values)
+    pi_data = np.array(dataset.tables["EVENTS"].columns["PHA"].values)
 
     # Extract GTIs
     gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
@@ -108,6 +108,15 @@ def is_rmf_dataset(dataset):
     return False
 
 
+def is_arf_dataset(dataset):
+    if dataset:
+        if "SPECRESP" in dataset.tables:
+            if "SPECRESP" in dataset.tables["SPECRESP"].columns:
+                return True
+
+    return False
+
+
 def is_gti_dataset(dataset):
     if dataset:
         if "GTI" in dataset.tables:
@@ -150,6 +159,10 @@ def join_gti_tables(gti_table_0, gti_table_1):
     joined_gti = join_gtis(gti_0, gti_1)
 
     return get_gti_table_from_stingray_gti(joined_gti)
+
+
+def get_exposure_time (gti_table):
+    return gti_len(get_stingray_gti_from_gti_table(gti_table))
 
 
 #Returns True if there is a GAP in the time_vals values
@@ -282,3 +295,14 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, g
 
             else:
                 logging.info("No data point in GTI # %s: GTI (from, to)=(%f, %f); event list (from, to)=(%d, %d)" % (gti_index, start, end, start_event_idx, end_event_idx))
+
+
+def get_histogram (array):
+    histogram = dict()
+    values = []
+    for val in array:
+        if not val in histogram:
+            histogram[val] = 0
+            values.append(val)
+        histogram[val] += 1
+    return histogram, np.sort(values)

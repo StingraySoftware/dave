@@ -12,7 +12,7 @@ import utils.file_utils as FileUtils
 def test_get_txt_dataset(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, "Test_Input_1.txt")
     table_id = "EVENTS"
-    header_names = ["TIME", "PI", "Color1", "Color2"]
+    header_names = ["TIME", "PHA", "Color1", "Color2"]
     dataset = DaveReader.get_txt_dataset(destination, table_id, header_names)
     num_rows = 10
 
