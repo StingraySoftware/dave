@@ -1,7 +1,7 @@
 
 var DOMAIN_URL = "http://localhost:5000"; //Set as Dave Server Ip:Port
 var MIN_PLOT_POINTS = 2;
-var MAX_PLOT_POINTS = 5000;
+var MAX_PLOT_POINTS = 30000;
 
 var theService = null;
 

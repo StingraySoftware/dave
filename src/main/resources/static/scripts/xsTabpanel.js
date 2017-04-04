@@ -47,7 +47,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
         if (coherencePlot.isVisible) {
           //ColorLc Params req: freq, color_A, color_B, gti_start, gti_stop
-          coherencePlot.setData($.extend(true, [], [ data[0], data[3].values[0], data[3].values[1], [], [] ]));
+          coherencePlot.setData($.extend(true, [], [ data[0], data[3], [], [], [] ]));
         }
 
       }
@@ -107,7 +107,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.outputPanel.onPlotReady,
                               this.outputPanel.$toolBar,
                               "fullWidth",
-                              false
+                              false,
+                              this.projectConfig
                             );
 
     this.xsPlotIdx = this.outputPanel.plots.length;
@@ -119,7 +120,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.id + "_timelag_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
-                                          labels: ["Frequency", "TimeLag"],
+                                          labels: ["Frequency", "Time(s)"],
                                           title: "TimeLag" }
                               },
                               null,
@@ -138,8 +139,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     var coherencePlot = new Plot(
                               this.id + "_coherence_" + (new Date()).getTime(),
                               {
-                                styles: { type: "colors_ligthcurve",
-                                          labels: ["Frequency", "Real", "Imag"],
+                                styles: { type: "ligthcurve",
+                                          labels: ["Frequency", "Coherence"],
                                           title: "Coherence" },
                               },
                               null,

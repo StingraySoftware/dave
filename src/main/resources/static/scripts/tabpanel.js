@@ -106,8 +106,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
         currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
 
-        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCA", "LCB", "A/B", currentObj.projectConfig);
-        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCC", "LCD", "C/D", currentObj.projectConfig);
+        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
 
         if (!lcab_Added && ! lccd_Added) {
           waitingDialog.hide();

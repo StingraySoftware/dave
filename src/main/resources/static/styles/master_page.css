@@ -82,7 +82,7 @@ h3
 
 .toolPanelContainer
 {
-  padding-top: 40px;
+  padding-top: 14px;
   background-color: rgb(47, 47, 47);
   color: #9d9d9d;
 }
@@ -235,8 +235,7 @@ h3
   margin-top: 35px;
 }
 
-.buttonsContainer{
-  padding-top: 24px;
+.selectorsContainer{
   padding-bottom: 60px;
 }
 

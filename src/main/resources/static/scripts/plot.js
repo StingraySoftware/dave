@@ -45,22 +45,30 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.$hoverinfo = this.$html.find(".hoverinfo");
 
  this.btnShow.click(function(event){
-    currentObj.isVisible = true;
-    currentObj.$html.show();
-    currentObj.btnShow.hide();
-    currentObj.refreshData();
+    currentObj.show();
  });
 
  this.btnHide.click(function(event){
-    currentObj.isVisible = false;
-    currentObj.$html.hide();
-    var btnShowText = "";
-    if (!isNull(currentObj.plotConfig.styles.title)) {
-      btnShowText = currentObj.plotConfig.styles.title;
-    }
-    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
-    currentObj.btnShow.show();
+    currentObj.hide();
  });
+
+ this.show = function (){
+   currentObj.isVisible = true;
+   currentObj.$html.show();
+   currentObj.btnShow.hide();
+   currentObj.refreshData();
+ }
+
+ this.hide = function (){
+   currentObj.isVisible = false;
+   currentObj.$html.hide();
+   var btnShowText = "";
+   if (!isNull(currentObj.plotConfig.styles.title)) {
+     btnShowText = currentObj.plotConfig.styles.title;
+   }
+   currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   currentObj.btnShow.show();
+ }
 
  this.btnFullScreen.click(function( event ) {
    if (currentObj.$html.hasClass("fullWidth")) {
@@ -142,19 +150,22 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.showWarn("");
 
    if (isNull(data)) {
+
      currentObj.showWarn("Wrong data received");
      log("setData wrong passed data!, plot" + currentObj.id);
-     return;
-   }
 
-   currentObj.data = currentObj.prepareData(data);
-   currentObj.updateMinMaxCoords();
+   } else {
 
-   var plotlyConfig = currentObj.getPlotConfig(data);
-   currentObj.redrawPlot(plotlyConfig);
+     currentObj.data = currentObj.prepareData(data);
+     currentObj.updateMinMaxCoords();
 
-   if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
-     currentObj.showWarn("Empty plot data");
+     var plotlyConfig = currentObj.getPlotConfig(data);
+     currentObj.redrawPlot(plotlyConfig);
+
+     if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
+       currentObj.showWarn("Empty plot data");
+     }
+
    }
 
    currentObj.setReadyState(true);
