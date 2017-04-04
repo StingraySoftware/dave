@@ -11,7 +11,9 @@ function ProjectConfig(){
   this.arfFilename = "";
   this.selectorFilenames = [];
   this.binSize = 100;
+  this.minBinSize = 0;
   this.timeUnit = "s";
+  this.totalDuration = 0;
   this.plots = [];
 
   this.hasSchema = function (schema) {
@@ -22,23 +24,58 @@ function ProjectConfig(){
 
     this.schema = schema;
 
-    // Sets the time unit
+    var tableHeader = null;
+
     if (!isNull(schema["EVENTS"])
-        && !isNull(schema["EVENTS"]["HEADER"])
-        && !isNull(schema["EVENTS"]["HEADER"]["TUNIT1"])) {
-      this.timeUnit = schema["EVENTS"]["HEADER"]["TUNIT1"];
+        && !isNull(schema["EVENTS"]["HEADER"])) {
+
+        tableHeader = schema["EVENTS"]["HEADER"];
+
     } else if (!isNull(schema["RATE"])
-        && !isNull(schema["RATE"]["HEADER"])
-        && !isNull(schema["RATE"]["HEADER"]["TUNIT1"])) {
-      this.timeUnit = schema["RATE"]["HEADER"]["TUNIT1"];
+                && !isNull(schema["RATE"]["HEADER"])) {
+
+        tableHeader = schema["RATE"]["HEADER"];
     }
 
-    // Sets the time unit
-    if (!isNull(schema["RATE"])
-        && !isNull(schema["RATE"]["HEADER"])
-        && !isNull(schema["RATE"]["HEADER"]["TIMEDEL"])) {
-      this.binSize = parseFloat(schema["RATE"]["HEADER"]["TIMEDEL"]);
+    if (!isNull(tableHeader)) {
+
+        // Sets the time unit
+        if (!isNull(tableHeader["TUNIT1"])) {
+          this.timeUnit = tableHeader["TUNIT1"];
+        }
+
+        // Sets the time resolution
+        if (!isNull(tableHeader["TIMEDEL"])) {
+          this.binSize = parseFloat(tableHeader["TIMEDEL"]);
+        }
+
+        // Sets the minimun resolution
+        if (!isNull(tableHeader["FRMTIME"])) {
+          this.minBinSize = parseInt(tableHeader["FRMTIME"]) / 1000;
+        } else {
+          this.minBinSize = this.binSize;
+        }
+
+        // Sets the total duration
+        if (!isNull(tableHeader["TSTART"])
+            && !isNull(tableHeader["TSTOP"])) {
+
+          var start = parseInt(tableHeader["TSTART"]);
+          var stop = parseInt(tableHeader["TSTOP"]);
+          this.totalDuration = stop - start;
+
+        } else if (!isNull(tableHeader["TSTARTI"])
+                    && !isNull(tableHeader["TSTOPI"])
+                    && !isNull(tableHeader["TSTARTF"])
+                    && !isNull(tableHeader["TSTOPF"])) {
+
+          var start = parseInt(tableHeader["TSTARTI"]) + parseFloat(tableHeader["TSTARTF"]);
+          var stop = parseInt(tableHeader["TSTOPI"]) + parseFloat(tableHeader["TSTOPF"]);
+          this.totalDuration = stop - start;
+        }
+
     }
+
   }
 
   this.setFiles = function (selectorKey, filenames, filename) {

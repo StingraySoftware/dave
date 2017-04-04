@@ -260,7 +260,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             #If dataset is LIGHTCURVE type
             time_vals = filtered_ds.tables["RATE"].columns["TIME"].values
             count_rate = filtered_ds.tables["RATE"].columns["RATE"].values
-            error_values = filtered_ds.tables["RATE"].columns["ERROR"].values
+            error_values = filtered_ds.tables["RATE"].columns["RATE"].error_values
 
         else:
             logging.warn("Wrong dataset type")
@@ -282,58 +282,6 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     result = push_to_results_array(result, gti_start_values)
     result = push_to_results_array(result, gti_stop_values)
     return result
-
-
-# get_color_color_lightcurve: Returns the data for the Color Color Lightcurve
-#
-# @param: src_destination: source file destination
-# @param: bck_destination: background file destination, is optional
-# @param: gti_destination: gti file destination, is optional
-# @param: filters: array with the filters to apply
-#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PHA" } ]
-# @param: dt: The time resolution of the events.
-#
-def get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
-
-    if len(axis) != 2:
-        logging.warn("Wrong number of axis")
-        return None
-
-    try:
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-        gti_start_values = []
-        gti_stop_values = []
-
-        count_column_name = "PHA"
-        color_keys = FltHelper.get_color_keys_from_filters(filters)
-        filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
-        if len(filtered_datasets) > 0:
-            gti_start_values = filtered_datasets[0].tables["GTI"].columns["START"].values
-            gti_stop_values = filtered_datasets[0].tables["GTI"].columns["STOP"].values
-
-        # Creates lightcurves array applying bck and gtis from each color
-        logging.debug("Create color color lightcurves ....")
-        lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, bck_destination, filters, gti_destination, dt)
-        filtered_datasets = None  # Dispose memory
-
-        # Preapares the result
-        logging.debug("Result color color lightcurves ....")
-        if len(lightcurves) == 4:
-            if lightcurves[0]:
-                result = push_to_results_array([], lightcurves[0].time)
-                result = push_divided_values_to_results_array(result, lightcurves[0].countrate, lightcurves[1].countrate)
-                result = push_divided_values_to_results_array(result, lightcurves[2].countrate, lightcurves[3].countrate)
-                result = push_to_results_array(result, gti_start_values)
-                result = push_to_results_array(result, gti_stop_values)
-                return result
-
-    except:
-        logging.error(getException('get_color_color_lightcurve'))
-
-    return None
 
 
 # get_joined_lightcurves: Returns the joined data of LC0 and LC1
@@ -375,7 +323,6 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
             logging.debug("Result joined lightcurves ....")
             result = push_to_results_array([], lc0_ds.tables["RATE"].columns["RATE"].values)
             result = push_to_results_array(result, lc1_ds.tables["RATE"].columns["RATE"].values)
-            result = push_to_results_array(result, lc0_ds.tables["RATE"].columns["TIME"].values)
             return result
 
         else:
@@ -389,6 +336,8 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
 
 
 # get_joined_lightcurves_from_colors: Returns the joined data of src_lc and ColorX / ColorY
+# if len(color_filters) == 2, else if len(color_filters) == 4 returns the joined data
+# of ColorZ / ColorS and ColorX / ColorY
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -409,18 +358,32 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
     try:
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
-        # Prepares SRC_LC
-        clean_filters = FltHelper.get_filters_clean_color_filters(filters)
-        filtered_ds = get_filtered_dataset(src_destination, clean_filters, gti_destination)
+        color_keys = FltHelper.get_color_keys_from_filters(filters)
 
-        # Creates src lightcurve applying bck and gtis
-        src_lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, clean_filters, gti_destination, dt)
-        if not src_lc:
-            logging.warn("Cant create lc_src")
+        if len(color_keys) != 2 and len(color_keys) != 4:
+            logging.warn("Wrong number of color filters")
             return None
 
+        gti_start_values = []
+        gti_stop_values = []
+
+        if len(color_keys) == 2:
+            # Prepares SRC_LC
+            clean_filters = FltHelper.get_filters_clean_color_filters(filters)
+            filtered_ds = get_filtered_dataset(src_destination, clean_filters, gti_destination)
+
+            #Sets gtis ranges
+            gti_start_values = filtered_ds.tables["GTI"].columns["START"].values
+            gti_stop_values = filtered_ds.tables["GTI"].columns["STOP"].values
+
+            # Creates src lightcurve applying bck and gtis
+            src_lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, clean_filters, gti_destination, dt)
+            if not src_lc:
+                logging.warn("Cant create lc_src")
+                return None
+
+        # Prepares datasets from color filters
         count_column_name = "PHA"
-        color_keys = FltHelper.get_color_keys_from_filters(filters)
         filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
 
         # Creates lightcurves array applying bck and gtis from each color
@@ -428,14 +391,29 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
         lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, bck_destination, filters, gti_destination, dt)
         filtered_datasets = None  # Dispose memory
 
-        if len(lightcurves) == 2:
+        if len(lightcurves) == len(color_keys):
 
             # Preapares the result
             logging.debug("Result joined lightcurves ....")
-            result = push_to_results_array([], src_lc.countrate)
+            if len(color_keys) == 2:
+                result = push_to_results_array([], src_lc.countrate)
+            else:
+                result = push_divided_values_to_results_array([], lightcurves[2].countrate, lightcurves[3].countrate)
+
             result = push_divided_values_to_results_array(result, lightcurves[0].countrate, lightcurves[1].countrate)
-            result = push_to_results_array(result, src_lc.time)
+
+            if len(color_keys) == 2:
+                result = push_to_results_array(result, src_lc.time)
+            else:
+                result = push_to_results_array(result, lightcurves[0].time)
+
+            result = push_to_results_array(result, gti_start_values)
+            result = push_to_results_array(result, gti_stop_values)
+
             return result
+
+        else:
+            logging.warn("Cant create the colors filtered ligthcurves")
 
     except:
         logging.error(getException('get_joined_lightcurves_from_colors'))
@@ -443,7 +421,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
     return None
 
 
-# get_divided_lightcurve_ds: Returns the data for the LC0 divided by LC1
+# get_divided_lightcurve_ds: Returns a new dataset key for the LC0 divided by LC1
 #
 # @param: lc0_destination: lightcurve 0 file destination
 # @param: lc1_destination: lightcurve 1 file destination
@@ -458,6 +436,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
             return ""
 
         count_rate_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].values)
+        count_rate_error_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].error_values)
 
         lc1_ds = DaveReader.get_file_dataset(lc1_destination)
         if not DsHelper.is_lightcurve_dataset(lc1_ds):
@@ -465,6 +444,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
             return ""
 
         count_rate_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].values)
+        count_rate_error_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].error_values)
 
         if count_rate_0.shape == count_rate_1.shape:
 
@@ -472,16 +452,28 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
 
             with np.errstate(all='ignore'): # Ignore divisions by 0 and others
                 count_rate = np.nan_to_num(count_rate_0 / count_rate_1)
+                if count_rate_error_0.shape == count_rate_error_1.shape == count_rate_0.shape:
+                    count_rate_error = np.nan_to_num((count_rate_error_0/count_rate_1) + ((count_rate_error_1 * count_rate_0)/(count_rate_1 * count_rate_1)))
+                else:
+                    logging.warn("count_rate_error_0.shape: " + str(count_rate_error_0.shape))
+                    logging.warn("count_rate_error_1.shape: " + str(count_rate_error_1.shape))
+                    logging.warn("count_rate_0.shape: " + str(count_rate_0.shape))
+                    logging.warn("count_rate_1.shape: " + str(count_rate_1.shape))
+                    count_rate_error = np.array([])
             count_rate[count_rate > BIG_NUMBER]=0
+            count_rate_error[count_rate_error > BIG_NUMBER]=0
 
             ret_lc_ds.tables["RATE"].columns["RATE"].clear()
-            ret_lc_ds.tables["RATE"].columns["RATE"].add_values(count_rate) # TODO: Set error from lightcurve
+            ret_lc_ds.tables["RATE"].columns["RATE"].add_values(count_rate, count_rate_error)
 
             lc0_ds = None  # Dispose memory
             lc1_ds = None  # Dispose memory
             count_rate_1 = None  # Dispose memory
             count_rate_0 = None  # Dispose memory
             count_rate = None  # Dispose memory
+            count_rate_error_1 = None  # Dispose memory
+            count_rate_error_0 = None  # Dispose memory
+            count_rate_error = None  # Dispose memory
 
             new_cache_key = DsCache.get_key(lc0_destination + "|" + lc1_destination + "|ligthcurve")
             DsCache.add(new_cache_key, ret_lc_ds)  # Adds new cached dataset for new key
@@ -586,10 +578,10 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
         # Creates the power density spectrum
         logging.debug("Create power density spectrum")
 
-        if nsegm < 30:
-            pds = Powerspectrum(lc, norm=norm, gti=gti)
-        else:
-            pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+        #if nsegm < 30:
+        #    pds = Powerspectrum(lc, norm=norm, gti=gti)
+        #else:
+        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
         if pds:
             freq = pds.freq
@@ -706,10 +698,10 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         # Creates the cross spectrum
         logging.debug("Create cross spectrum")
 
-        if nsegm < 30:
-            xs = Crossspectrum(lc1=lc1, lc2=lc2, norm=norm, gti=gti)
-        else:
-            xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
+        #if nsegm < 30:
+        #    xs = Crossspectrum(lc1=lc1, lc2=lc2, norm=norm, gti=gti)
+        #else:
+        xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
 
         if xs:
             freq = xs.freq
@@ -717,9 +709,8 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             time_lag = xs.time_lag()
             coherence = xs.coherence()
 
-            # Splits complex array into array[real, imaginary]
-            coherence_array = push_to_results_array([], np.real(coherence))
-            coherence_array = push_to_results_array(coherence_array, np.imag(coherence))
+            # Gets only the real part of the coherence
+            coherence_array = np.real(coherence)
 
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
