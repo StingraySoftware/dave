@@ -122,17 +122,23 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getFitsTablePlots: filename: " + filename );
 
-    baLcPlot = this.getLightCurvePlot ( "", "", "", "EVENTS",
-                                      ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
-                                      "B/A LC",
-                                      [], "fullWidth", false );
-    baLcPlot.getDataFromServerFn = null;
+    baLcPlot = this.getLightCurvePlot ( filename,
+                                        bck_filename,
+                                        gti_filename,
+                                        "EVENTS",
+                                        ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
+                                        "B/A LC",
+                                        [], "fullWidth", false );
+    baLcPlot.getDataFromServerFn = null; //Disable calls to server
 
-    dcLcPlot = this.getLightCurvePlot ( "", "", "", "EVENTS",
-                                      ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
-                                      "D/C LC",
-                                      [], "fullWidth", false );
-    dcLcPlot.getDataFromServerFn = null;
+    dcLcPlot = this.getLightCurvePlot ( filename,
+                                        bck_filename,
+                                        gti_filename,
+                                        "EVENTS",
+                                        ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
+                                        "D/C LC",
+                                        [], "fullWidth", false );
+    dcLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     return [
               this.getLightCurvePlot ( filename,
@@ -358,7 +364,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "ligthcurve", labels: ["Frequency", "Power"], title: title },
+                        styles: { type: "ligthcurve", labels: ["Frequency (Hz)", "Power"], title: title },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
@@ -453,7 +459,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     var rmfPlot = this.getPlot (this.id + "_rmf_" + projectConfig.rmfFilename,
                                 projectConfig.rmfFilename, "", "",
                                 { type: "2d",
-                                  labels: ["CHANNEL", "Energy (keV)"] },
+                                  labels: ["CHANNEL", "Energy (keV)"],
+                                  title: "RMF" },
                                 [ { table: "EBOUNDS", column:"CHANNEL" },
                                   { table: "EBOUNDS", column:"E_MIN" } ],
                                 null, "");
@@ -468,7 +475,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     var arfPlot = this.getPlot (this.id + "_arf_" + projectConfig.arfFilename,
                                 projectConfig.arfFilename, "", "",
                                 { type: "2d",
-                                  labels: ["Energy (keV)", "Effective area (cm^2)"] },
+                                  labels: ["Energy (keV)", "Effective area (cm^2)"],
+                                  title: "ARF" },
                                 [ { table: "SPECRESP", column:"ENERG_LO" },
                                   { table: "SPECRESP", column:"SPECRESP" } ],
                                 null, "");

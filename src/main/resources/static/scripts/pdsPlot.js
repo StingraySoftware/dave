@@ -9,6 +9,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.duration = 0;
   this.plotConfig.nsegm = 1;
   this.plotConfig.segment_size = 0;
+  this.plotConfig.type = "Avg";
   this.plotConfig.norm = "leahy";
   this.plotConfig.xAxisType = "linear";
   this.plotConfig.yAxisType = "log";
@@ -72,7 +73,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       var title = 'Settings:';
       if (!isNull(this.plotConfig.styles.title)){
-        this.plotConfig.styles.title + ' Settings:';
+        title = this.plotConfig.styles.title + ' Settings:';
       }
 
       this.setSettingsTitle(title);
@@ -80,6 +81,26 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       var tab = getTabForSelector(this.id);
       var binSize = tab.projectConfig.binSize;
       if (this.settingsPanel.find(".sliderSelector").length == 0) {
+
+        // Creates PDS type radio buttons
+        this.typeRadios = $('<div class="pdsType">' +
+                              '<h3>Type</h3>' +
+                              '<fieldset>' +
+                                '<label for="' + this.id + '_Sng">Single</label>' +
+                                '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng">' +
+                                '<label for="' + this.id + '_Avg">Averaged</label>' +
+                                '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Avg" value="Avg" checked="checked">' +
+                              '</fieldset>' +
+                            '</div>');
+
+        this.settingsPanel.find(".leftCol").append(this.typeRadios);
+        var $typeRadios = this.typeRadios.find("input[type=radio][name=" + this.id + "_Type]")
+        $typeRadios.checkboxradio();
+        this.typeRadios.find("fieldset").controlgroup();
+        $typeRadios.change(function() {
+          currentObj.plotConfig.type = this.value;
+        });
+
 
         // Creates the Segment length selector
         var maxValue = binSize * 100;
@@ -255,7 +276,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.prepareData = function (data) {
 
-    if (data != null) {
+    if (!isNull(data) && data.length > 2) {
       if (this.plotConfig.rebinSize != 0) {
         try {
           var rebinnedData = this.rebinData(data[0].values, data[1].values, this.plotConfig.rebinSize, "sum");
@@ -279,35 +300,37 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           && data[2].values[0] > 0) {
         this.plotConfig.duration = data[2].values[0];
       }
+    } else {
+      this.showWarn("Wrong data received");
     }
 
     return data;
   }
 
-  this.getPlotConfig = function (data) {
+  this.getPlotlyConfig = function (data) {
 
     var yLabel = currentObj.plotConfig.styles.labels[1];
     if (currentObj.plotConfig.plotType == "X*Y") {
       yLabel += " X " + currentObj.plotConfig.styles.labels[0];
     }
 
-    var plotConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
+    var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], [], [],
                                         currentObj.plotConfig.styles.labels[0],
                                         yLabel,
                                         currentObj.plotConfig.styles.title);
 
     if (currentObj.plotConfig.xAxisType == "log") {
-      plotConfig.layout.xaxis.type = 'log';
-      plotConfig.layout.xaxis.autorange = true;
+      plotlyConfig.layout.xaxis.type = 'log';
+      plotlyConfig.layout.xaxis.autorange = true;
     }
 
     if (currentObj.plotConfig.yAxisType == "log") {
-      plotConfig.layout.yaxis.type = 'log';
-      plotConfig.layout.yaxis.autorange = true;
+      plotlyConfig.layout.yaxis.type = 'log';
+      plotlyConfig.layout.yaxis.autorange = true;
     }
 
-    return plotConfig;
+    return plotlyConfig;
   }
 
   this.setReadyState = function (isReady) {

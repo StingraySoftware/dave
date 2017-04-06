@@ -30,7 +30,7 @@ function ToolPanel (id,
   this.resetHistory = resetHistoryFn;
 
   this.lastTimeoutId = null;
-  this.autoRefresh = true;
+  this.autoRefresh = false;
 
   this.file_selectors_ids_array = [];
   this.selectors_array = [];
@@ -254,16 +254,20 @@ function ToolPanel (id,
   }
 
   this.onSelectorValuesChanged = function (source) {
-    if (currentObj.autoRefresh) {
+    /*if (currentObj.autoRefresh) {
       if (currentObj.lastTimeoutId != null) {
         clearTimeout(currentObj.lastTimeoutId);
       }
 
       currentObj.lastTimeoutId = setTimeout( function () {
-        var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
-        getTabForSelector(currentObj.id).onFiltersChanged(filters);
+        currentObj.refresh(source);
       }, 850);
-    }
+    }*/
+  }
+
+  this.refresh = function (source) {
+    var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
+    getTabForSelector(currentObj.id).onFiltersChanged(filters);
   }
 
   this.containsId = function (id) {
@@ -338,11 +342,12 @@ function ToolPanel (id,
   });
 
   this.autoRefreshBtn.bind("click", function( event ) {
-      currentObj.autoRefreshBtn.toggleClass("btn-success");
+      /*currentObj.autoRefreshBtn.toggleClass("btn-success");
       currentObj.autoRefresh = currentObj.autoRefreshBtn.hasClass("btn-success");
       if (currentObj.autoRefresh) {
         currentObj.onSelectorValuesChanged();
-      }
+      }*/
+      currentObj.refresh();
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

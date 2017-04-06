@@ -99,7 +99,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 dt2: this.plots[1].plotConfig.dt,
 
                                 styles: { type: "ligthcurve",
-                                          labels: ["Frequency", "Power"],
+                                          labels: ["Frequency (Hz)", "Power"],
                                           title: "XSpectrum" }
                               },
                               this.getXSDataFromServer, //Only XSpectra plot triggers receive new data from server
@@ -120,7 +120,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.id + "_timelag_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
-                                          labels: ["Frequency", "Time(s)"],
+                                          labels: ["Frequency (Hz)", "Time(s)"],
                                           title: "TimeLag" }
                               },
                               null,
@@ -140,7 +140,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.id + "_coherence_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
-                                          labels: ["Frequency", "Coherence"],
+                                          labels: ["Frequency (Hz)", "Coherence"],
                                           title: "Coherence" },
                               },
                               null,

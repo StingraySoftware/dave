@@ -125,10 +125,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       return;
    }
 
+   this.updatePlotConfig();
+   this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
+ }
+
+ this.updatePlotConfig = function () {
    var tab = getTabForSelector(this.id);
    this.plotConfig.dt = tab.projectConfig.binSize;
-
-   this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
  }
 
  this.onPlotDataReceived = function ( data ) {
@@ -147,6 +150,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setData = function ( data ) {
 
+   currentObj.updatePlotConfig();
+
    currentObj.showWarn("");
 
    if (isNull(data)) {
@@ -159,7 +164,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      currentObj.data = currentObj.prepareData(data);
      currentObj.updateMinMaxCoords();
 
-     var plotlyConfig = currentObj.getPlotConfig(data);
+     var plotlyConfig = currentObj.getPlotlyConfig(data);
      currentObj.redrawPlot(plotlyConfig);
 
      if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
@@ -176,12 +181,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return data; //This method is just for being overriden if necessary
  }
 
- this.getPlotConfig = function (data) {
+ this.getPlotlyConfig = function (data) {
    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
-   var plotConfig = null;
+   var plotlyConfig = null;
 
    if (currentObj.plotConfig.styles.type == "2d") {
-      plotConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
+      plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.plotConfig.styles.labels[coords.x],
@@ -189,27 +194,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                     currentObj.plotConfig.styles.title)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
-      plotConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
+      plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     data[3].values);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
-      plotConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
+      plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
-      plotConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
+      plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-      plotConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
+      plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                           [], data[2].values,
                                           (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                           currentObj.plotConfig.styles.labels[coords.x],
@@ -217,7 +222,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                           currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
-      plotConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
+      plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
                                    (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                    currentObj.plotConfig.styles.labels[coords.x],
@@ -227,16 +232,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
 
    if (currentObj.plotConfig.xAxisType == "log") {
-     plotConfig.layout.xaxis.type = 'log';
-     plotConfig.layout.xaxis.autorange = true;
+     plotlyConfig.layout.xaxis.type = 'log';
+     plotlyConfig.layout.xaxis.autorange = true;
    }
 
    if (currentObj.plotConfig.yAxisType == "log") {
-     plotConfig.layout.yaxis.type = 'log';
-     plotConfig.layout.yaxis.autorange = true;
+     plotlyConfig.layout.yaxis.type = 'log';
+     plotlyConfig.layout.yaxis.autorange = true;
    }
 
-   return plotConfig;
+   return plotlyConfig;
  }
 
  this.redrawPlot = function (plotlyConfig) {

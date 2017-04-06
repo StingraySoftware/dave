@@ -38,6 +38,17 @@ h3
   background-color: #000;
 }
 
+.closeTabPanel {
+  margin-left: 8px;
+  margin-right: -8px;
+  padding: 0px;
+  opacity: 0.1;
+}
+
+.closeTabPanel:hover {
+  opacity: 1;
+}
+
 .daveContainer.container:before
 {
     content: '';
@@ -90,6 +101,7 @@ h3
 .toolPanelContainer input[type="text"] {
   background-color: #4a4a4a;
   border: 1px solid #222;
+  margin-left: 8px;
 }
 
 .outputPanelContainer
@@ -112,7 +124,6 @@ h3
   width: 98%;
   height: 305px;
   border: 1px solid #afafaf;
-  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -156,7 +167,6 @@ h3
   float:left;
   width: 48%;
   border: 1px solid #afafaf;
-  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -233,10 +243,12 @@ h3
 
 .sliderSelector .selectorSlider {
   margin-top: 35px;
+  margin-left: 8px;
 }
 
 .selectorsContainer{
   padding-bottom: 60px;
+  margin-left: -4px;
 }
 
 .btn {
