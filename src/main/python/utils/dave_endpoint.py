@@ -304,7 +304,8 @@ def get_lightcurve_ds_from_events_ds(filename, target, axis, dt):
     return json.dumps(cache_key, cls=NPEncoder)
 
 
-def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target, filters, axis, dt, nsegm, segm_size, norm):
+def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -330,8 +331,10 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_power_density_spectrum: nsegm %f" % nsegm)
     logging.debug("get_power_density_spectrum: segm_size %f" % segm_size)
     logging.debug("get_power_density_spectrum: norm %s" % norm)
+    logging.debug("get_power_density_spectrum: type %s" % pds_type)
 
-    data = DaveEngine.get_power_density_spectrum(src_destination, bck_destination, gti_destination, filters, axis, dt, nsegm, segm_size, norm)
+    data = DaveEngine.get_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                                filters, axis, dt, nsegm, segm_size, norm, pds_type)
 
     logging.debug("get_power_density_spectrum: Finish!")
 
@@ -340,7 +343,7 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
 
 def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, axis1, dt1,
                        src_filename2, bck_filename2, gti_filename2, filters2, axis2, dt2,
-                       target, nsegm, segm_size, norm):
+                       target, nsegm, segm_size, norm, xds_type):
 
    src_destination1 = get_destination(src_filename1, target)
    if not src_destination1:
@@ -389,10 +392,11 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    logging.debug("get_cross_spectrum: nsegm %f" % nsegm)
    logging.debug("get_cross_spectrum: segm_size %f" % segm_size)
    logging.debug("get_cross_spectrum: norm %s" % norm)
+   logging.debug("get_cross_spectrum: type %s" % xds_type)
 
    data = DaveEngine.get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
                                         src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
-                                        nsegm, segm_size, norm)
+                                        nsegm, segm_size, norm, xds_type)
 
    logging.debug("get_cross_spectrum: Finish!")
 

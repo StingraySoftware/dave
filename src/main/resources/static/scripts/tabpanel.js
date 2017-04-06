@@ -25,6 +25,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   //TAB_PANEL METHODS AND EVENTS HANDLERS
   this.setTitle = function ( title ) {
     this.$navItem.find("." + this.navItemClass).html(title);
+    this.addCloseButton();
     log("TabPanel setTitle id: " + this.id + " title: " + title);
   }
 
@@ -46,6 +47,27 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     $(".TabPanel").hide();
     this.$html.show();
     log("TabPanel shown id: " + this.id);
+  }
+
+  this.addCloseButton = function () {
+    var closeTabBtn = $('<i class="fa fa-times closeTabPanel" aria-hidden="true"></i>')
+    this.$navItem.find("." + this.navItemClass).append(closeTabBtn);
+    closeTabBtn.bind("click", function( event ) {
+      currentObj.close();
+    });
+  }
+
+  this.close = function () {
+    this.$navItem.remove();
+    $(".TabPanel").hide();
+    this.$html.remove();
+    log("TabPanel closed id: " + this.id);
+    removeTab(this.id);
+    if (tabPanels.length > 0) {
+      tabPanels[0].show()
+    } else {
+      $("#navbar").find(".addTabPanel").click();
+    }
   }
 
   this.onDatasetChanged = function ( filenames, selectorKey ) {
@@ -338,6 +360,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   });
 
   this.$navItem.insertBefore(".addTabPanelLi");
+  this.addCloseButton();
   panelContainer.append(this.$html);
   this.show();
 
@@ -361,4 +384,20 @@ function getTabForSelector (selectorId) {
   }
 
   return null;
+}
+
+function removeTab (id) {
+  var idx = -1;
+
+  for (t in tabPanels) {
+    var tab = tabPanels[t];
+
+    if (tab.id == id) {
+        idx = t;
+        break;
+    }
+  }
+  if (idx > -1){
+    tabPanels.splice(idx,1);
+  }
 }

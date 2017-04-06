@@ -55,7 +55,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
 
    //Set values method
    this.setValues = function (value, source) {
-     this.value = value;
+     this.value = Math.min(Math.max(parseFloat(value), this.initFromValue), this.initToValue);
      this.fromInput.val( this.value );
      if (source != "slider") {
        this.slider.slider('values', 0, this.value);

@@ -546,8 +546,10 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
 #
-def get_power_density_spectrum(src_destination, bck_destination, gti_destination, filters, axis, dt, nsegm, segm_size, norm):
+def get_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
 
     freq = []
     power = []
@@ -561,6 +563,10 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
         if norm not in ['frac', 'abs', 'leahy', 'none']:
             logging.warn("Wrong normalization")
+            return None
+
+        if pds_type not in ['Sng', 'Avg']:
+            logging.warn("Wrong power density spectrum type")
             return None
 
         if segm_size == 0:
@@ -578,10 +584,10 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
         # Creates the power density spectrum
         logging.debug("Create power density spectrum")
 
-        #if nsegm < 30:
-        #    pds = Powerspectrum(lc, norm=norm, gti=gti)
-        #else:
-        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+        if pds_type == 'Sng':
+            pds = Powerspectrum(lc, norm=norm, gti=gti)
+        else:
+            pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
         if pds:
             freq = pds.freq
@@ -632,10 +638,11 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) cross spectrum.
+# @param: xds_type: Type of XDS to use, single or averaged.
 #
 def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
                        src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
-                       nsegm, segm_size, norm):
+                       nsegm, segm_size, norm, xds_type):
 
     freq = []
     power = []
@@ -655,6 +662,10 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
         if norm not in ['frac', 'abs', 'leahy', 'none']:
             logging.warn("Wrong normalization")
+            return None
+
+        if xds_type not in ['Sng', 'Avg']:
+            logging.warn("Wrong cross spectrum type")
             return None
 
         if segm_size == 0:
@@ -698,10 +709,10 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         # Creates the cross spectrum
         logging.debug("Create cross spectrum")
 
-        #if nsegm < 30:
-        #    xs = Crossspectrum(lc1=lc1, lc2=lc2, norm=norm, gti=gti)
-        #else:
-        xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
+        if xds_type == 'Sng':
+            xs = Crossspectrum(lc1=lc1, lc2=lc2, norm=norm, gti=gti)
+        else:
+            xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
 
         if xs:
             freq = xs.freq
