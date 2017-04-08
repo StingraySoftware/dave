@@ -29,7 +29,7 @@ function publish_file {
   echo "DIST_DIRS=$DIST_DIRS"
   for DIR in $DIST_DIRS; do
     if [ ! -d $DIR ]; then
-      mkdir $DIR || exit 1  # exit if this fails
+      mkdir -p $DIR || exit 1  # exit if this fails
     fi
     echo "Publishing $FILE to $DIR"
     cp $FILE $DIR
