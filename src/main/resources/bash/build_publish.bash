@@ -17,24 +17,26 @@
 #
 
 rm -rf work
-source setup/setup.bash
+#source setup/setup.bash
 
 echo "Running Python unit tests"
 echo "========================="
 echo
-python -m pytest src/test/python
+#python -m pytest src/test/python
 
 function publish_file {
   FILE=$1
+  echo "DIST_DIRS=$DIST_DIRS"
   for DIR in $DIST_DIRS; do
     if [ ! -d $DIR ]; then
       mkdir $DIR || exit 1  # exit if this fails
     fi
+    echo "Publishing $FILE to $DIR"
     cp $FILE $DIR
   done
 }
 
-if ! [ -z $PUBLISH_ALL -a -z $PUBLISH_LINUX ]; then
+if ! [ -z "$PUBLISH_ALL" -a -z "$PUBLISH_LINUX" ]; then
   echo "Building Linux x64 package"
   echo "========================="
 
@@ -42,7 +44,7 @@ if ! [ -z $PUBLISH_ALL -a -z $PUBLISH_LINUX ]; then
   publish_file build/DAVEApp-linux-x64.zip
 fi
 
-if ! [ -z $PUBLISH_ALL -a -z $PUBLISH_MACOS ]; then
+if ! [ -z "$PUBLISH_ALL" -a -z "$PUBLISH_MACOS" ]; then
   echo "Building OS X package"
   echo "========================="
 
