@@ -17,12 +17,12 @@
 #
 
 rm -rf work
-#source setup/setup.bash
+source setup/setup.bash
 
 echo "Running Python unit tests"
 echo "========================="
 echo
-#python -m pytest src/test/python
+python -m pytest src/test/python
 
 function publish_file {
   FILE=$1
