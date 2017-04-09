@@ -1,10 +1,10 @@
 
 //Adds new Cross Spectrum Tab Panel
-function addXdTabPanel(navBarList, panelContainer, plots){
-  tab = new XSTabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer, plots);
+function addXdTabPanel(navBarList, panelContainer, plots, projectConfigs){
+  tab = new XSTabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer, plots, projectConfigs);
 }
 
-function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plots) {
+function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plots, projectConfigs) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -67,6 +67,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.xsPlotIdx = -1;
   this.timeLagPlotIdx = -1;
   this.coherencePlotIdx = -1;
+
+  this.projectConfig.updateFromProjectConfigs(projectConfigs);
 
   this.setTitle("XSpectrum");
 

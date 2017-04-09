@@ -59,15 +59,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.close = function () {
     this.$navItem.remove();
-    $(".TabPanel").hide();
     this.$html.remove();
     log("TabPanel closed id: " + this.id);
     removeTab(this.id);
-    if (tabPanels.length > 0) {
-      tabPanels[0].show()
-    } else {
-      $("#navbar").find(".addTabPanel").click();
-    }
   }
 
   this.onDatasetChanged = function ( filenames, selectorKey ) {
@@ -194,6 +188,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         currentObj.setTitle(currentObj.projectConfig.filename);
         currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
+        currentObj.enableWfSelector();
         currentObj.refreshPlotsData();
 
         //Reset History and add default filters
@@ -297,6 +292,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     }
   }
 
+  this.enableDragDrop = function (enabled) {
+    currentObj.outputPanel.enableDragDrop(enabled);
+  }
+
   this.applyAction = function (action){
     if (action != null){
       switch (action.type) {
@@ -325,6 +324,13 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     }
   }
 
+  this.enableWfSelector = function () {
+    this.prepareButton(this.wfSelector.find(".filterBtn"), "filterPanel");
+    this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
+    this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
+    this.wfSelector.find(".wfSelectorDisableable").fadeIn();
+  }
+
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
 
@@ -336,7 +342,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                   this.onLcDatasetChanged,
                                   this.onFiltersChanged,
                                   this.undoHistory,
-                                  this.resetHistory);
+                                  this.resetHistory,
+                                  this.enableDragDrop);
 
   this.outputPanel = new OutputPanel (this.id + "_outputPanel",
                                       "OutputPanelTemplate",
@@ -348,12 +355,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   $(window).resize(function () { currentObj.outputPanel.resize(); });
 
   this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");
-  this.prepareButton(this.wfSelector.find(".filterBtn"), "filterPanel");
-  this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
-  this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
 
   this.setCurrentPanel("loadPanel");
   this.wfSelector.find(".loadBtn").parent().addClass('active');
+  this.wfSelector.find(".wfSelectorDisableable").hide();
 
   this.$navItem.find("." + this.navItemClass).bind("click", function( event ) {
     currentObj.show();
@@ -397,7 +402,14 @@ function removeTab (id) {
         break;
     }
   }
+
   if (idx > -1){
     tabPanels.splice(idx,1);
+
+    if (tabPanels.length > 0) {
+      tabPanels[0].show()
+    } else {
+      $("#navbar").find(".addTabPanel").click();
+    }
   }
 }

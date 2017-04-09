@@ -50,7 +50,13 @@ function onMultiplePlotsSelected(selectedPlots) {
 
   waitingDialog.show('Preparing new tab ...');
 
-  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), selectedPlots);
+  var projectConfigs = [];
+  for (i in selectedPlots) {
+    var tab = getTabForSelector(selectedPlots[i].id);
+    projectConfigs.push(tab.projectConfig);
+  }
+
+  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), selectedPlots, projectConfigs);
 
   setTimeout( function () {
     ClearSelectedPlots();

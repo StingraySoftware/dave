@@ -215,6 +215,16 @@ h3
   width: 98%;
 }
 
+.fullScreen
+{
+  width: 98%;
+  height: 590px;
+}
+
+.fullScreen .plot{
+  height: 560px;
+}
+
 .sliderSelector .switch-wrapper {
   display: inline-block;
   position: relative;
@@ -274,8 +284,18 @@ h3
   height: 100%;
 }
 
-.fullWidth .btnWarn, .fileSelector .btnWarn {
+.fullWidth .btnWarn, .fileSelector .btnWarn, .fullScreen .btnWarn {
   width: auto;
   white-space: nowrap;
   font-size: 1em;
+}
+
+.btnAutoRefreshFloating {
+  position: fixed;
+  right: 16px;
+  top: 60px;
+  z-index: 9999;
+  width: 120px;
+  height: 40px;
+  font-size: 1.4em;
 }

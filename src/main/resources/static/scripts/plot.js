@@ -27,7 +27,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div class="plotTools">' +
                     '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
                     '<button class="btn btn-default btnFullScreen">' +
-                      '<i class="fa ' + ((this.cssClass == "fullWidth") ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
+                      '<i class="fa ' + ((this.cssClass.startsWith("full")) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
                     '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +

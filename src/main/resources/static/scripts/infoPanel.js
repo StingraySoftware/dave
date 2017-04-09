@@ -1,5 +1,5 @@
 
-function infoPanel(id, title, header, headerComments, toolbar) {
+function InfoPanel(id, title, header, headerComments, toolbar) {
 
   var currentObj = this;
   this.id = id;
@@ -11,11 +11,11 @@ function infoPanel(id, title, header, headerComments, toolbar) {
                        "OBS_ID", "OBS_MODE", "EXP_ID"];
 
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
-                 '<button class="btn btn-default btnShowAll"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>' +
-                 '<button class="btn btn-default btnHide"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                 '<h3>' + title + '</h3>' +
-                 '<table class="properties"></table>' +
-               '</div>');
+                   '<button class="btn btn-default btnShowAll"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>' +
+                   '<button class="btn btn-default btnHide"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                   '<h3>' + title + '</h3>' +
+                   '<table class="properties"></table>' +
+                 '</div>');
 
   this.container = this.$html.find(".properties");
   this.btnShowAll = this.$html.find(".btnShowAll");
