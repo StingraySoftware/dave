@@ -1,3 +1,4 @@
+//Power density spectrum and cross spectrum plots
 
 function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
 
@@ -14,6 +15,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.xAxisType = "linear";
   this.plotConfig.yAxisType = "log";
   this.plotConfig.plotType = "X*Y";
+  this.plotConfig.rebinEnabled = false;
   this.plotConfig.rebinSize = 0;
   this.plotConfig.minRebinSize = 0;
   this.plotConfig.maxRebinSize = 0;
@@ -21,7 +23,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   if (!isNull(projectConfig)) {
     // Prepare PDS Plot attributes from projectConfig
     this.plotConfig.duration = projectConfig.totalDuration;
-    this.plotConfig.segment_size = projectConfig.totalDuration;
+    this.plotConfig.segment_size = projectConfig.avgSegmentSize;
     this.plotConfig.minRebinSize = projectConfig.minBinSize;
     this.plotConfig.maxRebinSize = projectConfig.totalDuration;
   }
@@ -80,30 +82,33 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       var tab = getTabForSelector(this.id);
       var binSize = tab.projectConfig.binSize;
+      var segmSize = Math.max(binSize, tab.projectConfig.avgSegmentSize);
       if (this.settingsPanel.find(".sliderSelector").length == 0) {
+        //If setting panel not created
 
-        // Creates PDS type radio buttons
-        this.typeRadios = $('<div class="pdsType">' +
-                              '<h3>Type</h3>' +
-                              '<fieldset>' +
-                                '<label for="' + this.id + '_Sng">Single</label>' +
-                                '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng">' +
-                                '<label for="' + this.id + '_Avg">Averaged</label>' +
-                                '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Avg" value="Avg" checked="checked">' +
-                              '</fieldset>' +
-                            '</div>');
+        if (isNull(plotConfig.styles.showPdsType) || plotConfig.styles.showPdsType){
+          // Creates PDS type radio buttons
+          this.typeRadios = $('<div class="pdsType">' +
+                                '<h3>Type</h3>' +
+                                '<fieldset>' +
+                                  '<label for="' + this.id + '_Sng">Single</label>' +
+                                  '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng">' +
+                                  '<label for="' + this.id + '_Avg">Averaged</label>' +
+                                  '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Avg" value="Avg" checked="checked">' +
+                                '</fieldset>' +
+                              '</div>');
 
-        this.settingsPanel.find(".leftCol").append(this.typeRadios);
-        var $typeRadios = this.typeRadios.find("input[type=radio][name=" + this.id + "_Type]")
-        $typeRadios.checkboxradio();
-        this.typeRadios.find("fieldset").controlgroup();
-        $typeRadios.change(function() {
-          currentObj.plotConfig.type = this.value;
-        });
-
+          this.settingsPanel.find(".leftCol").append(this.typeRadios);
+          var $typeRadios = this.typeRadios.find("input[type=radio][name=" + this.id + "_Type]")
+          $typeRadios.checkboxradio();
+          this.typeRadios.find("fieldset").controlgroup();
+          $typeRadios.change(function() {
+            currentObj.plotConfig.type = this.value;
+          });
+        }
 
         // Creates the Segment length selector
-        var maxValue = binSize * 100;
+        var maxValue = segmSize * 100;
         if (this.plotConfig.duration > 0) {
           maxValue = this.plotConfig.duration;
         }
@@ -111,7 +116,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         this.segmSelector = new BinSelector(this.id + "_segmSelector",
                                           "Segment Length (" + tab.projectConfig.timeUnit  + "):",
                                           "From",
-                                          binSize, maxValue, binSize, binSize,
+                                          binSize, maxValue, binSize, segmSize,
                                           this.onSegmSelectorValuesChanged);
         this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "):  Nº Segments: " + this.plotConfig.nsegm);
         this.segmSelector.slider.slider({
@@ -161,6 +166,12 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                           "From",
                                           this.plotConfig.minRebinSize, this.plotConfig.maxRebinSize, this.plotConfig.minRebinSize, this.plotConfig.minRebinSize,
                                           this.onBinSelectorValuesChanged);
+        this.binSelector.setDisableable(true);
+        this.binSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
+        this.binSelector.switchBox.click( function ( event ) {
+          currentObj.plotConfig.rebinEnabled = !currentObj.plotConfig.rebinEnabled;
+          currentObj.binSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
+        });
         this.binSelector.slider.slider({
                min: this.binSelector.fromValue,
                max: this.binSelector.toValue,
@@ -179,13 +190,15 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
 
         // Creates the X axis type radio buttons
+        var XlinearChecked = (this.plotConfig.xAxisType == "linear") ? 'checked="checked"' : "";
+        var XlogChecked = (this.plotConfig.xAxisType == "log") ? 'checked="checked"' : "";
         this.xAxisRadios = $('<div class="pdsXAxisType">' +
                               '<h3>X axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Xlinear">Linear</label>' +
-                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" checked="checked">' +
+                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + XlinearChecked + '>' +
                                 '<label for="' + this.id + '_Xlog">Logarithmic</label>' +
-                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlog" value="log">' +
+                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlog" value="log" ' + XlogChecked + '>' +
                               '</fieldset>' +
                             '</div>');
 
@@ -199,13 +212,15 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
 
         // Creates the Y axis type radio buttons
+        var YlinearChecked = (this.plotConfig.yAxisType == "linear") ? 'checked="checked"' : "";
+        var YlogChecked = (this.plotConfig.yAxisType == "log") ? 'checked="checked"' : "";
         this.yAxisRadios = $('<div class="pdsYAxisType">' +
                               '<h3>Y axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Ylinear">Linear</label>' +
-                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear">' +
+                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + YlinearChecked + '>' +
                                 '<label for="' + this.id + '_Ylog">Logarithmic</label>' +
-                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylog" value="log" checked="checked">' +
+                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylog" value="log" ' + YlogChecked + '>' +
                               '</fieldset>' +
                             '</div>');
 
@@ -217,6 +232,28 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           currentObj.plotConfig.yAxisType = this.value;
         });
 
+        if (!isNull(this.plotConfig.zAxisType)) {
+          // Creates the X axis type radio buttons
+          var ZlinearChecked = (this.plotConfig.zAxisType == "linear") ? 'checked="checked"' : "";
+          var ZlogChecked = (this.plotConfig.zAxisType == "log") ? 'checked="checked"' : "";
+          this.zAxisRadios = $('<div class="pdsZAxisType">' +
+                                '<h3>Z axis type</h3>' +
+                                '<fieldset>' +
+                                  '<label for="' + this.id + '_Zlinear">Linear</label>' +
+                                  '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + ZlinearChecked + '>' +
+                                  '<label for="' + this.id + '_Zlog">Logarithmic</label>' +
+                                  '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlog" value="log" ' + ZlogChecked + '>' +
+                                '</fieldset>' +
+                              '</div>');
+
+          this.settingsPanel.find(".rightCol").append(this.zAxisRadios);
+          var $zAxisRadios = this.zAxisRadios.find("input[type=radio][name=" + this.id + "ZAxisType]")
+          $zAxisRadios.checkboxradio();
+          this.zAxisRadios.find("fieldset").controlgroup();
+          $zAxisRadios.change(function() {
+            currentObj.plotConfig.zAxisType = this.value;
+          });
+        }
 
         // Creates the plot type radio buttons
         this.plotTypeRadios = $('<div class="pdsPlotType">' +
@@ -277,7 +314,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.prepareData = function (data) {
 
     if (!isNull(data) && data.length > 2) {
-      if (this.plotConfig.rebinSize != 0) {
+      if (this.plotConfig.rebinEnabled && this.plotConfig.rebinSize != 0) {
         try {
           var rebinnedData = this.rebinData(data[0].values, data[1].values, this.plotConfig.rebinSize, "sum");
           data[0].values = rebinnedData.x;

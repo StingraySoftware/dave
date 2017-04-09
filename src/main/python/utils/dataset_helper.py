@@ -191,6 +191,26 @@ def hasGTIGaps(time_vals):
     return False
 
 
+#Returns Gtis from an unique gti splited by time_interval
+def get_splited_gti(gti, ti):
+    if ti <= (gti[1] - gti[0])/2:
+        #If the gti is splitable by ti
+        start = gti[0]
+        num_gtis = int((gti[1] - gti[0]) / ti)
+        new_gtis = []
+
+        for i in range(num_gtis):
+            end = start + ti
+            new_gtis.append([start, end])
+            start = end
+
+        return np.array(new_gtis)
+
+    else:
+        logging.warn("get_splited_gti: gti is not splitable by time_interval")
+        return None
+
+
 # Returns a list of columns excluding passed columnName
 def get_additional_column_names(columns, column):
     additional_columns = []

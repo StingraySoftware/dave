@@ -7,7 +7,8 @@ function ToolPanel (id,
                     onLcDatasetChangedFn,
                     onFiltersChangedFn,
                     undoHistoryFn,
-                    resetHistoryFn)
+                    resetHistoryFn,
+                    onDragDropChangedFn)
 {
 
   var currentObj = this;
@@ -19,18 +20,24 @@ function ToolPanel (id,
   this.$html.show();
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
+  this.analyzeContainer = this.$html.find(".analyzeContainer");
+  this.styleContainer = this.$html.find(".styleContainer");
   this.clearBtn = this.$html.find(".btnClear");
   this.undoBtn = this.$html.find(".btnUndo");
   this.autoRefreshBtn = this.$html.find(".btnAutoRefresh");
+  this.autoRefreshFloatingBtn = this.$html.find(".btnAutoRefreshFloating");
+  this.dragDropBtn = this.$html.find(".btnDragDrop");
 
   this.onDatasetChangedFn = onDatasetChangedFn;
   this.onLcDatasetChangedFn = onLcDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
   this.undoHistory = undoHistoryFn;
   this.resetHistory = resetHistoryFn;
+  this.onDragDropChanged = onDragDropChangedFn;
 
   this.lastTimeoutId = null;
   this.autoRefresh = false;
+  this.dragDropEnabled = false;
 
   this.file_selectors_ids_array = [];
   this.selectors_array = [];
@@ -211,6 +218,8 @@ function ToolPanel (id,
 
         this.buttonsContainer.removeClass("hidden");
         this.buttonsContainer.fadeIn();
+        this.analyzeContainer.removeClass("hidden");
+        this.styleContainer.removeClass("hidden");
       }
     }
 
@@ -254,6 +263,7 @@ function ToolPanel (id,
   }
 
   this.onSelectorValuesChanged = function (source) {
+    currentObj.autoRefreshFloatingBtn.show();
     /*if (currentObj.autoRefresh) {
       if (currentObj.lastTimeoutId != null) {
         clearTimeout(currentObj.lastTimeoutId);
@@ -266,6 +276,7 @@ function ToolPanel (id,
   }
 
   this.refresh = function (source) {
+    currentObj.autoRefreshFloatingBtn.hide();
     var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
     getTabForSelector(currentObj.id).onFiltersChanged(filters);
   }
@@ -348,6 +359,17 @@ function ToolPanel (id,
         currentObj.onSelectorValuesChanged();
       }*/
       currentObj.refresh();
+  });
+
+  this.autoRefreshFloatingBtn.hide();
+  this.autoRefreshFloatingBtn.bind("click", function( event ) {
+      currentObj.refresh();
+  });
+
+  this.dragDropBtn.bind("click", function( event ) {
+      currentObj.dragDropBtn.toggleClass("btn-success");
+      currentObj.dragDropEnabled = currentObj.dragDropBtn.hasClass("btn-success");
+      currentObj.onDragDropChanged(currentObj.dragDropEnabled);
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

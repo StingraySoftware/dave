@@ -12,9 +12,15 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   this.value = initValue;
   this.step = step;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
+  this.onSelectorEnabledChanged = null;
 
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
-                  '<h3>' + title + '</h3>' +
+                  '<h3>' +
+                    title +
+                    '<div class="switch-wrapper">' +
+                    '  <div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
+                    '</div>' +
+                  '</h3>' +
                   '<div class="selectorContainer">' +
                   ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromLabel + '" value="' + fromValue + '" />' +
                   ' <div id="slider-' + this.id + '" class="selectorSlider"></div>' +
@@ -23,12 +29,19 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
 
   //Caches the controls for further use
   this.container = this.$html.find(".selectorContainer");
+  this.switchBox = this.$html.find("#switch_" + this.id);
   this.fromInput = this.$html.find("#from_" + this.id);
   this.slider = this.$html.find("#slider-" + this.id);
+
+  this.switchBox.parent().hide();
 
   this.setTitle = function (title) {
     this.title = title;
     this.$html.find("h3").first().html(title);
+  }
+
+  this.setDisableable = function (disableable) {
+    this.switchBox.parent().show();
   }
 
   this.inputChanged = function ( event ) {
@@ -65,6 +78,18 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      if (!isNull(tab)) {
        tab.projectConfig.binSize = this.value;
        log("New BinSize set: " + tab.projectConfig.binSize);
+     }
+   }
+
+   this.setEnabled = function (enabled) {
+     this.enabled = enabled;
+     if (enabled) {
+       this.switchBox.switchClass("fa-plus-square", "fa-minus-square");
+       this.container.fadeIn();
+     } else {
+       this.switchBox.switchClass("fa-minus-square", "fa-plus-square");
+       this.setValues( this.value );
+       this.container.fadeOut();
      }
    }
 

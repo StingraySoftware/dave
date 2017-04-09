@@ -5,7 +5,7 @@ var DEFAULT_TITLE_FONT = {
             color : '#7f7f7f'
           };
 
-var DEFAULT_MARGINS = { b : 42, r : 12, l: 64, t: 24 }
+var DEFAULT_MARGINS = { b : 38, r : 12, l: 64, t: 30 }
 
 function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
 
@@ -205,6 +205,39 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
               }
       }
 
+}
+
+function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y_label, z_label, title) {
+
+  return {
+      data: [
+              {
+                type : 'surface',
+                x : x_values,
+                y : y_values,
+                z : z_values
+              }
+            ],
+      layout : {
+                 title : !isNull(title) ? title : '',
+                 hovermode: 'closest',
+                 scene: {
+                   xaxis : {
+                             title : x_label,
+                             titlefont : DEFAULT_TITLE_FONT
+                           },
+                   yaxis: {
+                             title : y_label,
+                             titlefont : DEFAULT_TITLE_FONT
+                         },
+                   zaxis: {
+                             title : z_label,
+                             titlefont : DEFAULT_TITLE_FONT
+                       }
+              		},
+                 margin: DEFAULT_MARGINS
+              }
+      }
 }
 
 function get_plotdiv_xyy(x_values, y0_values, y1_values,

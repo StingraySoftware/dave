@@ -109,8 +109,17 @@ def get_power_density_spectrum():
     return DaveEndpoint.get_power_density_spectrum(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']), request.json['norm'],
-            request.json['type'])
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'])
+
+
+@app.route('/get_dynamical_spectrum', methods=['POST'])
+def get_dynamical_spectrum():
+    return DaveEndpoint.get_dynamical_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'])
 
 
 @app.route('/get_cross_spectrum', methods=['POST'])

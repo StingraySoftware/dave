@@ -13,7 +13,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$toolBar = this.$html.find(".outputPanelToolBar");
   this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
-
+  this.infoPanel = null;
 
   //METHODS AND EVENTS
   this.initPlots = function(projectConfig) {
@@ -48,6 +48,14 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       }
     };
     this.forceResize();
+    this.enableDragDrop(false);
+
+    setTimeout( function () {
+      //Forces check if all plots visible are ready.
+      //If all plots are hidden no PlotReady event is rised from plots
+      currentObj.onPlotReady();
+    }, 2500);
+
   };
 
   this.resize = function() {
@@ -77,8 +85,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   this.addInfoPanel = function ( title, tableName, schema ) {
     if (!isNull(schema[tableName]["HEADER"])) {
-      var theInfoPanel = new infoPanel("infoPanel", title, schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
-      this.$body.append(theInfoPanel.$html);
+      this.infoPanel = new InfoPanel("infoPanel", title, schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
+      this.$body.append(this.infoPanel.$html);
     }
   }
 
@@ -93,9 +101,17 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.onPlotReady = function () {
-    for (i in currentObj.plots) { if (!currentObj.plots[i].isReady) return; };
-    currentObj.$body.sortable({ revert: true });
+    for (i in currentObj.plots) { if (currentObj.plots[i].isVisible && !currentObj.plots[i].isReady) return; };
     waitingDialog.hide();
+  }
+
+  this.enableDragDrop = function (enabled) {
+    if (isNull(this.dragDropEnabled)) {
+      currentObj.$body.sortable({ revert: true });
+    }
+
+    this.dragDropEnabled = enabled;
+    currentObj.$body.sortable( "option", "disabled", !this.dragDropEnabled );
   }
 
   this.containsId = function (id) {
@@ -252,6 +268,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   "EVENTS", "PHA", "", "D PDS",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PHA" } ]),
 
+              this.getDynamicalSpectrumPlot ( projectConfig,
+                                              filename,
+                                              bck_filename,
+                                              gti_filename,
+                                              "EVENTS", "PHA", "fullScreen", "SRC DYNAMICAL SPECTRUM" ),
+
               this.getPlot (this.id + "_phaVsCounts_" + filename,
                             filename, bck_filename, gti_filename,
                             { type: "2d",
@@ -364,12 +386,42 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "ligthcurve", labels: ["Frequency (Hz)", "Power"], title: title },
+                        styles: { type: "ligthcurve",
+                                  labels: ["Frequency (Hz)", "Power"],
+                                  title: title },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
                       },
                       this.service.request_power_density_spectrum,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      this.$toolBar,
+                      cssClass,
+                      false,
+                      projectConfig
+                    );
+  }
+
+  this.getDynamicalSpectrumPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
+
+    log("getDynamicalSpectrumPlot: filename: " + filename );
+    return new DynSpPlot(
+                      this.id + "_dynX_" + filename + "_" + (new Date()).getTime(),
+                      {
+                        filename: filename,
+                        bck_filename: bck_filename,
+                        gti_filename: gti_filename,
+                        styles: { type: "surface",
+                                  labels: ["Frequency (Hz)", "Time (s)", "Power"],
+                                  title: title,
+                                  showPdsType: false
+                                },
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:columnName } ],
+                        mandatoryFilters: mandatoryFilters,
+                      },
+                      this.service.request_dynamical_spectrum,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       this.$toolBar,
@@ -452,7 +504,21 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.appendPlot(pds_plot, mustRefreshData);
     }
 
-    return [lc_plot, pds_plot];
+    if (titlePrefix == "SRC") {
+      var dynamical_plot = this.getDynamicalSpectrumPlot ( projectConfig,
+                                                          filename,
+                                                          bck_filename,
+                                                          gti_filename,
+                                                          tableName, columnName, "fullScreen", titlePrefix + " DYNAMICAL SPECTRUM" )
+
+      projectConfig.plots.push(dynamical_plot);
+      currentObj.appendPlot(dynamical_plot, mustRefreshData);
+      return [lc_plot, pds_plot, dynamical_plot];
+
+    } else {
+
+      return [lc_plot, pds_plot];
+    }
   }
 
   this.addRmfPlots = function (projectConfig){

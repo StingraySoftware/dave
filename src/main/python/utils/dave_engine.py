@@ -580,6 +580,9 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
         # Prepares GTI if passed
         gti = load_gti_from_destination (gti_destination)
+        if not gti:
+            logging.debug("External GTIs not loaded using defaults")
+            gti = lc.gti
 
         # Creates the power density spectrum
         logging.debug("Create power density spectrum")
@@ -610,6 +613,104 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
     logging.debug("Result power density spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
     result = push_to_results_array(result, power)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
+    return result
+
+
+# get_dynamical_spectrum: Returns the Dynamical Spectrum of a given dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+#
+def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, nsegm, segm_size, norm):
+
+    freq = []
+    power_all = []
+    time = []
+    duration = []
+    warnmsg = []
+
+    try:
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            logging.warn("Wrong normalization")
+            return None
+
+        if segm_size == 0:
+            segm_size = None
+
+        # Creates the lightcurve
+        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+        if not lc:
+            logging.warn("Can't create lightcurve")
+            return None
+
+        # Prepares GTI if passed
+        gti = load_gti_from_destination (gti_destination)
+        if not gti:
+            logging.debug("External GTIs not loaded using defaults")
+            gti = lc.gti
+
+        warnmsg = [""]
+
+        # Check if there is only one GTI and tries to split it by segm_size
+        if gti != None and len(gti) == 1:
+            logging.debug("Only one GTI found, splitting by segm_size")
+            new_gtis = DsHelper.get_splited_gti(gti[0], segm_size)
+            if new_gtis != None:
+                gti = new_gtis
+                warnmsg = ["GTIs obtained by splitting with segment length"]
+            else:
+                warnmsg = ["The GTI is not splitable by segment length"]
+                logging.warn("Can't create splitted gtis from segm_size")
+
+        # Creates the power density spectrum
+        logging.debug("Create dynamical spectrum")
+
+        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+
+        if pds:
+            freq = pds.freq
+
+            pds_array, nphots_all = pds._make_segment_spectrum(lc, segm_size)
+            for tmp_pds in pds_array:
+                power_all = push_to_results_array(power_all, tmp_pds.power)
+
+            time = gti[:, 0]
+            duration = [lc.tseg]
+
+            if gti != None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
+                warnmsg = ["GTI gaps found on LC"]
+
+            pds = None  # Dispose memory
+
+        lc = None  # Dispose memory
+
+    except:
+        logging.error(getException('get_dynamical_spectrum'))
+        warnmsg = [str(sys.exc_info()[1])]
+
+    # Preapares the result
+    logging.debug("Result dynamical spectrum .... " + str(len(freq)))
+    result = push_to_results_array([], freq)
+    result = push_to_results_array(result, power_all)
+    result = push_to_results_array(result, time)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
     return result
@@ -679,6 +780,9 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
         # Prepares GTI1 if passed
         gti1 = load_gti_from_destination (gti_destination1)
+        if not gti1:
+            logging.debug("External GTIs 1 not loaded using defaults")
+            gti1 = lc1.gti
 
         # Creates the lightcurve 2
         lc2 = get_lightcurve_any_dataset(src_destination2, bck_destination2, gti_destination2, filters2, dt2)
@@ -688,6 +792,9 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
         # Prepares GTI2 if passed
         gti2 = load_gti_from_destination (gti_destination2)
+        if not gti2:
+            logging.debug("External GTIs 2 not loaded using defaults")
+            gti2 = lc2.gti
 
         # Join gtis in one gti
         gti = None
@@ -695,16 +802,19 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         gti2_valid = gti2 != None and len(gti2) > 0
         if gti1_valid and gti2_valid:
             gti = cross_two_gtis(gti1, gti2)
+            logging.debug("GTIS crossed")
         elif gti1_valid and not gti2_valid:
             gti = gti1
+            logging.debug("GTI 1 applied")
         elif not gti1_valid and gti2_valid:
             gti = gti2
+            logging.debug("GTI 2 applied")
 
         # Cross Spectra requires a single Good Time Interval
-        if gti != None and gti.shape[0] != 1:
-            logging.warn("Non-averaged Cross Spectra need "
-                            "a single Good Time Interval")
-            return None
+        #if gti != None and gti.shape[0] != 1:
+        #    logging.warn("Non-averaged Cross Spectra need "
+        #                    "a single Good Time Interval: gti -> " + str(gti.shape))
+        #    return None
 
         # Creates the cross spectrum
         logging.debug("Create cross spectrum")

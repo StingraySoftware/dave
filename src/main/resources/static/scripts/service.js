@@ -83,6 +83,10 @@ function Service (base_url) {
     thisService.make_ajax_call("get_power_density_spectrum", data, fn);
   };
 
+  this.request_dynamical_spectrum = function (data, fn) {
+    thisService.make_ajax_call("get_dynamical_spectrum", data, fn);
+  };
+
   this.request_cross_spectrum = function (data, fn) {
     thisService.make_ajax_call("get_cross_spectrum", data, fn);
   };

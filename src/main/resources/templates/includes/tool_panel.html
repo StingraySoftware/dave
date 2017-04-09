@@ -15,10 +15,19 @@
       <!---SliderSelectors are appended with JS here -->
     </div>
   </div>
-</div>
+  <div class="panelContainer analyzePanel">
+    <div class="analyzeContainer hidden">
 
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/html2canvas.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('static',filename='scripts/canvas2image.js') }}"></script>
+    </div>
+  </div>
+  <div class="panelContainer stylePanel">
+    <div class="styleContainer hidden">
+      <button class="btn button btnDragDrop"><i class="fa fa-sitemap" aria-hidden="true"></i> Reorganize</button>
+    </div>
+  </div>
+  <!--- Floating refresh button -->
+  <button class="btn button btn-success btnAutoRefreshFloating"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+</div>
 
 <script type="text/javascript" src="{{ url_for('static', filename='scripts/fileSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='scripts/sliderSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
