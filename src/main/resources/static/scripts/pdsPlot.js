@@ -1,5 +1,5 @@
 
-function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable) {
+function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
 
   var currentObj = this;
 
@@ -16,6 +16,14 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.rebinSize = 0;
   this.plotConfig.minRebinSize = 0;
   this.plotConfig.maxRebinSize = 0;
+
+  if (!isNull(projectConfig)) {
+    // Prepare PDS Plot attributes from projectConfig
+    this.plotConfig.duration = projectConfig.totalDuration;
+    this.plotConfig.segment_size = projectConfig.totalDuration;
+    this.plotConfig.minRebinSize = projectConfig.minBinSize;
+    this.plotConfig.maxRebinSize = projectConfig.totalDuration;
+  }
 
   //PDS plot attributes:
   this.settingsVisible = false;

@@ -45,22 +45,30 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.$hoverinfo = this.$html.find(".hoverinfo");
 
  this.btnShow.click(function(event){
-    currentObj.isVisible = true;
-    currentObj.$html.show();
-    currentObj.btnShow.hide();
-    currentObj.refreshData();
+    currentObj.show();
  });
 
  this.btnHide.click(function(event){
-    currentObj.isVisible = false;
-    currentObj.$html.hide();
-    var btnShowText = "";
-    if (!isNull(currentObj.plotConfig.styles.title)) {
-      btnShowText = currentObj.plotConfig.styles.title;
-    }
-    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
-    currentObj.btnShow.show();
+    currentObj.hide();
  });
+
+ this.show = function (){
+   currentObj.isVisible = true;
+   currentObj.$html.show();
+   currentObj.btnShow.hide();
+   currentObj.refreshData();
+ }
+
+ this.hide = function (){
+   currentObj.isVisible = false;
+   currentObj.$html.hide();
+   var btnShowText = "";
+   if (!isNull(currentObj.plotConfig.styles.title)) {
+     btnShowText = currentObj.plotConfig.styles.title;
+   }
+   currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   currentObj.btnShow.show();
+ }
 
  this.btnFullScreen.click(function( event ) {
    if (currentObj.$html.hasClass("fullWidth")) {
@@ -142,19 +150,22 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.showWarn("");
 
    if (isNull(data)) {
+
      currentObj.showWarn("Wrong data received");
      log("setData wrong passed data!, plot" + currentObj.id);
-     return;
-   }
 
-   currentObj.data = currentObj.prepareData(data);
-   currentObj.updateMinMaxCoords();
+   } else {
 
-   var plotlyConfig = currentObj.getPlotConfig(data);
-   currentObj.redrawPlot(plotlyConfig);
+     currentObj.data = currentObj.prepareData(data);
+     currentObj.updateMinMaxCoords();
 
-   if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
-     currentObj.showWarn("Empty plot data");
+     var plotlyConfig = currentObj.getPlotConfig(data);
+     currentObj.redrawPlot(plotlyConfig);
+
+     if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
+       currentObj.showWarn("Empty plot data");
+     }
+
    }
 
    currentObj.setReadyState(true);
@@ -167,9 +178,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.getPlotConfig = function (data) {
    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
+   var plotConfig = null;
 
    if (currentObj.plotConfig.styles.type == "2d") {
-      return get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
+      plotConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.plotConfig.styles.labels[coords.x],
@@ -177,27 +189,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                     currentObj.plotConfig.styles.title)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
-      return get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
+      plotConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     data[3].values);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
-      return get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
+      plotConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
-      return get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
+      plotConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-      return get_plotdiv_lightcurve(data[0].values, data[1].values,
+      plotConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                           [], data[2].values,
                                           (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                           currentObj.plotConfig.styles.labels[coords.x],
@@ -205,7 +217,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                           currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
-      return get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
+      plotConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
                                    (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                    currentObj.plotConfig.styles.labels[coords.x],
@@ -214,7 +226,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.plotConfig.styles.title);
    }
 
-   return null;
+   if (currentObj.plotConfig.xAxisType == "log") {
+     plotConfig.layout.xaxis.type = 'log';
+     plotConfig.layout.xaxis.autorange = true;
+   }
+
+   if (currentObj.plotConfig.yAxisType == "log") {
+     plotConfig.layout.yaxis.type = 'log';
+     plotConfig.layout.yaxis.autorange = true;
+   }
+
+   return plotConfig;
  }
 
  this.redrawPlot = function (plotlyConfig) {

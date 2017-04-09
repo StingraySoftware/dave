@@ -78,13 +78,6 @@ def get_lightcurve():
             request.json['filters'], request.json['axis'], float(request.json['dt']))
 
 
-@app.route('/get_color_color_lightcurve', methods=['POST'])
-def get_color_color_lightcurve():
-    return DaveEndpoint.get_color_color_lightcurve(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']))
-
-
 @app.route('/get_joined_lightcurves', methods=['POST'])
 def get_joined_lightcurves():
     return DaveEndpoint.get_joined_lightcurves(request.json['lc0_filename'],
@@ -129,11 +122,11 @@ def get_cross_spectrum():
             UPLOADS_TARGET, float(request.json['nsegm']), float(request.json['segment_size']), request.json['norm'])
 
 
-@app.route('/get_datasets_product', methods=['POST'])
-def get_datasets_product():
-    return DaveEndpoint.get_datasets_product(request.json['filename1'], request.json['axis1'],
-            request.json['filename2'], request.json['axis2'],
-            request.json['common_axis'], UPLOADS_TARGET)
+@app.route('/get_unfolded_spectrum', methods=['POST'])
+def get_unfolded_spectrum():
+    return DaveEndpoint.get_unfolded_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
+            request.json['arf_filename'], UPLOADS_TARGET)
 
 
 # Receives a message from client and send it to all subscribers

@@ -29,7 +29,7 @@ def get_file_dataset(destination):
     if file_extension.find("ASCII") == 0:
 
         table_id = "EVENTS"
-        header_names = ["TIME", "PI", "Color1", "Color2"]
+        header_names = ["TIME", "PHA", "Color1", "Color2"]
         dataset = get_txt_dataset(destination, table_id, header_names)
 
         table = dataset.tables[table_id]
@@ -69,7 +69,7 @@ def get_file_dataset(destination):
         elif 'SPECRESP' in hdulist:
             # If SPECRESP extension found, consider the Fits as ARF Fits
             dataset = get_fits_dataset(hdulist, "ARF", ["SPECRESP"])
-            
+
         else:
             # If not EVENTS or RATE extension found, consider the Fits as GTI Fits
             dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring)

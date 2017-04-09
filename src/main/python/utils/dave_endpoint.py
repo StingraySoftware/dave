@@ -216,37 +216,6 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_color_color_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
-    src_destination = get_destination(src_filename, target)
-    if not src_destination:
-        return common_error("Invalid file or cache key for source data")
-
-    bck_destination = ""
-    if bck_filename:
-        bck_destination = get_destination(bck_filename, target)
-        if not bck_destination:
-            return common_error("Invalid file or cache key for backgrund data")
-
-    gti_destination = ""
-    if gti_filename:
-        gti_destination = get_destination(gti_filename, target)
-        if not gti_destination:
-            return common_error("Invalid file or cache key for gti data")
-
-    logging.debug("get_color_color_lightcurve src: %s" % src_filename)
-    logging.debug("get_color_color_lightcurve bck: %s" % bck_filename)
-    logging.debug("get_color_color_lightcurve gti: %s" % gti_filename)
-    logging.debug("get_color_color_lightcurve: filters %s" % filters)
-    logging.debug("get_color_color_lightcurve: axis %s" % axis)
-    logging.debug("get_color_color_lightcurve: dt %f" % dt)
-
-    data = DaveEngine.get_color_color_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt)
-
-    logging.debug("get_color_color_lightcurve: Finish!")
-
-    return json.dumps(data, cls=NPEncoder)
-
-
 def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt):
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
@@ -430,23 +399,37 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    return json.dumps(data, cls=NPEncoder)
 
 
-def get_datasets_product(filename1, axis1, filename2, axis2, common_axis, target):
-    destination1 = get_destination(filename1, target)
-    if not destination1:
-        return common_error("Invalid file or cache key for filename 1")
+def get_unfolded_spectrum(src_filename, bck_filename, gti_filename, filters, arf_filename, target):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
 
-    destination2 = get_destination(filename2, target)
-    if not destination2:
-        return common_error("Invalid file or cache key for filename 2")
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
 
-    logging.debug("get_datasets_product file 1: %s" % filename1)
-    logging.debug("get_datasets_product: axis 1 %s" % axis1)
-    logging.debug("get_datasets_product file 2: %s" % filename2)
-    logging.debug("get_datasets_product: axis 2 %s" % axis2)
-    logging.debug("get_datasets_product: common_axis %s" % common_axis)
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
 
-    data = DaveEngine.get_datasets_product(destination1, axis1, destination2, axis2, common_axis)
+    arf_destination = ""
+    if arf_filename:
+        arf_destination = get_destination(arf_filename, target)
+        if not arf_destination:
+            return common_error("Invalid file or cache key for arf data")
 
-    logging.debug("get_datasets_product: Finish!")
+    logging.debug("get_unfolded_spectrum src: %s" % src_filename)
+    logging.debug("get_unfolded_spectrum bck: %s" % bck_filename)
+    logging.debug("get_unfolded_spectrum gti: %s" % gti_filename)
+    logging.debug("get_unfolded_spectrum: filters %s" % filters)
+    logging.debug("get_unfolded_spectrum arf: %s" % arf_filename)
+
+    data = DaveEngine.get_unfolded_spectrum(src_destination, bck_destination, gti_destination, filters, arf_destination)
+
+    logging.debug("get_unfolded_spectrum: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
