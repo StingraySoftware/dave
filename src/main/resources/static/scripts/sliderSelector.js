@@ -14,6 +14,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.maxRange = this.initToValue - this.initFromValue;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
+  this.disableable = isNull(this.filterData.source);
 
   selectors_array[this.id] = this;
 
@@ -52,6 +53,10 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
     sliderSelectors_array[switchId].onSelectorValuesChanged();
   });
 
+  if (!this.disableable) {
+    this.switchBox.hide();
+  }
+
   //Creates the slider
   this.slider.slider({
          range:true,
@@ -63,7 +68,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
            var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
            var sliderWdg = sliderSelectors_array[sliderId];
            sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-           sliderWdg.onSelectorValuesChanged(sliderWdg.filterData.source);
+           sliderWdg.onSelectorValuesChanged();
          }
      });
 
@@ -149,7 +154,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.container.fadeIn();
      } else {
        this.switchBox.switchClass("fa-minus-square", "fa-plus-square");
-       this.setValues( this.initFromValue, this.initToValue );
+       if (this.disableable){
+         this.setValues( this.initFromValue, this.initToValue );
+       }
        this.container.fadeOut();
      }
    }
@@ -176,19 +183,11 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
 //STATIC SLIDER_SELECTOR METHODS
 
-function sliderSelectors_getFilters (source, selectors_array) {
+function sliderSelectors_getFilters (selectors_array) {
   var filters = [];
   for (i in selectors_array) {
     var filter = selectors_array[i].getFilter();
     if (filter != null) {
-      /*if (!isNull(source)) {
-        if (!isNull(filter.source) && filter.source == source) {
-          filters.push(filter);
-        }
-      } else if (isNull(filter.source)) {
-        filters.push(filter);
-      }*/
-
       filters.push(filter);
     }
   }
@@ -213,5 +212,14 @@ function sliderSelectors_setFilters (filters, selectors_array) {
     if (!filterSetted) {
       selectors_array[i].setEnabled(false);
     }
+  }
+}
+
+function sliderSelectors_setFiltersEnabled (selectors_array, source, columnName) {
+  for (i in selectors_array) {
+    var selector = selectors_array[i];
+    if (selector.filterData.source == source){
+        selector.setEnabled(selector.filterData.replaceColumn == columnName);
+      }
   }
 }

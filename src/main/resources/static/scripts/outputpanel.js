@@ -210,7 +210,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
                                         "A LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumn: "PHA" } ],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: "PHA" } ],
                                         "", false ),
 
               this.getPDSPlot ( projectConfig,
@@ -218,7 +218,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   bck_filename,
                                   gti_filename,
                                   "EVENTS", "PHA", "", "A PDS",
-                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumn: "PHA" } ]),
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: "PHA" } ]),
 
               this.getLightCurvePlot ( filename,
                                         bck_filename,
@@ -226,7 +226,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
                                         "B LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumn: "PHA" } ],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: "PHA" } ],
                                         "", false ),
 
               this.getPDSPlot ( projectConfig,
@@ -234,7 +234,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   bck_filename,
                                   gti_filename,
                                   "EVENTS", "PHA", "", "B PDS",
-                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumn: "PHA" } ]),
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: "PHA" } ]),
 
               this.getLightCurvePlot ( filename,
                                         bck_filename,
@@ -242,7 +242,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
                                         "C LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumn: "PHA" } ],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: "PHA" } ],
                                         "", false ),
 
               this.getPDSPlot ( projectConfig,
@@ -250,7 +250,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   bck_filename,
                                   gti_filename,
                                   "EVENTS", "PHA", "", "C PDS",
-                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumn: "PHA" } ]),
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: "PHA" } ]),
 
               this.getLightCurvePlot ( filename,
                                         bck_filename,
@@ -258,7 +258,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
                                         "D LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PHA" } ],
+                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: "PHA" } ],
                                         "", false ),
 
               this.getPDSPlot ( projectConfig,
@@ -266,7 +266,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   bck_filename,
                                   gti_filename,
                                   "EVENTS", "PHA", "", "D PDS",
-                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumn: "PHA" } ]),
+                                  [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: "PHA" } ]),
 
               this.getDynamicalSpectrumPlot ( projectConfig,
                                               filename,

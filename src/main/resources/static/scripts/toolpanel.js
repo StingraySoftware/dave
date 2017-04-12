@@ -180,7 +180,7 @@ function ToolPanel (id,
       }
     }
 
-    var pi_column = null;
+    var pha_column = null;
 
     //Adds the rest of selectors from dataset columns
     for (tableName in schema) {
@@ -190,12 +190,13 @@ function ToolPanel (id,
 
         for (columnName in table) {
           var column = table[columnName];
-          if ((columnName != "HEADER") && (columnName != "HEADER_COMMENTS") && column.min_value < column.max_value) {
+          if ((columnName != "HEADER") && (columnName != "HEADER_COMMENTS") && (columnName != "E") && column.min_value < column.max_value) {
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
                columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
             }
+
             var selector = new sliderSelector(this.id + "_" + columnName,
                                               columnTitle,
                                               filterData,
@@ -211,7 +212,7 @@ function ToolPanel (id,
             }
 
             if (tableName == "EVENTS" && columnName == "PHA") {
-              pi_column = column;
+              pha_column = column;
             }
           }
         }
@@ -223,19 +224,42 @@ function ToolPanel (id,
       }
     }
 
-    if (pi_column != null){
-      this.createColorSelectors (pi_column);
+    if (pha_column != null){
+
+      // Creates colors filter type (PHA by default or ENERGY with RMF file upload requisite)
+      this.colorFilterTypeRadios = $('<div class="colorFilterType">' +
+                                      '<h3>Color filter type</h3>' +
+                                      '<fieldset>' +
+                                        '<label for="' + this.id + '_PHA">Channel</label>' +
+                                        '<input type="radio" name="' + this.id + '_ColorFilterType" id="' + this.id + '_PHA" value="PHA" checked="checked">' +
+                                        '<label for="' + this.id + '_Energy">Energy (keV)</label>' +
+                                        '<input type="radio" name="' + this.id + '_ColorFilterType" id="' + this.id + '_Energy" value="E">' +
+                                      '</fieldset>' +
+                                    '</div>');
+
+      this.$html.find(".selectorsContainer").append(this.colorFilterTypeRadios);
+      var $typeRadios = this.colorFilterTypeRadios.find("input[type=radio][name=" + this.id + "_ColorFilterType]")
+      $typeRadios.checkboxradio();
+      this.colorFilterTypeRadios.find("fieldset").controlgroup();
+      $typeRadios.change(function() {
+        currentObj.onColorFilterTypeChanged(this.value);
+      });
+
+      //Adds color selectors, PHA filters
+      this.createColorSelectors (pha_column);
     }
   }
 
   this.createColorSelectors = function (column) {
     var selectorNames = ["Color A", "Color B", "Color C", "Color D"];
     var increment = (column.max_value - column.min_value) * (1 / selectorNames.length);
+    var container = $("<div class='colorSelectors_" + column.id + "'></div>");
+
     for (i in selectorNames) {
       var selectorName = selectorNames[i];
       var selectorKey = selectorName.replace(" ", "_");
-      var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector" };
-      var selector = new sliderSelector(this.id + "_selector_" + selectorKey,
+      var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector", replaceColumn: column.id };
+      var selector = new sliderSelector(this.id + "_selector_" + selectorKey + "_" + column.id,
                                         selectorName + ":",
                                         filterData,
                                         "From", "To",
@@ -246,7 +270,31 @@ function ToolPanel (id,
       var max_value = min_value + increment;
       selector.setValues (min_value, max_value);
       selector.setEnabled (true);
-      this.$html.find(".selectorsContainer").append(selector.$html);
+      container.append(selector.$html);
+    }
+
+    this.$html.find(".colorSelectorsContainer").append(container);
+  }
+
+  this.onRmfDatasetUploaded = function ( schema ) {
+    if (!isNull(schema["EVENTS"])) {
+        table = schema["EVENTS"];
+        if (!isNull(table["E"])){
+          //Adds Energy general filter
+          var column = table["E"];
+          var selector = new sliderSelector(this.id + "_Energy",
+                                            "Energy (keV):",
+                                            { table:"EVENTS", column:"E" },
+                                            "From", "To",
+                                            column.min_value, column.max_value,
+                                            this.onSelectorValuesChanged,
+                                            this.selectors_array);
+          selector.$html.insertAfter("." + this.id + "_TIME");
+
+          //Prepares Energy color filters
+          this.createColorSelectors(column);
+          this.onColorFilterTypeChanged("E");
+        }
     }
   }
 
@@ -259,25 +307,51 @@ function ToolPanel (id,
   }
 
   this.getFilters = function () {
-    return sliderSelectors_getFilters(null, currentObj.selectors_array);
+    return sliderSelectors_getFilters(currentObj.selectors_array);
   }
 
-  this.onSelectorValuesChanged = function (source) {
+  this.onSelectorValuesChanged = function () {
     currentObj.autoRefreshFloatingBtn.show();
-    /*if (currentObj.autoRefresh) {
-      if (currentObj.lastTimeoutId != null) {
-        clearTimeout(currentObj.lastTimeoutId);
-      }
-
-      currentObj.lastTimeoutId = setTimeout( function () {
-        currentObj.refresh(source);
-      }, 850);
-    }*/
   }
 
-  this.refresh = function (source) {
+  this.onColorFilterTypeChanged = function (columnName) {
+    var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
+    selectorsContainer.children().hide();
+
+    if (columnName == "E") {
+      var tab = getTabForSelector(currentObj.id);
+      if (tab.projectConfig.rmfFilename == "") {
+
+        //Show upload RMF file
+        var rmfFileDiv = $('<div class="rmfFileDiv"></div>');
+        if (rmfFileDiv.children().length == 0) {
+          var rmfBtn = $('<button class="btn btn-warning btnRmf"> Upload RMF file </button>');
+          rmfBtn.click(function () {
+            currentObj.rmfFileSelector.$html.find("#" + currentObj.rmfFileSelector.uploadInputId).focus().click();
+          });
+          rmfFileDiv.html('<p class="text-warning">Rmf file is requiered for processing energy values:</p>');
+          rmfFileDiv.append(rmfBtn);
+          selectorsContainer.append(rmfFileDiv);
+        }
+        rmfFileDiv.show();
+
+      } else {
+        //Show ENERGY color selectors
+        sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
+        selectorsContainer.find(".colorSelectors_E").show();
+        currentObj.onSelectorValuesChanged();
+      }
+    } else {
+      //Show PHA color selectors
+      sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
+      selectorsContainer.find(".colorSelectors_PHA").show();
+      currentObj.onSelectorValuesChanged();
+    }
+  }
+
+  this.refresh = function () {
     currentObj.autoRefreshFloatingBtn.hide();
-    var filters = sliderSelectors_getFilters(source, currentObj.selectors_array)
+    var filters = sliderSelectors_getFilters(currentObj.selectors_array)
     getTabForSelector(currentObj.id).onFiltersChanged(filters);
   }
 
@@ -353,11 +427,6 @@ function ToolPanel (id,
   });
 
   this.autoRefreshBtn.bind("click", function( event ) {
-      /*currentObj.autoRefreshBtn.toggleClass("btn-success");
-      currentObj.autoRefresh = currentObj.autoRefreshBtn.hasClass("btn-success");
-      if (currentObj.autoRefresh) {
-        currentObj.onSelectorValuesChanged();
-      }*/
       currentObj.refresh();
   });
 

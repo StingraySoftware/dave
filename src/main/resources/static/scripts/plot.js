@@ -497,9 +497,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
              if (filter.source == mfilter.source
                   && filter.table == mfilter.table
                   && filter.column == mfilter.column) {
-                    if (!isNull(mfilter.replaceColumn)){
+                    if (!isNull(mfilter.replaceColumnInPlot)){
                       var replacedFilter = $.extend(true, {}, filter);
-                      replacedFilter.column = mfilter.replaceColumn;
+                      replacedFilter.column = mfilter.replaceColumnInPlot;
                       delete replacedFilter.source;
                       validFilters.push(replacedFilter);
                     } else {

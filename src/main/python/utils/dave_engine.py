@@ -383,12 +383,11 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
                 return None
 
         # Prepares datasets from color filters
-        count_column_name = "PHA"
-        filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination)
+        filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, gti_destination)
 
         # Creates lightcurves array applying bck and gtis from each color
         logging.debug("Create color lightcurves ....")
-        lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, count_column_name, bck_destination, filters, gti_destination, dt)
+        lightcurves = get_lightcurves_from_events_datasets_array(filtered_datasets, color_keys, bck_destination, filters, gti_destination, dt)
         filtered_datasets = None  # Dispose memory
 
         if len(lightcurves) == len(color_keys):
@@ -954,16 +953,16 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
     return filtered_ds
 
 
-def get_color_filtered_dataset(destination, filters, color_column_name, column_name, gti_destination=""):
-    color_filters = FltHelper.get_filters_from_color_filters(filters, color_column_name, column_name)
+def get_color_filtered_dataset(destination, filters, color_column_name, gti_destination=""):
+    color_filters = FltHelper.get_filters_from_color_filters(filters, color_column_name)
     filtered_ds = get_filtered_dataset(destination, color_filters, gti_destination)
     return filtered_ds
 
 
-def split_dataset_with_color_filters(src_destination, filters, color_keys, count_column_name, gti_destination):
+def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_destination):
     filtered_datasets = []
     for color_key in color_keys:
-        filtered_ds = get_color_filtered_dataset(src_destination, filters, color_key, count_column_name, gti_destination)
+        filtered_ds = get_color_filtered_dataset(src_destination, filters, color_key, gti_destination)
         if not DsHelper.is_events_dataset(filtered_ds):
             logging.warn("Can't create filtered_ds for " + str(color_key))
             return None
@@ -1054,10 +1053,10 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
     return lc
 
 
-def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, count_column_name, bck_destination, filters, gti_destination, dt):
+def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, bck_destination, filters, gti_destination, dt):
     lightcurves = []
     for color_idx in range(len(color_keys)):
-        color_filters = FltHelper.get_filters_from_color_filters(filters, color_keys[color_idx], count_column_name)
+        color_filters = FltHelper.get_filters_from_color_filters(filters, color_keys[color_idx])
         lc = get_lightcurve_from_events_dataset(datasets_array[color_idx], bck_destination, color_filters, gti_destination, dt)
         if lc:
             lightcurves.append(lc)
