@@ -107,6 +107,25 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     return "";
   }
 
+  this.saveAsCSV = function () {
+    var data = currentObj.data;
+    if (!isNull(data)){
+      var csvContent = "data:text/csv;charset=utf-8,";
+      for (time_idx in data[2].values) {
+        for (frec_idx in data[0].values) {
+          var infoArray = [data[2].values[time_idx], data[0].values[frec_idx], data[1].values[time_idx].values[frec_idx]];
+          dataString = Array.prototype.join.call(infoArray, ",");
+          csvContent += time_idx < data[2].values.length ? dataString + "\n" : dataString;
+        }
+      }
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
+      link.click();
+    }
+  }
+
   log ("new DynSpPlot id: " + this.id);
 
   return this;

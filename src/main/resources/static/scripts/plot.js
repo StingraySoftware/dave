@@ -86,7 +86,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
-    currentObj.saveAsPNG();
+   var saveDialog = $('<div id="dialog_' + currentObj.id +  '" title="Save ' + currentObj.plotConfig.styles.title + '"></div>');
+   saveDialog.dialog({
+      buttons: {
+        'Save as PNG': function() {
+           currentObj.saveAsPNG();
+           $(this).dialog('close');
+           saveDialog.remove();
+        },
+        'Save as PDF': function() {
+          currentObj.saveAsPDF();
+           $(this).dialog('close');
+           saveDialog.remove();
+        },
+        'Save as CSV': function() {
+          currentObj.saveAsCSV();
+           $(this).dialog('close');
+           saveDialog.remove();
+        }
+      }
+    });
+    currentObj.$html.append(saveDialog);
  });
 
  if (switchable) {
@@ -479,6 +499,37 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
            //document.body.removeChild(canvas);
        }
    });
+  }
+
+  this.saveAsPDF = function () {
+    html2canvas(this.plotElem, {
+        onrendered: function(canvas) {
+          var imgData = canvas.toDataURL("image/jpeg", 1.0);
+          var pdf = new jsPDF();
+
+          pdf.addImage(imgData, 'JPEG', 0, 0);
+          var download = document.getElementById('download');
+
+          pdf.save(currentObj.plotConfig.styles.title + ".pdf");
+        }
+    });
+  }
+
+  this.saveAsCSV = function () {
+    var data = currentObj.data;
+    if (!isNull(data)){
+      var csvContent = "data:text/csv;charset=utf-8,";
+      data[0].values.forEach(function(values, index){
+         var infoArray = [data[0].values[index], data[1].values[index]];
+         dataString = Array.prototype.join.call(infoArray, ",");
+         csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
+      });
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
+      link.click();
+    }
   }
 
   this.applyValidFilters = function (filters) {
