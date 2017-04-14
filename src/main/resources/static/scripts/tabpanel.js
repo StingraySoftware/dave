@@ -19,7 +19,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.actionsHistory = [];
   this.prevAction = null;
-
+  
   this.projectConfig = new ProjectConfig();
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
@@ -161,7 +161,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.onRmfApplied = function ( result ) {
     result = JSON.parse(result);
     if (!isNull(result.success) && result.success){
-      log("onRmfApplied: Getting new shema...");
+      log("onRmfApplied: Getting new shema..");
       currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( schema, params ){
 
         log("onRmfApplied: Success!");

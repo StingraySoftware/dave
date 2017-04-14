@@ -297,7 +297,7 @@ h3
   font-size: 1em;
 }
 
-.btnAutoRefreshFloating {
+.btnRefreshFloating {
   position: fixed;
   right: 16px;
   top: 60px;

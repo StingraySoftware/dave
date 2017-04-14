@@ -9,7 +9,9 @@
     <div class="buttonsContainer hidden">
       <button class="btn button btnClear"><i class="fa fa-eraser" aria-hidden="true"></i></button>
       <button class="btn button btnUndo"><i class="fa fa-history" aria-hidden="true"></i></button>
-      <button class="btn button btn-success btnAutoRefresh"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+      <button class="btn button btnLoad"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>
+      <button class="btn button btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>
+      <button class="btn button btn-success btnRefresh"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
     </div>
     <div class="selectorsContainer">
       <!---SliderSelectors are appended with JS here -->
@@ -28,7 +30,7 @@
     </div>
   </div>
   <!--- Floating refresh button -->
-  <button class="btn button btn-success btnAutoRefreshFloating"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
+  <button class="btn button btn-success btnRefreshFloating"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
 </div>
 
 <script type="text/javascript" src="{{ url_for('static', filename='scripts/fileSelector.js') }}?v={{ range (1, 9999) | random }}"></script>

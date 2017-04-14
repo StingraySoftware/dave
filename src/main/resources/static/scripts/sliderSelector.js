@@ -127,7 +127,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    this.setFilter = function (filter) {
      if (this.filterData.table == filter.table
-          && this.filterData.column == filter.column) {
+          && this.filterData.column == filter.column
+          && ( isNull(this.filterData.replaceColumn) 
+              || (this.filterData.replaceColumn == filter.replaceColumn))) {
         this.setValues( filter.from, filter.to );
         this.setEnabled (true);
         return true;

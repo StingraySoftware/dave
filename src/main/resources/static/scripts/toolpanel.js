@@ -24,8 +24,10 @@ function ToolPanel (id,
   this.styleContainer = this.$html.find(".styleContainer");
   this.clearBtn = this.$html.find(".btnClear");
   this.undoBtn = this.$html.find(".btnUndo");
-  this.autoRefreshBtn = this.$html.find(".btnAutoRefresh");
-  this.autoRefreshFloatingBtn = this.$html.find(".btnAutoRefreshFloating");
+  this.loadBtn = this.$html.find(".btnLoad");
+  this.saveBtn = this.$html.find(".btnSave");
+  this.refreshBtn = this.$html.find(".btnRefresh");
+  this.refreshFloatingBtn = this.$html.find(".btnRefreshFloating");
   this.dragDropBtn = this.$html.find(".btnDragDrop");
 
   this.onDatasetChangedFn = onDatasetChangedFn;
@@ -36,7 +38,6 @@ function ToolPanel (id,
   this.onDragDropChanged = onDragDropChangedFn;
 
   this.lastTimeoutId = null;
-  this.autoRefresh = false;
   this.dragDropEnabled = false;
 
   this.file_selectors_ids_array = [];
@@ -311,7 +312,7 @@ function ToolPanel (id,
   }
 
   this.onSelectorValuesChanged = function () {
-    currentObj.autoRefreshFloatingBtn.show();
+    currentObj.refreshFloatingBtn.show();
   }
 
   this.onColorFilterTypeChanged = function (columnName) {
@@ -350,7 +351,7 @@ function ToolPanel (id,
   }
 
   this.refresh = function () {
-    currentObj.autoRefreshFloatingBtn.hide();
+    currentObj.refreshFloatingBtn.hide();
     var filters = sliderSelectors_getFilters(currentObj.selectors_array)
     getTabForSelector(currentObj.id).onFiltersChanged(filters);
   }
@@ -380,6 +381,36 @@ function ToolPanel (id,
     return false;
   }
 
+  this.saveFilters = function () {
+    var filename = getTabForSelector(currentObj.id).projectConfig.filename.replace(/\./g,'');;
+    var filters = sliderSelectors_getFilters(currentObj.selectors_array);
+    var action = { type: "filters", actionData: $.extend(true, [], filters), binSize: this.binSelector.value };
+    var a = document.createElement("a");
+    var file = new Blob([JSON.stringify(action)], {type: 'text/plain'});
+    a.href = URL.createObjectURL(file);
+    a.download = filename + "_filters.json";
+    a.click();
+  }
+
+  this.loadFilters = function () {
+    var input = $('<input type="file" id="load-input" />');
+    input.on('change', function (e) {
+      if (e.target.files.length == 1) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              var action = JSON.parse(e.target.result);
+              getTabForSelector(currentObj.id).applyAction(action);
+            } catch (e) {
+              log("ToolPanel error loading filters: " + e);
+            }
+          };
+          reader.readAsText(file);
+      }
+     });
+     input.click();
+  }
 
   //Normal file selectors, SRC is valid on both events files and lightcurves
   this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Src File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
@@ -426,12 +457,20 @@ function ToolPanel (id,
       currentObj.undoHistory();
   });
 
-  this.autoRefreshBtn.bind("click", function( event ) {
+  this.loadBtn.bind("click", function( event ) {
+      currentObj.loadFilters();
+  });
+
+  this.saveBtn.bind("click", function( event ) {
+      currentObj.saveFilters();
+  });
+
+  this.refreshBtn.bind("click", function( event ) {
       currentObj.refresh();
   });
 
-  this.autoRefreshFloatingBtn.hide();
-  this.autoRefreshFloatingBtn.bind("click", function( event ) {
+  this.refreshFloatingBtn.hide();
+  this.refreshFloatingBtn.bind("click", function( event ) {
       currentObj.refresh();
   });
 
