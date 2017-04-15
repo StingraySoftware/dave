@@ -19,12 +19,13 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.actionsHistory = [];
   this.prevAction = null;
-
+  
   this.projectConfig = new ProjectConfig();
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
   this.setTitle = function ( title ) {
     this.$navItem.find("." + this.navItemClass).html(title);
+    this.addCloseButton();
     log("TabPanel setTitle id: " + this.id + " title: " + title);
   }
 
@@ -48,6 +49,21 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     log("TabPanel shown id: " + this.id);
   }
 
+  this.addCloseButton = function () {
+    var closeTabBtn = $('<i class="fa fa-times closeTabPanel" aria-hidden="true"></i>')
+    this.$navItem.find("." + this.navItemClass).append(closeTabBtn);
+    closeTabBtn.bind("click", function( event ) {
+      currentObj.close();
+    });
+  }
+
+  this.close = function () {
+    this.$navItem.remove();
+    this.$html.remove();
+    log("TabPanel closed id: " + this.id);
+    removeTab(this.id);
+  }
+
   this.onDatasetChanged = function ( filenames, selectorKey ) {
 
     if (filenames.length == 1) {
@@ -62,11 +78,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       } else if (selectorKey == "GTI") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Appliying RMF: ' + filenames[0]);
+        waitingDialog.show('Applying RMF: ' + filenames[0]);
         currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
       } else if ((selectorKey == "ARF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Appliying ARF: ' + filenames[0]);
+        waitingDialog.show('Applying ARF: ' + filenames[0]);
         currentObj.projectConfig.setFile("ARF", filenames[0]);
         currentObj.onArfUploaded();
       }
@@ -106,8 +122,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
         currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
 
-        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCA", "LCB", "A/B", currentObj.projectConfig);
-        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCC", "LCD", "C/D", currentObj.projectConfig);
+        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
 
         if (!lcab_Added && ! lccd_Added) {
           waitingDialog.hide();
@@ -145,8 +161,14 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.onRmfApplied = function ( result ) {
     result = JSON.parse(result);
     if (!isNull(result.success) && result.success){
-      log("onRmfApplied: Success!");
-      currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+      log("onRmfApplied: Getting new shema..");
+      currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( schema, params ){
+
+        log("onRmfApplied: Success!");
+        currentObj.toolPanel.onRmfDatasetUploaded(JSON.parse(schema));
+        currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+
+      }, currentObj.onSchemaError, null);
     } else {
       log("onRmfApplied error:" + JSON.stringify(result));
       waitingDialog.hide();
@@ -172,6 +194,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         currentObj.setTitle(currentObj.projectConfig.filename);
         currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
+        currentObj.enableWfSelector();
         currentObj.refreshPlotsData();
 
         //Reset History and add default filters
@@ -275,6 +298,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     }
   }
 
+  this.enableDragDrop = function (enabled) {
+    currentObj.outputPanel.enableDragDrop(enabled);
+  }
+
   this.applyAction = function (action){
     if (action != null){
       switch (action.type) {
@@ -303,6 +330,13 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     }
   }
 
+  this.enableWfSelector = function () {
+    this.prepareButton(this.wfSelector.find(".filterBtn"), "filterPanel");
+    this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
+    this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
+    this.wfSelector.find(".wfSelectorDisableable").fadeIn();
+  }
+
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
 
@@ -314,7 +348,8 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                   this.onLcDatasetChanged,
                                   this.onFiltersChanged,
                                   this.undoHistory,
-                                  this.resetHistory);
+                                  this.resetHistory,
+                                  this.enableDragDrop);
 
   this.outputPanel = new OutputPanel (this.id + "_outputPanel",
                                       "OutputPanelTemplate",
@@ -326,18 +361,17 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   $(window).resize(function () { currentObj.outputPanel.resize(); });
 
   this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");
-  this.prepareButton(this.wfSelector.find(".filterBtn"), "filterPanel");
-  this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
-  this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
 
   this.setCurrentPanel("loadPanel");
   this.wfSelector.find(".loadBtn").parent().addClass('active');
+  this.wfSelector.find(".wfSelectorDisableable").hide();
 
   this.$navItem.find("." + this.navItemClass).bind("click", function( event ) {
     currentObj.show();
   });
 
   this.$navItem.insertBefore(".addTabPanelLi");
+  this.addCloseButton();
   panelContainer.append(this.$html);
   this.show();
 
@@ -361,4 +395,27 @@ function getTabForSelector (selectorId) {
   }
 
   return null;
+}
+
+function removeTab (id) {
+  var idx = -1;
+
+  for (t in tabPanels) {
+    var tab = tabPanels[t];
+
+    if (tab.id == id) {
+        idx = t;
+        break;
+    }
+  }
+
+  if (idx > -1){
+    tabPanels.splice(idx,1);
+
+    if (tabPanels.length > 0) {
+      tabPanels[0].show()
+    } else {
+      $("#navbar").find(".addTabPanel").click();
+    }
+  }
 }

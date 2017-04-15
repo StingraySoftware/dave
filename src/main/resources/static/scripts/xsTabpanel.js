@@ -1,10 +1,10 @@
 
 //Adds new Cross Spectrum Tab Panel
-function addXdTabPanel(navBarList, panelContainer, plots){
-  tab = new XSTabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer, plots);
+function addXdTabPanel(navBarList, panelContainer, plots, projectConfigs){
+  tab = new XSTabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer, plots, projectConfigs);
 }
 
-function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plots) {
+function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plots, projectConfigs) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -47,7 +47,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
         if (coherencePlot.isVisible) {
           //ColorLc Params req: freq, color_A, color_B, gti_start, gti_stop
-          coherencePlot.setData($.extend(true, [], [ data[0], data[3].values[0], data[3].values[1], [], [] ]));
+          coherencePlot.setData($.extend(true, [], [ data[0], data[3], [], [], [] ]));
         }
 
       }
@@ -67,6 +67,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.xsPlotIdx = -1;
   this.timeLagPlotIdx = -1;
   this.coherencePlotIdx = -1;
+
+  this.projectConfig.updateFromProjectConfigs(projectConfigs);
 
   this.setTitle("XSpectrum");
 
@@ -99,7 +101,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 dt2: this.plots[1].plotConfig.dt,
 
                                 styles: { type: "ligthcurve",
-                                          labels: ["Frequency", "Power"],
+                                          labels: ["Frequency (Hz)", "Power"],
                                           title: "XSpectrum" }
                               },
                               this.getXSDataFromServer, //Only XSpectra plot triggers receive new data from server
@@ -107,7 +109,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.outputPanel.onPlotReady,
                               this.outputPanel.$toolBar,
                               "fullWidth",
-                              false
+                              false,
+                              this.projectConfig
                             );
 
     this.xsPlotIdx = this.outputPanel.plots.length;
@@ -119,7 +122,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.id + "_timelag_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
-                                          labels: ["Frequency", "TimeLag"],
+                                          labels: ["Frequency (Hz)", "Time(s)"],
                                           title: "TimeLag" }
                               },
                               null,
@@ -138,8 +141,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     var coherencePlot = new Plot(
                               this.id + "_coherence_" + (new Date()).getTime(),
                               {
-                                styles: { type: "colors_ligthcurve",
-                                          labels: ["Frequency", "Real", "Imag"],
+                                styles: { type: "ligthcurve",
+                                          labels: ["Frequency (Hz)", "Coherence"],
                                           title: "Coherence" },
                               },
                               null,

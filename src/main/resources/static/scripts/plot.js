@@ -27,7 +27,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div class="plotTools">' +
                     '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
                     '<button class="btn btn-default btnFullScreen">' +
-                      '<i class="fa ' + ((this.cssClass == "fullWidth") ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
+                      '<i class="fa ' + ((this.cssClass.startsWith("full")) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
                     '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
@@ -45,22 +45,30 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.$hoverinfo = this.$html.find(".hoverinfo");
 
  this.btnShow.click(function(event){
-    currentObj.isVisible = true;
-    currentObj.$html.show();
-    currentObj.btnShow.hide();
-    currentObj.refreshData();
+    currentObj.show();
  });
 
  this.btnHide.click(function(event){
-    currentObj.isVisible = false;
-    currentObj.$html.hide();
-    var btnShowText = "";
-    if (!isNull(currentObj.plotConfig.styles.title)) {
-      btnShowText = currentObj.plotConfig.styles.title;
-    }
-    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
-    currentObj.btnShow.show();
+    currentObj.hide();
  });
+
+ this.show = function (){
+   currentObj.isVisible = true;
+   currentObj.$html.show();
+   currentObj.btnShow.hide();
+   currentObj.refreshData();
+ }
+
+ this.hide = function (){
+   currentObj.isVisible = false;
+   currentObj.$html.hide();
+   var btnShowText = "";
+   if (!isNull(currentObj.plotConfig.styles.title)) {
+     btnShowText = currentObj.plotConfig.styles.title;
+   }
+   currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   currentObj.btnShow.show();
+ }
 
  this.btnFullScreen.click(function( event ) {
    if (currentObj.$html.hasClass("fullWidth")) {
@@ -78,7 +86,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
-    currentObj.saveAsPNG();
+   var saveDialog = $('<div id="dialog_' + currentObj.id +  '" title="Save ' + currentObj.plotConfig.styles.title + '"></div>');
+   saveDialog.dialog({
+      buttons: {
+        'Save as PNG': function() {
+           currentObj.saveAsPNG();
+           $(this).dialog('close');
+           saveDialog.remove();
+        },
+        'Save as PDF': function() {
+          currentObj.saveAsPDF();
+           $(this).dialog('close');
+           saveDialog.remove();
+        },
+        'Save as CSV': function() {
+          currentObj.saveAsCSV();
+           $(this).dialog('close');
+           saveDialog.remove();
+        }
+      }
+    });
+    currentObj.$html.append(saveDialog);
  });
 
  if (switchable) {
@@ -117,10 +145,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       return;
    }
 
+   this.updatePlotConfig();
+   this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
+ }
+
+ this.updatePlotConfig = function () {
    var tab = getTabForSelector(this.id);
    this.plotConfig.dt = tab.projectConfig.binSize;
-
-   this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
  }
 
  this.onPlotDataReceived = function ( data ) {
@@ -139,22 +170,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setData = function ( data ) {
 
+   currentObj.updatePlotConfig();
+
    currentObj.showWarn("");
 
    if (isNull(data)) {
+
      currentObj.showWarn("Wrong data received");
      log("setData wrong passed data!, plot" + currentObj.id);
-     return;
-   }
 
-   currentObj.data = currentObj.prepareData(data);
-   currentObj.updateMinMaxCoords();
+   } else {
 
-   var plotlyConfig = currentObj.getPlotConfig(data);
-   currentObj.redrawPlot(plotlyConfig);
+     currentObj.data = currentObj.prepareData(data);
+     currentObj.updateMinMaxCoords();
 
-   if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
-     currentObj.showWarn("Empty plot data");
+     var plotlyConfig = currentObj.getPlotlyConfig(data);
+     currentObj.redrawPlot(plotlyConfig);
+
+     if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
+       currentObj.showWarn("Empty plot data");
+     }
+
    }
 
    currentObj.setReadyState(true);
@@ -165,11 +201,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return data; //This method is just for being overriden if necessary
  }
 
- this.getPlotConfig = function (data) {
+ this.getPlotlyConfig = function (data) {
    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
+   var plotlyConfig = null;
 
    if (currentObj.plotConfig.styles.type == "2d") {
-      return get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
+      plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.plotConfig.styles.labels[coords.x],
@@ -177,27 +214,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                     currentObj.plotConfig.styles.title)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
-      return get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
+      plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
                                     currentObj.plotConfig.styles.labels[coords.x],
                                     currentObj.plotConfig.styles.labels[coords.y],
                                     data[3].values);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
-      return get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
+      plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
-      return get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
+      plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-      return get_plotdiv_lightcurve(data[0].values, data[1].values,
+      plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                           [], data[2].values,
                                           (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                           currentObj.plotConfig.styles.labels[coords.x],
@@ -205,7 +242,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                           currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
-      return get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
+      plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
                                    (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                    currentObj.plotConfig.styles.labels[coords.x],
@@ -214,7 +251,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.plotConfig.styles.title);
    }
 
-   return null;
+   if (currentObj.plotConfig.xAxisType == "log") {
+     plotlyConfig.layout.xaxis.type = 'log';
+     plotlyConfig.layout.xaxis.autorange = true;
+   }
+
+   if (currentObj.plotConfig.yAxisType == "log") {
+     plotlyConfig.layout.yaxis.type = 'log';
+     plotlyConfig.layout.yaxis.autorange = true;
+   }
+
+   return plotlyConfig;
  }
 
  this.redrawPlot = function (plotlyConfig) {
@@ -454,6 +501,37 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    });
   }
 
+  this.saveAsPDF = function () {
+    html2canvas(this.plotElem, {
+        onrendered: function(canvas) {
+          var imgData = canvas.toDataURL("image/jpeg", 1.0);
+          var pdf = new jsPDF();
+
+          pdf.addImage(imgData, 'JPEG', 0, 0);
+          var download = document.getElementById('download');
+
+          pdf.save(currentObj.plotConfig.styles.title + ".pdf");
+        }
+    });
+  }
+
+  this.saveAsCSV = function () {
+    var data = currentObj.data;
+    if (!isNull(data)){
+      var csvContent = "data:text/csv;charset=utf-8,";
+      data[0].values.forEach(function(values, index){
+         var infoArray = [data[0].values[index], data[1].values[index]];
+         dataString = Array.prototype.join.call(infoArray, ",");
+         csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
+      });
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
+      link.click();
+    }
+  }
+
   this.applyValidFilters = function (filters) {
    if (!isNull(this.plotConfig.mandatoryFilters)
         && this.plotConfig.mandatoryFilters.length > 0) {
@@ -470,9 +548,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
              if (filter.source == mfilter.source
                   && filter.table == mfilter.table
                   && filter.column == mfilter.column) {
-                    if (!isNull(mfilter.replaceColumn)){
+                    if (!isNull(mfilter.replaceColumnInPlot)){
                       var replacedFilter = $.extend(true, {}, filter);
-                      replacedFilter.column = mfilter.replaceColumn;
+                      replacedFilter.column = mfilter.replaceColumnInPlot;
                       delete replacedFilter.source;
                       validFilters.push(replacedFilter);
                     } else {

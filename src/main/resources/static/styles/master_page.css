@@ -38,6 +38,17 @@ h3
   background-color: #000;
 }
 
+.closeTabPanel {
+  margin-left: 8px;
+  margin-right: -8px;
+  padding: 0px;
+  opacity: 0.1;
+}
+
+.closeTabPanel:hover {
+  opacity: 1;
+}
+
 .daveContainer.container:before
 {
     content: '';
@@ -82,7 +93,7 @@ h3
 
 .toolPanelContainer
 {
-  padding-top: 40px;
+  padding-top: 14px;
   background-color: rgb(47, 47, 47);
   color: #9d9d9d;
 }
@@ -90,6 +101,7 @@ h3
 .toolPanelContainer input[type="text"] {
   background-color: #4a4a4a;
   border: 1px solid #222;
+  margin-left: 8px;
 }
 
 .outputPanelContainer
@@ -112,7 +124,6 @@ h3
   width: 98%;
   height: 305px;
   border: 1px solid #afafaf;
-  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -156,7 +167,6 @@ h3
   float:left;
   width: 48%;
   border: 1px solid #afafaf;
-  /*background-color: #ffffff;*/
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -205,6 +215,16 @@ h3
   width: 98%;
 }
 
+.fullScreen
+{
+  width: 98%;
+  height: 590px;
+}
+
+.fullScreen .plot{
+  height: 560px;
+}
+
 .sliderSelector .switch-wrapper {
   display: inline-block;
   position: relative;
@@ -233,11 +253,19 @@ h3
 
 .sliderSelector .selectorSlider {
   margin-top: 35px;
+  margin-left: 8px;
 }
 
-.buttonsContainer{
-  padding-top: 24px;
+.selectorsContainer, .colorSelectorsContainer {
+  margin-left: -4px;
+}
+
+.colorSelectorsContainer{
   padding-bottom: 60px;
+  margin-top: 8px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border: 1px solid #3a3a3a;
 }
 
 .btn {
@@ -263,8 +291,23 @@ h3
   height: 100%;
 }
 
-.fullWidth .btnWarn, .fileSelector .btnWarn {
+.fullWidth .btnWarn, .fileSelector .btnWarn, .fullScreen .btnWarn {
   width: auto;
   white-space: nowrap;
   font-size: 1em;
+}
+
+.btnRefreshFloating {
+  position: fixed;
+  right: 16px;
+  top: 60px;
+  z-index: 9999;
+  width: 120px;
+  height: 40px;
+  font-size: 1.4em;
+}
+
+.btnRmf {
+  float: right;
+  margin-top: -10px;
 }

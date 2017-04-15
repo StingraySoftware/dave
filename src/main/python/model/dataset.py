@@ -155,15 +155,14 @@ def get_gti_dataset_from_stingray_gti(st_gtis):
 
 # Returns a new dataset with LIGHTCURVE table from Stingray lcurve
 def get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments, hduname='RATE', column='TIME'):
-    lc_columns = [column, hduname, "ERROR"]
+    lc_columns = [column, hduname]
 
     dataset = get_hdu_type_dataset("LIGHTCURVE", lc_columns, hduname)
 
     hdu_table = dataset.tables[hduname]
     hdu_table.set_header_info(header, header_comments)
     hdu_table.columns[lc_columns[0]].add_values(lcurve["time"])
-    hdu_table.columns[lc_columns[1]].add_values(lcurve["lc"])
-    hdu_table.columns[lc_columns[2]].add_values(lcurve["elc"])
+    hdu_table.columns[lc_columns[1]].add_values(lcurve["lc"], lcurve["elc"])
 
     dataset.tables["GTI"] = DsHelper.get_gti_table_from_stingray_gti(lcurve["GTI"])
 

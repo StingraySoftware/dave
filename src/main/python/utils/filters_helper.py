@@ -40,11 +40,11 @@ def apply_bin_size_to_filters(filters, bin_size):
 
 # Returns the filters removing all color filters
 def get_filters_clean_color_filters(filters):
-    return get_filters_from_color_filters(filters, "", "")
+    return get_filters_from_color_filters(filters, None)
 
 
 # Returns the filters removing unmatched color filters, and renaming color_column_name by column_name
-def get_filters_from_color_filters(filters, color_column_name, column_name):
+def get_filters_from_color_filters(filters, color_column_name):
     ret_filters = []
     for filter in filters:
         if "source" not in filter:
@@ -53,7 +53,7 @@ def get_filters_from_color_filters(filters, color_column_name, column_name):
             ret_filters.append(new_filter)
         elif filter["column"] == color_column_name:
             new_filter = copy.copy(filter)
-            new_filter["column"] = column_name
+            new_filter["column"] = filter["replaceColumn"]
             ret_filters.append(new_filter)
 
     return ret_filters
