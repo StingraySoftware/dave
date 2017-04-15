@@ -525,7 +525,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     var rmfPlot = this.getPlot (this.id + "_rmf_" + projectConfig.rmfFilename,
                                 projectConfig.rmfFilename, "", "",
                                 { type: "2d",
-                                  labels: ["CHANNEL", "Energy (keV)"],
+                                  labels: ["Channel", "Energy (keV)"],
                                   title: "RMF" },
                                 [ { table: "EBOUNDS", column:"CHANNEL" },
                                   { table: "EBOUNDS", column:"E_MIN" } ],

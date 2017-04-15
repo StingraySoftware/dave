@@ -330,7 +330,7 @@ function ToolPanel (id,
           rmfBtn.click(function () {
             currentObj.rmfFileSelector.$html.find("#" + currentObj.rmfFileSelector.uploadInputId).focus().click();
           });
-          rmfFileDiv.html('<p class="text-warning">Rmf file is requiered for processing energy values:</p>');
+          rmfFileDiv.html('<p class="text-warning">RMF file is requiered for processing energy values:</p>');
           rmfFileDiv.append(rmfBtn);
           selectorsContainer.append(rmfFileDiv);
         }
