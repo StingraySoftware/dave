@@ -225,7 +225,7 @@ h3
   height: 560px;
 }
 
-.sliderSelector .switch-wrapper {
+.switch-wrapper {
   display: inline-block;
   position: relative;
   float: right;

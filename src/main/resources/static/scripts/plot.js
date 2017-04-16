@@ -233,14 +233,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
-   } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-      plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
-                                          [], data[2].values,
-                                          (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
-                                          currentObj.plotConfig.styles.labels[coords.x],
-                                          currentObj.plotConfig.styles.labels[coords.y],
-                                          currentObj.plotConfig.styles.title);
-
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
@@ -251,6 +243,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.plotConfig.styles.title);
    }
 
+   plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+
+   return plotlyConfig;
+ }
+
+ this.prepareAxis = function (plotlyConfig) {
    if (currentObj.plotConfig.xAxisType == "log") {
      plotlyConfig.layout.xaxis.type = 'log';
      plotlyConfig.layout.xaxis.autorange = true;

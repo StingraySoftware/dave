@@ -357,15 +357,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         yLabel,
                                         currentObj.plotConfig.styles.title);
 
-    if (currentObj.plotConfig.xAxisType == "log") {
-      plotlyConfig.layout.xaxis.type = 'log';
-      plotlyConfig.layout.xaxis.autorange = true;
-    }
-
-    if (currentObj.plotConfig.yAxisType == "log") {
-      plotlyConfig.layout.yaxis.type = 'log';
-      plotlyConfig.layout.yaxis.autorange = true;
-    }
+    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
 
     return plotlyConfig;
   }

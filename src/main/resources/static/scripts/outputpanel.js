@@ -306,7 +306,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable ) {
 
     log("getLightCurvePlot: filename: " + filename );
-    return new Plot(
+    return new LcPlot(
                       this.id + "_ligthcurve_" + filename + "_" + (new Date()).getTime(),
                       {
                         filename: filename,

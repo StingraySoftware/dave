@@ -10,6 +10,7 @@ import model.dataset as DataSet
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray.gti import cross_two_gtis
+from stingray.utils import baseline_als
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -225,14 +226,16 @@ def get_histogram(src_destination, bck_destination, gti_destination, filters, ax
 #           [{ table = "EVENTS", column = "TIME" },
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
+# @param: baseline_opts: Object with the baseline parameters.
 #
-def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
+def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt, baseline_opts):
 
     time_vals = []
     count_rate = []
     error_values = []
     gti_start_values = []
     gti_stop_values = []
+    baseline = []
 
     try:
         if len(axis) != 2:
@@ -271,6 +274,15 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
         gti_stop_values = filtered_ds.tables["GTI"].columns["STOP"].values
         filtered_ds = None  # Dispose memory
 
+        # Gets the baseline values
+        if baseline_opts["niter"] > 0:
+            logging.debug("Preparing lightcurve baseline");
+            y = count_rate.astype(float).tolist()
+            lam = baseline_opts["lam"]  # 1000
+            p = baseline_opts["p"]  # 0.01
+            niter = baseline_opts["niter"]  # 10
+            baseline = baseline_als(y, lam, p, niter)
+
     except:
         logging.error(getException('get_lightcurve'))
 
@@ -281,6 +293,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     result = push_to_results_array(result, error_values)
     result = push_to_results_array(result, gti_start_values)
     result = push_to_results_array(result, gti_stop_values)
+    result = push_to_results_array(result, baseline)
     return result
 
 
