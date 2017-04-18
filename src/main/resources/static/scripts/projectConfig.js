@@ -13,6 +13,7 @@ function ProjectConfig(){
   this.binSize = 0;
   this.minBinSize = 0;
   this.avgSegmentSize = 0;
+  this.maxSegmentSize = 0;
   this.timeUnit = "s";
   this.totalDuration = 0;
   this.plots = [];
@@ -81,13 +82,14 @@ function ProjectConfig(){
 
     //Sets the segment size for spectrums
     this.avgSegmentSize = this.minBinSize;
+    this.maxSegmentSize = this.totalDuration;
     if (!isNull(schema["GTI"])) {
       var gtiTable = schema["GTI"];
       if (!isNull(gtiTable["START"])
           && !isNull(gtiTable["STOP"])) {
         if (gtiTable["START"].count > 1) {
           //If there are more than one gti then get segmSize from avg gti size
-          this.avgSegmentSize = gtiTable["STOP"].avg_value - gtiTable["START"].avg_value;
+          this.avgSegmentSize = gtiTable["STOP"].min_value - gtiTable["START"].min_value;
         } else {
           //Else set segmSize from splitting totalDuration by 30
           this.avgSegmentSize = this.totalDuration / 30;
@@ -130,6 +132,7 @@ function ProjectConfig(){
       this.minBinSize = (this.minBinSize != 0) ? Math.max(this.minBinSize, projectConfigs[i].minBinSize) : projectConfigs[i].minBinSize;
       this.binSize = (this.binSize != 0) ? Math.max(this.binSize, projectConfigs[i].binSize) : projectConfigs[i].binSize;
       this.avgSegmentSize = (this.avgSegmentSize != 0) ? Math.min(this.avgSegmentSize, projectConfigs[i].avgSegmentSize) : projectConfigs[i].avgSegmentSize;
+      this.maxSegmentSize = (this.maxSegmentSize != 0) ? Math.min(this.maxSegmentSize, projectConfigs[i].maxSegmentSize) : projectConfigs[i].maxSegmentSize;
     }
 
     this.binSize = Math.max(this.binSize, this.minBinSize);

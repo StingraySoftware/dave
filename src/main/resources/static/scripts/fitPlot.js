@@ -4,16 +4,18 @@ var CombinedModelColor = '#FF0000';
 function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
 
   var currentObj = this;
+  var tmpPlotConfig = $.extend(true, {}, plotConfig);
 
   PDSPlot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig);
 
+  this.plotConfig = tmpPlotConfig;
   this.getModelsFn = getModelsFn;
   this.getModelsDataFromServerFn = getModelsDataFromServerFn;
   this.models = [];
 
   this.btnFullScreen.remove();
   this.btnFit.remove();
-  //this.btnSettings.hide();
+  this.btnSettings.hide();
 
   this.onPlotDataReceived = function ( data ) {
     log("onPlotDataReceived passed data!, plot" + currentObj.id);
@@ -54,6 +56,8 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       currentObj.onPlotReady();
     }
   }
+
+  this.updatePlotConfig = function () {}
 
   this.setData = function ( data, modelsData ) {
 

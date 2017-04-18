@@ -98,10 +98,12 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        var step = 1.0;
        if (this.filterData.column == "TIME") {
           //Fixes values to binSize steps
-           var binSize = getTabForSelector(this.id).projectConfig.binSize;
-           step = parseFloat(binSize);
-           this.fromValue = Math.floor (from / binSize) * binSize;
-           this.toValue = Math.floor (to / binSize) * binSize;
+          var projectConfig = getTabForSelector(this.id).projectConfig;
+          var binSize = projectConfig.binSize;
+          step = parseFloat(binSize);
+          this.fromValue = Math.floor (from / binSize) * binSize;
+          this.toValue = Math.floor (to / binSize) * binSize;
+          projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.99, projectConfig.maxSegmentSize);
        }
 
        this.fromValue = Math.floor(from);
@@ -128,7 +130,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
    this.setFilter = function (filter) {
      if (this.filterData.table == filter.table
           && this.filterData.column == filter.column
-          && ( isNull(this.filterData.replaceColumn) 
+          && ( isNull(this.filterData.replaceColumn)
               || (this.filterData.replaceColumn == filter.replaceColumn))) {
         this.setValues( filter.from, filter.to );
         this.setEnabled (true);
@@ -168,6 +170,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        this.maxRange = maxRange;
        var toValueInc = (this.initToValue - this.initFromValue) * (maxRange/(this.initToValue - this.initFromValue));
        this.setValues( this.initFromValue, this.initFromValue + toValueInc );
+       this.switchBox.hide();
      }
    }
 

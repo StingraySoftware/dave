@@ -40,14 +40,14 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
         if (timeLagPlot.isVisible) {
           //Lightcurve Params req: freq, time_lag, error_values, gti_start, gti_stop
-          timeLagPlot.setData($.extend(true, [], [ data[0], data[2], [], [], [] ]));
+          timeLagPlot.setData($.extend(true, [], [ data[0], { values: data[2].values[0] }, { values: data[2].values[1] }, [], [] ]));
         }
 
         //Prepares Coherence Plot data and sends it to coherencePlot
         var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
         if (coherencePlot.isVisible) {
           //ColorLc Params req: freq, color_A, color_B, gti_start, gti_stop
-          coherencePlot.setData($.extend(true, [], [ data[0], data[3], [], [], [] ]));
+          coherencePlot.setData($.extend(true, [], [ data[0], { values: data[3].values[0] }, { values: data[3].values[1] }, [], [] ]));
         }
 
       }
@@ -118,7 +118,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
 
     //Adds Cross Spectrum Plot to outputPanel
-    var timeLagPlot = new Plot(
+    var timeLagPlot = new LcPlot(
                               this.id + "_timelag_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
@@ -138,7 +138,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
 
     //Adds Cross Spectrum Plot to outputPanel
-    var coherencePlot = new Plot(
+    var coherencePlot = new LcPlot(
                               this.id + "_coherence_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",

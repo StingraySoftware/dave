@@ -745,7 +745,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     freq = []
     power = []
-    time_lag = []
+    time_lag_array = []
     coherence_array = []
     duration = []
     warnmsg = []
@@ -825,12 +825,23 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         if xs:
             freq = xs.freq
             power = xs.power
-            time_lag = xs.time_lag()
-            coherence = xs.coherence()
+            time_lag, time_lag_err = xs.time_lag()
+            coherence, coherence_err = xs.coherence()
 
-            # Gets only the real part of the coherence
-            coherence_array = np.real(coherence)
+            # Replace posible out of range values
+            time_lag = np.nan_to_num(time_lag)
+            time_lag[time_lag > BIG_NUMBER]=0
+            time_lag_err = np.nan_to_num(time_lag_err)
+            time_lag_err[time_lag_err > BIG_NUMBER]=0
+            time_lag_array = [ time_lag, time_lag_err ]
 
+            coherence = np.nan_to_num(coherence)
+            coherence[coherence > BIG_NUMBER]=0
+            coherence_err = np.nan_to_num(coherence_err)
+            coherence_err[coherence_err > BIG_NUMBER]=0
+            coherence_array = [ coherence, coherence_err ]
+
+            # Set duration and warnmsg
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
             if gti1 != None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
@@ -851,7 +862,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     logging.debug("Result cross spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
     result = push_to_results_array(result, power)
-    result = push_to_results_array(result, time_lag)
+    result = push_to_results_array(result, time_lag_array)
     result = push_to_results_array(result, coherence_array)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)

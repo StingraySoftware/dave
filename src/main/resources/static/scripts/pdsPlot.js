@@ -90,7 +90,6 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       var binSize = tab.projectConfig.binSize;
       var segmSize = Math.max(binSize, tab.projectConfig.avgSegmentSize);
       if (this.settingsPanel.find(".sliderSelector").length == 0) {
-        //If setting panel not created
 
         if (isNull(plotConfig.styles.showPdsType) || plotConfig.styles.showPdsType){
           // Creates PDS type radio buttons
@@ -279,7 +278,6 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         $plotTypeRadios.change(function() {
           currentObj.plotConfig.plotType = this.value;
         });
-
       }
     }
   }
@@ -300,7 +298,10 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       currentObj.plotConfig.segment_size = currentObj.segmSelector.value;
       currentObj.plotConfig.nsegm = parseFloat(Math.round((currentObj.plotConfig.duration / currentObj.segmSelector.value) * 1000) / 1000).toFixed(2);
     }
+    currentObj.updateSegmSelector();
+  }
 
+  this.updateSegmSelector = function () {
     var tab = getTabForSelector(currentObj.id);
     currentObj.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "):  Nº Segments: " + currentObj.plotConfig.nsegm);
 
@@ -314,6 +315,23 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.onBinSelectorValuesChanged = function(){
     if (currentObj.plotConfig.duration > 0) {
       currentObj.plotConfig.rebinSize = currentObj.binSelector.value;
+    }
+  }
+
+  this.updatePlotConfig = function () {
+    var tab = getTabForSelector(this.id);
+    var plotConfig = this.plotConfig;
+    plotConfig.dt = tab.projectConfig.binSize;
+    if (!isNull(this.segmSelector)){
+      plotConfig.segment_size = (tab.projectConfig.maxSegmentSize != 0) ? Math.min(tab.projectConfig.maxSegmentSize, this.segmSelector.value) : currentObj.segmSelector.value;
+    } else {
+      plotConfig.segment_size = tab.projectConfig.maxSegmentSize;
+    }
+    plotConfig.nsegm = parseFloat(Math.round((plotConfig.duration / plotConfig.segment_size) * 1000) / 1000).toFixed(2);
+
+    if (!isNull(this.segmSelector)){
+      this.updateSegmSelector();
+      this.segmSelector.setValues(plotConfig.segment_size);
     }
   }
 
