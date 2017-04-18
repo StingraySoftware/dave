@@ -1,4 +1,5 @@
 //Fit plot for fitting PDS plots
+var CombinedModelColor = '#FF0000';
 
 function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
 
@@ -91,7 +92,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
                                     y : model.values,
                                     line : {
                                             width : isNull(currentObj.models[m]) ? 3 : 2,
-                                            color : isNull(currentObj.models[m]) ? '#FF0000' : currentObj.models[m].color
+                                            color : isNull(currentObj.models[m]) ? CombinedModelColor : currentObj.models[m].color
                                           }
                                   });
           } else {
