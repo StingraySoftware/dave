@@ -140,6 +140,11 @@ def get_unfolded_spectrum():
             request.json['arf_filename'], UPLOADS_TARGET)
 
 
+@app.route('/get_plot_data_from_models', methods=['POST'])
+def get_plot_data_from_models():
+    return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():

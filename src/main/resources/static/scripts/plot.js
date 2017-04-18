@@ -34,23 +34,26 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div class="hoverinfo"></div>' +
                 '</div>');
 
- this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
- this.btnShow.hide();
- toolbar.append(this.btnShow);
+ if (!isNull(toolbar)) {
+   this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow.hide();
+   this.btnShow.click(function(event){
+      currentObj.show();
+   });
+   toolbar.append(this.btnShow);
 
- this.btnHide = this.$html.find(".btnHidePlot");
+   this.btnHide = this.$html.find(".btnHidePlot");
+   this.btnHide.click(function(event){
+      currentObj.hide();
+   });
+ } else {
+   this.$html.find(".btnHidePlot").remove();
+ }
+
  this.btnFullScreen = this.$html.find(".btnFullScreen");
  this.btnSave = this.$html.find(".btnSave");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
-
- this.btnShow.click(function(event){
-    currentObj.show();
- });
-
- this.btnHide.click(function(event){
-    currentObj.hide();
- });
 
  this.show = function (){
    currentObj.isVisible = true;
@@ -80,9 +83,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.resize();
  });
 
- this.updateFullscreenBtn = function () {
-
- }
+ this.updateFullscreenBtn = function () {};
  this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
@@ -411,20 +412,24 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.getLegendTextForPoint = function (coords) {
-   if (coords == null) { return ""; }
-   var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
-   var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
-   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
-   var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
-   var error_x_string = "";
-   var error_y_string = "";
-   if (!isNull(coords.error_x)) {
-     error_x_string= "+/-" + coords.error_x.toFixed(3);
-   }
-   if (!isNull(coords.error_y)){
-     error_y_string= "+/-" + coords.error_y.toFixed(3);
-   }
-   return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
+    try {
+       if (coords == null) { return ""; }
+       var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
+       var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
+       var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+       var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
+       var error_x_string = "";
+       var error_y_string = "";
+       if (!isNull(coords.error_x)) {
+         error_x_string= "+/-" + coords.error_x.toFixed(3);
+       }
+       if (!isNull(coords.error_y)){
+         error_y_string= "+/-" + coords.error_y.toFixed(3);
+       }
+       return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
+     } catch (ex) {
+       log("getLegendTextForPoint plot " + this.id + " error: " + ex);
+     }
   }
 
   this.setLegendText = function (text) {

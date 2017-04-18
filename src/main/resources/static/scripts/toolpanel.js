@@ -275,6 +275,7 @@ function ToolPanel (id,
     }
 
     this.$html.find(".colorSelectorsContainer").append(container);
+    this.$html.find(".colorSelectorsContainer").removeClass("hidden");
   }
 
   this.onRmfDatasetUploaded = function ( schema ) {

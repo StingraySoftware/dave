@@ -95,6 +95,10 @@ function Service (base_url) {
     thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
   };
 
+  this.request_plot_data_from_models  = function ( data, fn ) {
+    thisService.make_ajax_call("get_plot_data_from_models", data, fn);
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {

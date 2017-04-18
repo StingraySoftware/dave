@@ -56,6 +56,12 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.hideSettings();
   });
 
+  //If plot is lightcurve adds Select button to plot
+  this.btnFit = $('<button class="btn btn-default btnFit"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
+  this.$html.find(".plotTools").append(this.btnFit);
+  this.btnFit.click(function(event){
+    onFitPlotClicked(currentObj);
+  });
 
   //PDS plot methods:
 

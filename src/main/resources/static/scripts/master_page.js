@@ -63,3 +63,16 @@ function onMultiplePlotsSelected(selectedPlots) {
     waitingDialog.hide();
   }, 850);
 }
+
+function onFitPlotClicked(plot) {
+  log("onFitPlotClicked: plot -> " + plot.id);
+
+  waitingDialog.show('Preparing new tab ...');
+
+  var tab = getTabForSelector(plot.id);
+  addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot, tab.projectConfig);
+
+  setTimeout( function () {
+    waitingDialog.hide();
+  }, 850);
+}

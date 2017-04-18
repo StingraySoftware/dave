@@ -19,6 +19,8 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     currentObj.resize();
   });
 
+  this.btnFit.hide();
+
   this.prepareData = function (data) {
 
     if (!isNull(data) && data.length == 5) {

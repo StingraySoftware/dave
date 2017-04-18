@@ -11,6 +11,7 @@ from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
+from astropy.modeling.models import Gaussian1D, Lorentz1D
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -931,6 +932,49 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
     result = push_to_results_array(result, energy_spectrum_arr)
     result = push_to_results_array(result, unfolded_spectrum_arr)
     return result
+
+
+# get_plot_data_from_models:
+# Returns the plot Y data for an array of models with a given X_axis values
+#
+# @param: models: array of models
+# @param: x_values: array of float
+#
+def get_plot_data_from_models(models, x_values):
+
+    models_arr = []
+
+    try:
+
+        sum_values = []
+
+        for i in range(len(models)):
+            model = models[i]
+            val_array = []
+
+            if model["type"] == "Gaussian":
+                 g_init = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
+                 for i in range(len(x_values)):
+                     val_array.append(g_init(x_values[i]))
+
+            elif model["type"] == "Lorentz":
+                 l_init = Lorentz1D(model["amplitude"], model["x_0"], model["fwhm"])
+                 for i in range(len(x_values)):
+                     val_array.append(l_init(x_values[i]))
+
+            if len(val_array) > 0:
+                models_arr = push_to_results_array(models_arr, val_array)
+                if len (sum_values) == 0:
+                    sum_values = val_array
+                else:
+                    sum_values = np.sum([sum_values, val_array], axis=0)
+
+        models_arr = push_to_results_array(models_arr, sum_values)
+
+    except:
+        logging.error(getException('get_plot_data_from_models'))
+
+    return models_arr
 
 
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------

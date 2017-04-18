@@ -474,3 +474,21 @@ def get_unfolded_spectrum(src_filename, bck_filename, gti_filename, filters, arf
     logging.debug("get_unfolded_spectrum: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+# get_plot_data_from_models:
+# Returns the plot Y data for an array of models with a given X_axis values
+#
+# @param: models: array of models
+# @param: x_values: array of float
+#
+def get_plot_data_from_models(models, x_values):
+
+    logging.debug("get_plot_data_from_models models: %s" % models)
+    logging.debug("get_plot_data_from_models x_values: %s" % x_values)
+
+    data = DaveEngine.get_plot_data_from_models(models, x_values)
+
+    logging.debug("get_plot_data_from_models: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
