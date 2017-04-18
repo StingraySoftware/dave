@@ -188,6 +188,10 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     return plotlyConfig;
   }
 
+  this.getPlotDefaultTracesCount = function (){
+      return (currentObj.data.length > 5 && currentObj.data[5].values.length > 0) ? 2 : 1;
+  }
+
   //LC BaseLine parameters:
   this.disableBaseline();
 

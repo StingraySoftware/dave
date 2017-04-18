@@ -244,46 +244,30 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             logging.warn("Wrong number of axis")
             return None
 
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            # Creates lightcurves by gti and joins in one
-            logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
-
-            lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt)
-
-            if lc:
-                time_vals = lc.time
-                count_rate = lc.countrate
-                error_values = []  # TODO: Implement error values on Stingray
-                lc = None  # Dispose memory
-
-        elif DsHelper.is_lightcurve_dataset(filtered_ds):
-            #If dataset is LIGHTCURVE type
-            time_vals = filtered_ds.tables["RATE"].columns["TIME"].values
-            count_rate = filtered_ds.tables["RATE"].columns["RATE"].values
-            error_values = filtered_ds.tables["RATE"].columns["RATE"].error_values
-
-        else:
-            logging.warn("Wrong dataset type")
+        # Creates the lightcurve
+        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+        if not lc:
+            logging.warn("Can't create lightcurve")
             return None
 
-        #Sets gtis ranges
-        gti_start_values = filtered_ds.tables["GTI"].columns["START"].values
-        gti_stop_values = filtered_ds.tables["GTI"].columns["STOP"].values
-        filtered_ds = None  # Dispose memory
+        # Sets lc values
+        time_vals = lc.time
+        count_rate = lc.countrate
+        error_values = []  # TODO: Implement error values on Stingray -> lc.countrate_err
+
+        # Sets gtis ranges
+        gti_start_values = lc.gti[:, 0]
+        gti_stop_values = lc.gti[:, 1]
 
         # Gets the baseline values
         if baseline_opts["niter"] > 0:
             logging.debug("Preparing lightcurve baseline");
-            y = np.array(count_rate).astype(float).tolist()
             lam = baseline_opts["lam"]  # 1000
             p = baseline_opts["p"]  # 0.01
             niter = baseline_opts["niter"]  # 10
-            baseline = baseline_als(y, lam, p, niter)
+            baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
+
+        lc = None  # Dispose memory
 
     except:
         logging.error(getException('get_lightcurve'))
@@ -527,7 +511,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
             #Changes lc format to stingray_addons format
             tmp_lc = {}
             tmp_lc['lc'] = lc.countrate
-            tmp_lc['elc'] = []  # TODO: Get error from lightcurve
+            tmp_lc['elc'] = []  # TODO: Get error from lightcurve -> lc.countrate_err
             tmp_lc['time'] = lc.time
             tmp_lc['GTI'] = lc.gti
 

@@ -348,10 +348,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     });
   }
 
+  this.getPlotDefaultTracesCount = function (){
+      return 1;
+  }
+
   this.getCoordsFromPlotlyHoverEvent = function (data){
    if (data.points.length == 1) {
      var pt = data.points[0];
-     if (this.tracesCount == 1 || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
+     if (this.tracesCount == this.getPlotDefaultTracesCount() || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
        var error_x = null;
        var error_y = null;
        if (!isNull(pt.data.error_x)
