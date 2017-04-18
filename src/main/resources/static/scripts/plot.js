@@ -142,8 +142,18 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.setReadyState(false);
 
    if (isNull(this.getDataFromServerFn)) {
-      log("Avoid request data, no service function setted, Plot" + currentObj.id);
-      return;
+     if (!isNull(this.parentPlotId)) {
+       var tab = getTabForSelector(this.id);
+       var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
+       if (!parentPlot.isVisible) {
+          log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
+          parentPlot.refreshData();
+          return;
+       }
+     }
+
+     log("Avoid request data, no service function setted, Plot" + this.id);
+     return;
    }
 
    this.updatePlotConfig();
@@ -540,40 +550,45 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.applyValidFilters = function (filters) {
-   if (!isNull(this.plotConfig.mandatoryFilters)
-        && this.plotConfig.mandatoryFilters.length > 0) {
 
-     //Sets only valid filters: Valid filters is a filter without source, or
-     //filter specified on mandatoryFilters
-     validFilters = [];
-     for (f in filters) {
-       var filter = filters[f];
-       if (filter != null) {
-         if (!isNull(filter.source)) {
-           for (mf in this.plotConfig.mandatoryFilters) {
-             var mfilter = this.plotConfig.mandatoryFilters[mf];
-             if (filter.source == mfilter.source
-                  && filter.table == mfilter.table
-                  && filter.column == mfilter.column) {
-                    if (!isNull(mfilter.replaceColumnInPlot)){
-                      var replacedFilter = $.extend(true, {}, filter);
-                      replacedFilter.column = mfilter.replaceColumnInPlot;
-                      delete replacedFilter.source;
-                      validFilters.push(replacedFilter);
-                    } else {
-                      validFilters.push(filter);
+    var tab = getTabForSelector(this.id);
+    if (tab != null) {
+
+     if (!isNull(this.plotConfig.mandatoryFilters)
+          && this.plotConfig.mandatoryFilters.length > 0) {
+
+       //Sets only valid filters: Valid filters is a filter without source, or
+       //filter specified on mandatoryFilters
+       validFilters = [];
+       for (f in filters) {
+         var filter = filters[f];
+         if (filter != null) {
+           if (!isNull(filter.source)) {
+             for (mf in this.plotConfig.mandatoryFilters) {
+               var mfilter = this.plotConfig.mandatoryFilters[mf];
+               if (filter.source == mfilter.source
+                    && filter.table == mfilter.table
+                    && filter.column == mfilter.column) {
+                      if (!isNull(mfilter.replaceColumnInPlot) && mfilter.replaceColumnInPlot){
+                        var replacedFilter = $.extend(true, {}, filter);
+                        replacedFilter.column = tab.getReplaceColumn();
+                        delete replacedFilter.source;
+                        validFilters.push(replacedFilter);
+                      } else {
+                        validFilters.push(filter);
+                      }
                     }
-                  }
+             }
+           } else if (isNull(filter.source)) {
+             validFilters.push(filter);
            }
-         } else if (isNull(filter.source)) {
-           validFilters.push(filter);
          }
        }
-     }
 
-     this.plotConfig.filters = validFilters;
-   } else {
-     this.plotConfig.filters = filters;
+       this.plotConfig.filters = validFilters;
+     } else {
+       this.plotConfig.filters = filters;
+     }
    }
   }
 

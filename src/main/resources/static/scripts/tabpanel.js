@@ -19,7 +19,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.actionsHistory = [];
   this.prevAction = null;
-  
+
   this.projectConfig = new ProjectConfig();
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
@@ -264,6 +264,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.onFiltersChangedFromPlot = function (filters) {
     log("onFiltersChangedFromPlot: filters: " + JSON.stringify(filters));
     currentObj.toolPanel.applyFilters(filters);
+  }
+
+  this.getReplaceColumn = function () {
+    return currentObj.toolPanel.getReplaceColumn();
   }
 
   this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {

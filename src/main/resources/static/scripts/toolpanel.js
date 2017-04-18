@@ -42,6 +42,7 @@ function ToolPanel (id,
 
   this.file_selectors_ids_array = [];
   this.selectors_array = [];
+  this.replaceColumn = "PHA";
 
   this.addFileSelector = function (selector) {
     this.$html.find(".fileSelectorsContainer").append(selector.$html);
@@ -341,14 +342,20 @@ function ToolPanel (id,
         //Show ENERGY color selectors
         sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
         selectorsContainer.find(".colorSelectors_E").show();
+        currentObj.replaceColumn = "E";
         currentObj.onSelectorValuesChanged();
       }
     } else {
       //Show PHA color selectors
       sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
       selectorsContainer.find(".colorSelectors_PHA").show();
+      currentObj.replaceColumn = "PHA";
       currentObj.onSelectorValuesChanged();
     }
+  }
+
+  this.getReplaceColumn = function () {
+    return currentObj.replaceColumn;
   }
 
   this.refresh = function () {
