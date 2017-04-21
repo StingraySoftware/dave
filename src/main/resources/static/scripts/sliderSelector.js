@@ -103,7 +103,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           step = parseFloat(binSize);
           this.fromValue = Math.floor (from / binSize) * binSize;
           this.toValue = Math.floor (to / binSize) * binSize;
-          projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.99, projectConfig.maxSegmentSize);
+          projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.95, projectConfig.maxSegmentSize);
        }
 
        this.fromValue = Math.floor(from);

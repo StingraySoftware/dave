@@ -175,7 +175,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["D/C Count Rate(c/s)", "B/A Count Rate(c/s)"], "D/C vs B/A",
+                                                        ["D/C Color Ratio(c/s)", "B/A Color Ratio(c/s)"], "Color-Color Diagram",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
@@ -186,7 +186,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["SRC Count Rate", "B/A Count Rate(c/s)"], "B/A vs SRC",
+                                                        ["Total Count Rate (c/s)", "B/A Color Ratio(c/s)"], "Softness Intensity Diagram",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_A" } ],
                                                         "", true, baLcPlot ),
@@ -195,7 +195,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["SRC Count Rate", "D/C Count Rate(c/s)"], "D/C vs SRC",
+                                                        ["Total Count Rate (c/s)", "D/C Color Ratio(c/s)"], "Hardness Intensity Diagram",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_C" } ],
                                                         "", true, dcLcPlot ),
@@ -459,7 +459,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
             joined_lc_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("SRC"),
                                                                       cache_key,
-                                                                      ["Src Count Rate(c/s)", newKeySufix + " Color Ratio"],
+                                                                      ["Total Count Rate (c/s)", newKeySufix + " Color Ratio"],
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
             currentObj.appendPlot(joined_lc_plot);
@@ -470,7 +470,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
                 var abcd_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("LC_B/A"),
                                                                       projectConfig.getFile("LC_D/C"),
-                                                                      ["B/A Count Rate(c/s)", "D/C Color Ratio"],
+                                                                      ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
                                                                       "", true);
                 projectConfig.plots.push(abcd_plot);
                 currentObj.appendPlot(abcd_plot);
