@@ -554,41 +554,51 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     var tab = getTabForSelector(this.id);
     if (tab != null) {
 
-     if (!isNull(this.plotConfig.mandatoryFilters)
-          && this.plotConfig.mandatoryFilters.length > 0) {
+     if (isNull(this.plotConfig.mandatoryFilters)
+          || this.plotConfig.mandatoryFilters.length == 0) {
+        //If no mandatoryFilters just set the filters
+        this.plotConfig.filters = filters;
+        return;
+      }
 
-       //Sets only valid filters: Valid filters is a filter without source, or
-       //filter specified on mandatoryFilters
-       validFilters = [];
-       for (f in filters) {
-         var filter = filters[f];
-         if (filter != null) {
-           if (!isNull(filter.source)) {
-             for (mf in this.plotConfig.mandatoryFilters) {
-               var mfilter = this.plotConfig.mandatoryFilters[mf];
-               if (filter.source == mfilter.source
-                    && filter.table == mfilter.table
-                    && filter.column == mfilter.column) {
-                      if (!isNull(mfilter.replaceColumnInPlot) && mfilter.replaceColumnInPlot){
-                        var replacedFilter = $.extend(true, {}, filter);
-                        replacedFilter.column = tab.getReplaceColumn();
-                        delete replacedFilter.source;
-                        validFilters.push(replacedFilter);
-                      } else {
-                        validFilters.push(filter);
-                      }
-                    }
-             }
-           } else if (isNull(filter.source)) {
-             validFilters.push(filter);
-           }
-         }
+     //Sets only valid filters: Valid filters is a filter without source, or
+     //filter specified on mandatoryFilters
+     // This is done on two loops beacuse we want to respect the order of mandatoryFilters
+     validFilters = [];
+
+     //First append to valid filters the ones without source
+     for (f in filters) {
+       var filter = filters[f];
+       if (!isNull(filter) && isNull(filter.source)) {
+         validFilters.push(filter);
        }
-
-       this.plotConfig.filters = validFilters;
-     } else {
-       this.plotConfig.filters = filters;
      }
+
+     //Then for each manadatory filter finds the one with that source
+     for (mf in this.plotConfig.mandatoryFilters) {
+       var mfilter = this.plotConfig.mandatoryFilters[mf];
+       if (!isNull(mfilter)) {
+         for (f in filters) {
+           var filter = filters[f];
+           if (!isNull(filter)
+              && !isNull(filter.source)
+              && filter.source == mfilter.source
+              && filter.table == mfilter.table
+              && filter.column == mfilter.column) {
+                if (!isNull(mfilter.replaceColumnInPlot) && mfilter.replaceColumnInPlot){
+                  var replacedFilter = $.extend(true, {}, filter);
+                  replacedFilter.column = tab.getReplaceColumn();
+                  delete replacedFilter.source;
+                  validFilters.push(replacedFilter);
+                } else {
+                  validFilters.push(filter);
+                }
+              }
+          }
+        }
+     }
+
+     this.plotConfig.filters = validFilters;
    }
   }
 

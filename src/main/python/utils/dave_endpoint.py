@@ -239,7 +239,7 @@ def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_joined_lightcurves_from_colors(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
+def get_divided_lightcurves_from_colors(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -256,16 +256,16 @@ def get_joined_lightcurves_from_colors(src_filename, bck_filename, gti_filename,
         if not gti_destination:
             return common_error("Invalid file or cache key for gti data")
 
-    logging.debug("get_joined_lightcurves_from_colors src: %s" % src_filename)
-    logging.debug("get_joined_lightcurves_from_colors bck: %s" % bck_filename)
-    logging.debug("get_joined_lightcurves_from_colors gti: %s" % gti_filename)
-    logging.debug("get_joined_lightcurves_from_colors: filters %s" % filters)
-    logging.debug("get_joined_lightcurves_from_colors: axis %s" % axis)
-    logging.debug("get_joined_lightcurves_from_colors: dt %f" % dt)
+    logging.debug("get_divided_lightcurves_from_colors src: %s" % src_filename)
+    logging.debug("get_divided_lightcurves_from_colors bck: %s" % bck_filename)
+    logging.debug("get_divided_lightcurves_from_colors gti: %s" % gti_filename)
+    logging.debug("get_divided_lightcurves_from_colors: filters %s" % filters)
+    logging.debug("get_divided_lightcurves_from_colors: axis %s" % axis)
+    logging.debug("get_divided_lightcurves_from_colors: dt %f" % dt)
 
-    data = DaveEngine.get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt)
+    data = DaveEngine.get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt)
 
-    logging.debug("get_joined_lightcurves_from_colors: Finish!")
+    logging.debug("get_divided_lightcurves_from_colors: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 

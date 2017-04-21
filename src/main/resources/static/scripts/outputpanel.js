@@ -373,7 +373,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         mandatoryFilters: mandatoryFilters,
                         linkedPlotId: (isNull(linkedPlot)) ? null : linkedPlot.id
                       },
-                      (isNull(linkedPlot)) ? this.service.request_joined_lightcurves_from_colors : this.getJoinedLightCurvesFromColorsDataFromServer,
+                      (isNull(linkedPlot)) ? this.service.request_divided_lightcurves_from_colors : this.getDividedLightCurvesFromColorsDataFromServer,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       this.$toolBar,
@@ -614,11 +614,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return false;
   }
 
-  this.getJoinedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
+  this.getDividedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
 
-    log("OutputPanel getJoinedLightCurvesFromColorsDataFromServer...");
+    log("OutputPanel getDividedLightCurvesFromColorsDataFromServer...");
 
-    currentObj.service.request_joined_lightcurves_from_colors(paramsData, function( jsdata ) {
+    currentObj.service.request_divided_lightcurves_from_colors(paramsData, function( jsdata ) {
       data = JSON.parse(jsdata);
 
       var joinedLcPlot = currentObj.getPlotById(paramsData.id);

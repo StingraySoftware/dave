@@ -334,7 +334,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
     return None
 
 
-# get_joined_lightcurves_from_colors: Returns the joined data of src_lc and ColorX / ColorY
+# get_divided_lightcurves_from_colors: Returns the joined data of src_lc and ColorX / ColorY
 # if len(color_filters) == 2, else if len(color_filters) == 4 returns the joined data
 # of ColorZ / ColorS and ColorX / ColorY
 #
@@ -348,7 +348,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt):
+def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt):
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
@@ -392,7 +392,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
         if len(lightcurves) == len(color_keys):
 
             # Preapares the result
-            logging.debug("Result joined lightcurves ....")
+            logging.debug("Result divided lightcurves ....")
             if len(color_keys) == 2:
                 result = push_to_results_array([], src_lc.countrate)
             else:
@@ -414,7 +414,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
             logging.warn("Cant create the colors filtered ligthcurves")
 
     except:
-        logging.error(getException('get_joined_lightcurves_from_colors'))
+        logging.error(getException('get_divided_lightcurves_from_colors'))
 
     return None
 
