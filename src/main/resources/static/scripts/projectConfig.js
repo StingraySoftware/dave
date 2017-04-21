@@ -50,15 +50,13 @@ function ProjectConfig(){
 
           // Sets the time resolution
           if (!isNull(tableHeader["TIMEDEL"])) {
-            this.binSize = parseFloat(tableHeader["TIMEDEL"]);
-          }
-
-          // Sets the minimun resolution
-          if (!isNull(tableHeader["FRMTIME"])) {
+            this.minBinSize = parseFloat(tableHeader["TIMEDEL"]);
+          } else if (!isNull(tableHeader["FRMTIME"])) {
             this.minBinSize = parseInt(tableHeader["FRMTIME"]) / 1000;
           } else {
-            this.minBinSize = this.binSize;
+            this.minBinSize = 1.0;
           }
+          this.binSize = this.minBinSize;
 
           // Sets the total duration
           if (!isNull(tableHeader["TSTART"])
@@ -136,5 +134,9 @@ function ProjectConfig(){
     }
 
     this.binSize = Math.max(this.binSize, this.minBinSize);
+  }
+
+  this.binSizeCouldHaveAliasing = function () {
+    return this.binSize != this.minBinSize && this.binSize < (this.minBinSize * 2.0);
   }
 }
