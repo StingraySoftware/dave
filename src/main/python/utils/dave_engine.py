@@ -597,7 +597,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
             duration = [lc.tseg]
             warnmsg = [""]
-            if gti != None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
+            if gti is not None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
                 warnmsg = ["GTI gaps found on LC"]
 
             pds = None  # Dispose memory
@@ -669,10 +669,10 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         warnmsg = [""]
 
         # Check if there is only one GTI and tries to split it by segm_size
-        if gti != None and len(gti) == 1:
+        if gti is not None and len(gti) == 1:
             logging.debug("Only one GTI found, splitting by segm_size")
             new_gtis = DsHelper.get_splited_gti(gti[0], segm_size)
-            if new_gtis != None:
+            if new_gtis is not None:
                 gti = new_gtis
                 warnmsg = ["GTIs obtained by splitting with segment length"]
             else:
@@ -694,7 +694,7 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
             time = gti[:, 0]
             duration = [lc.tseg]
 
-            if gti != None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
+            if gti is not None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
                 warnmsg = ["GTI gaps found on LC"]
 
             pds = None  # Dispose memory
@@ -797,8 +797,8 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
         # Join gtis in one gti
         gti = None
-        gti1_valid = gti1 != None and len(gti1) > 0
-        gti2_valid = gti2 != None and len(gti2) > 0
+        gti1_valid = gti1 is not None and len(gti1) > 0
+        gti2_valid = gti2 is not None and len(gti2) > 0
         if gti1_valid and gti2_valid:
             gti = cross_two_gtis(gti1, gti2)
             logging.debug("GTIS crossed")
@@ -810,7 +810,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             logging.debug("GTI 2 applied")
 
         # Cross Spectra requires a single Good Time Interval
-        #if gti != None and gti.shape[0] != 1:
+        #if gti is not None and gti.shape[0] != 1:
         #    logging.warn("Non-averaged Cross Spectra need "
         #                    "a single Good Time Interval: gti -> " + str(gti.shape))
         #    return None
@@ -834,9 +834,9 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
-            if gti1 != None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
+            if gti1 is not None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
                 warnmsg.append("GTI gaps found on LC 1")
-            if gti2 != None and len(gti2) == 0 and DsHelper.hasGTIGaps(lc2.time):
+            if gti2 is not None and len(gti2) == 0 and DsHelper.hasGTIGaps(lc2.time):
                 warnmsg.append("GTI gaps found on LC 2")
 
             xs = None  # Dispose memory
