@@ -10,6 +10,9 @@ import model.dataset as DataSet
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray.gti import cross_two_gtis
+from stingray.utils import baseline_als
+from astropy.modeling.models import Gaussian1D, Lorentz1D
+from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -225,51 +228,46 @@ def get_histogram(src_destination, bck_destination, gti_destination, filters, ax
 #           [{ table = "EVENTS", column = "TIME" },
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
+# @param: baseline_opts: Object with the baseline parameters.
 #
-def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt):
+def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt, baseline_opts):
 
     time_vals = []
     count_rate = []
     error_values = []
     gti_start_values = []
     gti_stop_values = []
+    baseline = []
 
     try:
         if len(axis) != 2:
             logging.warn("Wrong number of axis")
             return None
 
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            # Creates lightcurves by gti and joins in one
-            logging.debug("Create lightcurve ....Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
-
-            lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt)
-
-            if lc:
-                time_vals = lc.time
-                count_rate = lc.countrate
-                error_values = []  # TODO: Implement error values on Stingray
-                lc = None  # Dispose memory
-
-        elif DsHelper.is_lightcurve_dataset(filtered_ds):
-            #If dataset is LIGHTCURVE type
-            time_vals = filtered_ds.tables["RATE"].columns["TIME"].values
-            count_rate = filtered_ds.tables["RATE"].columns["RATE"].values
-            error_values = filtered_ds.tables["RATE"].columns["RATE"].error_values
-
-        else:
-            logging.warn("Wrong dataset type")
+        # Creates the lightcurve
+        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+        if not lc:
+            logging.warn("Can't create lightcurve")
             return None
 
-        #Sets gtis ranges
-        gti_start_values = filtered_ds.tables["GTI"].columns["START"].values
-        gti_stop_values = filtered_ds.tables["GTI"].columns["STOP"].values
-        filtered_ds = None  # Dispose memory
+        # Sets lc values
+        time_vals = lc.time
+        count_rate = lc.countrate
+        error_values = []  # TODO: Implement error values on Stingray -> lc.countrate_err
+
+        # Sets gtis ranges
+        gti_start_values = lc.gti[:, 0]
+        gti_stop_values = lc.gti[:, 1]
+
+        # Gets the baseline values
+        if baseline_opts["niter"] > 0:
+            logging.debug("Preparing lightcurve baseline");
+            lam = baseline_opts["lam"]  # 1000
+            p = baseline_opts["p"]  # 0.01
+            niter = baseline_opts["niter"]  # 10
+            baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
+
+        lc = None  # Dispose memory
 
     except:
         logging.error(getException('get_lightcurve'))
@@ -281,6 +279,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     result = push_to_results_array(result, error_values)
     result = push_to_results_array(result, gti_start_values)
     result = push_to_results_array(result, gti_stop_values)
+    result = push_to_results_array(result, baseline)
     return result
 
 
@@ -335,7 +334,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
     return None
 
 
-# get_joined_lightcurves_from_colors: Returns the joined data of src_lc and ColorX / ColorY
+# get_divided_lightcurves_from_colors: Returns the joined data of src_lc and ColorX / ColorY
 # if len(color_filters) == 2, else if len(color_filters) == 4 returns the joined data
 # of ColorZ / ColorS and ColorX / ColorY
 #
@@ -349,7 +348,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt):
+def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt):
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
@@ -393,7 +392,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
         if len(lightcurves) == len(color_keys):
 
             # Preapares the result
-            logging.debug("Result joined lightcurves ....")
+            logging.debug("Result divided lightcurves ....")
             if len(color_keys) == 2:
                 result = push_to_results_array([], src_lc.countrate)
             else:
@@ -415,7 +414,7 @@ def get_joined_lightcurves_from_colors(src_destination, bck_destination, gti_des
             logging.warn("Cant create the colors filtered ligthcurves")
 
     except:
-        logging.error(getException('get_joined_lightcurves_from_colors'))
+        logging.error(getException('get_divided_lightcurves_from_colors'))
 
     return None
 
@@ -512,7 +511,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
             #Changes lc format to stingray_addons format
             tmp_lc = {}
             tmp_lc['lc'] = lc.countrate
-            tmp_lc['elc'] = []  # TODO: Get error from lightcurve
+            tmp_lc['elc'] = []  # TODO: Get error from lightcurve -> lc.countrate_err
             tmp_lc['time'] = lc.time
             tmp_lc['GTI'] = lc.gti
 
@@ -746,7 +745,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     freq = []
     power = []
-    time_lag = []
+    time_lag_array = []
     coherence_array = []
     duration = []
     warnmsg = []
@@ -826,12 +825,23 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         if xs:
             freq = xs.freq
             power = xs.power
-            time_lag = xs.time_lag()
-            coherence = xs.coherence()
+            time_lag, time_lag_err = xs.time_lag()
+            coherence, coherence_err = xs.coherence()
 
-            # Gets only the real part of the coherence
-            coherence_array = np.real(coherence)
+            # Replace posible out of range values
+            time_lag = np.nan_to_num(time_lag)
+            time_lag[time_lag > BIG_NUMBER]=0
+            time_lag_err = np.nan_to_num(time_lag_err)
+            time_lag_err[time_lag_err > BIG_NUMBER]=0
+            time_lag_array = [ time_lag, time_lag_err ]
 
+            coherence = np.nan_to_num(coherence)
+            coherence[coherence > BIG_NUMBER]=0
+            coherence_err = np.nan_to_num(coherence_err)
+            coherence_err[coherence_err > BIG_NUMBER]=0
+            coherence_array = [ coherence, coherence_err ]
+
+            # Set duration and warnmsg
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
             if gti1 != None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
@@ -852,7 +862,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     logging.debug("Result cross spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
     result = push_to_results_array(result, power)
-    result = push_to_results_array(result, time_lag)
+    result = push_to_results_array(result, time_lag_array)
     result = push_to_results_array(result, coherence_array)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
@@ -918,6 +928,56 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
     result = push_to_results_array(result, energy_spectrum_arr)
     result = push_to_results_array(result, unfolded_spectrum_arr)
     return result
+
+
+# get_plot_data_from_models:
+# Returns the plot Y data for an array of models with a given X_axis values
+#
+# @param: models: array of models
+# @param: x_values: array of float
+#
+def get_plot_data_from_models(models, x_values):
+
+    models_arr = []
+
+    try:
+
+        sum_values = []
+
+        for i in range(len(models)):
+            model = models[i]
+            val_array = []
+            model_obj = None
+
+            if model["type"] == "Gaussian":
+                 model_obj = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
+
+            elif model["type"] == "Lorentz":
+                 model_obj = Lorentz1D(model["amplitude"], model["x_0"], model["fwhm"])
+
+            elif model["type"] == "PowerLaw":
+                 model_obj = PowerLaw1D(model["amplitude"], model["x_0"], model["alpha"])
+
+            elif model["type"] == "BrokenPowerLaw":
+                 model_obj = BrokenPowerLaw1D(model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"])
+
+            if model_obj:
+                for i in range(len(x_values)):
+                     val_array.append(model_obj(x_values[i]))
+
+                if len(val_array) > 0:
+                    models_arr = push_to_results_array(models_arr, val_array)
+                    if len (sum_values) == 0:
+                        sum_values = val_array
+                    else:
+                        sum_values = np.sum([sum_values, val_array], axis=0)
+
+        models_arr = push_to_results_array(models_arr, sum_values)
+
+    except:
+        logging.error(getException('get_plot_data_from_models'))
+
+    return models_arr
 
 
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------

@@ -77,6 +77,11 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      var tab = getTabForSelector(this.id);
      if (!isNull(tab)) {
        tab.projectConfig.binSize = this.value;
+       if (tab.projectConfig.binSizeCouldHaveAliasing()) {
+         this.showWarn("Aliasing/Moiré effects could arise");
+       } else {
+         this.showWarn("");
+       }
        log("New BinSize set: " + tab.projectConfig.binSize);
      }
    }
@@ -90,6 +95,15 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
        this.switchBox.switchClass("fa-minus-square", "fa-plus-square");
        this.setValues( this.value );
        this.container.fadeOut();
+     }
+   }
+
+   this.showWarn = function (msg) {
+     this.$html.find(".btnWarn").remove();
+     if (!isNull(msg) && msg != ""){
+       this.$html.append($('<a href="#" class="btn btn-danger btnWarn"><div>' +
+                                       '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
+                                     '</div></a>'));
      }
    }
 

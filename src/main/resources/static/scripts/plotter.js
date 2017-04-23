@@ -7,6 +7,8 @@ var DEFAULT_TITLE_FONT = {
 
 var DEFAULT_MARGINS = { b : 38, r : 12, l: 64, t: 30 }
 
+var ERROR_BAR_OPACITY = 0.2;
+
 function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
 
     return {
@@ -20,12 +22,14 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_
                   error_x : {
                              type : 'data',
                              array : x_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   error_y : {
                              type : 'data',
                              array : y_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           }
                 }
               ],
@@ -61,12 +65,14 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                   error_x : {
                              type : 'data',
                              array : x_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   error_y : {
                              type : 'data',
                              array : y_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   line : {
                           shape	:	'hvh',
@@ -104,17 +110,20 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                   error_x : {
                              type : 'data',
                              array : x_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   error_y : {
                              type : 'data',
                              array : y_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   error_z : {
                              type : 'data',
                              array : z_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   marker : {
                             size : 5,
@@ -255,12 +264,14 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                   error_x : {
                              type : 'data',
                              array : x_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   error_y : {
                              type : 'data',
                              array : y0_error_values,
-                             visible : true
+                             visible : true,
+                             opacity: ERROR_BAR_OPACITY
                           },
                   name: y0_label
                 },

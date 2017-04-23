@@ -36,8 +36,13 @@ def test_get_lightcurve(s):
     axis[1]["table"] = "EVENTS"
     axis[1]["column"] = "PHA"
 
+    baseline_opts = dict()
+    baseline_opts["niter"] = 10
+    baseline_opts["lam"] = 1000
+    baseline_opts["p"] = 0.01
+
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16.)
+        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts)
 
     assert not os.path.isfile(destination) or result is not None
 
@@ -85,14 +90,15 @@ def test_get_power_density_spectrum(s):
     axis[1]["column"] = "PHA"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16., 1, 0, 'leahy')
+        result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16., 1, 0, 'leahy', 'Sng')
 
     assert not os.path.isfile(destination) or result is not None
 
 
 @given(text(min_size=1))
+@example("test.evt")
 def test_get_cross_spectrum(s):
-    destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
+    destination = FileUtils.get_destination(TEST_RESOURCES, s)
     result = None
 
     axis = [dict() for i in range(2)]
@@ -101,11 +107,9 @@ def test_get_cross_spectrum(s):
     axis[1]["table"] = "EVENTS"
     axis[1]["column"] = "PHA"
 
-    filter = FltHelper.createTimeFilter(0.0, 225.0)  # Cross Spectra requires a single Good Time Interval
-
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_cross_spectrum(destination, "", "", [filter], axis, 16.,
-                                               destination, "", "", [filter], axis, 16.,
-                                               1, 0, 'leahy')
+        result = DaveEngine.get_cross_spectrum(destination, "", "", [], axis, 16.,
+                                               destination, "", "", [], axis, 16.,
+                                               1, 0, 'leahy', 'Avg')
 
     assert not os.path.isfile(destination) or result is not None

@@ -15,18 +15,22 @@ def get_eventlist_from_evt_dataset(dataset):
         logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
+    if not "PHA" in dataset.tables["EVENTS"].columns:
+        logging.warn("get_eventlist_from_evt_dataset: PHA column not found in dataset")
+        return None
+
     # Extract axis values
     time_data = np.array(dataset.tables["EVENTS"].columns["TIME"].values)
-    pi_data = np.array(dataset.tables["EVENTS"].columns["PHA"].values)
+    pha_data = np.array(dataset.tables["EVENTS"].columns["PHA"].values)
 
     # Extract GTIs
     gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
 
     # Returns the EventList
     if len(gti) > 0:
-        return EventList(time_data, gti=gti, pi=pi_data)
+        return EventList(time_data, gti=gti, pi=pha_data)
     else:
-        return EventList(time_data, pi=pi_data)
+        return EventList(time_data, pi=pha_data)
 
 
 # Returns an Stingray Lightcurve from a given lightcurve dataset

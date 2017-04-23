@@ -67,8 +67,8 @@ function Service (base_url) {
     thisService.make_ajax_call("get_lightcurve", data, fn);
   };
 
-  this.request_joined_lightcurves_from_colors = function (data, fn) {
-    thisService.make_ajax_call("get_joined_lightcurves_from_colors", data, fn);
+  this.request_divided_lightcurves_from_colors = function (data, fn) {
+    thisService.make_ajax_call("get_divided_lightcurves_from_colors", data, fn);
   };
 
   this.request_joined_lightcurves = function (data, fn) {
@@ -93,6 +93,10 @@ function Service (base_url) {
 
   this.request_unfolded_spectrum  = function ( data, fn ) {
     thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
+  };
+
+  this.request_plot_data_from_models  = function ( data, fn ) {
+    thisService.make_ajax_call("get_plot_data_from_models", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

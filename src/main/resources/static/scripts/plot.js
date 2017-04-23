@@ -34,23 +34,26 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div class="hoverinfo"></div>' +
                 '</div>');
 
- this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
- this.btnShow.hide();
- toolbar.append(this.btnShow);
+ if (!isNull(toolbar)) {
+   this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow.hide();
+   this.btnShow.click(function(event){
+      currentObj.show();
+   });
+   toolbar.append(this.btnShow);
 
- this.btnHide = this.$html.find(".btnHidePlot");
+   this.btnHide = this.$html.find(".btnHidePlot");
+   this.btnHide.click(function(event){
+      currentObj.hide();
+   });
+ } else {
+   this.$html.find(".btnHidePlot").remove();
+ }
+
  this.btnFullScreen = this.$html.find(".btnFullScreen");
  this.btnSave = this.$html.find(".btnSave");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
-
- this.btnShow.click(function(event){
-    currentObj.show();
- });
-
- this.btnHide.click(function(event){
-    currentObj.hide();
- });
 
  this.show = function (){
    currentObj.isVisible = true;
@@ -80,9 +83,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.resize();
  });
 
- this.updateFullscreenBtn = function () {
-
- }
+ this.updateFullscreenBtn = function () {};
  this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
@@ -141,8 +142,18 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.setReadyState(false);
 
    if (isNull(this.getDataFromServerFn)) {
-      log("Avoid request data, no service function setted, Plot" + currentObj.id);
-      return;
+     if (!isNull(this.parentPlotId)) {
+       var tab = getTabForSelector(this.id);
+       var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
+       if (!parentPlot.isVisible) {
+          log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
+          parentPlot.refreshData();
+          return;
+       }
+     }
+
+     log("Avoid request data, no service function setted, Plot" + this.id);
+     return;
    }
 
    this.updatePlotConfig();
@@ -233,14 +244,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
-   } else if (currentObj.plotConfig.styles.type == "ligthcurve") {
-      plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
-                                          [], data[2].values,
-                                          (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
-                                          currentObj.plotConfig.styles.labels[coords.x],
-                                          currentObj.plotConfig.styles.labels[coords.y],
-                                          currentObj.plotConfig.styles.title);
-
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
@@ -251,6 +254,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.plotConfig.styles.title);
    }
 
+   plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+
+   return plotlyConfig;
+ }
+
+ this.prepareAxis = function (plotlyConfig) {
    if (currentObj.plotConfig.xAxisType == "log") {
      plotlyConfig.layout.xaxis.type = 'log';
      plotlyConfig.layout.xaxis.autorange = true;
@@ -349,10 +358,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     });
   }
 
+  this.getPlotDefaultTracesCount = function (){
+      return 1;
+  }
+
   this.getCoordsFromPlotlyHoverEvent = function (data){
    if (data.points.length == 1) {
      var pt = data.points[0];
-     if (this.tracesCount == 1 || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
+     if (this.tracesCount == this.getPlotDefaultTracesCount() || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
        var error_x = null;
        var error_y = null;
        if (!isNull(pt.data.error_x)
@@ -413,20 +426,24 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.getLegendTextForPoint = function (coords) {
-   if (coords == null) { return ""; }
-   var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
-   var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
-   var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
-   var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
-   var error_x_string = "";
-   var error_y_string = "";
-   if (!isNull(coords.error_x)) {
-     error_x_string= "+/-" + coords.error_x.toFixed(3);
-   }
-   if (!isNull(coords.error_y)){
-     error_y_string= "+/-" + coords.error_y.toFixed(3);
-   }
-   return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
+    try {
+       if (coords == null) { return ""; }
+       var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
+       var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
+       var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+       var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
+       var error_x_string = "";
+       var error_y_string = "";
+       if (!isNull(coords.error_x)) {
+         error_x_string= "+/-" + coords.error_x.toFixed(3);
+       }
+       if (!isNull(coords.error_y)){
+         error_y_string= "+/-" + coords.error_y.toFixed(3);
+       }
+       return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
+     } catch (ex) {
+       log("getLegendTextForPoint plot " + this.id + " error: " + ex);
+     }
   }
 
   this.setLegendText = function (text) {
@@ -533,40 +550,55 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.applyValidFilters = function (filters) {
-   if (!isNull(this.plotConfig.mandatoryFilters)
-        && this.plotConfig.mandatoryFilters.length > 0) {
+
+    var tab = getTabForSelector(this.id);
+    if (tab != null) {
+
+     if (isNull(this.plotConfig.mandatoryFilters)
+          || this.plotConfig.mandatoryFilters.length == 0) {
+        //If no mandatoryFilters just set the filters
+        this.plotConfig.filters = filters;
+        return;
+      }
 
      //Sets only valid filters: Valid filters is a filter without source, or
      //filter specified on mandatoryFilters
+     // This is done on two loops beacuse we want to respect the order of mandatoryFilters
      validFilters = [];
+
+     //First append to valid filters the ones without source
      for (f in filters) {
        var filter = filters[f];
-       if (filter != null) {
-         if (!isNull(filter.source)) {
-           for (mf in this.plotConfig.mandatoryFilters) {
-             var mfilter = this.plotConfig.mandatoryFilters[mf];
-             if (filter.source == mfilter.source
-                  && filter.table == mfilter.table
-                  && filter.column == mfilter.column) {
-                    if (!isNull(mfilter.replaceColumnInPlot)){
-                      var replacedFilter = $.extend(true, {}, filter);
-                      replacedFilter.column = mfilter.replaceColumnInPlot;
-                      delete replacedFilter.source;
-                      validFilters.push(replacedFilter);
-                    } else {
-                      validFilters.push(filter);
-                    }
-                  }
-           }
-         } else if (isNull(filter.source)) {
-           validFilters.push(filter);
-         }
+       if (!isNull(filter) && isNull(filter.source)) {
+         validFilters.push(filter);
        }
      }
 
+     //Then for each manadatory filter finds the one with that source
+     for (mf in this.plotConfig.mandatoryFilters) {
+       var mfilter = this.plotConfig.mandatoryFilters[mf];
+       if (!isNull(mfilter)) {
+         for (f in filters) {
+           var filter = filters[f];
+           if (!isNull(filter)
+              && !isNull(filter.source)
+              && filter.source == mfilter.source
+              && filter.table == mfilter.table
+              && filter.column == mfilter.column) {
+                if (!isNull(mfilter.replaceColumnInPlot) && mfilter.replaceColumnInPlot){
+                  var replacedFilter = $.extend(true, {}, filter);
+                  replacedFilter.column = tab.getReplaceColumn();
+                  delete replacedFilter.source;
+                  validFilters.push(replacedFilter);
+                } else {
+                  validFilters.push(filter);
+                }
+              }
+          }
+        }
+     }
+
      this.plotConfig.filters = validFilters;
-   } else {
-     this.plotConfig.filters = filters;
    }
   }
 
