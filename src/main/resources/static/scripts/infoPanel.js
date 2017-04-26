@@ -18,27 +18,34 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
                  '</div>');
 
   this.container = this.$html.find(".properties");
-  this.btnShowAll = this.$html.find(".btnShowAll");
-  this.btnShowAll.click(function(event){
-    currentObj.showAll = !currentObj.showAll;
-    currentObj.redraw();
-  });
 
-  this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> Header</button>');
-  this.btnShow.hide();
-  toolbar.append(this.btnShow);
+  if (!isNull(toolbar)){
+    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> Header</button>');
+    this.btnShow.hide();
+    toolbar.append(this.btnShow);
 
-  this.btnHide = this.$html.find(".btnHide");
+    this.btnShow.click(function(event){
+       currentObj.$html.show();
+       currentObj.btnShow.hide();
+    });
 
-  this.btnShow.click(function(event){
-     currentObj.$html.show();
-     currentObj.btnShow.hide();
-  });
+    this.btnHide = this.$html.find(".btnHide");
 
-  this.btnHide.click(function(event){
-     currentObj.$html.hide();
-     currentObj.btnShow.show();
-  });
+    this.btnHide.click(function(event){
+       currentObj.$html.hide();
+       currentObj.btnShow.show();
+    });
+
+    this.btnShowAll = this.$html.find(".btnShowAll");
+    this.btnShowAll.click(function(event){
+      currentObj.showAll = !currentObj.showAll;
+      currentObj.redraw();
+    });
+
+  } else {
+    this.$html.find(".btnHide").hide();
+    this.$html.find(".btnShowAll").hide();
+  }
 
   this.getPropertyHtml = function(tag, value, comment) {
     return $('<tr class="property ' + tag + '">' +

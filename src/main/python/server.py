@@ -145,6 +145,15 @@ def get_plot_data_from_models():
     return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])
 
 
+@app.route('/get_fit_powerspectrum_result', methods=['POST'])
+def get_fit_powerspectrum_result():
+    return DaveEndpoint.get_fit_powerspectrum_result(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'], request.json['models'])
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():

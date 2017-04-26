@@ -1,6 +1,7 @@
 import utils.dave_reader as DaveReader
 import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
+import utils.model_helper as ModelHelper
 import utils.plotter as Plotter
 import numpy as np
 import copy
@@ -11,8 +12,7 @@ from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
-from astropy.modeling.models import Gaussian1D, Lorentz1D
-from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
+from stingray.modeling import fit_powerspectrum
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -555,41 +555,8 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
     warnmsg = []
 
     try:
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
-
-        if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
-
-        if pds_type not in ['Sng', 'Avg']:
-            logging.warn("Wrong power density spectrum type")
-            return None
-
-        if segm_size == 0:
-            segm_size = None
-
-        # Creates the lightcurve
-        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
-        if not lc:
-            logging.warn("Can't create lightcurve")
-            return None
-
-        # Prepares GTI if passed
-        gti = load_gti_from_destination (gti_destination)
-        if not gti:
-            logging.debug("External GTIs not loaded using defaults")
-            gti = lc.gti
-
-        # Creates the power density spectrum
-        logging.debug("Create power density spectrum")
-
-        if pds_type == 'Sng':
-            pds = Powerspectrum(lc, norm=norm, gti=gti)
-        else:
-            pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
-
+        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
         if pds:
             freq = pds.freq
             power = pds.power
@@ -600,8 +567,8 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
                 warnmsg = ["GTI gaps found on LC"]
 
             pds = None  # Dispose memory
-
-        lc = None  # Dispose memory
+            lc = None  # Dispose memory
+            gti = None  # Dispose memory
 
     except:
         logging.error(getException('get_power_density_spectrum'))
@@ -945,23 +912,10 @@ def get_plot_data_from_models(models, x_values):
         sum_values = []
 
         for i in range(len(models)):
-            model = models[i]
-            val_array = []
-            model_obj = None
 
-            if model["type"] == "Gaussian":
-                 model_obj = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
-
-            elif model["type"] == "Lorentz":
-                 model_obj = Lorentz1D(model["amplitude"], model["x_0"], model["fwhm"])
-
-            elif model["type"] == "PowerLaw":
-                 model_obj = PowerLaw1D(model["amplitude"], model["x_0"], model["alpha"])
-
-            elif model["type"] == "BrokenPowerLaw":
-                 model_obj = BrokenPowerLaw1D(model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"])
-
+            model_obj = ModelHelper.get_astropy_model(models[i])
             if model_obj:
+                val_array = []
                 for i in range(len(x_values)):
                      val_array.append(model_obj(x_values[i]))
 
@@ -978,6 +932,103 @@ def get_plot_data_from_models(models, x_values):
         logging.error(getException('get_plot_data_from_models'))
 
     return models_arr
+
+
+# get_fit_powerspectrum_result: Returns the PDS of a given dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: models: array of models
+#
+def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+    results = []
+
+    try:
+        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+        if pds:
+
+            fit_model = None
+            starting_pars = []
+
+            for i in range(len(models)):
+
+                model = models[i]
+                model_obj = ModelHelper.get_astropy_model(model)
+                if model_obj:
+
+                    if model["type"] == "Gaussian":
+                         starting_pars.extend([model["amplitude"], model["mean"], model["stddev"]])
+                    elif model["type"] == "Lorentz":
+                         starting_pars.extend([model["amplitude"], model["x_0"], model["fwhm"]])
+                    elif model["type"] == "PowerLaw":
+                         starting_pars.extend([model["amplitude"], model["x_0"], model["alpha"]])
+                    elif model["type"] == "BrokenPowerLaw":
+                         starting_pars.extend([model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"]])
+
+                    if not fit_model:
+                        fit_model = model_obj
+                    else:
+                        fit_model += model_obj
+
+            parest, res = fit_powerspectrum(pds, fit_model, starting_pars, max_post=False, priors=None,
+                      fitmethod="L-BFGS-B")
+
+            fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+            parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                        if f is False]
+
+            params = []
+            for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
+                param = dict()
+                param["index"] = i
+                param["name"] = p
+                param["opt"] = x
+                param["err"] = y
+                params.append(param)
+
+            results = push_to_results_array(results, params)
+
+            stats = dict()
+            try:
+                stats["deviance"] = res.deviance
+                stats["aic"] = res.aic
+                stats["bic"] = res.bic
+            except AttributeError:
+                stats["deviance"] = "ERROR"
+
+            try:
+                stats["merit"] = res.merit
+                stats["dof"] = res.dof  # Degrees of freedom
+                stats["dof_ratio"] = res.merit/res.dof
+                stats["sobs"] = res.sobs
+                stats["sexp"] = res.sobs
+                stats["ssd"] = res.ssd
+            except AttributeError:
+                stats["merit"] = "ERROR"
+
+            results = push_to_results_array(results, stats)
+
+            pds = None  # Dispose memory
+            lc = None  # Dispose memory
+            gti = None  # Dispose memory
+
+    except:
+        logging.error(getException('get_fit_powerspectrum_result'))
+
+    return results
 
 
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
@@ -1149,6 +1200,45 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt):
         logging.warn("Background dataset is None!, omiting Bck data.")
 
     return lc
+
+
+def create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
+
+    if len(axis) != 2:
+        logging.warn("Wrong number of axis")
+        return None
+
+    if norm not in ['frac', 'abs', 'leahy', 'none']:
+        logging.warn("Wrong normalization")
+        return None
+
+    if pds_type not in ['Sng', 'Avg']:
+        logging.warn("Wrong power density spectrum type")
+        return None
+
+    if segm_size == 0:
+        segm_size = None
+
+    # Creates the lightcurve
+    lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+    if not lc:
+        logging.warn("Can't create lightcurve")
+        return None
+
+    # Prepares GTI if passed
+    gti = load_gti_from_destination (gti_destination)
+    if not gti:
+        logging.debug("External GTIs not loaded using defaults")
+        gti = lc.gti
+
+    # Creates the power density spectrum
+    logging.debug("Create power density spectrum")
+
+    if pds_type == 'Sng':
+        return Powerspectrum(lc, norm=norm, gti=gti), lc, gti
+    else:
+        return AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti), lc, gti
 
 
 def load_gti_from_destination (gti_destination):

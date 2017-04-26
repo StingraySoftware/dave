@@ -12,6 +12,8 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   this.getModelsFn = getModelsFn;
   this.getModelsDataFromServerFn = getModelsDataFromServerFn;
   this.models = [];
+  this.modelsData = null;
+  this.estimatedModels = [];
 
   this.btnFullScreen.remove();
   this.btnFit.remove();
@@ -27,7 +29,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       currentObj.data = currentObj.prepareData(data);
       currentObj.updateMinMaxCoords();
 
-      currentObj.refreshModelsData();
+      currentObj.refreshModelsData(false);
 
     } else {
       currentObj.showWarn("Wrong data received");
@@ -37,9 +39,18 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
     }
   }
 
-  this.refreshModelsData = function () {
-    currentObj.models = currentObj.getModelsFn();
-    var modelsConfig = { models: currentObj.models, x_values: currentObj.data[0].values };
+  this.refreshModelsData = function (estimated) {
+    var modelsConfig = { x_values: currentObj.data[0].values, estimated: estimated = isNull(estimated) || !estimated };
+
+    if (modelsConfig.estimated){
+      currentObj.modelsData = null;
+      currentObj.models = currentObj.getModelsFn(false);
+      modelsConfig.models = currentObj.models;
+    } else {
+      currentObj.estimatedModels = currentObj.getModelsFn(true);
+      modelsConfig.models = currentObj.estimatedModels;
+    }
+
     currentObj.getModelsDataFromServerFn( modelsConfig, currentObj.onModelsDataReceived );
   }
 
@@ -48,7 +59,16 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
     data = JSON.parse(data);
 
     if (data != null && currentObj.data != null) {
-      currentObj.setData(currentObj.data, data);
+      if (isNull(currentObj.modelsData)) {
+        currentObj.modelsData = data;
+        if (currentObj.getModelsFn(true).length > 0){
+          currentObj.refreshModelsData (true);
+        } else {
+          currentObj.setData(currentObj.data, currentObj.modelsData);
+        }
+      } else {
+        currentObj.setData(currentObj.data, currentObj.modelsData, data);
+      }
     } else {
       currentObj.showWarn("Wrong models data received");
       log("onModelsDataReceived wrong models data!, plot" + currentObj.id);
@@ -59,7 +79,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
   this.updatePlotConfig = function () {}
 
-  this.setData = function ( data, modelsData ) {
+  this.setData = function ( data, modelsData, estimatedModelsData ) {
 
     currentObj.updatePlotConfig();
 
@@ -75,36 +95,15 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       var plotlyConfig = currentObj.getPlotlyConfig(data);
 
       if (modelsData.length > 0) {
-        for (m in modelsData) {
-          var model = modelsData[m];
-          if (model.values.length > 0) {
-
-            //Prepares trace for model data values
-
-            if (currentObj.plotConfig.plotType == "X*Y") {
-              for (i in model.values) {
-                model.values[i] = model.values[i] * data[0].values[i];
-              }
-            }
-
-            plotlyConfig.data.push({
-                                    type : 'scatter',
-                                    showlegend : false,
-                                    hoverinfo : 'none',
-                                    connectgaps : false,
-                                    x : data[0].values,
-                                    y : model.values,
-                                    line : {
-                                            width : isNull(currentObj.models[m]) ? 3 : 2,
-                                            color : isNull(currentObj.models[m]) ? CombinedModelColor : currentObj.models[m].color
-                                          }
-                                  });
-          } else {
-            log("setData no values received for model: " + m + ", plot" + currentObj.id);
-          }
-        }
+        plotlyConfig = this.preparePlotConfigWithModelsData (plotlyConfig, data, modelsData, currentObj.models, false);
       } else {
         log("setData no models data received, plot" + currentObj.id);
+      }
+
+      if (!isNull(estimatedModelsData) && estimatedModelsData.length > 0) {
+        plotlyConfig = this.preparePlotConfigWithModelsData (plotlyConfig, data, estimatedModelsData, currentObj.estimatedModels, true);
+      } else {
+        log("setData no estimatedModelsData data received, plot" + currentObj.id);
       }
 
       currentObj.redrawPlot(plotlyConfig);
@@ -117,6 +116,41 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
     currentObj.setReadyState(true);
     currentObj.onPlotReady();
+  }
+
+  this.preparePlotConfigWithModelsData = function (plotlyConfig, data, modelsData, models, estimated) {
+
+    for (m in modelsData) {
+      var model = modelsData[m];
+      if (model.values.length > 0) {
+
+        //Prepares trace for model data values
+
+        if (currentObj.plotConfig.plotType == "X*Y") {
+          for (i in model.values) {
+            model.values[i] = model.values[i] * data[0].values[i];
+          }
+        }
+
+        plotlyConfig.data.push({
+                                type : 'scatter',
+                                showlegend : false,
+                                hoverinfo : 'none',
+                                connectgaps : false,
+                                x : data[0].values,
+                                y : model.values,
+                                line : {
+                                        width : isNull(models[m]) ? 3 : 2,
+                                        color : isNull(models[m]) ? CombinedModelColor : models[m].color,
+                                        dash : isNull(estimated) || !estimated ? "solid" : "dash",
+                                      }
+                              });
+      } else {
+        log("setData no values received for model: " + m + ", plot" + currentObj.id);
+      }
+    }
+
+    return plotlyConfig;
   }
 
   log ("new FitPlot id: " + this.id);

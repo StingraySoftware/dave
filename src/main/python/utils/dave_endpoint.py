@@ -476,19 +476,51 @@ def get_unfolded_spectrum(src_filename, bck_filename, gti_filename, filters, arf
     return json.dumps(data, cls=NPEncoder)
 
 
-# get_plot_data_from_models:
-# Returns the plot Y data for an array of models with a given X_axis values
-#
-# @param: models: array of models
-# @param: x_values: array of float
-#
 def get_plot_data_from_models(models, x_values):
 
     logging.debug("get_plot_data_from_models models: %s" % models)
-    logging.debug("get_plot_data_from_models x_values: %s" % x_values)
+    logging.debug("get_plot_data_from_models x_values: %s" % str(len(x_values)))
 
     data = DaveEngine.get_plot_data_from_models(models, x_values)
 
     logging.debug("get_plot_data_from_models: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, target,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_fit_powerspectrum_result src: %s" % src_filename)
+    logging.debug("get_fit_powerspectrum_result bck: %s" % bck_filename)
+    logging.debug("get_fit_powerspectrum_result gti: %s" % gti_filename)
+    logging.debug("get_fit_powerspectrum_result: filters %s" % filters)
+    logging.debug("get_fit_powerspectrum_result: axis %s" % axis)
+    logging.debug("get_fit_powerspectrum_result: dt %f" % dt)
+    logging.debug("get_fit_powerspectrum_result: nsegm %f" % nsegm)
+    logging.debug("get_fit_powerspectrum_result: segm_size %f" % segm_size)
+    logging.debug("get_fit_powerspectrum_result: norm %s" % norm)
+    logging.debug("get_fit_powerspectrum_result: type %s" % pds_type)
+    logging.debug("get_fit_powerspectrum_result: models %s" % models)
+
+    data = DaveEngine.get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
+                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models)
+
+    logging.debug("get_fit_powerspectrum_result: Finish!")
 
     return json.dumps(data, cls=NPEncoder)

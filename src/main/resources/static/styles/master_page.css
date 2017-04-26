@@ -311,3 +311,37 @@ h3
   float: right;
   margin-top: -10px;
 }
+
+.actionsContainer .btn {
+    font-size: 1.2em;
+    width: 49%;
+    margin-top: 30px;
+}
+
+.paramContainer input[type="text"] {
+  width: 80px;
+  float: right;
+  text-align: right;
+}
+
+.paramContainer .applied {
+    color: #5cb85c;
+}
+
+.paramContainer .estimation {
+    float: right;
+    font-size: 0.8em;
+    color: #5cb85c;
+    width: 70px;
+    text-align: right;
+}
+
+.estimation a.applySngBtn {
+    float: left;
+    color: #5cb85c;
+}
+
+.estimation .err {
+    color: red;
+    font-size: 0.75em;
+}

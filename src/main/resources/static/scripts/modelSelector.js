@@ -1,9 +1,10 @@
 //Model Selector: Container with all supported models
-function ModelSelector(id, onModelsChangedFn) {
+function ModelSelector(id, onModelsChangedFn, onFitClickedFn) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.onModelsChangedFn = onModelsChangedFn;
+  this.onFitClickedFn = onFitClickedFn;
   this.models = [];
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
@@ -14,6 +15,10 @@ function ModelSelector(id, onModelsChangedFn) {
                     '<button class="btn btn-info btnBrokenPowerLaw"><i class="fa fa-plus" aria-hidden="true"></i> BrokenPowerLaw</button>' +
                   '</div>' +
                   '<div class="modelsContainer">' +
+                  '</div>' +
+                  '<div class="actionsContainer">' +
+                    '<button class="btn btn-primary fitBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> FIT</button>' +
+                    '<button class="btn btn-success applyBtn"><i class="fa fa-check-circle" aria-hidden="true"></i> APPLY ALL</button>' +
                   '</div>' +
                 '</div>');
 
@@ -33,6 +38,15 @@ function ModelSelector(id, onModelsChangedFn) {
     currentObj.addModel(new BrokenPowerLawModel(currentObj.models.length, currentObj.getRandomColor(), currentObj.onModelsChangedFn));
   });
 
+  this.$html.find(".fitBtn").click(function () {
+    currentObj.onFitClickedFn();
+  }).hide();
+
+  this.$html.find(".applyBtn").click(function () {
+    currentObj.applyAllEstimations();
+    $(this).hide();
+  }).hide();
+
   this.getRandomColor = function () {
     return '#'+Math.floor(Math.random()*16777215).toString(16);
   }
@@ -43,18 +57,43 @@ function ModelSelector(id, onModelsChangedFn) {
     }
     this.models.push(model);
     this.$html.find(".modelsContainer").append(model.$html);
+    this.$html.find(".fitBtn").show();
     this.onModelsChangedFn();
   }
 
-  this.getModels = function (){
+  this.getModels = function (estimated){
     var models = [];
     for (i in currentObj.models){
-      var model = currentObj.models[i].getModel();
+      var model = currentObj.models[i].getModel(!isNull(estimated) && estimated);
       if (!isNull(model)){
         models.push(model);
       }
     }
     return models;
+  };
+
+  this.setEstimation = function (params) {
+    var idx = 0;
+    for (i in currentObj.models){
+      if (currentObj.models[i].visible) {
+        currentObj.models[i].setEstimation(params, idx);
+        idx ++;
+      }
+    }
+
+    if (idx > 0) {
+      this.$html.find(".applyBtn").show();
+      this.onModelsChangedFn();
+    } else {
+      this.$html.find(".applyBtn").hide();
+    }
+  }
+
+  this.applyAllEstimations = function (){
+    for (i in currentObj.models){
+      currentObj.models[i].applyEstimations();
+    }
+    this.onModelsChangedFn();
   };
 
   log ("new ModelSelector id: " + this.id);
@@ -84,7 +123,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
                       '<div id="switch_' + this.id + '" class="switch-btn fa fa-minus-square" aria-hidden="true"></div>' +
                     '</div>' +
                   '</h3>' +
-                  '<div class="modelContainer">' +
+                  '<div class="container paramContainer">' +
                   '</div>' +
                 '</div>');
 
@@ -94,20 +133,132 @@ function Model(idx, title, type, color, onModelsChangedFn) {
     currentObj.onValuesChanged();
     if (currentObj.visible) {
       $(this).switchClass("fa-plus-square", "fa-minus-square");
-      currentObj.$html.find(".modelContainer").fadeIn();
+      currentObj.$html.find(".paramContainer").fadeIn();
     } else {
       $(this).switchClass("fa-minus-square", "fa-plus-square");
-      currentObj.$html.find(".modelContainer").fadeOut();
+      currentObj.$html.find(".paramContainer").fadeOut();
     }
   });
 
-  this.setInputs = function ($inputs) {
-    this.$html.find(".modelContainer").append($inputs);
-    this.$html.find("input").on('input', this.onValuesChanged);
+  this.setInputs = function () {
+    var modelParams = this.getParammeters();
+    var $paramContainer = this.$html.find(".paramContainer");
+    $paramContainer.html("");
+
+    for (p in modelParams){
+      var paramName = modelParams[p];
+
+      var $paramHtml = $('<div class="row ' + paramName + '">' +
+                            paramName + ':' +
+                            '<input id="' + paramName + '_' + this.id + '" class="input_' + paramName + '" type="text" name="' + paramName + '_' + this.id + '" placeholder="' + this[paramName].toFixed(3) + '" value="' + this[paramName].toFixed(3) + '" />' +
+                          '</div>');
+
+      if (!isNull(this[paramName + "Est"])){
+        if (this[paramName + "Est"].value != this[paramName]){
+          var estimation = this[paramName + "Est"];
+          var $estimationHtml = $('<div class="estimation">' +
+                                    '<a href="#" class="applySngBtn" param="' + paramName + '"><i class="fa fa-check-circle" aria-hidden="true"></i></a>' +
+                                    '<div class="value">' + estimation.value.toFixed(3) + '</div>' +
+                                    '<div class="err">+/-' + estimation.err.toFixed(3) + '</div>' +
+                                  '</div>');
+          $estimationHtml.find(".applySngBtn").click(function () {
+            currentObj.applyEstimation($(this).attr("param"));
+            currentObj.setInputs();
+            currentObj.onModelsChangedFn();
+          });
+          $paramHtml.append($estimationHtml);
+        } else {
+          $paramHtml.find("input").addClass("applied");
+        }
+      }
+
+      $paramContainer.append($paramHtml);
+    }
+
+    this.$html.find("input").on('change', this.onValuesChanged);
   }
 
-  this.getModel = function () {
+  this.onValuesChanged = function(){
+    try {
+      var modelParams = currentObj.getParammeters();
+      var paramContainer = currentObj.$html.find(".paramContainer");
+      var modelChanged = false;
+
+      for (p in modelParams){
+        var paramName = modelParams[p];
+        var value = parseFloat(paramContainer.find(".input_" + paramName).val());
+        if (!isNaN(value)){
+          currentObj[paramName] = value;
+          modelChanged = true;
+        } else {
+          log("onValuesChanged, model" + currentObj.id + ", " + paramName + " is wrong!!");
+        }
+      }
+
+      if (modelChanged) {
+        currentObj.onModelsChangedFn();
+      }
+
+    } catch (e) {
+      log("onValuesChanged error, model" + currentObj.id + ", error: " + e);
+    }
+  }
+
+  this.getModel = function (estimated) {
+    if (this.visible) {
+      var daveModel = { type: this.type, color: this.color };
+      var modelParams = this.getParammeters();
+
+      for (p in modelParams){
+        var paramName = modelParams[p];
+        if (!estimated) {
+          daveModel[paramName] = this[paramName];
+        } else if (!isNull(this[paramName + "Est"])){
+          daveModel[paramName] = this[paramName + "Est"].value;
+        } else {
+          return null;
+        }
+      }
+
+      return daveModel;
+    }
+
     return null;
+  }
+
+  this.setEstimation = function (params, modelIdx) {
+    var modelParams = this.getParammeters();
+
+    for (p in modelParams){
+      var paramName = modelParams[p] + "_" + modelIdx;
+
+      for (i in params){
+        var param = params[i];
+
+        if (param.name == paramName) {
+            this[modelParams[p] + "Est"] = { value: param.opt, err: param.err };
+            break;
+        }
+      }
+    }
+    this.setInputs();
+  }
+
+  this.applyEstimations = function (paramName) {
+    if (this.visible) {
+      var daveModel = { type: this.type, color: this.color };
+      var modelParams = this.getParammeters();
+      for (p in modelParams){
+        this.applyEstimation(modelParams[p]);
+      }
+      this.setInputs();
+    }
+  }
+
+  this.applyEstimation = function (paramName) {
+    if (!isNull(this[paramName + "Est"])){
+      this[paramName] = this[paramName + "Est"].value;
+    }
   }
 
   log ("new Model id: " + this.id);
@@ -126,42 +277,18 @@ function GaussianModel(idx, color, onModelsChangedFn) {
   this.mean = 1.0;
   this.stddev = 0.5;
 
+  this.getParammeters = function () {
+    return ["amplitude", "mean", "stddev"];
+  }
+
   Model.call(this,
             idx,
             '- Gaussian ' + idx + ':',
             'Gaussian',
             color, onModelsChangedFn);
 
-  this.onValuesChanged = function(){
-    try {
-      var amplitude = parseFloat(currentObj.$html.find(".inputAmp").val());
-      var mean = parseFloat(currentObj.$html.find(".inputMean").val());
-      var stddev = parseFloat(currentObj.$html.find(".inputStddev").val());
-      if (!isNaN(amplitude) && !isNaN(mean) && !isNaN(stddev)) {
-        currentObj.amplitude = amplitude;
-        currentObj.mean = mean;
-        currentObj.stddev = stddev;
-        currentObj.onModelsChangedFn();
-      } else {
-        log("onValuesChanged, model" + currentObj.id + ", Some value is wrong!!");
-      }
-    } catch (e) {
-      log("onValuesChanged error, model" + currentObj.id + ", error: " + e);
-    }
-  }
-
-  this.getModel = function () {
-    if (this.visible) {
-      return { type: "Gaussian", amplitude: this.amplitude, mean: this.mean, stddev: this.stddev, color: this.color };
-    }
-    return null;
-  }
-
   //Prepares inputs
-  this.setInputs($('<p>Amplitude: <input id="amplitude_' + this.id + '" class="inputAmp" type="text" name="amplitude_' + this.id + '" placeholder="' + this.amplitude + '" value="' + this.amplitude + '" /></p>' +
-                  '<p>Mean: <input id="mean_' + this.id + '" class="inputMean" type="text" name="mean_' + this.id + '" placeholder="' + this.mean + '" value="' + this.mean + '" /></p>' +
-                  '<p>Stddev: <input id="stddev_' + this.id + '" class="inputStddev" type="text" name="stddev_' + this.id + '" placeholder="' + this.stddev + '" value="' + this.stddev + '" /></p>'));
-
+  this.setInputs();
 
   log ("new GaussianModel id: " + this.id);
 
@@ -179,42 +306,18 @@ function LorentzModel(idx, color, onModelsChangedFn) {
   this.x_0 = 1.0;
   this.fwhm = 0.5;
 
+  this.getParammeters = function () {
+    return ["amplitude", "x_0", "fwhm"];
+  }
+
   Model.call(this,
             idx,
             '- Lorentz ' + idx + ':',
             'Lorentz',
             color, onModelsChangedFn);
 
-  this.onValuesChanged = function(){
-    try {
-      var amplitude = parseFloat(currentObj.$html.find(".inputAmp").val());
-      var x_0 = parseFloat(currentObj.$html.find(".inputX_0").val());
-      var fwhm = parseFloat(currentObj.$html.find(".inputFwhm").val());
-      if (!isNaN(amplitude) && !isNaN(x_0) && !isNaN(fwhm)) {
-        currentObj.amplitude = amplitude;
-        currentObj.x_0 = x_0;
-        currentObj.fwhm = fwhm;
-        currentObj.onModelsChangedFn();
-      } else {
-        log("onValuesChanged, model" + currentObj.id + ", Some value is wrong!!");
-      }
-    } catch (e) {
-      log("onValuesChanged error, model" + currentObj.id + ", error: " + e);
-    }
-  }
-
-  this.getModel = function () {
-    if (this.visible) {
-      return { type: "Lorentz", amplitude: this.amplitude, x_0: this.x_0, fwhm: this.fwhm, color: this.color };
-    }
-    return null;
-  }
-
   //Prepares inputs
-  this.setInputs($('<p>Amplitude: <input id="amplitude_' + this.id + '" class="inputAmp" type="text" name="amplitude_' + this.id + '" placeholder="' + this.amplitude + '" value="' + this.amplitude + '" /></p>' +
-                  '<p>X_0: <input id="x_0_' + this.id + '" class="inputX_0" type="text" name="x_0_' + this.id + '" placeholder="' + this.x_0 + '" value="' + this.x_0 + '" /></p>' +
-                  '<p>Fwhm: <input id="fwhm_' + this.id + '" class="inputFwhm" type="text" name="fwhm_' + this.id + '" placeholder="' + this.fwhm + '" value="' + this.fwhm + '" /></p>'));
-
+  this.setInputs();
 
   log ("new LorentzModel id: " + this.id);
 
@@ -232,42 +335,18 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
   this.x_0 = 1.0;
   this.alpha = 0.5;
 
+  this.getParammeters = function () {
+    return ["amplitude", "x_0", "alpha"];
+  }
+
   Model.call(this,
             idx,
             '- PowerLaw ' + idx + ':',
             'PowerLaw',
             color, onModelsChangedFn);
 
-  this.onValuesChanged = function(){
-    try {
-      var amplitude = parseFloat(currentObj.$html.find(".inputAmp").val());
-      var x_0 = parseFloat(currentObj.$html.find(".inputX_0").val());
-      var alpha = parseFloat(currentObj.$html.find(".inputAlpha").val());
-      if (!isNaN(amplitude) && !isNaN(x_0) && !isNaN(alpha)) {
-        currentObj.amplitude = amplitude;
-        currentObj.x_0 = x_0;
-        currentObj.alpha = alpha;
-        currentObj.onModelsChangedFn();
-      } else {
-        log("onValuesChanged, model" + currentObj.id + ", Some value is wrong!!");
-      }
-    } catch (e) {
-      log("onValuesChanged error, model" + currentObj.id + ", error: " + e);
-    }
-  }
-
-  this.getModel = function () {
-    if (this.visible) {
-      return { type: "PowerLaw", amplitude: this.amplitude, x_0: this.x_0, alpha: this.alpha, color: this.color };
-    }
-    return null;
-  }
-
   //Prepares inputs
-  this.setInputs($('<p>Amplitude: <input id="amplitude_' + this.id + '" class="inputAmp" type="text" name="amplitude_' + this.id + '" placeholder="' + this.amplitude + '" value="' + this.amplitude + '" /></p>' +
-                  '<p>X_0: <input id="x_0_' + this.id + '" class="inputX_0" type="text" name="x_0_' + this.id + '" placeholder="' + this.x_0 + '" value="' + this.x_0 + '" /></p>' +
-                  '<p>Alpha: <input id="alpha_' + this.id + '" class="inputAlpha" type="text" name="alpha_' + this.id + '" placeholder="' + this.alpha + '" value="' + this.alpha + '" /></p>'));
-
+  this.setInputs();
 
   log ("new PowerLawModel id: " + this.id);
 
@@ -286,45 +365,18 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
   this.alpha_1 = 0.5;
   this.alpha_2 = 0.5;
 
+  this.getParammeters = function () {
+    return ["amplitude", "x_break", "alpha_1", "alpha_2"];
+  }
+
   Model.call(this,
             idx,
             '- BrokenPowerLaw ' + idx + ':',
             'BrokenPowerLaw',
             color, onModelsChangedFn);
 
-  this.onValuesChanged = function(){
-    try {
-      var amplitude = parseFloat(currentObj.$html.find(".inputAmp").val());
-      var x_break = parseFloat(currentObj.$html.find(".inputX_break").val());
-      var alpha_1 = parseFloat(currentObj.$html.find(".inputAlpha_1").val());
-      var alpha_2 = parseFloat(currentObj.$html.find(".inputAlpha_2").val());
-      if (!isNaN(amplitude) && !isNaN(x_break) && !isNaN(alpha_1) && !isNaN(alpha_2)) {
-        currentObj.amplitude = amplitude;
-        currentObj.x_break = x_break;
-        currentObj.alpha_1 = alpha_1;
-        currentObj.alpha_2 = alpha_2;
-        currentObj.onModelsChangedFn();
-      } else {
-        log("onValuesChanged, model" + currentObj.id + ", Some value is wrong!!");
-      }
-    } catch (e) {
-      log("onValuesChanged error, model" + currentObj.id + ", error: " + e);
-    }
-  }
-
-  this.getModel = function () {
-    if (this.visible) {
-      return { type: "BrokenPowerLaw", amplitude: this.amplitude, x_break: this.x_break, alpha_1: this.alpha_1, alpha_2: this.alpha_2, color: this.color };
-    }
-    return null;
-  }
-
   //Prepares inputs
-  this.setInputs($('<p>Amplitude: <input id="amplitude_' + this.id + '" class="inputAmp" type="text" name="amplitude_' + this.id + '" placeholder="' + this.amplitude + '" value="' + this.amplitude + '" /></p>' +
-                  '<p>X_break: <input id="x_break_' + this.id + '" class="inputX_break" type="text" name="x_break_' + this.id + '" placeholder="' + this.x_break + '" value="' + this.x_break + '" /></p>' +
-                  '<p>Alpha_1: <input id="alpha_1_' + this.id + '" class="inputAlpha_1" type="text" name="alpha_1_' + this.id + '" placeholder="' + this.alpha_1 + '" value="' + this.alpha_1 + '" /></p>' +
-                  '<p>Alpha_2: <input id="alpha_2_' + this.id + '" class="inputAlpha_2" type="text" name="alpha_2_' + this.id + '" placeholder="' + this.alpha_2 + '" value="' + this.alpha_2+ '" /></p>'));
-
+  this.setInputs();
 
   log ("new BrokenPowerLawModel id: " + this.id);
 
