@@ -154,6 +154,16 @@ def get_fit_powerspectrum_result():
             request.json['norm'], request.json['type'], request.json['models'])
 
 
+@app.route('/get_bootstrap_results', methods=['POST'])
+def get_bootstrap_results():
+    return DaveEndpoint.get_bootstrap_results(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'], request.json['models'],
+            int(request.json['n_iter']))
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():

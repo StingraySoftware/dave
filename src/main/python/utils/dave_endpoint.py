@@ -524,3 +524,44 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
     logging.debug("get_fit_powerspectrum_result: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            models, n_iter):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_bootstrap_results src: %s" % src_filename)
+    logging.debug("get_bootstrap_results bck: %s" % bck_filename)
+    logging.debug("get_bootstrap_results gti: %s" % gti_filename)
+    logging.debug("get_bootstrap_results: filters %s" % filters)
+    logging.debug("get_bootstrap_results: axis %s" % axis)
+    logging.debug("get_bootstrap_results: dt %f" % dt)
+    logging.debug("get_bootstrap_results: nsegm %f" % nsegm)
+    logging.debug("get_bootstrap_results: segm_size %f" % segm_size)
+    logging.debug("get_bootstrap_results: norm %s" % norm)
+    logging.debug("get_bootstrap_results: type %s" % pds_type)
+    logging.debug("get_bootstrap_results: models %s" % models)
+    logging.debug("get_bootstrap_results: n_iter %s" % n_iter)
+
+    data = DaveEngine.get_bootstrap_results(src_destination, bck_destination, gti_destination,
+                                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                            models, n_iter)
+
+    logging.debug("get_bootstrap_results: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)

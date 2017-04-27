@@ -1,10 +1,12 @@
 //Model Selector: Container with all supported models
-function ModelSelector(id, onModelsChangedFn, onFitClickedFn) {
+function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.onModelsChangedFn = onModelsChangedFn;
   this.onFitClickedFn = onFitClickedFn;
+  this.applyBootstrapFn = applyBootstrapFn;
+
   this.models = [];
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
@@ -19,6 +21,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn) {
                   '<div class="actionsContainer">' +
                     '<button class="btn btn-primary fitBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> FIT</button>' +
                     '<button class="btn btn-success applyBtn"><i class="fa fa-check-circle" aria-hidden="true"></i> APPLY ALL</button>' +
+                    '<button class="btn btn-danger bootstrapBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BOOTSTRAP</button>' +
                   '</div>' +
                 '</div>');
 
@@ -45,6 +48,10 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn) {
   this.$html.find(".applyBtn").click(function () {
     currentObj.applyAllEstimations();
     $(this).hide();
+  }).hide();
+
+  this.$html.find(".bootstrapBtn").click(function () {
+    currentObj.applyBootstrapFn();
   }).hide();
 
   this.getRandomColor = function () {
@@ -74,9 +81,9 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn) {
 
   this.setEstimation = function (params) {
     var idx = 0;
-    for (i in currentObj.models){
-      if (currentObj.models[i].visible) {
-        currentObj.models[i].setEstimation(params, idx);
+    for (i in this.models){
+      if (this.models[i].visible) {
+        this.models[i].setEstimation(params, idx);
         idx ++;
       }
     }
@@ -90,9 +97,10 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn) {
   }
 
   this.applyAllEstimations = function (){
-    for (i in currentObj.models){
-      currentObj.models[i].applyEstimations();
+    for (i in this.models){
+      this.models[i].applyEstimations();
     }
+    this.$html.find(".bootstrapBtn").show();
     this.onModelsChangedFn();
   };
 

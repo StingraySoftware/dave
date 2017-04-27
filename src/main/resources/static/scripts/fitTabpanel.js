@@ -24,7 +24,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
   this.onFitClicked = function (){
     var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
-    paramsData.models = currentObj.modelSelector.getModels();
+    paramsData.models = currentObj.modelSelector.getModels(false);
 
     currentObj.service.request_fit_powerspectrum_result(paramsData, function( jsdata ) {
 
@@ -43,27 +43,55 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.outputPanel.$body.find(".infoPanel").remove();
     this.infoPanel = new InfoPanel("infoPanel", "Fitting statistics:", statsData, [], null);
     this.infoPanel.redraw = function() {
-      this.container.html("");
 
-      var content = "<tr><td> Number of data points = " + this.header.count + "</td></tr>" +
-                    "<tr><td> Deviance [-2 log L] D = " + this.header.deviance.toFixed(3) + "</td></tr>" +
+      var content = "<tr><td> Number of data points = " + this.header.count + "</td></tr>";
+
+      if (this.header.deviance != "ERROR") {
+        content += "<tr><td> Deviance [-2 log L] D = " + this.header.deviance.toFixed(3) + "</td></tr>" +
                     "<tr><td> The Akaike Information Criterion of the model is: " + this.header.aic.toFixed(3) + "</td></tr>" +
-                    "<tr><td> The Bayesian Information Criterion of the model is: " + this.header.bic.toFixed(3) + "</td></tr>" +
-                    "<tr><td> The figure-of-merit function for this model is: " + this.header.merit.toFixed(3) + " and the fit for " + this.header.dof.toFixed(3) + " dof is " + this.header.dof_ratio.toFixed(3) + "</td></tr>" +
+                    "<tr><td> The Bayesian Information Criterion of the model is: " + this.header.bic.toFixed(3) + "</td></tr>";
+      } else {
+        content += "<tr><td> Deviance [-2 log L] D = ERROR: DEVIANCE NOT CALCULATED </td></tr>";
+      }
+
+      if (this.header.merit != "ERROR") {
+        content += "<tr><td> The figure-of-merit function for this model is: " + this.header.merit.toFixed(3) + " and the fit for " + this.header.dof.toFixed(3) + " dof is " + this.header.dof_ratio.toFixed(3) + "</td></tr>" +
                     "<tr><td> Summed Residuals S = " + this.header.sobs.toFixed(3) + "</td></tr>" +
                     "<tr><td> Expected S ~ " + this.header.sexp.toFixed(3) + " +/- " + this.header.ssd.toFixed(3) + "</td></tr>" +
                     "<tr><td> Merit function (SSE) M = " + this.header.merit.toFixed(3) + "</td></tr>";
-      this.container.append($(content));
+      } else {
+        content += "<tr><td> Merit function (SSE) M = ERROR: MERIT NOT CALCULATED</td></tr>";
+      }
 
+      this.container.html(content);
     }
     this.infoPanel.redraw();
     this.outputPanel.$body.append(this.infoPanel.$html);
   }
 
+  this.applyBootstrap = function () {
+    var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
+    paramsData.models = currentObj.modelSelector.getModels(false);
+    paramsData.n_iter = 100;
+
+    currentObj.service.request_bootstrap_results( paramsData, function( jsdata ) {
+
+      log("Bootstrap data received!, FitTabPanel: " + currentObj.id);
+      var data = JSON.parse(jsdata);
+      if (!isNull(data)) {
+
+      }
+
+    });
+  }
+
   //Set the selected plot configs
   this.projectConfig.updateFromProjectConfigs([ projectConfig ]);
 
-  this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(), this.onModelsChanged, this.onFitClicked);
+  this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(),
+                                        this.onModelsChanged,
+                                        this.onFitClicked,
+                                        this.applyBootstrap);
 
   this.plot = new FitPlot(plot.id + "_" + (new Date()).getTime(),
                            $.extend(true, {}, plot.plotConfig),

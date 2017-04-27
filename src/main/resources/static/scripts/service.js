@@ -107,6 +107,10 @@ function Service (base_url) {
     thisService.make_ajax_call("get_fit_powerspectrum_result", data, fn);
   };
 
+  this.request_bootstrap_results  = function ( data, fn ) {
+    thisService.make_ajax_call("get_bootstrap_results", data, fn);
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {

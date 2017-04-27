@@ -3,6 +3,7 @@ import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
 import utils.model_helper as ModelHelper
 import utils.plotter as Plotter
+import math
 import numpy as np
 import copy
 import utils.dave_logger as logging
@@ -13,6 +14,7 @@ from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
 from stingray.modeling import fit_powerspectrum
+from stingray.simulator import simulator
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -898,10 +900,11 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
 
 
 # get_plot_data_from_models:
-# Returns the plot Y data for an array of models with a given X_axis values
+# Returns the plot Y data for each model of an array of models with a given X_axis values
+# and the sum of all Y data of models fro the gven x range
 #
-# @param: models: array of models
-# @param: x_values: array of float
+# @param: models: array of models, dave_model definition
+# @param: x_values: array of float, the x range
 #
 def get_plot_data_from_models(models, x_values):
 
@@ -960,73 +963,168 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
                                         filters, axis, dt, nsegm, segm_size, norm, pds_type)
         if pds:
 
-            fit_model = None
-            starting_pars = []
+            fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
+            if fit_model:
+                parest, res = fit_powerspectrum(pds, fit_model, starting_pars, max_post=False, priors=None,
+                          fitmethod="L-BFGS-B")
 
-            for i in range(len(models)):
+                fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+                parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                            if f is False]
 
-                model = models[i]
-                model_obj = ModelHelper.get_astropy_model(model)
-                if model_obj:
+                params = []
+                for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
+                    param = dict()
+                    param["index"] = i
+                    param["name"] = p
+                    param["opt"] = x
+                    param["err"] = y
+                    params.append(param)
 
-                    if model["type"] == "Gaussian":
-                         starting_pars.extend([model["amplitude"], model["mean"], model["stddev"]])
-                    elif model["type"] == "Lorentz":
-                         starting_pars.extend([model["amplitude"], model["x_0"], model["fwhm"]])
-                    elif model["type"] == "PowerLaw":
-                         starting_pars.extend([model["amplitude"], model["x_0"], model["alpha"]])
-                    elif model["type"] == "BrokenPowerLaw":
-                         starting_pars.extend([model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"]])
+                results = push_to_results_array(results, params)
 
-                    if not fit_model:
-                        fit_model = model_obj
-                    else:
-                        fit_model += model_obj
+                stats = dict()
+                try:
+                    stats["deviance"] = res.deviance
+                    stats["aic"] = res.aic
+                    stats["bic"] = res.bic
+                except AttributeError:
+                    stats["deviance"] = "ERROR"
 
-            parest, res = fit_powerspectrum(pds, fit_model, starting_pars, max_post=False, priors=None,
-                      fitmethod="L-BFGS-B")
+                try:
+                    stats["merit"] = res.merit
+                    stats["dof"] = res.dof  # Degrees of freedom
+                    stats["dof_ratio"] = res.merit/res.dof
+                    stats["sobs"] = res.sobs
+                    stats["sexp"] = res.sobs
+                    stats["ssd"] = res.ssd
+                except AttributeError:
+                    stats["merit"] = "ERROR"
 
-            fixed = [fit_model.fixed[n] for n in fit_model.param_names]
-            parnames = [n for n, f in zip(fit_model.param_names, fixed) \
-                        if f is False]
+                results = push_to_results_array(results, stats)
 
-            params = []
-            for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
-                param = dict()
-                param["index"] = i
-                param["name"] = p
-                param["opt"] = x
-                param["err"] = y
-                params.append(param)
+                pds = None  # Dispose memory
+                lc = None  # Dispose memory
+                gti = None  # Dispose memory
 
-            results = push_to_results_array(results, params)
-
-            stats = dict()
-            try:
-                stats["deviance"] = res.deviance
-                stats["aic"] = res.aic
-                stats["bic"] = res.bic
-            except AttributeError:
-                stats["deviance"] = "ERROR"
-
-            try:
-                stats["merit"] = res.merit
-                stats["dof"] = res.dof  # Degrees of freedom
-                stats["dof_ratio"] = res.merit/res.dof
-                stats["sobs"] = res.sobs
-                stats["sexp"] = res.sobs
-                stats["ssd"] = res.ssd
-            except AttributeError:
-                stats["merit"] = "ERROR"
-
-            results = push_to_results_array(results, stats)
-
-            pds = None  # Dispose memory
-            lc = None  # Dispose memory
-            gti = None  # Dispose memory
+            else:
+                logging.warn("get_fit_powerspectrum_result: can't create summed model from dave_models.")
+        else:
+            logging.warn("get_fit_powerspectrum_result: can't create power density spectrum.")
 
     except:
         logging.error(getException('get_fit_powerspectrum_result'))
+
+    return results
+
+
+# get_bootstrap_results:
+# Returns the data of applying bootstrap error analisys method to a given dave model
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: models: array of models, dave_model definition with the optimal parammeters
+# @param: n_iter: Number of bootstrap iterations
+#
+def get_bootstrap_results(src_destination, bck_destination, gti_destination,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            models, n_iter):
+
+    results = []
+
+    try:
+        # Gets de power density espectrum from given params
+        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+        if pds:
+
+            # Creates the model from dave_model
+            fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
+            if fit_model:
+
+                # For n_iter: generate the PDS from the fit_model using the Stingray.Simulator
+                #             then fit the simulated PDS and record the new model params and the PDS values
+
+                rms, rms_err = pds.compute_rms(min(pds.freq), max(pds.freq))
+                N, red_noise = int(math.ceil(segm_size * nsegm)), 10
+
+                models_params = []
+                powers = []
+
+                for i in range(n_iter):
+                    try:
+                        the_simulator = simulator.Simulator(N=N, dt=dt, mean=0.1,
+                                                             rms=rms, red_noise=red_noise)
+                        lc = the_simulator.simulate(fit_model)
+                        pds = AveragedPowerspectrum(lc, segm_size)
+
+                        parest, res = fit_powerspectrum(pds, fit_model, starting_pars,
+                                        max_post=False, priors=None, fitmethod="L-BFGS-B")
+
+                        models_params.append(res.p_opt)
+                        powers.append(pds.power)
+
+                    except:
+                        logging.error(getException('get_bootstrap_results for i: ' + str(i)))
+
+                models_params = np.array(models_params)
+                powers = np.array(powers)
+
+
+                if len(models_params) > 0 and len(powers) == len(models_params):
+
+                    # Histogram all the recorded model parammeters
+                    param_errors = []
+                    for i in range(models_params.shape[1]):
+                        param_values = models_params[:, i]
+                        counts, values = DsHelper.get_histogram(param_values, 0.1)
+
+                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        x = np.array(list(counts.keys()))
+                        y = np.array(list(counts.values()))
+                        amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
+                        param_errors.extend(np.nan_to_num([stddev]))
+
+                    results = push_to_results_array(results, param_errors)
+
+                    # Histogram all the recorded power values
+                    power_means = []
+                    power_errors = []
+                    for i in range(powers.shape[1]):
+                        power_values = powers[:, i]
+                        counts, values = DsHelper.get_histogram(power_values, 0.1)
+
+                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        x = np.array(list(counts.keys()))
+                        y = np.array(list(counts.values()))
+                        amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
+                        power_means.extend(np.nan_to_num([mean]))
+                        power_errors.extend(np.nan_to_num([stddev]))
+
+                    results = push_to_results_array(results, power_means)
+                    results = push_to_results_array(results, power_errors)
+
+                else:
+                    logging.warn("get_bootstrap_results: can't get model params or powers from the simulated data")
+
+            else:
+                logging.warn("get_bootstrap_results: can't create summed model from dave_models.")
+        else:
+            logging.warn("get_bootstrap_results: can't create power density spectrum.")
+
+    except:
+        logging.error(getException('get_bootstrap_results'))
 
     return results
 
