@@ -528,7 +528,7 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
 
 def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
                             filters, axis, dt, nsegm, segm_size, norm, pds_type,
-                            models, n_iter):
+                            models, n_iter, mean, red_noise, seed):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -557,10 +557,13 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_bootstrap_results: type %s" % pds_type)
     logging.debug("get_bootstrap_results: models %s" % models)
     logging.debug("get_bootstrap_results: n_iter %s" % n_iter)
+    logging.debug("get_bootstrap_results: mean %s" % mean)
+    logging.debug("get_bootstrap_results: red_noise %s" % red_noise)
+    logging.debug("get_bootstrap_results: seed %s" % seed)
 
     data = DaveEngine.get_bootstrap_results(src_destination, bck_destination, gti_destination,
                                             filters, axis, dt, nsegm, segm_size, norm, pds_type,
-                                            models, n_iter)
+                                            models, n_iter, mean, red_noise, seed)
 
     logging.debug("get_bootstrap_results: Finish!")
 

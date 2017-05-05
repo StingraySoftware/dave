@@ -161,7 +161,8 @@ def get_bootstrap_results():
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
             request.json['norm'], request.json['type'], request.json['models'],
-            int(request.json['n_iter']))
+            int(request.json['n_iter']), float(request.json['mean']),
+            int(request.json['red_noise']), int(request.json['seed']))
 
 
 # Receives a message from client and send it to all subscribers

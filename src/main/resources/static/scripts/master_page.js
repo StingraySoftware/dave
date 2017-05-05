@@ -37,6 +37,10 @@ function isNull (value) {
   return (value === undefined) || (value == null);
 }
 
+function isInt(n) {
+   return n % 1 === 0;
+}
+
 function closest(arr, closestTo){
     var closest = Math.max.apply(null, arr);
     for(var i = 0; i < arr.length; i++){

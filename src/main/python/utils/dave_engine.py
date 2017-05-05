@@ -1036,10 +1036,13 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: models: array of models, dave_model definition with the optimal parammeters
 # @param: n_iter: Number of bootstrap iterations
+# @param: mean: Mean value of the simulated light curve
+# @param: red_noise: The red noise value
+# @param: seed: The random state seed for simulator
 #
 def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, nsegm, segm_size, norm, pds_type,
-                            models, n_iter):
+                            models, n_iter, mean, red_noise, seed):
 
     results = []
 
@@ -1057,15 +1060,17 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                 #             then fit the simulated PDS and record the new model params and the PDS values
 
                 rms, rms_err = pds.compute_rms(min(pds.freq), max(pds.freq))
-                N, red_noise = int(math.ceil(segm_size * nsegm)), 10
-
+                N = int(math.ceil(segm_size * nsegm))
+                if seed < 0:
+                    seed = None
+                    
                 models_params = []
                 powers = []
 
                 for i in range(n_iter):
                     try:
-                        the_simulator = simulator.Simulator(N=N, dt=dt, mean=0.1,
-                                                             rms=rms, red_noise=red_noise)
+                        the_simulator = simulator.Simulator(N=N, dt=dt, mean=mean,
+                                                             rms=rms, red_noise=red_noise, random_state=seed)
                         lc = the_simulator.simulate(fit_model)
                         pds = AveragedPowerspectrum(lc, segm_size)
 
@@ -1081,6 +1086,9 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                 models_params = np.array(models_params)
                 powers = np.array(powers)
 
+                fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+                parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                            if f is False]
 
                 if len(models_params) > 0 and len(powers) == len(models_params):
 
@@ -1094,7 +1102,11 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
-                        param_errors.extend(np.nan_to_num([stddev]))
+                        param = dict()
+                        param["index"] = i
+                        param["name"] = parnames[i]
+                        param["err"] = np.nan_to_num([stddev])
+                        param_errors.extend([param])
 
                     results = push_to_results_array(results, param_errors)
 
@@ -1117,7 +1129,6 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 
                 else:
                     logging.warn("get_bootstrap_results: can't get model params or powers from the simulated data")
-
             else:
                 logging.warn("get_bootstrap_results: can't create summed model from dave_models.")
         else:

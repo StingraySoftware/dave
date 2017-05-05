@@ -324,11 +324,21 @@ h3
   text-align: right;
 }
 
+.paramContainer .switch-wrapper {
+  float: left;
+  top: 1px;
+  margin-right: 10px;
+}
+
 .paramContainer .applied {
     color: #5cb85c;
 }
 
-.paramContainer .estimation {
+.paramContainer .fixed {
+    color: #121212;
+}
+
+.paramContainer .estimation, .paramContainer .error {
     float: right;
     font-size: 0.8em;
     color: #5cb85c;
@@ -344,4 +354,22 @@ h3
 .estimation .err {
     color: red;
     font-size: 0.75em;
+}
+
+.error .err {
+    color: red;
+    font-size: 1.2em;
+    margin-top: 2px;
+}
+
+.ui-dialog-content .row {
+    margin-left: 12px;
+    margin-right: 3px;
+}
+
+.ui-dialog-content input {
+    float: right;
+    width: 60px;
+    height: 25px;
+    text-align: right;
 }

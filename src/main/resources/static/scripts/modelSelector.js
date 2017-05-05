@@ -79,7 +79,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
     return models;
   };
 
-  this.setEstimation = function (params) {
+  this.setEstimation = function (params, showApplyBtn) {
     var idx = 0;
     for (i in this.models){
       if (this.models[i].visible) {
@@ -88,7 +88,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
       }
     }
 
-    if (idx > 0) {
+    if (idx > 0 && showApplyBtn) {
       this.$html.find(".applyBtn").show();
       this.onModelsChangedFn();
     } else {
@@ -102,6 +102,14 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
     }
     this.$html.find(".bootstrapBtn").show();
     this.onModelsChangedFn();
+  };
+
+  this.clearAllEstimationsAndErrors = function (){
+    for (i in this.models){
+      this.models[i].clearEstimationsAndErrors();
+    }
+    this.$html.find(".applyBtn").hide();
+    this.$html.find(".bootstrapBtn").hide();
   };
 
   log ("new ModelSelector id: " + this.id);
@@ -159,9 +167,23 @@ function Model(idx, title, type, color, onModelsChangedFn) {
       var $paramHtml = $('<div class="row ' + paramName + '">' +
                             paramName + ':' +
                             '<input id="' + paramName + '_' + this.id + '" class="input_' + paramName + '" type="text" name="' + paramName + '_' + this.id + '" placeholder="' + this[paramName].toFixed(3) + '" value="' + this[paramName].toFixed(3) + '" />' +
+                            '<div class="switch-wrapper">' +
+                            '  <div id="switch_' + paramName + '_' + this.id + '" param="' + paramName + '" class="switch-btn fa fa-square-o" aria-hidden="true"></div>' +
+                            '</div>' +
                           '</div>');
 
-      if (!isNull(this[paramName + "Est"])){
+      if (this.isFixedParam(paramName)){
+        $paramHtml.find(".switch-btn").switchClass("fa-square-o", "fa-check-square-o");
+        $paramHtml.find("input").addClass("fixed");
+        $paramHtml.find("input").attr("disabled", true);
+      } else if (!isNull(this[paramName + "Err"])){
+        var error = this[paramName + "Err"];
+        var $errorHtml = $('<div class="error">' +
+                              '<div class="err">+/-' + Math.abs(error).toFixed(3) + '</div>' +
+                            '</div>');
+        $paramHtml.append($errorHtml);
+
+      } else if (!isNull(this[paramName + "Est"])){
         if (this[paramName + "Est"].value != this[paramName]){
           var estimation = this[paramName + "Est"];
           var $estimationHtml = $('<div class="estimation">' +
@@ -183,7 +205,12 @@ function Model(idx, title, type, color, onModelsChangedFn) {
       $paramContainer.append($paramHtml);
     }
 
-    this.$html.find("input").on('change', this.onValuesChanged);
+    $paramContainer.find("input").on('change', this.onValuesChanged);
+    $paramContainer.find(".switch-btn").click( function ( event ) {
+      currentObj.switchFixedParam($(this).attr("param"));
+      currentObj.onValuesChanged();
+      currentObj.setInputs();
+    });
   }
 
   this.onValuesChanged = function(){
@@ -226,6 +253,14 @@ function Model(idx, title, type, color, onModelsChangedFn) {
         } else {
           return null;
         }
+
+        if (this.isFixedParam(paramName)){
+          //Adds fixed param to model
+          if (isNull(daveModel["fixed"])){
+            daveModel["fixed"] = [];
+          }
+          daveModel["fixed"].push(paramName);
+        }
       }
 
       return daveModel;
@@ -244,7 +279,13 @@ function Model(idx, title, type, color, onModelsChangedFn) {
         var param = params[i];
 
         if (param.name == paramName) {
-            this[modelParams[p] + "Est"] = { value: param.opt, err: param.err };
+            if (!isNull(param.opt)) {
+              //The estimation is an Stingray parameters optimization
+              this[modelParams[p] + "Est"] = { value: param.opt, err: param.err };
+            } else {
+              //The estimation is from Bootstrap method
+              this[modelParams[p] + "Err"] = param.err;
+            }
             break;
         }
       }
@@ -266,6 +307,28 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   this.applyEstimation = function (paramName) {
     if (!isNull(this[paramName + "Est"])){
       this[paramName] = this[paramName + "Est"].value;
+      this[paramName + "Est"] = null;
+    }
+  }
+
+  this.clearEstimationsAndErrors = function () {
+    var modelParams = this.getParammeters();
+    for (p in modelParams){
+      this[modelParams[p] + "Est"] = null;
+      this[modelParams[p] + "Err"] = null;
+    }
+    this.setInputs();
+  }
+
+  this.isFixedParam = function (paramName) {
+    return !isNull(this[paramName + "Fixed"]) && this[paramName + "Fixed"];
+  }
+
+  this.switchFixedParam = function (paramName) {
+    if (this.isFixedParam(paramName)){
+      this[paramName + "Fixed"] = false;
+    } else {
+      this[paramName + "Fixed"] = true;
     }
   }
 

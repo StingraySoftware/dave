@@ -23,21 +23,116 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   };
 
   this.onFitClicked = function (){
+
+    waitingDialog.show('Fitting power spectrum...');
+
     var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
     paramsData.models = currentObj.modelSelector.getModels(false);
+    currentObj.modelSelector.clearAllEstimationsAndErrors();
 
     currentObj.service.request_fit_powerspectrum_result(paramsData, function( jsdata ) {
 
       log("FitData received!, FitTabPanel: " + currentObj.id);
       var data = JSON.parse(jsdata);
       if (!isNull(data)) {
-        currentObj.modelSelector.setEstimation(data[0].values);
+        currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;
         currentObj.addInfoPanel(data[1].values);
       }
+
+      waitingDialog.hide();
+
     });
 
   };
+
+  this.applyBootstrap = function () {
+
+    var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
+    paramsData.models = currentObj.modelSelector.getModels(false);
+    paramsData.n_iter = 100;
+    paramsData.mean = 0.1;
+    paramsData.red_noise = 1;
+    paramsData.seed = -1;
+
+    var $bootstrapDialog = $('<div id="dialog_' + currentObj.id +  '" title="Bootstrap settings:">' +
+                              '<form>' +
+                                '<fieldset>' +
+                                  '<div class="row">' +
+                                    '<label for="n_iter">Number of iterations:</label>' +
+                                    '<input name="n_iter" id="n_iter_' + currentObj.id + '" class="input_n_iter" type="text" placeholder="' + paramsData.n_iter + '" value="' + paramsData.n_iter + '" />' +
+                                  '</div>' +
+                                  '<div class="row">' +
+                                    '<label for="mean">Lightcurve mean:</label>' +
+                                    '<input name="mean" id="mean_' + currentObj.id + '" class="input_mean" type="text" placeholder="' + paramsData.mean + '" value="' + paramsData.mean + '" />' +
+                                  '</div>' +
+                                  '<div class="row">' +
+                                    '<label for="red_noise">Red noise level:</label>' +
+                                    '<input name="red_noise" id="red_noise_' + currentObj.id + '" class="input_red_noise" type="text" placeholder="' + paramsData.red_noise + '" value="' + paramsData.red_noise + '" />' +
+                                  '</div>' +
+                                  '<div class="row">' +
+                                    '<label for="seed">Random Seed (Set <0 for default):</label>' +
+                                    '<input name="seed" id="seed_' + currentObj.id + '" class="input_seed" type="text" placeholder="' + paramsData.seed + '" value="' + paramsData.seed + '" />' +
+                                  '</div>' +
+                                '</fieldset>' +
+                              '</form>' +
+                            '</div>');
+
+    $bootstrapDialog.find("input").on('change', function(){
+      try {
+        var params = ["n_iter", "mean", "red_noise", "seed"];
+        for (p in params){
+          var paramName = params[p];
+          var value = parseFloat($bootstrapDialog.find(".input_" + paramName).val());
+          if (!isNaN(value)){
+            if (isInt(paramsData[paramName])) {
+              paramsData[paramName] = Math.floor(value);
+            } else {
+              paramsData[paramName] = value;
+            }
+          } else {
+            $bootstrapDialog.find(".input_" + paramName).val(paramsData[paramName]);
+            log("bootstrapDialog onValuesChanged... " + paramName + " is wrong!!");
+          }
+        }
+      } catch (e) {
+        log("bootstrapDialog onValuesChanged error: " + e);
+      }
+    });
+
+    currentObj.$html.append($bootstrapDialog);
+    $bootstrapDialog.dialog({
+       height: 220,
+       width: 350,
+       modal: true,
+       buttons: {
+         'Apply Bootstrap': function() {
+
+           currentObj.service.request_bootstrap_results( paramsData, function( jsdata ) {
+
+             log("Bootstrap data received!, FitTabPanel: " + currentObj.id);
+             var data = JSON.parse(jsdata);
+             if (!isNull(data)) {
+               currentObj.modelSelector.setEstimation(data[0].values, false);
+               currentObj.plot.setErrorData(data[1].values, data[2].values);
+             }
+
+             waitingDialog.hide();
+
+           });
+
+            $(this).dialog('close');
+            $bootstrapDialog.remove();
+
+            waitingDialog.show('Applying Bootstrap...');
+         },
+         'Cancel': function() {
+            $(this).dialog('close');
+            $bootstrapDialog.remove();
+         }
+       }
+     });
+  }
 
   this.addInfoPanel = function ( statsData ) {
     this.outputPanel.$body.find(".infoPanel").remove();
@@ -67,22 +162,6 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     }
     this.infoPanel.redraw();
     this.outputPanel.$body.append(this.infoPanel.$html);
-  }
-
-  this.applyBootstrap = function () {
-    var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
-    paramsData.models = currentObj.modelSelector.getModels(false);
-    paramsData.n_iter = 100;
-
-    currentObj.service.request_bootstrap_results( paramsData, function( jsdata ) {
-
-      log("Bootstrap data received!, FitTabPanel: " + currentObj.id);
-      var data = JSON.parse(jsdata);
-      if (!isNull(data)) {
-
-      }
-
-    });
   }
 
   //Set the selected plot configs
