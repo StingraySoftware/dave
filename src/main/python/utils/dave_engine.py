@@ -11,6 +11,7 @@ import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
+from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
 from stingray.modeling import fit_powerspectrum
@@ -899,9 +900,75 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
     return result
 
 
+# get_covariance_spectrum:
+# Returns the energy values and its correlated covariance and covariance errors
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: dt: The time resolution of the events.
+# @ref_band_interest : A tuple with minimum and maximum values of the range in the band
+#                      of interest in reference channel.
+# @n_bands: The number of bands to split the refence band
+# @std: The standard deviation
+#
+def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, n_bands, std):
+
+    energy_arr = []
+    covariance_arr =[]
+    covariance_err_arr = []
+
+    try:
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+
+            if "E" in events_table.columns:
+
+                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
+                                                                       events_table.columns["E"].values)])
+
+                band_width = ref_band_interest[1] - ref_band_interest[0]
+                band_step = band_width / n_bands
+                from_val = ref_band_interest[0]
+                band_interest = []
+                for i in range(n_bands):
+                    band_interest.extend([[ref_band_interest[0] + (i * band_step), ref_band_interest[0] + ((i + 1) * band_step)]])
+
+                if std < 0:
+                    std = None
+
+                # Calculates the Covariance Spectrum
+                cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
+
+                sorted_idx = np.argsort(cs.covar[:,0])
+                sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
+                sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
+                energy_arr = sorted_covar[:,0]
+                covariance_arr = np.nan_to_num(sorted_covar[:,1])
+                covariance_err_arr = np.nan_to_num(sorted_covar_err[:,1])
+
+            else:
+                logging.warn('get_covariance_spectrum: E column not found!')
+
+    except:
+        logging.error(getException('get_covariance_spectrum'))
+
+    # Preapares the result
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, covariance_arr, covariance_err_arr)
+    return result
+
+
 # get_plot_data_from_models:
 # Returns the plot Y data for each model of an array of models with a given X_axis values
-# and the sum of all Y data of models fro the gven x range
+# and the sum of all Y data of models from the given x range
 #
 # @param: models: array of models, dave_model definition
 # @param: x_values: array of float, the x range
@@ -1063,7 +1130,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                 N = int(math.ceil(segm_size * nsegm))
                 if seed < 0:
                     seed = None
-                    
+
                 models_params = []
                 powers = []
 
@@ -1196,6 +1263,12 @@ def push_to_results_array (result, values):
     result.append(column)
     return result
 
+def push_to_results_array_with_errors (result, values, errors):
+    column = dict()
+    column["values"] = values
+    column["error_values"] = errors
+    result.append(column)
+    return result
 
 def push_divided_values_to_results_array (result, values0, values1):
     divided_values = []

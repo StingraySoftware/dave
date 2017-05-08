@@ -99,6 +99,10 @@ function Service (base_url) {
     thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
   };
 
+  this.request_covariance_spectrum  = function ( data, fn ) {
+    thisService.make_ajax_call("get_covariance_spectrum", data, fn);
+  };
+
   this.request_plot_data_from_models  = function ( data, fn ) {
     thisService.make_ajax_call("get_plot_data_from_models", data, fn);
   };

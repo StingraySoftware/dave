@@ -16,7 +16,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
 
-  selectors_array[this.id] = this;
+  if (!isNull(selectors_array)){
+    selectors_array[this.id] = this;
+  }
 
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
                   '<h3>' + title +

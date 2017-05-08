@@ -394,6 +394,12 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           this.showWarn(warnmsg);
       }
     }
+
+    if (!isReady) {
+      this.showLoading();
+    } else {
+      this.hideLoading();
+    }
   }
 
   this.getWarnMsg = function (){

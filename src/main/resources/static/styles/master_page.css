@@ -205,6 +205,27 @@ h3
   overflow-y: scroll;
 }
 
+.plotContainer .loading
+{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.71);
+}
+
+.loadingGif {
+    width: 120px;
+    margin: auto;
+    margin-top: 80px;
+}
+
+.loadingGif img {
+    width: 100%;
+}
+
 .plotContainer .settings h3
 {
   margin-top: 12px

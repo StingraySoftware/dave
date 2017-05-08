@@ -140,6 +140,14 @@ def get_unfolded_spectrum():
             request.json['arf_filename'], UPLOADS_TARGET)
 
 
+@app.route('/get_covariance_spectrum', methods=['POST'])
+def get_covariance_spectrum():
+    return DaveEndpoint.get_covariance_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
+            UPLOADS_TARGET, float(request.json['dt']), request.json['ref_band_interest'],
+            int(request.json['n_bands']), float(request.json['std']))
+
+
 @app.route('/get_plot_data_from_models', methods=['POST'])
 def get_plot_data_from_models():
     return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])

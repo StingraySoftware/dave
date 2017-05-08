@@ -476,6 +476,40 @@ def get_unfolded_spectrum(src_filename, bck_filename, gti_filename, filters, arf
     return json.dumps(data, cls=NPEncoder)
 
 
+def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, n_bands, std):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_covariance_spectrum src: %s" % src_filename)
+    logging.debug("get_covariance_spectrum bck: %s" % bck_filename)
+    logging.debug("get_covariance_spectrum gti: %s" % gti_filename)
+    logging.debug("get_covariance_spectrum: filters %s" % filters)
+    logging.debug("get_covariance_spectrum dt: %s" % dt)
+    logging.debug("get_covariance_spectrum ref_band_interest: %s" % ref_band_interest)
+    logging.debug("get_covariance_spectrum n_bands: %s" % n_bands)
+    logging.debug("get_covariance_spectrum std: %s" % std)
+
+    data = DaveEngine.get_covariance_spectrum(src_destination, bck_destination, gti_destination,
+                                            filters, dt, ref_band_interest, n_bands, std)
+
+    logging.debug("get_covariance_spectrum: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
 def get_plot_data_from_models(models, x_values):
 
     logging.debug("get_plot_data_from_models models: %s" % models)

@@ -9,6 +9,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getDataFromServerFn = getDataFromServerFn;
   this.onFiltersChanged = onFiltersChangedFn;
   this.onPlotReady = onPlotReadyFn;
+  this.isLoading = true;
   this.isVisible = true;
   this.isReady = true;
   this.isSwitched = false;
@@ -23,6 +24,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.maxY = 0;
 
   this.$html = $('<div id="' + this.id + '" class="plotContainer ' + this.cssClass + '">' +
+                  '<div class="loading">' +
+                    '<div class="loadingGif"><img src="static/img/loading.gif"/></div>' +
+                  '</div>' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
                     '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
@@ -71,6 +75,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
    currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
    currentObj.btnShow.show();
+ }
+
+ this.showLoading = function (){
+   this.isLoading = true;
+   this.$html.find(".loading").show();
+ }
+
+ this.hideLoading = function (){
+   this.isLoading = false;
+   this.$html.find(".loading").hide();
  }
 
  this.btnFullScreen.click(function( event ) {
@@ -289,6 +303,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setReadyState = function (isReady) {
    this.isReady = isReady;
+   if (!isReady) {
+     this.showLoading();
+   } else {
+     this.hideLoading();
+   }
  }
 
  this.resize = function () {
