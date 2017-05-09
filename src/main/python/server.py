@@ -5,6 +5,9 @@ import sys
 import os
 import logging
 
+import matplotlib
+matplotlib.use('TkAgg')  # Changes the matplotlib framework
+
 import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
 import utils.dave_logger as Logger
