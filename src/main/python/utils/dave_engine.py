@@ -2,6 +2,7 @@ import utils.dave_reader as DaveReader
 import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
 import utils.model_helper as ModelHelper
+import utils.exception_helper as ExHelper
 import utils.plotter as Plotter
 import math
 import numpy as np
@@ -104,7 +105,7 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                 DsCache.add(destination, dataset) # Stores dataset on cache
                 return len(events_table.columns["E"].values) == len(pha_data)
     except:
-        logging.error(getException('apply_rmf_file_to_dataset'))
+        logging.error(ExHelper.getException('apply_rmf_file_to_dataset'))
     return False
 
 
@@ -167,7 +168,7 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         logging.warn("Wrong plot type specified on styles")
 
     except:
-        logging.error(getException('get_plot_data'))
+        logging.error(ExHelper.getException('get_plot_data'))
 
     return None
 
@@ -212,7 +213,7 @@ def get_histogram(src_destination, bck_destination, gti_destination, filters, ax
         filtered_ds = None  # Dispose memory
 
     except:
-        logging.error(getException('get_histogram'))
+        logging.error(ExHelper.getException('get_histogram'))
 
     # Preapares the result
     result = push_to_results_array([], axis_values)
@@ -273,7 +274,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
         lc = None  # Dispose memory
 
     except:
-        logging.error(getException('get_lightcurve'))
+        logging.error(ExHelper.getException('get_lightcurve'))
 
     # Preapares the result
     logging.debug("Result lightcurve .... " + str(len(time_vals)))
@@ -332,7 +333,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
             return None
 
     except:
-        logging.error(getException('get_joined_lightcurves'))
+        logging.error(ExHelper.getException('get_joined_lightcurves'))
 
     return None
 
@@ -417,7 +418,7 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
             logging.warn("Cant create the colors filtered ligthcurves")
 
     except:
-        logging.error(getException('get_divided_lightcurves_from_colors'))
+        logging.error(ExHelper.getException('get_divided_lightcurves_from_colors'))
 
     return None
 
@@ -485,7 +486,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
             return None
 
     except:
-        logging.error(getException('get_divided_lightcurve_ds'))
+        logging.error(ExHelper.getException('get_divided_lightcurve_ds'))
 
     return ""
 
@@ -528,7 +529,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
             return new_cache_key
 
     except:
-        logging.error(getException('get_lightcurve_ds_from_events_ds'))
+        logging.error(ExHelper.getException('get_lightcurve_ds_from_events_ds'))
 
     return ""
 
@@ -574,8 +575,8 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
             gti = None  # Dispose memory
 
     except:
-        logging.error(getException('get_power_density_spectrum'))
-        warnmsg = [str(sys.exc_info()[1])]
+        logging.error(ExHelper.getException('get_power_density_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
@@ -671,8 +672,8 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         lc = None  # Dispose memory
 
     except:
-        logging.error(getException('get_dynamical_spectrum'))
-        warnmsg = [str(sys.exc_info()[1])]
+        logging.error(ExHelper.getException('get_dynamical_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     logging.debug("Result dynamical spectrum .... " + str(len(freq)))
@@ -825,8 +826,8 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         lc2 = None  # Dispose memory
 
     except:
-        logging.error(getException('get_cross_spectrum'))
-        warnmsg = [str(sys.exc_info()[1])]
+        logging.error(ExHelper.getException('get_cross_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
@@ -891,7 +892,7 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
                     unfolded_spectrum_arr.append(norm_count / arf_effective_area_array[idx])
 
     except:
-        logging.error(getException('get_unfolded_spectrum'))
+        logging.error(ExHelper.getException('get_unfolded_spectrum'))
 
     # Preapares the result
     result = push_to_results_array([], energy_arr)
@@ -958,7 +959,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                 logging.warn('get_covariance_spectrum: E column not found!')
 
     except:
-        logging.error(getException('get_covariance_spectrum'))
+        logging.error(ExHelper.getException('get_covariance_spectrum'))
 
     # Preapares the result
     result = push_to_results_array([], energy_arr)
@@ -999,7 +1000,7 @@ def get_plot_data_from_models(models, x_values):
         models_arr = push_to_results_array(models_arr, sum_values)
 
     except:
-        logging.error(getException('get_plot_data_from_models'))
+        logging.error(ExHelper.getException('get_plot_data_from_models'))
 
     return models_arr
 
@@ -1080,7 +1081,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
             logging.warn("get_fit_powerspectrum_result: can't create power density spectrum.")
 
     except:
-        logging.error(getException('get_fit_powerspectrum_result'))
+        logging.error(ExHelper.getException('get_fit_powerspectrum_result'))
 
     return results
 
@@ -1148,7 +1149,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         powers.append(pds.power)
 
                     except:
-                        logging.error(getException('get_bootstrap_results for i: ' + str(i)))
+                        logging.error(ExHelper.getException('get_bootstrap_results for i: ' + str(i)))
 
                 models_params = np.array(models_params)
                 powers = np.array(powers)
@@ -1202,7 +1203,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
             logging.warn("get_bootstrap_results: can't create power density spectrum.")
 
     except:
-        logging.error(getException('get_bootstrap_results'))
+        logging.error(ExHelper.getException('get_bootstrap_results'))
 
     return results
 
@@ -1431,10 +1432,3 @@ def load_gti_from_destination (gti_destination):
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
             logging.debug("Load GTI success")
     return gti
-
-def getException(method_name):
-    exc_type, exc_obj, tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    return 'EXCEPTION {} IN ({}, LINE {}): {}'.format(method_name, filename, lineno, exc_obj)

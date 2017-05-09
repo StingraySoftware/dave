@@ -435,7 +435,7 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
                                         src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
                                         nsegm, segm_size, norm, xds_type)
 
-   logging.debug("get_cross_spectrum: Finish!")
+   logging.debug("get_cross_spectrum: Finish! %s" % data)
 
    return json.dumps(data, cls=NPEncoder)
 
