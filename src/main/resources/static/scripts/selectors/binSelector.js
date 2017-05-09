@@ -78,7 +78,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      if (!isNull(tab)) {
        tab.projectConfig.binSize = this.value;
        if (tab.projectConfig.binSizeCouldHaveAliasing()) {
-         this.showWarn("Aliasing/Moire effects could rise");
+         this.showWarn("Aliasing/Moiré effects could arise");
        } else {
          this.showWarn("");
        }
