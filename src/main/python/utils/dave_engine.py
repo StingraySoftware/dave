@@ -1342,7 +1342,7 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
     filtered_ds = None  # Dispose memory
     lc = eventlist.to_lc(dt)
     if bck_destination:
-        lc = apply_background_to_lc(lc, bck_destination, filters, axis, gti_destination, dt)
+        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
     eventlist = None  # Dispose memory
     return lc
 
@@ -1365,12 +1365,7 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt):
         bck_eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_bck_ds)
         if bck_eventlist and len(bck_eventlist.time) > 0:
             bck_lc = bck_eventlist.to_lc(dt)
-
-            if lc.countrate.shape == bck_lc.countrate.shape:
-                lc.countrate -= bck_lc.countrate
-            else:
-                logging.warn("Background counts differs from lc counts, omiting Bck data.")
-
+            lc = lc - bck_lc
             bck_lc = None
 
         else:

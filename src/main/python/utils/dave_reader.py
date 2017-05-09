@@ -157,7 +157,7 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
     # Gets start time of observation
     events_start_time = 0
     if "TSTART" in header:
-        events_start_time = hdulist[hduname].header["TSTART"]
+        events_start_time = hdulist[hduname].header["TSTART"]  # Avoid use header directly, has wrong data type
 
     # Closes the FITS file, further file data reads will be done via Stingray
     hdulist.close()
@@ -216,6 +216,16 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
     lcurve = lcurve_from_fits(destination, gtistring=gtistring,
                              timecolumn=column, ratecolumn=None, ratehdu=1,
                              fracexp_limit=0.9)
+
+    # Gets start time of observation and substract it from all time data,
+    # sure this can be done on lcurve_from_fits, but I consider this is cleaner
+    if "Tstart" in lcurve:
+        events_start_time = lcurve["Tstart"]
+        lcurve["time"] = lcurve["time"] - events_start_time
+        lcurve["time"][0] = 0  # This is because double substraction could return small negative values for 0
+        lcurve["GTI"] = lcurve["GTI"] - events_start_time
+    else:
+        logging.warn("TSTART not readed from lightcurve Fits")
 
     dataset = DataSet.get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments,
                                                                     hduname, column)
