@@ -1,7 +1,10 @@
 import utils.dave_reader as DaveReader
 import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
+import utils.model_helper as ModelHelper
+import utils.exception_helper as ExHelper
 import utils.plotter as Plotter
+import math
 import numpy as np
 import copy
 import utils.dave_logger as logging
@@ -9,10 +12,11 @@ import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
+from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
-from astropy.modeling.models import Gaussian1D, Lorentz1D
-from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
+from stingray.modeling import fit_powerspectrum
+from stingray.simulator import simulator
 import sys
 
 BIG_NUMBER = 9999999999999
@@ -101,7 +105,7 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                 DsCache.add(destination, dataset) # Stores dataset on cache
                 return len(events_table.columns["E"].values) == len(pha_data)
     except:
-        logging.error(getException('apply_rmf_file_to_dataset'))
+        logging.error(ExHelper.getException('apply_rmf_file_to_dataset'))
     return False
 
 
@@ -164,7 +168,7 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         logging.warn("Wrong plot type specified on styles")
 
     except:
-        logging.error(getException('get_plot_data'))
+        logging.error(ExHelper.getException('get_plot_data'))
 
     return None
 
@@ -209,7 +213,7 @@ def get_histogram(src_destination, bck_destination, gti_destination, filters, ax
         filtered_ds = None  # Dispose memory
 
     except:
-        logging.error(getException('get_histogram'))
+        logging.error(ExHelper.getException('get_histogram'))
 
     # Preapares the result
     result = push_to_results_array([], axis_values)
@@ -270,7 +274,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
         lc = None  # Dispose memory
 
     except:
-        logging.error(getException('get_lightcurve'))
+        logging.error(ExHelper.getException('get_lightcurve'))
 
     # Preapares the result
     logging.debug("Result lightcurve .... " + str(len(time_vals)))
@@ -329,7 +333,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
             return None
 
     except:
-        logging.error(getException('get_joined_lightcurves'))
+        logging.error(ExHelper.getException('get_joined_lightcurves'))
 
     return None
 
@@ -414,7 +418,7 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
             logging.warn("Cant create the colors filtered ligthcurves")
 
     except:
-        logging.error(getException('get_divided_lightcurves_from_colors'))
+        logging.error(ExHelper.getException('get_divided_lightcurves_from_colors'))
 
     return None
 
@@ -482,7 +486,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
             return None
 
     except:
-        logging.error(getException('get_divided_lightcurve_ds'))
+        logging.error(ExHelper.getException('get_divided_lightcurve_ds'))
 
     return ""
 
@@ -525,7 +529,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
             return new_cache_key
 
     except:
-        logging.error(getException('get_lightcurve_ds_from_events_ds'))
+        logging.error(ExHelper.getException('get_lightcurve_ds_from_events_ds'))
 
     return ""
 
@@ -555,41 +559,8 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
     warnmsg = []
 
     try:
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
-
-        if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
-
-        if pds_type not in ['Sng', 'Avg']:
-            logging.warn("Wrong power density spectrum type")
-            return None
-
-        if segm_size == 0:
-            segm_size = None
-
-        # Creates the lightcurve
-        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
-        if not lc:
-            logging.warn("Can't create lightcurve")
-            return None
-
-        # Prepares GTI if passed
-        gti = load_gti_from_destination (gti_destination)
-        if not gti:
-            logging.debug("External GTIs not loaded using defaults")
-            gti = lc.gti
-
-        # Creates the power density spectrum
-        logging.debug("Create power density spectrum")
-
-        if pds_type == 'Sng':
-            pds = Powerspectrum(lc, norm=norm, gti=gti)
-        else:
-            pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
-
+        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
         if pds:
             freq = pds.freq
             power = pds.power
@@ -600,12 +571,12 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
                 warnmsg = ["GTI gaps found on LC"]
 
             pds = None  # Dispose memory
-
-        lc = None  # Dispose memory
+            lc = None  # Dispose memory
+            gti = None  # Dispose memory
 
     except:
-        logging.error(getException('get_power_density_spectrum'))
-        warnmsg = [str(sys.exc_info()[1])]
+        logging.error(ExHelper.getException('get_power_density_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
@@ -701,8 +672,8 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         lc = None  # Dispose memory
 
     except:
-        logging.error(getException('get_dynamical_spectrum'))
-        warnmsg = [str(sys.exc_info()[1])]
+        logging.error(ExHelper.getException('get_dynamical_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     logging.debug("Result dynamical spectrum .... " + str(len(freq)))
@@ -855,8 +826,8 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         lc2 = None  # Dispose memory
 
     except:
-        logging.error(getException('get_cross_spectrum'))
-        warnmsg = [str(sys.exc_info()[1])]
+        logging.error(ExHelper.getException('get_cross_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
@@ -921,7 +892,7 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
                     unfolded_spectrum_arr.append(norm_count / arf_effective_area_array[idx])
 
     except:
-        logging.error(getException('get_unfolded_spectrum'))
+        logging.error(ExHelper.getException('get_unfolded_spectrum'))
 
     # Preapares the result
     result = push_to_results_array([], energy_arr)
@@ -930,11 +901,78 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
     return result
 
 
-# get_plot_data_from_models:
-# Returns the plot Y data for an array of models with a given X_axis values
+# get_covariance_spectrum:
+# Returns the energy values and its correlated covariance and covariance errors
 #
-# @param: models: array of models
-# @param: x_values: array of float
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: dt: The time resolution of the events.
+# @ref_band_interest : A tuple with minimum and maximum values of the range in the band
+#                      of interest in reference channel.
+# @n_bands: The number of bands to split the refence band
+# @std: The standard deviation
+#
+def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, n_bands, std):
+
+    energy_arr = []
+    covariance_arr =[]
+    covariance_err_arr = []
+
+    try:
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+
+            if "E" in events_table.columns:
+
+                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
+                                                                       events_table.columns["E"].values)])
+
+                band_width = ref_band_interest[1] - ref_band_interest[0]
+                band_step = band_width / n_bands
+                from_val = ref_band_interest[0]
+                band_interest = []
+                for i in range(n_bands):
+                    band_interest.extend([[ref_band_interest[0] + (i * band_step), ref_band_interest[0] + ((i + 1) * band_step)]])
+
+                if std < 0:
+                    std = None
+
+                # Calculates the Covariance Spectrum
+                cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
+
+                sorted_idx = np.argsort(cs.covar[:,0])
+                sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
+                sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
+                energy_arr = sorted_covar[:,0]
+                covariance_arr = np.nan_to_num(sorted_covar[:,1])
+                covariance_err_arr = np.nan_to_num(sorted_covar_err[:,1])
+
+            else:
+                logging.warn('get_covariance_spectrum: E column not found!')
+
+    except:
+        logging.error(ExHelper.getException('get_covariance_spectrum'))
+
+    # Preapares the result
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, covariance_arr, covariance_err_arr)
+    return result
+
+
+# get_plot_data_from_models:
+# Returns the plot Y data for each model of an array of models with a given X_axis values
+# and the sum of all Y data of models from the given x range
+#
+# @param: models: array of models, dave_model definition
+# @param: x_values: array of float, the x range
 #
 def get_plot_data_from_models(models, x_values):
 
@@ -945,23 +983,10 @@ def get_plot_data_from_models(models, x_values):
         sum_values = []
 
         for i in range(len(models)):
-            model = models[i]
-            val_array = []
-            model_obj = None
 
-            if model["type"] == "Gaussian":
-                 model_obj = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
-
-            elif model["type"] == "Lorentz":
-                 model_obj = Lorentz1D(model["amplitude"], model["x_0"], model["fwhm"])
-
-            elif model["type"] == "PowerLaw":
-                 model_obj = PowerLaw1D(model["amplitude"], model["x_0"], model["alpha"])
-
-            elif model["type"] == "BrokenPowerLaw":
-                 model_obj = BrokenPowerLaw1D(model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"])
-
+            model_obj = ModelHelper.get_astropy_model(models[i])
             if model_obj:
+                val_array = []
                 for i in range(len(x_values)):
                      val_array.append(model_obj(x_values[i]))
 
@@ -975,9 +1000,212 @@ def get_plot_data_from_models(models, x_values):
         models_arr = push_to_results_array(models_arr, sum_values)
 
     except:
-        logging.error(getException('get_plot_data_from_models'))
+        logging.error(ExHelper.getException('get_plot_data_from_models'))
 
     return models_arr
+
+
+# get_fit_powerspectrum_result: Returns the PDS of a given dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: models: array of models
+#
+def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+    results = []
+
+    try:
+        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+        if pds:
+
+            fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
+            if fit_model:
+                parest, res = fit_powerspectrum(pds, fit_model, starting_pars, max_post=False, priors=None,
+                          fitmethod="L-BFGS-B")
+
+                fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+                parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                            if f is False]
+
+                params = []
+                for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
+                    param = dict()
+                    param["index"] = i
+                    param["name"] = p
+                    param["opt"] = x
+                    param["err"] = y
+                    params.append(param)
+
+                results = push_to_results_array(results, params)
+
+                stats = dict()
+                try:
+                    stats["deviance"] = res.deviance
+                    stats["aic"] = res.aic
+                    stats["bic"] = res.bic
+                except AttributeError:
+                    stats["deviance"] = "ERROR"
+
+                try:
+                    stats["merit"] = res.merit
+                    stats["dof"] = res.dof  # Degrees of freedom
+                    stats["dof_ratio"] = res.merit/res.dof
+                    stats["sobs"] = res.sobs
+                    stats["sexp"] = res.sobs
+                    stats["ssd"] = res.ssd
+                except AttributeError:
+                    stats["merit"] = "ERROR"
+
+                results = push_to_results_array(results, stats)
+
+                pds = None  # Dispose memory
+                lc = None  # Dispose memory
+                gti = None  # Dispose memory
+
+            else:
+                logging.warn("get_fit_powerspectrum_result: can't create summed model from dave_models.")
+        else:
+            logging.warn("get_fit_powerspectrum_result: can't create power density spectrum.")
+
+    except:
+        logging.error(ExHelper.getException('get_fit_powerspectrum_result'))
+
+    return results
+
+
+# get_bootstrap_results:
+# Returns the data of applying bootstrap error analisys method to a given dave model
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: models: array of models, dave_model definition with the optimal parammeters
+# @param: n_iter: Number of bootstrap iterations
+# @param: mean: Mean value of the simulated light curve
+# @param: red_noise: The red noise value
+# @param: seed: The random state seed for simulator
+#
+def get_bootstrap_results(src_destination, bck_destination, gti_destination,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            models, n_iter, mean, red_noise, seed):
+
+    results = []
+
+    try:
+        # Gets de power density espectrum from given params
+        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+        if pds:
+
+            # Creates the model from dave_model
+            fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
+            if fit_model:
+
+                # For n_iter: generate the PDS from the fit_model using the Stingray.Simulator
+                #             then fit the simulated PDS and record the new model params and the PDS values
+
+                rms, rms_err = pds.compute_rms(min(pds.freq), max(pds.freq))
+                N = int(math.ceil(segm_size * nsegm))
+                if seed < 0:
+                    seed = None
+
+                models_params = []
+                powers = []
+
+                for i in range(n_iter):
+                    try:
+                        the_simulator = simulator.Simulator(N=N, dt=dt, mean=mean,
+                                                             rms=rms, red_noise=red_noise, random_state=seed)
+                        lc = the_simulator.simulate(fit_model)
+                        pds = AveragedPowerspectrum(lc, segm_size)
+
+                        parest, res = fit_powerspectrum(pds, fit_model, starting_pars,
+                                        max_post=False, priors=None, fitmethod="L-BFGS-B")
+
+                        models_params.append(res.p_opt)
+                        powers.append(pds.power)
+
+                    except:
+                        logging.error(ExHelper.getException('get_bootstrap_results for i: ' + str(i)))
+
+                models_params = np.array(models_params)
+                powers = np.array(powers)
+
+                fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+                parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                            if f is False]
+
+                if len(models_params) > 0 and len(powers) == len(models_params):
+
+                    # Histogram all the recorded model parammeters
+                    param_errors = []
+                    for i in range(models_params.shape[1]):
+                        param_values = models_params[:, i]
+                        counts, values = DsHelper.get_histogram(param_values, 0.1)
+
+                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        x = np.array(list(counts.keys()))
+                        y = np.array(list(counts.values()))
+                        amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
+                        param = dict()
+                        param["index"] = i
+                        param["name"] = parnames[i]
+                        param["err"] = np.nan_to_num([stddev])
+                        param_errors.extend([param])
+
+                    results = push_to_results_array(results, param_errors)
+
+                    # Histogram all the recorded power values
+                    power_means = []
+                    power_errors = []
+                    for i in range(powers.shape[1]):
+                        power_values = powers[:, i]
+                        counts, values = DsHelper.get_histogram(power_values, 0.1)
+
+                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        x = np.array(list(counts.keys()))
+                        y = np.array(list(counts.values()))
+                        amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
+                        power_means.extend(np.nan_to_num([mean]))
+                        power_errors.extend(np.nan_to_num([stddev]))
+
+                    results = push_to_results_array(results, power_means)
+                    results = push_to_results_array(results, power_errors)
+
+                else:
+                    logging.warn("get_bootstrap_results: can't get model params or powers from the simulated data")
+            else:
+                logging.warn("get_bootstrap_results: can't create summed model from dave_models.")
+        else:
+            logging.warn("get_bootstrap_results: can't create power density spectrum.")
+
+    except:
+        logging.error(ExHelper.getException('get_bootstrap_results'))
+
+    return results
 
 
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
@@ -1036,6 +1264,12 @@ def push_to_results_array (result, values):
     result.append(column)
     return result
 
+def push_to_results_array_with_errors (result, values, errors):
+    column = dict()
+    column["values"] = values
+    column["error_values"] = errors
+    result.append(column)
+    return result
 
 def push_divided_values_to_results_array (result, values0, values1):
     divided_values = []
@@ -1108,7 +1342,7 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
     filtered_ds = None  # Dispose memory
     lc = eventlist.to_lc(dt)
     if bck_destination:
-        lc = apply_background_to_lc(lc, bck_destination, filters, axis, gti_destination, dt)
+        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
     eventlist = None  # Dispose memory
     return lc
 
@@ -1131,12 +1365,7 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt):
         bck_eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_bck_ds)
         if bck_eventlist and len(bck_eventlist.time) > 0:
             bck_lc = bck_eventlist.to_lc(dt)
-
-            if lc.countrate.shape == bck_lc.countrate.shape:
-                lc.countrate -= bck_lc.countrate
-            else:
-                logging.warn("Background counts differs from lc counts, omiting Bck data.")
-
+            lc = lc - bck_lc
             bck_lc = None
 
         else:
@@ -1151,6 +1380,45 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt):
     return lc
 
 
+def create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
+
+    if len(axis) != 2:
+        logging.warn("Wrong number of axis")
+        return None
+
+    if norm not in ['frac', 'abs', 'leahy', 'none']:
+        logging.warn("Wrong normalization")
+        return None
+
+    if pds_type not in ['Sng', 'Avg']:
+        logging.warn("Wrong power density spectrum type")
+        return None
+
+    if segm_size == 0:
+        segm_size = None
+
+    # Creates the lightcurve
+    lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+    if not lc:
+        logging.warn("Can't create lightcurve")
+        return None
+
+    # Prepares GTI if passed
+    gti = load_gti_from_destination (gti_destination)
+    if not gti:
+        logging.debug("External GTIs not loaded using defaults")
+        gti = lc.gti
+
+    # Creates the power density spectrum
+    logging.debug("Create power density spectrum")
+
+    if pds_type == 'Sng':
+        return Powerspectrum(lc, norm=norm, gti=gti), lc, gti
+    else:
+        return AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti), lc, gti
+
+
 def load_gti_from_destination (gti_destination):
     gti = None
     if gti_destination:
@@ -1159,10 +1427,3 @@ def load_gti_from_destination (gti_destination):
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
             logging.debug("Load GTI success")
     return gti
-
-def getException(method_name):
-    exc_type, exc_obj, tb = sys.exc_info()
-    f = tb.tb_frame
-    lineno = tb.tb_lineno
-    filename = f.f_code.co_filename
-    return 'EXCEPTION {} IN ({}, LINE {}): {}'.format(method_name, filename, lineno, exc_obj)

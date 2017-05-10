@@ -40,7 +40,11 @@ function Service (base_url) {
   };
 
   this.make_ajax_call = function (callName, data, fn) {
-    log(callName + " plot " + JSON.stringify(data));
+    if (isNull(data.x_values)){
+      log(callName + " plot " + JSON.stringify(data));
+    } else {
+      log(callName + " plot " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
+    }
     try {
       $.ajax({
          type : "POST",
@@ -95,8 +99,20 @@ function Service (base_url) {
     thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
   };
 
+  this.request_covariance_spectrum  = function ( data, fn ) {
+    thisService.make_ajax_call("get_covariance_spectrum", data, fn);
+  };
+
   this.request_plot_data_from_models  = function ( data, fn ) {
     thisService.make_ajax_call("get_plot_data_from_models", data, fn);
+  };
+
+  this.request_fit_powerspectrum_result = function (data, fn) {
+    thisService.make_ajax_call("get_fit_powerspectrum_result", data, fn);
+  };
+
+  this.request_bootstrap_results  = function ( data, fn ) {
+    thisService.make_ajax_call("get_bootstrap_results", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

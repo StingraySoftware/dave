@@ -129,6 +129,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return null;
   }
 
+  this.generatePlotId = function (id) {
+    return (this.id + "_" + id + "_" + (new Date()).getTime()).replace(/\./g,'');
+  }
+
   this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
     for (i in this.plots) {
       this.plots[i].receivePlotEvent(evt_name, evt_data, senderId);
@@ -309,7 +313,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getLightCurvePlot: filename: " + filename );
     return new LcPlot(
-                      this.id + "_ligthcurve_" + filename + "_" + (new Date()).getTime(),
+                      this.generatePlotId("ligthcurve_" + filename),
                       {
                         filename: filename,
                         bck_filename: bck_filename,
@@ -336,7 +340,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getJoinedLightCurvesPlot: lc0_filename: " + lc0_filename + ", lc0_filename: " + lc1_filename);
     return new Plot(
-                      this.id + "_ligthcurve_" + lc0_filename + "_" + lc1_filename + "_" + (new Date()).getTime(),
+                      this.generatePlotId("ligthcurve_" + lc0_filename + "_" + lc1_filename),
                       {
                         lc0_filename: lc0_filename,
                         lc1_filename: lc1_filename,
@@ -356,7 +360,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.getJoinedLightCurvesFromColorsPlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable, linkedPlot ) {
 
     log("getJoinedLightCurvesFromColorsPlot: filename: " + filename );
-    var id = (this.id + "_joinedLcByColors_" + filename + "_" + (new Date()).getTime()).replace(/\./g,'');
+    var id = this.generatePlotId("joinedLcByColors_" + filename);
     if (!isNull(linkedPlot)) {
       linkedPlot.parentPlotId = id;
     }
@@ -386,7 +390,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getPDSPlot: filename: " + filename );
     return new PDSPlot(
-                      this.id + "_pds_" + filename + "_" + (new Date()).getTime(),
+                      this.generatePlotId("pds_" + filename),
                       {
                         filename: filename,
                         bck_filename: bck_filename,
@@ -412,7 +416,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getDynamicalSpectrumPlot: filename: " + filename );
     return new DynSpPlot(
-                      this.id + "_dynX_" + filename + "_" + (new Date()).getTime(),
+                      this.generatePlotId("dynX_" + filename),
                       {
                         filename: filename,
                         bck_filename: bck_filename,
@@ -527,7 +531,30 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.addRmfPlots = function (projectConfig){
-    var rmfPlot = this.getPlot (this.id + "_rmf_" + projectConfig.rmfFilename,
+
+    var covarianceSpectrumPlot = new CovariancePlot(
+                                      this.generatePlotId("covarianceSpectrum_" + projectConfig.filename),
+                                      {
+                                        filename: projectConfig.filename,
+                                        bck_filename: projectConfig.bckFilename,
+                                        gti_filename: projectConfig.gtiFilename,
+                                        styles:{ type: "2d",
+                                                 labels: ["Energy(keV)", "Covariance"],
+                                                 title: "Covariance Spectrum" }
+                                      },
+                                      this.service.request_covariance_spectrum,
+                                      this.onFiltersChangedFromPlot,
+                                      this.onPlotReady,
+                                      this.$toolBar,
+                                      "fullWidth",
+                                      false,
+                                      projectConfig
+                                    );
+
+    this.plots.push(covarianceSpectrumPlot);
+    this.appendPlot(covarianceSpectrumPlot, true);
+
+    var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
                                 projectConfig.rmfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Channel", "Energy (keV)"],
@@ -543,7 +570,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.addArfPlots = function (projectConfig){
-    var arfPlot = this.getPlot (this.id + "_arf_" + projectConfig.arfFilename,
+    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
                                 projectConfig.arfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Energy (keV)", "Effective area (cm^2)"],
@@ -563,7 +590,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     if ((projectConfig.filename != "") && (projectConfig.arfFilename != "") && (projectConfig.rmfFilename != "")){
 
       var energySpectrumPlot = new Plot(
-                                this.id + "_energySpectrum_" + (new Date()).getTime(),
+                                this.generatePlotId("energySpectrum_" + projectConfig.filename),
                                 {
                                   filename: projectConfig.filename,
                                   bck_filename: projectConfig.bckFilename,
@@ -588,7 +615,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.appendPlot(energySpectrumPlot, true);
 
       var unfoldedSpectrumPlot = new Plot(
-                                this.id + "_unfoldedSpectrum_" + (new Date()).getTime(),
+                                this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
                                 {
                                   styles:{ type: "2d",
                                            labels: ["Energy(keV)", "Ph s^-1 cm^-2 keV^-1"],

@@ -320,13 +320,25 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, g
             else:
                 logging.info("No data point in GTI # %s: GTI (from, to)=(%f, %f); event list (from, to)=(%d, %d)" % (gti_index, start, end, start_event_idx, end_event_idx))
 
-
-def get_histogram (array):
+# Returns a tuple with the counts and the key values
+# of applying the histogram to an array
+#
+# @param: array: the array with the data to generate the histogram
+# @param: precision: the precision for matching/bining values of array,
+#         default will be 1.0 but is set as 0.01 will have a two decimal
+#         binning for example
+def get_histogram (array, precision=1.0):
     histogram = dict()
     values = []
     for val in array:
-        if not val in histogram:
-            histogram[val] = 0
-            values.append(val)
-        histogram[val] += 1
+
+        match_val = val
+        if precision != 1.0:
+            match_val = int(val / precision) * precision
+
+        if not match_val in histogram:
+            histogram[match_val] = 0
+            values.append(match_val)
+        histogram[match_val] += 1
+
     return histogram, np.sort(values)

@@ -143,6 +143,9 @@ source activate dave
 #Installing Stingray
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
+# Sets the specific commit to checkout:
+# May 4, 2017 -> https://github.com/StingraySoftware/stingray/pull/188/commits/e9d35cd44019637bfc99f997349ce50e3bdeb603
+STINGRAY_COMMIT_HASH=e9d35cd44019637bfc99f997349ce50e3bdeb603
 
 if [ ! -e $STINGRAY_FOLDER ]; then
 
@@ -150,6 +153,10 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git clone --recursive $STINGRAY_URL $STINGRAY_FOLDER
 
 	cd $STINGRAY_FOLDER
+
+	# Gets specific commit version
+	echo Getting specific version of Stingray
+	git checkout $STINGRAY_COMMIT_HASH
 
 	#Install stingray libraries
 	pip install -r requirements.txt

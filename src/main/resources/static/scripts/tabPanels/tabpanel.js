@@ -165,7 +165,9 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( schema, params ){
 
         log("onRmfApplied: Success!");
-        currentObj.toolPanel.onRmfDatasetUploaded(JSON.parse(schema));
+        var jsonSchema = JSON.parse(schema);
+        currentObj.projectConfig.setSchema(jsonSchema);
+        currentObj.toolPanel.onRmfDatasetUploaded(jsonSchema);
         currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
       }, currentObj.onSchemaError, null);

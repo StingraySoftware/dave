@@ -5,6 +5,9 @@ import sys
 import os
 import logging
 
+import matplotlib
+matplotlib.use('TkAgg')  # Changes the matplotlib framework
+
 import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
 import utils.dave_logger as Logger
@@ -140,9 +143,37 @@ def get_unfolded_spectrum():
             request.json['arf_filename'], UPLOADS_TARGET)
 
 
+@app.route('/get_covariance_spectrum', methods=['POST'])
+def get_covariance_spectrum():
+    return DaveEndpoint.get_covariance_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
+            UPLOADS_TARGET, float(request.json['dt']), request.json['ref_band_interest'],
+            int(request.json['n_bands']), float(request.json['std']))
+
+
 @app.route('/get_plot_data_from_models', methods=['POST'])
 def get_plot_data_from_models():
     return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])
+
+
+@app.route('/get_fit_powerspectrum_result', methods=['POST'])
+def get_fit_powerspectrum_result():
+    return DaveEndpoint.get_fit_powerspectrum_result(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'], request.json['models'])
+
+
+@app.route('/get_bootstrap_results', methods=['POST'])
+def get_bootstrap_results():
+    return DaveEndpoint.get_bootstrap_results(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'], request.json['models'],
+            int(request.json['n_iter']), float(request.json['mean']),
+            int(request.json['red_noise']), int(request.json['seed']))
 
 
 # Receives a message from client and send it to all subscribers

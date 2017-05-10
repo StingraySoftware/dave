@@ -394,12 +394,22 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           this.showWarn(warnmsg);
       }
     }
+
+    if (!isReady) {
+      this.showLoading();
+    } else {
+      this.hideLoading();
+    }
   }
 
   this.getWarnMsg = function (){
     if (this.data != null) {
       if (this.data[3].values.length > 0) {
-        return this.data[3].values[0];
+        if (this.data[3].values[0] == "Maximum allowed size exceeded"){
+          return "Bin size greater than segment length";
+        } else {
+          return this.data[3].values[0];
+        }
       }
     }
     return "";
