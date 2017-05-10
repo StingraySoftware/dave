@@ -86,9 +86,6 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       this.setSettingsTitle(title);
 
-      var tab = getTabForSelector(this.id);
-      var binSize = tab.projectConfig.binSize;
-      var segmSize = Math.max(binSize, tab.projectConfig.avgSegmentSize);
       if (this.settingsPanel.find(".sliderSelector").length == 0) {
 
         if (isNull(plotConfig.styles.showPdsType) || plotConfig.styles.showPdsType){
@@ -113,6 +110,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         }
 
         // Creates the Segment length selector
+        var tab = getTabForSelector(this.id);
+        var binSize = tab.projectConfig.binSize;
+        var segmSize = !isNull(plotConfig.segment_size) ? plotConfig.segment_size : Math.max(binSize, tab.projectConfig.avgSegmentSize);
         var maxValue = segmSize * 100;
         if (this.plotConfig.duration > 0) {
           maxValue = this.plotConfig.duration;
