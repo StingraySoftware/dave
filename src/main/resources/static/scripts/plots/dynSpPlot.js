@@ -8,6 +8,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
 
   this.plotConfig.yAxisType = "linear";
   this.plotConfig.zAxisType = "log";
+  this.plotConfig.plotStyle = "3d";
 
   this.btnFullScreen.unbind("click").click(function( event ) {
     if (currentObj.$html.hasClass("fullScreen")) {
@@ -19,7 +20,23 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     currentObj.resize();
   });
 
-  this.btnFit.hide();
+  //If plot is pds adds Fits button to plot
+  this.btnStyle = $('<button class="btn btn-default btnStyle">2D</button>');
+  this.$html.find(".plotTools").prepend(this.btnStyle);
+  this.btnStyle.click(function(event){
+    if (currentObj.plotConfig.plotStyle == "3d") {
+      currentObj.plotConfig.plotStyle = "2d";
+      currentObj.btnStyle.html("3D");
+      currentObj.settingsPanel.find(".AxisType").hide();
+    } else {
+      currentObj.plotConfig.plotStyle = "3d";
+      currentObj.btnStyle.html("2D");
+      currentObj.settingsPanel.find(".AxisType").show();
+    }
+    currentObj.refreshData();
+  });
+
+  this.btnFit.remove();
 
   this.prepareData = function (data) {
 
@@ -65,12 +82,37 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
       zLabel += " X " + currentObj.plotConfig.styles.labels[0];
     }
 
-    var z_data=[];
-    for (pds_idx in data[1].values) {
-      z_data.push(data[1].values[pds_idx].values);
-    }
+    var plotlyConfig = null;
+    if (currentObj.plotConfig.plotStyle == "2d") {
 
-    var plotlyConfig = get_plotdiv_dynamical_spectrum(data[0].values,
+      //ZDATA is an array of arrays with the powers of each time as values
+      var z_data=[];
+      for (freq_idx in data[0].values) {
+        var powers_for_time_data=[];
+        for (time_idx in data[2].values) {
+          powers_for_time_data.push(data[1].values[time_idx].values[freq_idx]);
+        }
+        z_data.push(powers_for_time_data);
+      }
+
+      plotlyConfig = get_plotdiv_dynamical_spectrum(data[2].values,
+                                                      data[0].values,
+                                                      z_data,
+                                                      currentObj.plotConfig.styles.labels[1],
+                                                      currentObj.plotConfig.styles.labels[0],
+                                                      zLabel,
+                                                      currentObj.plotConfig.styles.title);
+      plotlyConfig.data[0].type = "heatmap";
+
+    } else {
+
+      //ZDATA is a flattened array with the powers
+      var z_data=[];
+      for (pds_idx in data[1].values) {
+        z_data.push(data[1].values[pds_idx].values);
+      }
+
+      plotlyConfig = get_plotdiv_dynamical_spectrum(data[0].values,
                                                       data[2].values,
                                                       z_data,
                                                       currentObj.plotConfig.styles.labels[0],
@@ -78,19 +120,22 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                                       zLabel,
                                                       currentObj.plotConfig.styles.title);
 
-    if (currentObj.plotConfig.xAxisType == "log") {
-      plotlyConfig.layout.scene.xaxis.type = 'log';
-      plotlyConfig.layout.scene.xaxis.autorange = true;
-    }
+      //Set axis type for 3D plot only, log axes not supported on heatmaps
+      if (currentObj.plotConfig.xAxisType == "log") {
+        plotlyConfig.layout.scene.xaxis.type = 'log';
+        plotlyConfig.layout.scene.xaxis.autorange = true;
+      }
 
-    if (currentObj.plotConfig.yAxisType == "log") {
-      plotlyConfig.layout.scene.yaxis.type = 'log';
-      plotlyConfig.layout.scene.yaxis.autorange = true;
-    }
+      if (currentObj.plotConfig.yAxisType == "log") {
+        plotlyConfig.layout.scene.yaxis.type = 'log';
+        plotlyConfig.layout.scene.yaxis.autorange = true;
+      }
 
-    if (currentObj.plotConfig.zAxisType == "log") {
-      plotlyConfig.layout.scene.zaxis.type = 'log';
-      plotlyConfig.layout.scene.zaxis.autorange = true;
+      if (currentObj.plotConfig.zAxisType == "log") {
+        plotlyConfig.layout.scene.zaxis.type = 'log';
+        plotlyConfig.layout.scene.zaxis.autorange = true;
+      }
+
     }
 
     return plotlyConfig;

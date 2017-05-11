@@ -56,7 +56,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.hideSettings();
   });
 
-  //If plot is lightcurve adds Select button to plot
+  //If plot is pds adds Fits button to plot
   this.btnFit = $('<button class="btn btn-default btnFit"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
   this.$html.find(".plotTools").append(this.btnFit);
   this.btnFit.click(function(event){
@@ -197,7 +197,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         // Creates the X axis type radio buttons
         var XlinearChecked = (this.plotConfig.xAxisType == "linear") ? 'checked="checked"' : "";
         var XlogChecked = (this.plotConfig.xAxisType == "log") ? 'checked="checked"' : "";
-        this.xAxisRadios = $('<div class="pdsXAxisType">' +
+        this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
                               '<h3>X axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Xlinear">Linear</label>' +
@@ -219,7 +219,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         // Creates the Y axis type radio buttons
         var YlinearChecked = (this.plotConfig.yAxisType == "linear") ? 'checked="checked"' : "";
         var YlogChecked = (this.plotConfig.yAxisType == "log") ? 'checked="checked"' : "";
-        this.yAxisRadios = $('<div class="pdsYAxisType">' +
+        this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
                               '<h3>Y axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Ylinear">Linear</label>' +
@@ -241,7 +241,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           // Creates the X axis type radio buttons
           var ZlinearChecked = (this.plotConfig.zAxisType == "linear") ? 'checked="checked"' : "";
           var ZlogChecked = (this.plotConfig.zAxisType == "log") ? 'checked="checked"' : "";
-          this.zAxisRadios = $('<div class="pdsZAxisType">' +
+          this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
                                 '<h3>Z axis type</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Zlinear">Linear</label>' +
