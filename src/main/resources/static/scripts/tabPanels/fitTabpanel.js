@@ -112,9 +112,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
              log("Bootstrap data received!, FitTabPanel: " + currentObj.id);
              var data = JSON.parse(jsdata);
-             if (!isNull(data)) {
+             if (!isNull(data) && data.length > 0) {
                currentObj.modelSelector.setEstimation(data[0].values, false);
                currentObj.plot.setErrorData(data[1].values, data[2].values);
+             } else {
+               log("Bootstrap wrong data received!!");
              }
 
              waitingDialog.hide();
