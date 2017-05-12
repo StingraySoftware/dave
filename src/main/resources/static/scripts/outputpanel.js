@@ -10,12 +10,28 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$html = cloneHtmlElement(id, classSelector);
   container.html(this.$html);
   this.$html.show();
+  this.$btnShowToolbar = this.$html.find(".btnShowToolbar");
+  this.$btnHideToolbar = this.$html.find(".btnHideToolbar");
   this.$toolBar = this.$html.find(".outputPanelToolBar");
   this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
   this.infoPanel = null;
 
   //METHODS AND EVENTS
+
+  this.$btnShowToolbar.click(function(event){
+     currentObj.$btnShowToolbar.hide();
+     currentObj.$toolBar.show();
+  });
+
+  this.$btnHideToolbar.click(function(event){
+     currentObj.$toolBar.hide();
+     currentObj.$btnShowToolbar.show();
+  });
+
+  this.$btnShowToolbar.hide();
+  this.$toolBar.hide();
+
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!isNull(projectConfig.schema["RATE"])) {
@@ -43,12 +59,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     //ADDS PLOTS TO PANEL
     for (i in this.plots) {
       this.$body.append(this.plots[i].$html);
-      if (i > 5) {
+      if (i > 5) { //TODO: Change this condition...
         this.plots[i].hide();
       }
     };
     this.forceResize();
     this.enableDragDrop(false);
+    this.$btnShowToolbar.show();
 
     setTimeout( function () {
       //Forces check if all plots visible are ready.
@@ -70,7 +87,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     // Clears output panel
     this.$body.html("");
-    this.$toolBar.html("");
+    this.$toolBar.find(".container").html("");
 
     // Adds plots
     this.initPlots(projectConfig);

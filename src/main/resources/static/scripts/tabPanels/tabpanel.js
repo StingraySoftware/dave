@@ -50,7 +50,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   }
 
   this.addCloseButton = function () {
-    var closeTabBtn = $('<i class="fa fa-times closeTabPanel" aria-hidden="true"></i>')
+    var closeTabBtn = $('<i class="fa fa-times closeIcon closeTabPanel" aria-hidden="true"></i>')
     this.$navItem.find("." + this.navItemClass).append(closeTabBtn);
     closeTabBtn.bind("click", function( event ) {
       currentObj.close();

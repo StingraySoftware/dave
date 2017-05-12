@@ -40,11 +40,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (!isNull(toolbar)) {
    this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
-   this.btnShow.hide();
    this.btnShow.click(function(event){
-      currentObj.show();
+      if (currentObj.btnShow.hasClass("plotHidden")) {
+        currentObj.show();
+      } else {
+        currentObj.hide();
+      }
    });
-   toolbar.append(this.btnShow);
+   var btnShowText = "";
+   if (!isNull(this.plotConfig.styles.title)) {
+     btnShowText = this.plotConfig.styles.title;
+   }
+   this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   toolbar.find(".container").append(this.btnShow);
 
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
@@ -62,19 +70,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.show = function (){
    currentObj.isVisible = true;
    currentObj.$html.show();
-   currentObj.btnShow.hide();
+   currentObj.btnShow.removeClass("plotHidden");
+   currentObj.btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
    currentObj.refreshData();
  }
 
  this.hide = function (){
    currentObj.isVisible = false;
    currentObj.$html.hide();
-   var btnShowText = "";
-   if (!isNull(currentObj.plotConfig.styles.title)) {
-     btnShowText = currentObj.plotConfig.styles.title;
-   }
-   currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
-   currentObj.btnShow.show();
+   currentObj.btnShow.addClass("plotHidden");
+   currentObj.btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
  }
 
  this.showLoading = function (){

@@ -42,10 +42,14 @@ h3
   margin-left: 8px;
   margin-right: -8px;
   padding: 0px;
-  opacity: 0.1;
 }
 
-.closeTabPanel:hover {
+.closeIcon {
+  opacity: 0.1;
+  cursor: pointer;
+}
+
+.closeIcon:hover {
   opacity: 1;
 }
 
@@ -326,6 +330,59 @@ h3
   width: 120px;
   height: 40px;
   font-size: 1.4em;
+}
+
+.toolbar {
+  position: fixed;
+  top: 60px;
+  z-index: 9999;
+  margin-left: 10px;
+}
+
+.outputPanelToolBar {
+  border: 1px solid #000000;
+  background: #4a4a4a;
+  border-radius: 8px;
+  width: 260px;
+  padding-bottom: 16px;
+}
+
+.outputPanelToolBar h3 {
+    font-size: 1em;
+    color: white;
+    margin-top: 10px;
+}
+
+.outputPanelToolBar .container .btn {
+    display: block;
+    background: none;
+    color: #d4a34a;
+    border: none;
+    box-shadow: none;
+    text-shadow: none;
+    margin-left: -10px;
+    font-size: 0.95em;
+}
+
+.outputPanelToolBar .container .btn:hover {
+    color: #ffcf78 !important;
+}
+
+.outputPanelToolBar .container .btn.plotHidden {
+    color: gray;
+}
+
+.btnShowToolbar {
+  width: 30px;
+  height: 30px;
+}
+
+.btnHideToolbar {
+  float: right;
+  margin-top: 2px;
+  margin-right: -12px;
+  color: #fff;
+  font-size: 1.2em;
 }
 
 .btnRmf {
