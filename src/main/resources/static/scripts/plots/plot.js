@@ -348,13 +348,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
          //If plot data for label[0] is the same as axis[0] data,
          // else label data is calculated/derived with some process
          if (this.plotConfig.styles.labels[0].startsWith(this.plotConfig.axis[0].column)){
-          filters.push($.extend({ from: Math.floor(xRange[0]), to: Math.ceil(xRange[1]) },
+          filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
                                   this.plotConfig.axis[0]));
          }
 
          //Same here but for other axis
          if (this.plotConfig.styles.labels[1].startsWith(this.plotConfig.axis[1].column)){
-            filters.push($.extend({ from: Math.floor(yRange[0]), to: Math.ceil(yRange[1]) },
+            filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
                                   this.plotConfig.axis[1]));
          }
 

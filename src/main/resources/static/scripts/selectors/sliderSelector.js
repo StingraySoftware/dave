@@ -12,6 +12,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.fromValue = fromValue;
   this.toValue = toValue;
   this.maxRange = this.initToValue - this.initFromValue;
+  this.precision = 3;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
@@ -88,7 +89,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        var moveSlider = source != "slider";
        // Fits values to max range
        if ((to - from) > this.maxRange){
-          if (this.toValue != Math.ceil(to)) {
+          if (this.toValue != fixedPrecision(to, this.precision)) {
             //ToValue was changed
             from = to - this.maxRange;
           } else {
@@ -108,8 +109,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.95, projectConfig.maxSegmentSize);
        }
 
-       this.fromValue = Math.floor(from);
-       this.toValue = Math.ceil(to);
+       this.fromValue = fixedPrecision(from, this.precision);
+       this.toValue = fixedPrecision(to, this.precision);
        this.fromInput.val( this.fromValue );
        this.toInput.val( this.toValue );
        if (moveSlider) {

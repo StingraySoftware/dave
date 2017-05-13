@@ -41,6 +41,10 @@ function isInt(n) {
    return n % 1 === 0;
 }
 
+function fixedPrecision(value, precision) {
+   return parseFloat(value.toFixed(precision));
+}
+
 function closest(arr, closestTo){
     var closest = Math.max.apply(null, arr);
     for(var i = 0; i < arr.length; i++){
