@@ -75,12 +75,24 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     return data;
   }
 
-  this.getPlotlyConfig = function (data) {
-
-    var zLabel = currentObj.plotConfig.styles.labels[2];
-    if (currentObj.plotConfig.plotType == "X*Y") {
-      zLabel += " X " + currentObj.plotConfig.styles.labels[0];
+  this.getLabel = function (axis) {
+    if (axis == 2){
+      var zLabel = currentObj.plotConfig.styles.labels[2];
+      if (currentObj.plotConfig.plotType == "X*Y") {
+        if (currentObj.plotConfig.styles.labels[0].startsWith("Freq")
+            && currentObj.plotConfig.styles.labels[2].startsWith("Pow")) {
+              zLabel = "Power x Frequency (rms/mean)^2";
+          } else {
+            zLabel += " x " + currentObj.plotConfig.styles.labels[0];
+          }
+      }
+      return zLabel;
+    } else {
+      return this.plotConfig.styles.labels[axis];
     }
+  }
+
+  this.getPlotlyConfig = function (data) {
 
     var plotlyConfig = null;
     if (currentObj.plotConfig.plotStyle == "2d") {
@@ -98,9 +110,9 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
       plotlyConfig = get_plotdiv_dynamical_spectrum(data[2].values,
                                                       data[0].values,
                                                       z_data,
-                                                      currentObj.plotConfig.styles.labels[1],
-                                                      currentObj.plotConfig.styles.labels[0],
-                                                      zLabel,
+                                                      this.getLabel(1),
+                                                      this.getLabel(0),
+                                                      this.getLabel(2),
                                                       currentObj.plotConfig.styles.title);
       plotlyConfig.data[0].type = "heatmap";
 
@@ -115,9 +127,9 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
       plotlyConfig = get_plotdiv_dynamical_spectrum(data[0].values,
                                                       data[2].values,
                                                       z_data,
-                                                      currentObj.plotConfig.styles.labels[0],
-                                                      currentObj.plotConfig.styles.labels[1],
-                                                      zLabel,
+                                                      this.getLabel(0),
+                                                      this.getLabel(1),
+                                                      this.getLabel(2),
                                                       currentObj.plotConfig.styles.title);
 
       //Set axis type for 3D plot only, log axes not supported on heatmaps

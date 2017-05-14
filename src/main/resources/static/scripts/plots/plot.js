@@ -239,27 +239,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
-                                    currentObj.plotConfig.styles.labels[coords.x],
-                                    currentObj.plotConfig.styles.labels[coords.y],
+                                    currentObj.getLabel(coords.x),
+                                    currentObj.getLabel(coords.y),
                                     currentObj.plotConfig.styles.title)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
       plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
-                                    currentObj.plotConfig.styles.labels[coords.x],
-                                    currentObj.plotConfig.styles.labels[coords.y],
+                                    currentObj.getLabel(coords.x),
+                                    currentObj.getLabel(coords.y),
                                     data[3].values);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
-                                        currentObj.plotConfig.styles.labels[coords.x],
-                                        currentObj.plotConfig.styles.labels[coords.y],
+                                        currentObj.getLabel(coords.x),
+                                        currentObj.getLabel(coords.y),
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
-                                        currentObj.plotConfig.styles.labels[coords.x],
-                                        currentObj.plotConfig.styles.labels[coords.y],
+                                        currentObj.getLabel(coords.x),
+                                        currentObj.getLabel(coords.y),
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
@@ -267,9 +267,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
                                    (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
-                                   currentObj.plotConfig.styles.labels[coords.x],
-                                   currentObj.plotConfig.styles.labels[coords.y],
-                                   currentObj.plotConfig.styles.labels[2],
+                                   currentObj.getLabel(coords.x),
+                                   currentObj.getLabel(coords.y),
+                                   currentObj.getLabel(2),
                                    currentObj.plotConfig.styles.title);
    }
 
@@ -449,12 +449,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.hideCrosses();
   }
 
+  this.getLabel = function (axis) {
+    return this.plotConfig.styles.labels[axis];
+  }
+
   this.getLegendTextForPoint = function (coords) {
     try {
        if (coords == null) { return ""; }
        var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
-       var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
-       var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+       var labelY = !isNull(coords.label) ? coords.label : this.getLabel(swcoords.y);
+       var infotextforx = this.getLabel(swcoords.x) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
        var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
        var error_x_string = "";
        var error_y_string = "";

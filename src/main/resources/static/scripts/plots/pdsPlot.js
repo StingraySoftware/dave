@@ -264,7 +264,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         this.plotTypeRadios = $('<div class="pdsPlotType">' +
                               '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data</h3>' +
                               '<fieldset>' +
-                                '<label for="' + this.id + '_TypeXY">Power X Frecuency</label>' +
+                                '<label for="' + this.id + '_TypeXY">Power x Frequency</label>' +
                                 '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" checked="checked">' +
                                 '<label for="' + this.id + '_TypeX">Power</label>' +
                                 '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeX" value="X">' +
@@ -368,17 +368,29 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     return data;
   }
 
-  this.getPlotlyConfig = function (data) {
-
-    var yLabel = currentObj.plotConfig.styles.labels[1];
-    if (currentObj.plotConfig.plotType == "X*Y") {
-      yLabel += " X " + currentObj.plotConfig.styles.labels[0];
+  this.getLabel = function (axis) {
+    if (axis == 1){
+      var yLabel = currentObj.plotConfig.styles.labels[1];
+      if (currentObj.plotConfig.plotType == "X*Y") {
+        if (currentObj.plotConfig.styles.labels[0].startsWith("Freq")
+            && currentObj.plotConfig.styles.labels[1].startsWith("Pow")) {
+              yLabel = "Power x Frequency (rms/mean)^2";
+          } else {
+            yLabel += " x " + currentObj.plotConfig.styles.labels[0];
+          }
+      }
+      return yLabel;
+    } else {
+      return this.plotConfig.styles.labels[axis];
     }
+  }
+
+  this.getPlotlyConfig = function (data) {
 
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], [], [],
-                                        currentObj.plotConfig.styles.labels[0],
-                                        yLabel,
+                                        this.getLabel(0),
+                                        this.getLabel(1),
                                         currentObj.plotConfig.styles.title);
 
     plotlyConfig = currentObj.prepareAxis(plotlyConfig);
