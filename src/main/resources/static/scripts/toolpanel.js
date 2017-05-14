@@ -231,7 +231,7 @@ function ToolPanel (id,
 
       // Creates colors filter type (PHA by default or ENERGY with RMF file upload requisite)
       this.colorFilterTypeRadios = $('<div class="colorFilterType">' +
-                                      '<h3>Color filter type</h3>' +
+                                      '<h3>Energy range filter type:</h3>' +
                                       '<fieldset>' +
                                         '<label for="' + this.id + '_PHA">Channel</label>' +
                                         '<input type="radio" name="' + this.id + '_ColorFilterType" id="' + this.id + '_PHA" value="PHA" checked="checked">' +
@@ -254,16 +254,16 @@ function ToolPanel (id,
   }
 
   this.createColorSelectors = function (column) {
-    var selectorNames = ["Color A", "Color B", "Color C", "Color D"];
+    var selectorNames = ["A", "B", "C", "D"];
     var increment = (column.max_value - column.min_value) * (1 / selectorNames.length);
     var container = $("<div class='colorSelectors_" + column.id + "'></div>");
 
     for (i in selectorNames) {
       var selectorName = selectorNames[i];
-      var selectorKey = selectorName.replace(" ", "_");
+      var selectorKey = "Color_" + selectorName;
       var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector", replaceColumn: column.id };
       var selector = new sliderSelector(this.id + "_selector_" + selectorKey + "_" + column.id,
-                                        selectorName + ":",
+                                        ((column.id == "PHA") ? "Channel" : "Energy") + " range " + selectorName + ":",
                                         filterData,
                                         "From", "To",
                                         column.min_value, column.max_value,
