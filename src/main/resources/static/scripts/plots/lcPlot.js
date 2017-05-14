@@ -97,7 +97,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
         //Prepares input events
         $baseline.find(".baselineContainer").hide();
-        $baseline.find("input").on('input', this.onBaselineValuesChanged);
+        $baseline.find("input").on('change', this.onBaselineValuesChanged);
 
         this.settingsPanel.find(".leftCol").append($baseline);
       }
@@ -116,27 +116,12 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   }
 
   this.onBaselineValuesChanged = function(){
-    try {
-      if (currentObj.baselineEnabled) {
-        var bsOpts = {};
-        bsOpts.lam = parseFloat(currentObj.settingsPanel.find(".inputLam").val());
-        bsOpts.p = parseFloat(currentObj.settingsPanel.find(".inputP").val());
-        bsOpts.niter = parseInt(currentObj.settingsPanel.find(".inputNiter").val());
-        if (isNaN(bsOpts.lam) || isNaN(bsOpts.p) || isNaN(bsOpts.niter)) {
-          currentObj.updateBaselineInputs(currentObj.plotConfig.baseline_opts);
-        } else {
-          currentObj.plotConfig.baseline_opts = bsOpts;
-        }
-      } else {
-        currentObj.disableBaseline();
-      }
-    } catch (e) {
-      log("onBaselineValuesChanged error, plot" + currentObj.id + ", error: " + e);
-      if (currentObj.plotConfig.baseline_opts.niter > 0) {
-        currentObj.updateBaselineInputs(currentObj.plotConfig.baseline_opts);
-      } else {
-        currentObj.disableBaseline();
-      }
+    if (currentObj.baselineEnabled) {
+      currentObj.plotConfig.baseline_opts.lam = getInputFloatValue(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam);
+      currentObj.plotConfig.baseline_opts.p = getInputFloatValue(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p);
+      currentObj.plotConfig.baseline_opts.niter = getInputIntValue(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter);
+    } else {
+      currentObj.disableBaseline();
     }
   }
 

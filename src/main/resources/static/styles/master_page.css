@@ -451,3 +451,7 @@ h3
     height: 25px;
     text-align: right;
 }
+
+input.wrongValue {
+  color: red !important;
+}

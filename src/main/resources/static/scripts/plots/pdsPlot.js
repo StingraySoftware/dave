@@ -135,7 +135,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                }
            });
         this.segmSelector.inputChanged = function ( event ) {
-           currentObj.segmSelector.setValues( currentObj.segmSelector.fromInput.val() );
+           currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, plotConfig.segment_size) );
            currentObj.onSegmSelectorValuesChanged();
         };
         this.settingsPanel.find(".leftCol").append(this.segmSelector.$html);
@@ -188,7 +188,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                }
            });
         this.binSelector.inputChanged = function ( event ) {
-           currentObj.binSelector.setValues( currentObj.binSelector.fromInput.val() );
+           currentObj.binSelector.setValues( getInputFloatValue(currentObj.binSelector.fromInput, currentObj.binSelector.value) );
            currentObj.onBinSelectorValuesChanged();
         };
         this.settingsPanel.find(".leftCol").append(this.binSelector.$html);

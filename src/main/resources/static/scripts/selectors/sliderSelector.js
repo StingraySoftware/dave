@@ -42,11 +42,11 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.slider = this.$html.find("#slider-" + this.id);
 
   this.inputChanged = function ( event ) {
-    currentObj.setValues( currentObj.fromInput.val(), currentObj.toInput.val() );
+    currentObj.setValues( getInputFloatValue(currentObj.fromInput, currentObj.fromValue), getInputFloatValue(currentObj.toInput, currentObj.toValue) );
     currentObj.onSelectorValuesChanged();
   };
-  this.fromInput.on('input', this.inputChanged);
-  this.toInput.on('input', this.inputChanged);
+  this.fromInput.on('change', this.inputChanged);
+  this.toInput.on('change', this.inputChanged);
 
   //Prepares switchBox
   this.switchBox.click( function ( event ) {
@@ -111,8 +111,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
        this.fromValue = fixedPrecision(from, this.precision);
        this.toValue = fixedPrecision(to, this.precision);
-       this.fromInput.val( this.fromValue );
-       this.toInput.val( this.toValue );
+       this.fromInput.val( this.fromValue ).removeClass("wrongValue");
+       this.toInput.val( this.toValue ).removeClass("wrongValue");
        if (moveSlider) {
          this.slider.slider('values', 0, this.fromValue);
          this.slider.slider('values', 1, this.toValue);

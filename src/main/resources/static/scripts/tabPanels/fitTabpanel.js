@@ -83,16 +83,13 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
         var params = ["n_iter", "mean", "red_noise", "seed"];
         for (p in params){
           var paramName = params[p];
-          var value = parseFloat($bootstrapDialog.find(".input_" + paramName).val());
-          if (!isNaN(value)){
+          var value = getInputFloatValue($bootstrapDialog.find(".input_" + paramName), paramsData[paramName]);
+          if (paramsData[paramName] != value){
             if (isInt(paramsData[paramName])) {
               paramsData[paramName] = Math.floor(value);
             } else {
               paramsData[paramName] = value;
             }
-          } else {
-            $bootstrapDialog.find(".input_" + paramName).val(paramsData[paramName]);
-            log("bootstrapDialog onValuesChanged... " + paramName + " is wrong!!");
           }
         }
       } catch (e) {

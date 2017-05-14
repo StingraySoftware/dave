@@ -221,12 +221,10 @@ function Model(idx, title, type, color, onModelsChangedFn) {
 
       for (p in modelParams){
         var paramName = modelParams[p];
-        var value = parseFloat(paramContainer.find(".input_" + paramName).val());
-        if (!isNaN(value)){
+        var value = getInputFloatValue(paramContainer.find(".input_" + paramName), currentObj[paramName]);
+        if (currentObj[paramName] != value){
           currentObj[paramName] = value;
           modelChanged = true;
-        } else {
-          log("onValuesChanged, model" + currentObj.id + ", " + paramName + " is wrong!!");
         }
       }
 

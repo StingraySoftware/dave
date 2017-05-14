@@ -59,7 +59,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     //ADDS PLOTS TO PANEL
     for (i in this.plots) {
       this.$body.append(this.plots[i].$html);
-      if (i > 5) { //TODO: Change this condition...
+      if (i > 0) { //TODO: Change this condition...
         this.plots[i].hide();
       }
     };
