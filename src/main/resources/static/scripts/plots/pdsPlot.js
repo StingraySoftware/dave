@@ -198,7 +198,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         var XlinearChecked = (this.plotConfig.xAxisType == "linear") ? 'checked="checked"' : "";
         var XlogChecked = (this.plotConfig.xAxisType == "log") ? 'checked="checked"' : "";
         this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
-                              '<h3>X axis type</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Xlinear">Linear</label>' +
                                 '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + XlinearChecked + '>' +
@@ -220,7 +220,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         var YlinearChecked = (this.plotConfig.yAxisType == "linear") ? 'checked="checked"' : "";
         var YlogChecked = (this.plotConfig.yAxisType == "log") ? 'checked="checked"' : "";
         this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
-                              '<h3>Y axis type</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Ylinear">Linear</label>' +
                                 '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + YlinearChecked + '>' +
@@ -242,7 +242,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           var ZlinearChecked = (this.plotConfig.zAxisType == "linear") ? 'checked="checked"' : "";
           var ZlogChecked = (this.plotConfig.zAxisType == "log") ? 'checked="checked"' : "";
           this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
-                                '<h3>Z axis type</h3>' +
+                                '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Zlinear">Linear</label>' +
                                   '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + ZlinearChecked + '>' +
@@ -262,7 +262,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the plot type radio buttons
         this.plotTypeRadios = $('<div class="pdsPlotType">' +
-                              '<h3>Y axis data</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_TypeXY">Power X Frecuency</label>' +
                                 '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" checked="checked">' +
