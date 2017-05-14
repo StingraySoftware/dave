@@ -42,7 +42,7 @@ function isInt(n) {
 }
 
 function fixedPrecision(value, precision) {
-   return parseFloat(value.toFixed(precision));
+   return (precision > 0) ? parseFloat(value.toFixed(precision)) : Math.floor(value);
 }
 
 function closest(arr, closestTo){

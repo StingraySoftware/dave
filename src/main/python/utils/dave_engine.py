@@ -103,10 +103,12 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
 
                 DsCache.remove_with_prefix("FILTERED") # Removes all filtered datasets from cache
                 DsCache.add(destination, dataset) # Stores dataset on cache
-                return len(events_table.columns["E"].values) == len(pha_data)
+                if len(events_table.columns["E"].values) == len(pha_data):
+                    return list(e_avg_data.values())
     except:
         logging.error(ExHelper.getException('apply_rmf_file_to_dataset'))
-    return False
+
+    return []
 
 
 # get_plot_data: Returns the data for a plot
@@ -1149,7 +1151,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                                                              rms=rms, red_noise=red_noise, random_state=seed)
 
                         logging.debug('get_bootstrap_results for i: ' + str(i) + ' the_simulator: ' + str(the_simulator))
-                                                                
+
                         lc = the_simulator.simulate(fit_model)
 
                         logging.debug('get_bootstrap_results for i: ' + str(i) + ' lc.time: ' + str(len(lc.time)))

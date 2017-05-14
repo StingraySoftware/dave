@@ -17,6 +17,7 @@ function ProjectConfig(){
   this.timeUnit = "s";
   this.totalDuration = 0;
   this.plots = [];
+  this.rmfData = [];
 
   this.hasSchema = function (schema) {
     return this.schema != null;
@@ -122,6 +123,32 @@ function ProjectConfig(){
       return this.selectorFilenames[selectorKey];
     }
     return "";
+  }
+
+  this.setRmfData = function (rmfData) {
+    this.rmfData = rmfData;
+  }
+
+  this.getEnergyForChannel = function (channel) {
+    if (this.rmfData.length > 0
+        && channel >= 0
+        && channel < this.rmfData.length) {
+          return this.rmfData[channel];
+        }
+    return -1;
+  }
+
+  this.getChannelFromEnergy = function (energy) {
+    if (this.rmfData.length > 0) {
+      for (i in this.rmfData) {
+        var tmpEnergy = this.rmfData[i];
+        if (tmpEnergy > energy){
+          return i - 1; //Return prevChannel
+        }
+      }
+      return this.rmfData.length - 1; //Return lastChannel
+    }
+    return -1;
   }
 
   this.updateFromProjectConfigs = function (projectConfigs) {

@@ -215,6 +215,7 @@ function ToolPanel (id,
 
             if (tableName == "EVENTS" && columnName == "PHA") {
               pha_column = column;
+              selector.precision = 0;
             }
           }
         }
@@ -270,6 +271,9 @@ function ToolPanel (id,
                                         this.selectors_array);
       var min_value = column.min_value + (increment * i);
       var max_value = min_value + increment;
+      if (column.id == "PHA") {
+        selector.precision = 0;
+      }
       selector.setValues (min_value, max_value);
       selector.setEnabled (true);
       container.append(selector.$html);
@@ -318,11 +322,11 @@ function ToolPanel (id,
   }
 
   this.onColorFilterTypeChanged = function (columnName) {
+    var tab = getTabForSelector(currentObj.id);
     var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
     selectorsContainer.children().hide();
 
     if (columnName == "E") {
-      var tab = getTabForSelector(currentObj.id);
       if (tab.projectConfig.rmfFilename == "") {
 
         //Show upload RMF file
@@ -341,6 +345,25 @@ function ToolPanel (id,
       } else {
         //Show ENERGY color selectors
         sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
+
+        //Sets energy values to Energy Selectors from Pha selector values
+        var e_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "E");
+        var pha_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "PHA");
+        for (i in pha_Selectors) {
+          var phaSelector = pha_Selectors[i];
+          for (i in e_Selectors) {
+            var eSelector = e_Selectors[i];
+            if (eSelector.filterData.column == phaSelector.filterData.column){
+              var eFromValue = tab.projectConfig.getEnergyForChannel(phaSelector.fromValue);
+              var eToValue = tab.projectConfig.getEnergyForChannel(phaSelector.toValue);
+              if (eFromValue > -1 && eToValue > -1){
+                eSelector.setValues(eFromValue, eToValue);
+              }
+              break;
+            }
+          }
+        }
+
         selectorsContainer.find(".colorSelectors_E").show();
         currentObj.replaceColumn = "E";
         currentObj.onSelectorValuesChanged();
@@ -348,6 +371,25 @@ function ToolPanel (id,
     } else {
       //Show PHA color selectors
       sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
+
+      //Sets pha values to PHA Selectors from Energy selector values
+      var e_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "E");
+      var pha_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "PHA");
+      for (i in pha_Selectors) {
+        var phaSelector = pha_Selectors[i];
+        for (i in e_Selectors) {
+          var eSelector = e_Selectors[i];
+          if (eSelector.filterData.column == phaSelector.filterData.column){
+            var phaFromValue = tab.projectConfig.getChannelFromEnergy(eSelector.fromValue);
+            var phaToValue = tab.projectConfig.getChannelFromEnergy(eSelector.toValue);
+            if (phaFromValue > -1 && phaToValue > -1){
+              phaSelector.setValues(phaFromValue, phaToValue);
+            }
+            break;
+          }
+        }
+      }
+
       selectorsContainer.find(".colorSelectors_PHA").show();
       currentObj.replaceColumn = "PHA";
       currentObj.onSelectorValuesChanged();

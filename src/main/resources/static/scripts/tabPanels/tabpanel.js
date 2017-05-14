@@ -160,8 +160,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.onRmfApplied = function ( result ) {
     result = JSON.parse(result);
-    if (!isNull(result.success) && result.success){
+    if (!isNull(result) && result.length > 0){
       log("onRmfApplied: Getting new shema..");
+
+      currentObj.projectConfig.setRmfData(result);
+
       currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( schema, params ){
 
         log("onRmfApplied: Success!");

@@ -231,3 +231,15 @@ function sliderSelectors_setFiltersEnabled (selectors_array, source, columnName)
       }
   }
 }
+
+function sliderSelectors_getSelectors (selectors_array, source, columnName) {
+  var selectors = [];
+  for (i in selectors_array) {
+    var selector = selectors_array[i];
+    if (selector.filterData.source == source
+        && selector.filterData.replaceColumn == columnName){
+        selectors.push(selector);
+      }
+  }
+  return selectors;
+}

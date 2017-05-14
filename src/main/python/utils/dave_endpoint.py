@@ -116,8 +116,7 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
         return common_error("Invalid RMF file")
 
     result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination)
-
-    return json.dumps(dict(success=result))
+    return json.dumps(result)
 
 
 def common_error(error):
