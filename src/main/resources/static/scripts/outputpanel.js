@@ -571,7 +571,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.plots.push(covarianceSpectrumPlot);
     this.appendPlot(covarianceSpectrumPlot, true);
 
-    var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
+    /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
                                 projectConfig.rmfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Channel", "Energy (keV)"],
@@ -581,13 +581,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 null, "");
 
     this.plots.push(rmfPlot);
-    this.appendPlot(rmfPlot, true);
+    this.appendPlot(rmfPlot, true);*/
 
     this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
   }
 
   this.addArfPlots = function (projectConfig){
-    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
+    /*var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
                                 projectConfig.arfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Energy (keV)", "Effective area (cm^2)"],
@@ -597,7 +597,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 null, "");
 
     this.plots.push(arfPlot);
-    this.appendPlot(arfPlot, true);
+    this.appendPlot(arfPlot, true);*/
 
     this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
   }
