@@ -301,6 +301,9 @@ function ToolPanel (id,
           //Prepares Energy color filters
           this.createColorSelectors(column);
           this.onColorFilterTypeChanged("E");
+          var colorFilterTypeRadios = this.$html.find(".colorFilterType").find("input");
+          colorFilterTypeRadios.filter('[value=PHA]').prop('checked', false).checkboxradio('refresh');
+          colorFilterTypeRadios.filter('[value=E]').prop('checked', true).checkboxradio('refresh');
         }
     }
   }

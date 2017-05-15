@@ -621,7 +621,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 currentObj.onFiltersChangedFromPlot,
                                 currentObj.onPlotReady,
                                 currentObj.$toolBar,
-                                "",
+                                "fullWidth",
                                 false
                               );
 
@@ -631,7 +631,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.plots.push(energySpectrumPlot);
       currentObj.appendPlot(energySpectrumPlot, true);
 
-      var unfoldedSpectrumPlot = new Plot(
+      /*var unfoldedSpectrumPlot = new Plot(
                                 this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
                                 {
                                   styles:{ type: "2d",
@@ -650,7 +650,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       unfoldedSpectrumPlot.plotConfig.yAxisType = "log";
       currentObj.unfoldedSpectrumPlotIdx = currentObj.plots.length;
       currentObj.plots.push(unfoldedSpectrumPlot);
-      currentObj.appendPlot(unfoldedSpectrumPlot, false);
+      currentObj.appendPlot(unfoldedSpectrumPlot, false);*/
 
       return true;
     }
@@ -698,10 +698,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
           energySpectrumPlot.setData($.extend(true, [], [ data[0], data[1] ]));
         }
 
-        var unfoldedSpectrumPlot = currentObj.plots[currentObj.unfoldedSpectrumPlotIdx];
+        /*var unfoldedSpectrumPlot = currentObj.plots[currentObj.unfoldedSpectrumPlotIdx];
         if (unfoldedSpectrumPlot.isVisible) {
           unfoldedSpectrumPlot.setData($.extend(true, [], [ data[0], data[2] ]));
-        }
+        }*/
 
       }
     });
