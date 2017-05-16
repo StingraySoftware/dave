@@ -360,7 +360,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, labels, cssClass, switchable ) {
+  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, labels, title, cssClass, switchable ) {
 
     log("getJoinedLightCurvesPlot: lc0_filename: " + lc0_filename + ", lc0_filename: " + lc1_filename);
     return new Plot(
@@ -368,7 +368,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       {
                         lc0_filename: lc0_filename,
                         lc1_filename: lc1_filename,
-                        styles: { type: "scatter", labels: labels },
+                        styles: { type: "scatter", labels: labels, title: title },
                         axis: [ { table: "RATE", column:"TIME" },
                                 { table: "RATE", column:"PHA" } ]
                       },
@@ -489,6 +489,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             joined_lc_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("SRC"),
                                                                       cache_key,
                                                                       ["Total Count Rate (c/s)", newKeySufix + " Color Ratio"],
+                                                                      ((newKeySufix == "B/A") ? "Softness Intensity Diagram" : "Hardness Intensity Diagram"),
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
             currentObj.appendPlot(joined_lc_plot);
@@ -500,7 +501,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                 var abcd_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("LC_B/A"),
                                                                       projectConfig.getFile("LC_D/C"),
                                                                       ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
-                                                                      "", true);
+                                                                      "Color-Color Diagram", "", true);
                 projectConfig.plots.push(abcd_plot);
                 currentObj.appendPlot(abcd_plot);
             }
@@ -674,15 +675,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       data = JSON.parse(jsdata);
 
       var joinedLcPlot = currentObj.getPlotById(paramsData.id);
-      if (joinedLcPlot.isVisible) {
-        joinedLcPlot.setData((!isNull(data)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
-      }
+      joinedLcPlot.setData((!isNull(data)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
 
       if (!isNull(paramsData.linkedPlotId)) {
         var joinedLcTimePlot = currentObj.getPlotById(paramsData.linkedPlotId);
-        if (joinedLcTimePlot.isVisible) {
-          joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
-        }
+        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
       }
     });
 

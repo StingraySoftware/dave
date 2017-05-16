@@ -150,7 +150,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.onDatasetValuesChanged = function ( filters ) {
-    this.applyValidFilters(filters);
+
+   if (!isNull(this.parentPlotId)) {
+     var tab = getTabForSelector(this.id);
+     var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
+     parentPlot.applyValidFilters(filters);
+   }
+
+   this.applyValidFilters(filters);
 
     if (this.isVisible) {
        this.refreshData();
@@ -168,7 +175,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
           log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
           parentPlot.refreshData();
           return;
-       } else {
+       } else if (parentPlot.isReady) {
           this.setReadyState(true);
        }
      }

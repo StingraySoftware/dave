@@ -120,16 +120,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
         currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
 
-        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
-        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
-
-        if (!lcab_Added && ! lccd_Added) {
-          waitingDialog.hide();
-        }
-
-      } else {
-        waitingDialog.hide();
+        currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+        currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
       }
+
+      waitingDialog.hide();
 
     } else if (filenames.length > 1){
       log("onLcDatasetChanged " + selectorKey + ": Multifile selection not supported yet..");
