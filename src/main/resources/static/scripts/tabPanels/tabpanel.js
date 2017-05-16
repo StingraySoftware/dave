@@ -58,8 +58,6 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   }
 
   this.close = function () {
-    this.$navItem.remove();
-    this.$html.remove();
     log("TabPanel closed id: " + this.id);
     removeTab(this.id);
   }
@@ -346,6 +344,29 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     this.wfSelector.find(".wfSelectorDisableable").fadeIn();
   }
 
+  this.destroy = function () {
+    try {
+      delete this.classSelector;
+      delete this.navItemClass;
+      delete this.service;
+      this.$html.remove();
+      delete this.$html;
+      this.$navItem.remove();
+      delete this.$navItem;
+
+      delete this.wfSelector;
+      delete this.toolPanel;
+      delete this.outputPanel;
+      delete this.actionsHistory;
+      delete this.prevAction;
+      delete this.projectConfig;
+
+      delete this.id;
+    } catch (ex) {
+      log("Destroy tab " + this.id + " error: " + ex);
+    }
+  }
+
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
 
@@ -367,7 +388,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                       this.onFiltersChangedFromPlot,
                                       this.toolPanel.getFilters );
 
-  $(window).resize(function () { currentObj.outputPanel.resize(); });
+  $(window).resize(function () { if (!isNull(currentObj.outputPanel)){currentObj.outputPanel.resize();} });
 
   this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");
 
@@ -419,6 +440,7 @@ function removeTab (id) {
   }
 
   if (idx > -1){
+    tabPanels[idx].destroy();
     tabPanels.splice(idx,1);
 
     if (tabPanels.length > 0) {

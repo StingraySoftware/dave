@@ -335,7 +335,7 @@ h3
 .toolbar {
   position: fixed;
   top: 60px;
-  z-index: 9999;
+  z-index: 1000;
   margin-left: 10px;
 }
 

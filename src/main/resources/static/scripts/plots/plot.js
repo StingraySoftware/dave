@@ -168,6 +168,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
           log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
           parentPlot.refreshData();
           return;
+       } else {
+          this.setReadyState(true);
        }
      }
 
@@ -324,8 +326,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        };
 
        Plotly.relayout(this.plotId, update);
-     } else {
-       log("Resize plot " + this.id + ", not ready yet. ");
      }
    } catch (ex) {
      log("Resize plot " + this.id + " error: " + ex);
