@@ -4,6 +4,7 @@ var CombinedModelColor = '#FF0000';
 function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
 
   var currentObj = this;
+  plotConfig.styles.showFitBtn = false;
   var tmpPlotConfig = $.extend(true, {}, plotConfig);
 
   PDSPlot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig);
@@ -17,7 +18,6 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   this.errorsData = null;
 
   this.btnFullScreen.remove();
-  this.btnFit.remove();
   this.btnSettings.hide();
 
   this.onPlotDataReceived = function ( data ) {

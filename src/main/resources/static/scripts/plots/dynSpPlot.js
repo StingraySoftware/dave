@@ -36,8 +36,6 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     currentObj.refreshData();
   });
 
-  this.btnFit.remove();
-
   this.prepareData = function (data) {
 
     if (!isNull(data) && data.length == 5) {
