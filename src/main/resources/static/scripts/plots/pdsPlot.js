@@ -280,8 +280,14 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         $plotTypeRadios.change(function() {
           currentObj.plotConfig.plotType = this.value;
         });
+
+        this.settingCreated();
       }
     }
+  }
+
+  this.settingCreated = function(){
+    //Just for notify inherited plots that setting panel was created, must be overriden.
   }
 
   this.hideSettings = function(){

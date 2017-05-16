@@ -455,3 +455,34 @@ h3
 input.wrongValue {
   color: red !important;
 }
+
+.colorScale canvas {
+  border: 1px solid black;
+  width: 100%;
+  height: 10px;
+}
+
+.colorScale .sliderSelector {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.colorScale .sliderSelector h3 {
+    font-size: 0.95em;
+}
+
+.colorScale .sliderSelector .selectorContainer {
+    width: 50%;
+    float: right;
+    margin-top: -20px;
+}
+
+.colorScale .sliderSelector .selectorContainer input{
+  width: 50px;
+  margin-top: -10px;
+  margin-left: -60px;
+}
+
+.colorScale .sliderSelector .selectorContainer .selectorSlider{
+  margin-top: 0px;
+  margin-left: 0px;
+}

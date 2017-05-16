@@ -216,7 +216,7 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
 
 }
 
-function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y_label, z_label, title) {
+function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y_label, z_label, colorscale, title) {
 
   return {
       data: [
@@ -224,7 +224,8 @@ function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y
                 type : 'surface',
                 x : x_values,
                 y : y_values,
-                z : z_values
+                z : z_values,
+                colorscale: colorscale
               }
             ],
       layout : {
