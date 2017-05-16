@@ -16,6 +16,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
   this.infoPanel = null;
+  this.showBlockingLoadDialog = false;
 
   //METHODS AND EVENTS
 
@@ -108,7 +109,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.onDatasetValuesChanged = function ( filters ) {
-    waitingDialog.show('Retrieving plots data...');
+    if (this.showBlockingLoadDialog){
+      waitingDialog.show('Retrieving plots data...');
+    } else {
+      waitingDialog.hide();
+    }
 
     if (isNull(filters)) {
       filters = this.getFilters();
@@ -121,7 +126,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   this.onPlotReady = function () {
     for (i in currentObj.plots) { if (currentObj.plots[i].isVisible && !currentObj.plots[i].isReady) return; };
-    waitingDialog.hide();
+    if (this.showBlockingLoadDialog){
+      waitingDialog.hide();
+    }
   }
 
   this.enableDragDrop = function (enabled) {
