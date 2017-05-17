@@ -41,7 +41,11 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   }
 
   this.setDisableable = function (disableable) {
-    this.switchBox.parent().show();
+    if (disableable){
+      this.switchBox.parent().show();
+    } else {
+      this.switchBox.parent().hide();
+    }
   }
 
   this.inputChanged = function ( event ) {

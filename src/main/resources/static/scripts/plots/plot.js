@@ -302,16 +302,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.redrawPlot = function (plotlyConfig) {
-   if (plotlyConfig != null) {
-     Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
-     this.plotElem = this.$html.find(".plot")[0];
-     this.tracesCount = plotlyConfig.data.length;
-     this.registerPlotEvents()
-     this.resize();
+   try {
+     if (plotlyConfig != null) {
+       Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       this.plotElem = this.$html.find(".plot")[0];
+       this.tracesCount = plotlyConfig.data.length;
+       this.registerPlotEvents()
+       this.resize();
 
-   } else {
+     } else {
+       this.showWarn("Wrong plot config");
+       log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
+     }
+   } catch (e) {
      this.showWarn("Wrong plot config");
-     log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
+     log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id + ", exception:" + e);
    }
  }
 

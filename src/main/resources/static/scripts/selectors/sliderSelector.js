@@ -13,6 +13,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.toValue = toValue;
   this.maxRange = this.initToValue - this.initFromValue;
   this.precision = 3;
+  this.step = 1.0;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
@@ -75,6 +76,15 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          }
      });
 
+   this.setDisableable = function (disableable) {
+     if (disableable){
+       this.switchBox.parent().show();
+     } else {
+       this.switchBox.parent().hide();
+       this.setEnabled(true);
+     }
+   }
+
    //Set values method
    this.setValues = function (from, to, source) {
 
@@ -98,12 +108,11 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           moveSlider = true;
        }
 
-       var step = 1.0;
        if (this.filterData.column == "TIME") {
           //Fixes values to binSize steps
           var projectConfig = getTabForSelector(this.id).projectConfig;
           var binSize = projectConfig.binSize;
-          step = parseFloat(binSize);
+          this.step = parseFloat(binSize);
           this.fromValue = Math.floor (from / binSize) * binSize;
           this.toValue = Math.floor (to / binSize) * binSize;
           projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.95, projectConfig.maxSegmentSize);
@@ -117,7 +126,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          this.slider.slider('values', 0, this.fromValue);
          this.slider.slider('values', 1, this.toValue);
        }
-       this.slider.slider("option", "step", step);
+       this.slider.slider("option", "step", this.step);
    }
 
    this.getFilter = function () {

@@ -90,7 +90,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       if (this.settingsPanel.find(".sliderSelector").length == 0) {
 
-        if (isNull(plotConfig.styles.showPdsType) || plotConfig.styles.showPdsType){
+        if (isNull(this.plotConfig.styles.showPdsType) || this.plotConfig.styles.showPdsType){
           // Creates PDS type radio buttons
           this.typeRadios = $('<div class="pdsType">' +
                                 '<h3>Type</h3>' +
@@ -114,10 +114,11 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         // Creates the Segment length selector
         var tab = getTabForSelector(this.id);
         var binSize = tab.projectConfig.binSize;
-        var segmSize = !isNull(plotConfig.segment_size) ? plotConfig.segment_size : Math.max(binSize, tab.projectConfig.avgSegmentSize);
-        var maxValue = segmSize * 100;
+        var segmSize = !isNull(this.plotConfig.segment_size) ? this.plotConfig.segment_size : Math.max(binSize, tab.projectConfig.avgSegmentSize);
+        var maxSegmentSize = !isNull(this.plotConfig.zAxisType) ? tab.projectConfig.maxSegmentSize / 2 : tab.projectConfig.maxSegmentSize;
+        var maxValue = (maxSegmentSize > 0) ? maxSegmentSize : segmSize * 100;
         if (this.plotConfig.duration > 0) {
-          maxValue = this.plotConfig.duration;
+          maxValue = Math.min(maxValue, this.plotConfig.duration);
         }
 
         this.segmSelector = new BinSelector(this.id + "_segmSelector",
@@ -137,7 +138,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                }
            });
         this.segmSelector.inputChanged = function ( event ) {
-           currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, plotConfig.segment_size) );
+           currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, currentObj.plotConfig.segment_size) );
            currentObj.onSegmSelectorValuesChanged();
         };
         this.settingsPanel.find(".leftCol").append(this.segmSelector.$html);
@@ -301,12 +302,29 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     }
   }
 
+  this.updateSettings = function(){
+    if (this.settingsPanel.find(".sliderSelector").length > 0) {
+      var settingsVisible = this.settingsVisible;
+      this.settingsVisible = false;
+      this.settingsPanel.find(".leftCol").html("");
+      this.settingsPanel.find(".rightCol").html("");
+      this.showSettings();
+      if (!settingsVisible) {
+        this.hideSettings();
+      }
+    }
+  }
+
   this.onSegmSelectorValuesChanged = function(){
     if (currentObj.plotConfig.duration > 0) {
       currentObj.plotConfig.segment_size = currentObj.segmSelector.value;
-      currentObj.plotConfig.nsegm = parseFloat(Math.round((currentObj.plotConfig.duration / currentObj.segmSelector.value) * 1000) / 1000).toFixed(2);
+      currentObj.updateNSegm();
     }
     currentObj.updateSegmSelector();
+  }
+
+  this.updateNSegm = function() {
+     this.plotConfig.nsegm =  parseFloat(fixedPrecision(this.plotConfig.duration / this.plotConfig.segment_size, 2));
   }
 
   this.updateSegmSelector = function () {
@@ -328,18 +346,24 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.updatePlotConfig = function () {
     var tab = getTabForSelector(this.id);
-    var plotConfig = this.plotConfig;
-    plotConfig.dt = tab.projectConfig.binSize;
+    var mustUpdateSettings = this.plotConfig.dt != tab.projectConfig.binSize;
+    this.plotConfig.dt = tab.projectConfig.binSize;
+
+    var maxSegmentSize = tab.projectConfig.maxSegmentSize / 4;
     if (!isNull(this.segmSelector)){
-      plotConfig.segment_size = (tab.projectConfig.maxSegmentSize != 0) ? Math.min(tab.projectConfig.maxSegmentSize, this.segmSelector.value) : currentObj.segmSelector.value;
+      this.plotConfig.segment_size = (maxSegmentSize != 0) ? Math.min(maxSegmentSize, this.segmSelector.value) : currentObj.segmSelector.value;
     } else {
-      plotConfig.segment_size = tab.projectConfig.maxSegmentSize;
+      this.plotConfig.segment_size = maxSegmentSize;
     }
-    plotConfig.nsegm = parseFloat(Math.round((plotConfig.duration / plotConfig.segment_size) * 1000) / 1000).toFixed(2);
+    this.updateNSegm();
 
     if (!isNull(this.segmSelector)){
       this.updateSegmSelector();
-      this.segmSelector.setValues(plotConfig.segment_size);
+      this.segmSelector.setValues(this.plotConfig.segment_size);
+    }
+
+    if (mustUpdateSettings){
+      this.updateSettings();
     }
   }
 
@@ -359,7 +383,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           this.plotConfig.maxRebinSize = (data[0].values[data[0].values.length - 1] - data[0].values[0]) / 4;
       }
 
-      if (currentObj.plotConfig.plotType == "X*Y") {
+      if (this.plotConfig.plotType == "X*Y") {
         for (i in data[0].values) {
           data[1].values[i] = data[1].values[i] * data[0].values[i];
         }
@@ -368,6 +392,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       if (data[2].values.length > 0
           && data[2].values[0] > 0) {
         this.plotConfig.duration = data[2].values[0];
+        this.updateNSegm();
       }
     } else {
       this.showWarn("Wrong data received");
@@ -378,13 +403,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.getLabel = function (axis) {
     if (axis == 1){
-      var yLabel = currentObj.plotConfig.styles.labels[1];
-      if (currentObj.plotConfig.plotType == "X*Y") {
-        if (currentObj.plotConfig.styles.labels[0].startsWith("Freq")
-            && currentObj.plotConfig.styles.labels[1].startsWith("Pow")) {
+      var yLabel = this.plotConfig.styles.labels[1];
+      if (this.plotConfig.plotType == "X*Y") {
+        if (this.plotConfig.styles.labels[0].startsWith("Freq")
+            && this.plotConfig.styles.labels[1].startsWith("Pow")) {
               yLabel = "Power x Frequency (rms/mean)^2";
           } else {
-            yLabel += " x " + currentObj.plotConfig.styles.labels[0];
+            yLabel += " x " + this.plotConfig.styles.labels[0];
           }
       }
       return yLabel;
@@ -399,7 +424,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         [], [], [],
                                         this.getLabel(0),
                                         this.getLabel(1),
-                                        currentObj.plotConfig.styles.title);
+                                        this.plotConfig.styles.title);
 
     plotlyConfig = currentObj.prepareAxis(plotlyConfig);
 

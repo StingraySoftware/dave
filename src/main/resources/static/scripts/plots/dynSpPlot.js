@@ -10,6 +10,9 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
   this.plotConfig.zAxisType = "log";
   this.plotConfig.plotStyle = "3d";
   this.plotConfig.colorScale = { x0: 0.5, y0: 0.5, m: 1.0 };
+  this.plotConfig.maxSupportedFreq = 9999999.0;
+  this.plotConfig.freqMax = 9999999.0;
+  this.plotConfig.freqMin = 0.0;
 
   this.btnFullScreen.unbind("click").click(function( event ) {
     if (currentObj.$html.hasClass("fullScreen")) {
@@ -37,9 +40,49 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     currentObj.refreshData();
   });
 
+  this.updateMaxMinFreq = function () {
+    this.plotConfig.maxSupportedFreq = 0.6 / this.plotConfig.dt;
+    this.plotConfig.freqMax = Math.min(this.plotConfig.maxSupportedFreq, this.plotConfig.freqMax);
+    this.plotConfig.freqMin = Math.max(0.0, this.plotConfig.freqMin);
+  }
+
   this.prepareData = function (data) {
 
     if (!isNull(data) && data.length == 5) {
+
+      this.updateMaxMinFreq();
+
+      if (this.plotConfig.freqMax < this.plotConfig.maxSupportedFreq
+          || this.plotConfig.freqMin > 0.0){
+
+          //Filter data with frequency range
+          var freqArray = { values:[] };
+          var zArray = { values:[] };
+          for (freq_idx in data[0].values) {
+            var freq = data[0].values[freq_idx];
+            if (freq >= this.plotConfig.freqMin && freq <= this.plotConfig.freqMax){
+              //Good frequency, add data
+              freqArray.values.push(freq);
+              for (time_idx in data[2].values) {
+                if (!isNull(data[1].values)
+                    && (data[1].values.length > time_idx)
+                    && !isNull(data[1].values[time_idx].values)
+                    && (data[1].values[time_idx].values.length > freq_idx)){
+                      if (isNull(zArray.values[time_idx])) {
+                        zArray.values[time_idx] = { values:[] };
+                      }
+                      zArray.values[time_idx].values.push(data[1].values[time_idx].values[freq_idx]);
+                    }
+              }
+            }
+          }
+
+          //Assigns filtered data
+          data[0] = freqArray;
+          data[1] = zArray;
+      }
+
+      //Rebin the data if rebin is enabled
       if (this.plotConfig.rebinEnabled && this.plotConfig.rebinSize != 0) {
         try {
           for (pds_idx in data[1].values) {
@@ -67,6 +110,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
           && data[3].values[0] > 0) {
         this.plotConfig.duration = data[3].values[0];
       }
+
     } else {
       this.showWarn("Wrong data received");
     }
@@ -103,7 +147,12 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
       for (freq_idx in data[0].values) {
         var powers_for_time_data=[];
         for (time_idx in data[2].values) {
-          powers_for_time_data.push(data[1].values[time_idx].values[freq_idx]);
+          if (!isNull(data[1].values)
+              && (data[1].values.length > time_idx)
+              && !isNull(data[1].values[time_idx].values)
+              && (data[1].values[time_idx].values.length > freq_idx)){
+                powers_for_time_data.push(data[1].values[time_idx].values[freq_idx]);
+              }
         }
         z_data.push(powers_for_time_data);
       }
@@ -172,6 +221,40 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
   }
 
   this.settingCreated = function(){
+
+    // Hides axis types if is 2d plot
+    if (this.plotConfig.plotStyle == "2d") {
+      this.settingsPanel.find(".AxisType").hide();
+    }
+
+    // Creates the frequency selector
+    this.updateMaxMinFreq();
+    this.freqSelector = new sliderSelector(this.id + "_freqSelector",
+                                      "Frequency Range (Hz):",
+                                      { table:"", column:"", from:this.plotConfig.freqMin, to:this.plotConfig.freqMax },
+                                      "From", "To",
+                                      this.plotConfig.freqMin, this.plotConfig.freqMax,
+                                      this.onFreqSelectorValuesChanged,
+                                      null);
+    this.freqSelector.step = 0.01;
+    this.freqSelector.setDisableable(false);
+    this.freqSelector.slider.slider({
+           min: this.freqSelector.fromValue,
+           max: this.freqSelector.toValue,
+           values: [ this.freqSelector.fromValue, this.freqSelector.toValue ],
+           step: this.freqSelector.step,
+           slide: function( event, ui ) {
+             currentObj.freqSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider" );
+             currentObj.onFreqSelectorValuesChanged();
+           }
+       });
+    this.freqSelector.inputChanged = function ( event ) {
+       currentObj.setValues( getInputFloatValue(currentObj.freqSelector.fromInput, currentObj.freqSelector.fromValue),
+                             getInputFloatValue(currentObj.freqSelector.toInput, currentObj.freqSelector.toValue) );
+       currentObj.onFreqSelectorValuesChanged();
+    };
+    this.settingsPanel.find(".rightCol").prepend(this.freqSelector.$html);
+
     //Creates the color scale controls
     this.colorScale = $('<div class="colorScale">' +
                           '<h3>Color scale:</h3>' +
@@ -246,6 +329,11 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
 
     this.settingsPanel.find(".leftCol").append(this.colorScale);
     this.drawColorScale();
+  }
+
+  this.onFreqSelectorValuesChanged = function(){
+    currentObj.plotConfig.freqMax = currentObj.freqSelector.toValue;
+    currentObj.plotConfig.freqMin = currentObj.freqSelector.fromValue;
   }
 
   this.onX0SelectorValuesChanged = function(){
