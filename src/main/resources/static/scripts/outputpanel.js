@@ -10,12 +10,29 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$html = cloneHtmlElement(id, classSelector);
   container.html(this.$html);
   this.$html.show();
+  this.$btnShowToolbar = this.$html.find(".btnShowToolbar");
+  this.$btnHideToolbar = this.$html.find(".btnHideToolbar");
   this.$toolBar = this.$html.find(".outputPanelToolBar");
   this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
   this.infoPanel = null;
+  this.showBlockingLoadDialog = false;
 
   //METHODS AND EVENTS
+
+  this.$btnShowToolbar.click(function(event){
+     currentObj.$btnShowToolbar.hide();
+     currentObj.$toolBar.show();
+  });
+
+  this.$btnHideToolbar.click(function(event){
+     currentObj.$toolBar.hide();
+     currentObj.$btnShowToolbar.show();
+  });
+
+  this.$btnShowToolbar.hide();
+  this.$toolBar.hide();
+
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!isNull(projectConfig.schema["RATE"])) {
@@ -43,12 +60,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     //ADDS PLOTS TO PANEL
     for (i in this.plots) {
       this.$body.append(this.plots[i].$html);
-      if (i > 5) {
+      if (i > 0) { //TODO: Change this condition...
         this.plots[i].hide();
       }
     };
     this.forceResize();
     this.enableDragDrop(false);
+    this.$btnShowToolbar.show();
 
     setTimeout( function () {
       //Forces check if all plots visible are ready.
@@ -70,7 +88,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     // Clears output panel
     this.$body.html("");
-    this.$toolBar.html("");
+    this.$toolBar.find(".container").html("");
 
     // Adds plots
     this.initPlots(projectConfig);
@@ -91,7 +109,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.onDatasetValuesChanged = function ( filters ) {
-    waitingDialog.show('Retrieving plots data...');
+    if (this.showBlockingLoadDialog){
+      waitingDialog.show('Retrieving plots data...');
+    } else {
+      waitingDialog.hide();
+    }
 
     if (isNull(filters)) {
       filters = this.getFilters();
@@ -104,7 +126,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   this.onPlotReady = function () {
     for (i in currentObj.plots) { if (currentObj.plots[i].isVisible && !currentObj.plots[i].isReady) return; };
-    waitingDialog.hide();
+    if (this.showBlockingLoadDialog){
+      waitingDialog.hide();
+    }
   }
 
   this.enableDragDrop = function (enabled) {
@@ -336,7 +360,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                     );
   }
 
-  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, labels, cssClass, switchable ) {
+  this.getJoinedLightCurvesPlot = function ( lc0_filename, lc1_filename, labels, title, cssClass, switchable ) {
 
     log("getJoinedLightCurvesPlot: lc0_filename: " + lc0_filename + ", lc0_filename: " + lc1_filename);
     return new Plot(
@@ -344,7 +368,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       {
                         lc0_filename: lc0_filename,
                         lc1_filename: lc1_filename,
-                        styles: { type: "scatter", labels: labels },
+                        styles: { type: "scatter", labels: labels, title: title },
                         axis: [ { table: "RATE", column:"TIME" },
                                 { table: "RATE", column:"PHA" } ]
                       },
@@ -397,7 +421,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
                                   labels: ["Frequency (Hz)", "Power"],
-                                  title: title },
+                                  title: title,
+                                  showFitBtn: true },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
@@ -464,6 +489,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             joined_lc_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("SRC"),
                                                                       cache_key,
                                                                       ["Total Count Rate (c/s)", newKeySufix + " Color Ratio"],
+                                                                      ((newKeySufix == "B/A") ? "Softness Intensity Diagram" : "Hardness Intensity Diagram"),
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
             currentObj.appendPlot(joined_lc_plot);
@@ -475,7 +501,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                 var abcd_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("LC_B/A"),
                                                                       projectConfig.getFile("LC_D/C"),
                                                                       ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
-                                                                      "", true);
+                                                                      "Color-Color Diagram", "", true);
                 projectConfig.plots.push(abcd_plot);
                 currentObj.appendPlot(abcd_plot);
             }
@@ -554,7 +580,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.plots.push(covarianceSpectrumPlot);
     this.appendPlot(covarianceSpectrumPlot, true);
 
-    var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
+    /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
                                 projectConfig.rmfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Channel", "Energy (keV)"],
@@ -564,13 +590,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 null, "");
 
     this.plots.push(rmfPlot);
-    this.appendPlot(rmfPlot, true);
+    this.appendPlot(rmfPlot, true);*/
 
     this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
   }
 
   this.addArfPlots = function (projectConfig){
-    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
+    /*var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
                                 projectConfig.arfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Energy (keV)", "Effective area (cm^2)"],
@@ -580,7 +606,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 null, "");
 
     this.plots.push(arfPlot);
-    this.appendPlot(arfPlot, true);
+    this.appendPlot(arfPlot, true);*/
 
     this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
   }
@@ -604,7 +630,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 currentObj.onFiltersChangedFromPlot,
                                 currentObj.onPlotReady,
                                 currentObj.$toolBar,
-                                "",
+                                "fullWidth",
                                 false
                               );
 
@@ -614,7 +640,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.plots.push(energySpectrumPlot);
       currentObj.appendPlot(energySpectrumPlot, true);
 
-      var unfoldedSpectrumPlot = new Plot(
+      /*var unfoldedSpectrumPlot = new Plot(
                                 this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
                                 {
                                   styles:{ type: "2d",
@@ -633,7 +659,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       unfoldedSpectrumPlot.plotConfig.yAxisType = "log";
       currentObj.unfoldedSpectrumPlotIdx = currentObj.plots.length;
       currentObj.plots.push(unfoldedSpectrumPlot);
-      currentObj.appendPlot(unfoldedSpectrumPlot, false);
+      currentObj.appendPlot(unfoldedSpectrumPlot, false);*/
 
       return true;
     }
@@ -649,15 +675,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       data = JSON.parse(jsdata);
 
       var joinedLcPlot = currentObj.getPlotById(paramsData.id);
-      if (joinedLcPlot.isVisible) {
-        joinedLcPlot.setData((!isNull(data)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
-      }
+      joinedLcPlot.setData((!isNull(data)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
 
       if (!isNull(paramsData.linkedPlotId)) {
         var joinedLcTimePlot = currentObj.getPlotById(paramsData.linkedPlotId);
-        if (joinedLcTimePlot.isVisible) {
-          joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
-        }
+        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
       }
     });
 
@@ -681,10 +703,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
           energySpectrumPlot.setData($.extend(true, [], [ data[0], data[1] ]));
         }
 
-        var unfoldedSpectrumPlot = currentObj.plots[currentObj.unfoldedSpectrumPlotIdx];
+        /*var unfoldedSpectrumPlot = currentObj.plots[currentObj.unfoldedSpectrumPlotIdx];
         if (unfoldedSpectrumPlot.isVisible) {
           unfoldedSpectrumPlot.setData($.extend(true, [], [ data[0], data[2] ]));
-        }
+        }*/
 
       }
     });

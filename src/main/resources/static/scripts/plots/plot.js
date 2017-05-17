@@ -40,11 +40,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (!isNull(toolbar)) {
    this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
-   this.btnShow.hide();
    this.btnShow.click(function(event){
-      currentObj.show();
+      if (currentObj.btnShow.hasClass("plotHidden")) {
+        currentObj.show();
+      } else {
+        currentObj.hide();
+      }
    });
-   toolbar.append(this.btnShow);
+   var btnShowText = "";
+   if (!isNull(this.plotConfig.styles.title)) {
+     btnShowText = this.plotConfig.styles.title;
+   }
+   this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   toolbar.find(".container").append(this.btnShow);
 
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
@@ -62,19 +70,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.show = function (){
    currentObj.isVisible = true;
    currentObj.$html.show();
-   currentObj.btnShow.hide();
+   currentObj.btnShow.removeClass("plotHidden");
+   currentObj.btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
    currentObj.refreshData();
  }
 
  this.hide = function (){
    currentObj.isVisible = false;
    currentObj.$html.hide();
-   var btnShowText = "";
-   if (!isNull(currentObj.plotConfig.styles.title)) {
-     btnShowText = currentObj.plotConfig.styles.title;
-   }
-   currentObj.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
-   currentObj.btnShow.show();
+   currentObj.btnShow.addClass("plotHidden");
+   currentObj.btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
  }
 
  this.showLoading = function (){
@@ -145,7 +150,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.onDatasetValuesChanged = function ( filters ) {
-    this.applyValidFilters(filters);
+
+   if (!isNull(this.parentPlotId)) {
+     var tab = getTabForSelector(this.id);
+     var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
+     parentPlot.applyValidFilters(filters);
+   }
+
+   this.applyValidFilters(filters);
 
     if (this.isVisible) {
        this.refreshData();
@@ -163,6 +175,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
           log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
           parentPlot.refreshData();
           return;
+       } else if (parentPlot.isReady) {
+          this.setReadyState(true);
        }
      }
 
@@ -234,27 +248,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
                                     data[coords.x].error_values, data[coords.y].error_values,
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
-                                    currentObj.plotConfig.styles.labels[coords.x],
-                                    currentObj.plotConfig.styles.labels[coords.y],
+                                    currentObj.getLabel(coords.x),
+                                    currentObj.getLabel(coords.y),
                                     currentObj.plotConfig.styles.title)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
       plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
-                                    currentObj.plotConfig.styles.labels[coords.x],
-                                    currentObj.plotConfig.styles.labels[coords.y],
+                                    currentObj.getLabel(coords.x),
+                                    currentObj.getLabel(coords.y),
                                     data[3].values);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
-                                        currentObj.plotConfig.styles.labels[coords.x],
-                                        currentObj.plotConfig.styles.labels[coords.y],
+                                        currentObj.getLabel(coords.x),
+                                        currentObj.getLabel(coords.y),
                                         currentObj.plotConfig.styles.title);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
-                                        currentObj.plotConfig.styles.labels[coords.x],
-                                        currentObj.plotConfig.styles.labels[coords.y],
+                                        currentObj.getLabel(coords.x),
+                                        currentObj.getLabel(coords.y),
                                         'Amplitude<br>Map',
                                         currentObj.plotConfig.styles.title);
 
@@ -262,9 +276,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
                                    [], [], [],
                                    (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
-                                   currentObj.plotConfig.styles.labels[coords.x],
-                                   currentObj.plotConfig.styles.labels[coords.y],
-                                   currentObj.plotConfig.styles.labels[2],
+                                   currentObj.getLabel(coords.x),
+                                   currentObj.getLabel(coords.y),
+                                   currentObj.getLabel(2),
                                    currentObj.plotConfig.styles.title);
    }
 
@@ -288,16 +302,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.redrawPlot = function (plotlyConfig) {
-   if (plotlyConfig != null) {
-     Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
-     this.plotElem = this.$html.find(".plot")[0];
-     this.tracesCount = plotlyConfig.data.length;
-     this.registerPlotEvents()
-     this.resize();
+   try {
+     if (plotlyConfig != null) {
+       Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       this.plotElem = this.$html.find(".plot")[0];
+       this.tracesCount = plotlyConfig.data.length;
+       this.registerPlotEvents()
+       this.resize();
 
-   } else {
+     } else {
+       this.showWarn("Wrong plot config");
+       log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
+     }
+   } catch (e) {
      this.showWarn("Wrong plot config");
-     log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id);
+     log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id + ", exception:" + e);
    }
  }
 
@@ -319,8 +338,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        };
 
        Plotly.relayout(this.plotId, update);
-     } else {
-       log("Resize plot " + this.id + ", not ready yet. ");
      }
    } catch (ex) {
      log("Resize plot " + this.id + " error: " + ex);
@@ -343,13 +360,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
          //If plot data for label[0] is the same as axis[0] data,
          // else label data is calculated/derived with some process
          if (this.plotConfig.styles.labels[0].startsWith(this.plotConfig.axis[0].column)){
-          filters.push($.extend({ from: Math.floor(xRange[0]), to: Math.ceil(xRange[1]) },
+          filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
                                   this.plotConfig.axis[0]));
          }
 
          //Same here but for other axis
          if (this.plotConfig.styles.labels[1].startsWith(this.plotConfig.axis[1].column)){
-            filters.push($.extend({ from: Math.floor(yRange[0]), to: Math.ceil(yRange[1]) },
+            filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
                                   this.plotConfig.axis[1]));
          }
 
@@ -444,12 +461,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.hideCrosses();
   }
 
+  this.getLabel = function (axis) {
+    return this.plotConfig.styles.labels[axis];
+  }
+
   this.getLegendTextForPoint = function (coords) {
     try {
        if (coords == null) { return ""; }
        var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
-       var labelY = !isNull(coords.label) ? coords.label : this.plotConfig.styles.labels[swcoords.y];
-       var infotextforx = this.plotConfig.styles.labels[swcoords.x] + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+       var labelY = !isNull(coords.label) ? coords.label : this.getLabel(swcoords.y);
+       var infotextforx = this.getLabel(swcoords.x) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
        var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
        var error_x_string = "";
        var error_y_string = "";

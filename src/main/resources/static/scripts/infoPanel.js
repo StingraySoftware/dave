@@ -5,6 +5,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.id = id;
   this.header = header;
   this.headerComments = headerComments;
+  this.isVisible = true;
   this.showAll = false;
   this.defaultTags = [ "TSTART", "TSTOP", "TIMEUNIT", "TIMESYS", "DURATION", "FRMTIME",
                        "DATE-OBS", "DATE-END", "OBJECT", "OBSERVER", "TELESCOP", "INSTRUME",
@@ -20,20 +21,19 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.container = this.$html.find(".properties");
 
   if (!isNull(toolbar)){
-    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> Header</button>');
-    this.btnShow.hide();
-    toolbar.append(this.btnShow);
-
+    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> HEADER INFO</button>');
     this.btnShow.click(function(event){
-       currentObj.$html.show();
-       currentObj.btnShow.hide();
+      if (currentObj.btnShow.hasClass("plotHidden")) {
+        currentObj.show();
+      } else {
+        currentObj.hide();
+      }
     });
+    toolbar.find(".container").append(this.btnShow);
 
     this.btnHide = this.$html.find(".btnHide");
-
     this.btnHide.click(function(event){
-       currentObj.$html.hide();
-       currentObj.btnShow.show();
+       currentObj.hide();
     });
 
     this.btnShowAll = this.$html.find(".btnShowAll");
@@ -45,6 +45,21 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   } else {
     this.$html.find(".btnHide").hide();
     this.$html.find(".btnShowAll").hide();
+  }
+
+  this.show = function (){
+    currentObj.isVisible = true;
+    currentObj.$html.show();
+    currentObj.btnShow.removeClass("plotHidden");
+    currentObj.btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+    currentObj.redraw();
+  }
+
+  this.hide = function (){
+    currentObj.isVisible = false;
+    currentObj.$html.hide();
+    currentObj.btnShow.addClass("plotHidden");
+    currentObj.btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
   }
 
   this.getPropertyHtml = function(tag, value, comment) {

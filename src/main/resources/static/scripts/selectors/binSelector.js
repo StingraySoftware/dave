@@ -41,14 +41,18 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   }
 
   this.setDisableable = function (disableable) {
-    this.switchBox.parent().show();
+    if (disableable){
+      this.switchBox.parent().show();
+    } else {
+      this.switchBox.parent().hide();
+    }
   }
 
   this.inputChanged = function ( event ) {
-    currentObj.setValues( currentObj.fromInput.val() );
+    currentObj.setValues( getInputFloatValue(currentObj.fromInput, currentObj.value) );
     currentObj.onSelectorValuesChanged();
   };
-  this.fromInput.on('input', this.inputChanged);
+  this.fromInput.on('change', this.inputChanged);
 
   //Creates the slider
   this.slider.slider({
@@ -69,7 +73,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
    //Set values method
    this.setValues = function (value, source) {
      this.value = Math.min(Math.max(parseFloat(value), this.initFromValue), this.initToValue);
-     this.fromInput.val( this.value );
+     this.fromInput.val( this.value ).removeClass("wrongValue");
      if (source != "slider") {
        this.slider.slider('values', 0, this.value);
      }

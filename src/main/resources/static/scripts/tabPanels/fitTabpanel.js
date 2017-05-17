@@ -83,16 +83,13 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
         var params = ["n_iter", "mean", "red_noise", "seed"];
         for (p in params){
           var paramName = params[p];
-          var value = parseFloat($bootstrapDialog.find(".input_" + paramName).val());
-          if (!isNaN(value)){
+          var value = getInputFloatValue($bootstrapDialog.find(".input_" + paramName), paramsData[paramName]);
+          if (paramsData[paramName] != value){
             if (isInt(paramsData[paramName])) {
               paramsData[paramName] = Math.floor(value);
             } else {
               paramsData[paramName] = value;
             }
-          } else {
-            $bootstrapDialog.find(".input_" + paramName).val(paramsData[paramName]);
-            log("bootstrapDialog onValuesChanged... " + paramName + " is wrong!!");
           }
         }
       } catch (e) {
@@ -112,9 +109,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
              log("Bootstrap data received!, FitTabPanel: " + currentObj.id);
              var data = JSON.parse(jsdata);
-             if (!isNull(data)) {
+             if (!isNull(data) && data.length > 0) {
                currentObj.modelSelector.setEstimation(data[0].values, false);
                currentObj.plot.setErrorData(data[1].values, data[2].values);
+             } else {
+               log("Bootstrap wrong data received!!");
              }
 
              waitingDialog.hide();

@@ -56,12 +56,14 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.hideSettings();
   });
 
-  //If plot is lightcurve adds Select button to plot
-  this.btnFit = $('<button class="btn btn-default btnFit"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
-  this.$html.find(".plotTools").append(this.btnFit);
-  this.btnFit.click(function(event){
-    onFitPlotClicked(currentObj);
-  });
+  //If plot is pds adds Fits button to plot
+  if (!isNull(plotConfig.styles.showFitBtn) && plotConfig.styles.showFitBtn){
+    this.btnFit = $('<button class="btn btn-default btnFit"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
+    this.$html.find(".plotTools").append(this.btnFit);
+    this.btnFit.click(function(event){
+      onFitPlotClicked(currentObj);
+    });
+  }
 
   //PDS plot methods:
 
@@ -86,12 +88,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       this.setSettingsTitle(title);
 
-      var tab = getTabForSelector(this.id);
-      var binSize = tab.projectConfig.binSize;
-      var segmSize = Math.max(binSize, tab.projectConfig.avgSegmentSize);
       if (this.settingsPanel.find(".sliderSelector").length == 0) {
 
-        if (isNull(plotConfig.styles.showPdsType) || plotConfig.styles.showPdsType){
+        if (isNull(this.plotConfig.styles.showPdsType) || this.plotConfig.styles.showPdsType){
           // Creates PDS type radio buttons
           this.typeRadios = $('<div class="pdsType">' +
                                 '<h3>Type</h3>' +
@@ -113,9 +112,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         }
 
         // Creates the Segment length selector
-        var maxValue = segmSize * 100;
+        var tab = getTabForSelector(this.id);
+        var binSize = tab.projectConfig.binSize;
+        var segmSize = !isNull(this.plotConfig.segment_size) ? this.plotConfig.segment_size : Math.max(binSize, tab.projectConfig.avgSegmentSize);
+        var maxSegmentSize = !isNull(this.plotConfig.zAxisType) ? tab.projectConfig.maxSegmentSize / 2 : tab.projectConfig.maxSegmentSize;
+        var maxValue = (maxSegmentSize > 0) ? maxSegmentSize : segmSize * 100;
         if (this.plotConfig.duration > 0) {
-          maxValue = this.plotConfig.duration;
+          maxValue = Math.min(maxValue, this.plotConfig.duration);
         }
 
         this.segmSelector = new BinSelector(this.id + "_segmSelector",
@@ -135,7 +138,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                }
            });
         this.segmSelector.inputChanged = function ( event ) {
-           currentObj.segmSelector.setValues( currentObj.segmSelector.fromInput.val() );
+           currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, currentObj.plotConfig.segment_size) );
            currentObj.onSegmSelectorValuesChanged();
         };
         this.settingsPanel.find(".leftCol").append(this.segmSelector.$html);
@@ -188,7 +191,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                }
            });
         this.binSelector.inputChanged = function ( event ) {
-           currentObj.binSelector.setValues( currentObj.binSelector.fromInput.val() );
+           currentObj.binSelector.setValues( getInputFloatValue(currentObj.binSelector.fromInput, currentObj.binSelector.value) );
            currentObj.onBinSelectorValuesChanged();
         };
         this.settingsPanel.find(".leftCol").append(this.binSelector.$html);
@@ -197,8 +200,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         // Creates the X axis type radio buttons
         var XlinearChecked = (this.plotConfig.xAxisType == "linear") ? 'checked="checked"' : "";
         var XlogChecked = (this.plotConfig.xAxisType == "log") ? 'checked="checked"' : "";
-        this.xAxisRadios = $('<div class="pdsXAxisType">' +
-                              '<h3>X axis type</h3>' +
+        this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Xlinear">Linear</label>' +
                                 '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + XlinearChecked + '>' +
@@ -219,8 +222,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         // Creates the Y axis type radio buttons
         var YlinearChecked = (this.plotConfig.yAxisType == "linear") ? 'checked="checked"' : "";
         var YlogChecked = (this.plotConfig.yAxisType == "log") ? 'checked="checked"' : "";
-        this.yAxisRadios = $('<div class="pdsYAxisType">' +
-                              '<h3>Y axis type</h3>' +
+        this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Ylinear">Linear</label>' +
                                 '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + YlinearChecked + '>' +
@@ -241,8 +244,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           // Creates the X axis type radio buttons
           var ZlinearChecked = (this.plotConfig.zAxisType == "linear") ? 'checked="checked"' : "";
           var ZlogChecked = (this.plotConfig.zAxisType == "log") ? 'checked="checked"' : "";
-          this.zAxisRadios = $('<div class="pdsZAxisType">' +
-                                '<h3>Z axis type</h3>' +
+          this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
+                                '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Zlinear">Linear</label>' +
                                   '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + ZlinearChecked + '>' +
@@ -262,9 +265,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the plot type radio buttons
         this.plotTypeRadios = $('<div class="pdsPlotType">' +
-                              '<h3>Y axis data</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data</h3>' +
                               '<fieldset>' +
-                                '<label for="' + this.id + '_TypeXY">Power X Frecuency</label>' +
+                                '<label for="' + this.id + '_TypeXY">Power x Frequency</label>' +
                                 '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" checked="checked">' +
                                 '<label for="' + this.id + '_TypeX">Power</label>' +
                                 '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeX" value="X">' +
@@ -278,8 +281,14 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         $plotTypeRadios.change(function() {
           currentObj.plotConfig.plotType = this.value;
         });
+
+        this.settingCreated();
       }
     }
+  }
+
+  this.settingCreated = function(){
+    //Just for notify inherited plots that setting panel was created, must be overriden.
   }
 
   this.hideSettings = function(){
@@ -293,12 +302,29 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     }
   }
 
+  this.updateSettings = function(){
+    if (this.settingsPanel.find(".sliderSelector").length > 0) {
+      var settingsVisible = this.settingsVisible;
+      this.settingsVisible = false;
+      this.settingsPanel.find(".leftCol").html("");
+      this.settingsPanel.find(".rightCol").html("");
+      this.showSettings();
+      if (!settingsVisible) {
+        this.hideSettings();
+      }
+    }
+  }
+
   this.onSegmSelectorValuesChanged = function(){
     if (currentObj.plotConfig.duration > 0) {
       currentObj.plotConfig.segment_size = currentObj.segmSelector.value;
-      currentObj.plotConfig.nsegm = parseFloat(Math.round((currentObj.plotConfig.duration / currentObj.segmSelector.value) * 1000) / 1000).toFixed(2);
+      currentObj.updateNSegm();
     }
     currentObj.updateSegmSelector();
+  }
+
+  this.updateNSegm = function() {
+     this.plotConfig.nsegm =  parseFloat(fixedPrecision(this.plotConfig.duration / this.plotConfig.segment_size, 2));
   }
 
   this.updateSegmSelector = function () {
@@ -320,18 +346,24 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.updatePlotConfig = function () {
     var tab = getTabForSelector(this.id);
-    var plotConfig = this.plotConfig;
-    plotConfig.dt = tab.projectConfig.binSize;
+    var mustUpdateSettings = this.plotConfig.dt != tab.projectConfig.binSize;
+    this.plotConfig.dt = tab.projectConfig.binSize;
+
+    var maxSegmentSize = tab.projectConfig.maxSegmentSize / 4;
     if (!isNull(this.segmSelector)){
-      plotConfig.segment_size = (tab.projectConfig.maxSegmentSize != 0) ? Math.min(tab.projectConfig.maxSegmentSize, this.segmSelector.value) : currentObj.segmSelector.value;
+      this.plotConfig.segment_size = (maxSegmentSize != 0) ? Math.min(maxSegmentSize, this.segmSelector.value) : currentObj.segmSelector.value;
     } else {
-      plotConfig.segment_size = tab.projectConfig.maxSegmentSize;
+      this.plotConfig.segment_size = maxSegmentSize;
     }
-    plotConfig.nsegm = parseFloat(Math.round((plotConfig.duration / plotConfig.segment_size) * 1000) / 1000).toFixed(2);
+    this.updateNSegm();
 
     if (!isNull(this.segmSelector)){
       this.updateSegmSelector();
-      this.segmSelector.setValues(plotConfig.segment_size);
+      this.segmSelector.setValues(this.plotConfig.segment_size);
+    }
+
+    if (mustUpdateSettings){
+      this.updateSettings();
     }
   }
 
@@ -351,7 +383,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           this.plotConfig.maxRebinSize = (data[0].values[data[0].values.length - 1] - data[0].values[0]) / 4;
       }
 
-      if (currentObj.plotConfig.plotType == "X*Y") {
+      if (this.plotConfig.plotType == "X*Y") {
         for (i in data[0].values) {
           data[1].values[i] = data[1].values[i] * data[0].values[i];
         }
@@ -360,6 +392,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       if (data[2].values.length > 0
           && data[2].values[0] > 0) {
         this.plotConfig.duration = data[2].values[0];
+        this.updateNSegm();
       }
     } else {
       this.showWarn("Wrong data received");
@@ -368,18 +401,30 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     return data;
   }
 
-  this.getPlotlyConfig = function (data) {
-
-    var yLabel = currentObj.plotConfig.styles.labels[1];
-    if (currentObj.plotConfig.plotType == "X*Y") {
-      yLabel += " X " + currentObj.plotConfig.styles.labels[0];
+  this.getLabel = function (axis) {
+    if (axis == 1){
+      var yLabel = this.plotConfig.styles.labels[1];
+      if (this.plotConfig.plotType == "X*Y") {
+        if (this.plotConfig.styles.labels[0].startsWith("Freq")
+            && this.plotConfig.styles.labels[1].startsWith("Pow")) {
+              yLabel = "Power x Frequency (rms/mean)^2";
+          } else {
+            yLabel += " x " + this.plotConfig.styles.labels[0];
+          }
+      }
+      return yLabel;
+    } else {
+      return this.plotConfig.styles.labels[axis];
     }
+  }
+
+  this.getPlotlyConfig = function (data) {
 
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], [], [],
-                                        currentObj.plotConfig.styles.labels[0],
-                                        yLabel,
-                                        currentObj.plotConfig.styles.title);
+                                        this.getLabel(0),
+                                        this.getLabel(1),
+                                        this.plotConfig.styles.title);
 
     plotlyConfig = currentObj.prepareAxis(plotlyConfig);
 

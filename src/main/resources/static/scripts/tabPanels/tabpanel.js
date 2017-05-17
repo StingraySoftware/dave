@@ -50,7 +50,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   }
 
   this.addCloseButton = function () {
-    var closeTabBtn = $('<i class="fa fa-times closeTabPanel" aria-hidden="true"></i>')
+    var closeTabBtn = $('<i class="fa fa-times closeIcon closeTabPanel" aria-hidden="true"></i>')
     this.$navItem.find("." + this.navItemClass).append(closeTabBtn);
     closeTabBtn.bind("click", function( event ) {
       currentObj.close();
@@ -58,8 +58,6 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   }
 
   this.close = function () {
-    this.$navItem.remove();
-    this.$html.remove();
     log("TabPanel closed id: " + this.id);
     removeTab(this.id);
   }
@@ -122,16 +120,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
         currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
 
-        var lcab_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
-        var lccd_Added = currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
-
-        if (!lcab_Added && ! lccd_Added) {
-          waitingDialog.hide();
-        }
-
-      } else {
-        waitingDialog.hide();
+        currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+        currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
       }
+
+      waitingDialog.hide();
 
     } else if (filenames.length > 1){
       log("onLcDatasetChanged " + selectorKey + ": Multifile selection not supported yet..");
@@ -160,8 +153,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.onRmfApplied = function ( result ) {
     result = JSON.parse(result);
-    if (!isNull(result.success) && result.success){
+    if (!isNull(result) && result.length > 0){
       log("onRmfApplied: Getting new shema..");
+
+      currentObj.projectConfig.setRmfData(result);
+
       currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( schema, params ){
 
         log("onRmfApplied: Success!");
@@ -343,6 +339,29 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
     this.wfSelector.find(".wfSelectorDisableable").fadeIn();
   }
 
+  this.destroy = function () {
+    try {
+      delete this.classSelector;
+      delete this.navItemClass;
+      delete this.service;
+      this.$html.remove();
+      delete this.$html;
+      this.$navItem.remove();
+      delete this.$navItem;
+
+      delete this.wfSelector;
+      delete this.toolPanel;
+      delete this.outputPanel;
+      delete this.actionsHistory;
+      delete this.prevAction;
+      delete this.projectConfig;
+
+      delete this.id;
+    } catch (ex) {
+      log("Destroy tab " + this.id + " error: " + ex);
+    }
+  }
+
   //TAB_PANEL INITIALIZATION
   this.wfSelector = this.$html.find(".wfSelectorContainer");
 
@@ -364,7 +383,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                                       this.onFiltersChangedFromPlot,
                                       this.toolPanel.getFilters );
 
-  $(window).resize(function () { currentObj.outputPanel.resize(); });
+  $(window).resize(function () { if (!isNull(currentObj.outputPanel)){currentObj.outputPanel.resize();} });
 
   this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");
 
@@ -416,6 +435,7 @@ function removeTab (id) {
   }
 
   if (idx > -1){
+    tabPanels[idx].destroy();
     tabPanels.splice(idx,1);
 
     if (tabPanels.length > 0) {

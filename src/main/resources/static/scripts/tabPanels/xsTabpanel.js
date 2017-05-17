@@ -107,7 +107,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               this.getXSDataFromServer, //Only XSpectra plot triggers receive new data from server
                               this.outputPanel.onFiltersChangedFromPlot,
                               this.outputPanel.onPlotReady,
-                              this.outputPanel.$toolBar,
+                              null,
                               "fullWidth",
                               false,
                               this.projectConfig
@@ -128,7 +128,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               null,
                               this.outputPanel.onFiltersChangedFromPlot,
                               this.outputPanel.onPlotReady,
-                              this.outputPanel.$toolBar,
+                              null,
                               "",
                               false
                             );
@@ -148,7 +148,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               null,
                               this.outputPanel.onFiltersChangedFromPlot,
                               this.outputPanel.onPlotReady,
-                              this.outputPanel.$toolBar,
+                              null,
                               "",
                               false
                             );

@@ -70,19 +70,11 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
   }
 
   this.onNBandsChanged = function(){
-    try {
-      currentObj.plotConfig.n_bands = parseInt(currentObj.settingsPanel.find(".inputNBands").val());
-    } catch (e) {
-      log("onNBandsChanged error, plot" + currentObj.id + ", error: " + e);
-    }
+    currentObj.plotConfig.n_bands = getInputIntValue(currentObj.settingsPanel.find(".inputNBands"), currentObj.plotConfig.n_bands);
   }
 
   this.onStdChanged = function(){
-    try {
-      currentObj.plotConfig.std = parseFloat(currentObj.settingsPanel.find(".inputStd").val());
-    } catch (e) {
-      log("onStdChanged error, plot" + currentObj.id + ", error: " + e);
-    }
+    currentObj.plotConfig.std = getInputFloatValue(currentObj.settingsPanel.find(".inputStd"), currentObj.plotConfig.std);
   }
 
   //CovariancePlot plot attributes:
@@ -123,10 +115,10 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
     this.settingsPanel.find(".leftCol").append(this.refBandSelector.$html);
 
     this.settingsPanel.find(".rightCol").append('<p>Nº Bands: <input id="n_bands_' + this.id + '" class="inputNBands" type="text" name="n_bands_' + this.id + '" placeholder="' + this.plotConfig.n_bands + '" value="' + this.plotConfig.n_bands + '" /></p>');
-    this.settingsPanel.find(".rightCol").find(".inputNBands").on('input', this.onNBandsChanged);
+    this.settingsPanel.find(".rightCol").find(".inputNBands").on('change', this.onNBandsChanged);
 
     this.settingsPanel.find(".rightCol").append('<p>Standard deviation (<0 Default): <input id="std_' + this.id + '" class="inputStd" type="text" name="std_' + this.id + '" placeholder="' + this.plotConfig.std + '" value="' + this.plotConfig.std + '" /></p>');
-    this.settingsPanel.find(".rightCol").find(".inputStd").on('input', this.onStdChanged);
+    this.settingsPanel.find(".rightCol").find(".inputStd").on('change', this.onStdChanged);
 
     this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '"><i class="fa fa-cog" aria-hidden="true"></i></button>');
     this.$html.find(".plotTools").append(this.btnSettings);

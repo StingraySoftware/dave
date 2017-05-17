@@ -41,6 +41,45 @@ function isInt(n) {
    return n % 1 === 0;
 }
 
+function fixedPrecision(value, precision) {
+   return (precision > 0) ? parseFloat(value.toFixed(precision)) : Math.floor(value);
+}
+
+function getInputIntValue($input, defaultValue) {
+  return getInputValue($input, "int", defaultValue);
+}
+
+function getInputFloatValue($input, defaultValue) {
+  return getInputValue($input, "float", defaultValue);
+}
+
+function getInputValue($input, type, defaultValue) {
+  try {
+
+      var value = NaN;
+      var textVal = $input.val().replace(",", ".");
+      $input.val(textVal);
+
+      if (type == "float") {
+        value = parseFloat(textVal);
+      } else if (type == "int") {
+        value = parseInt(textVal);
+      }
+
+      if (jQuery.isNumeric(textVal) && !isNaN(value)) {
+        $input.removeClass("wrongValue");
+        return value;
+      } else {
+        $input.addClass("wrongValue");
+        return defaultValue;
+      }
+
+  } catch (e) {
+    $input.addClass("wrongValue");
+    return defaultValue;
+  }
+}
+
 function closest(arr, closestTo){
     var closest = Math.max.apply(null, arr);
     for(var i = 0; i < arr.length; i++){

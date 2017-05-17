@@ -12,6 +12,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.fromValue = fromValue;
   this.toValue = toValue;
   this.maxRange = this.initToValue - this.initFromValue;
+  this.precision = 3;
+  this.step = 1.0;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
@@ -41,11 +43,11 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.slider = this.$html.find("#slider-" + this.id);
 
   this.inputChanged = function ( event ) {
-    currentObj.setValues( currentObj.fromInput.val(), currentObj.toInput.val() );
+    currentObj.setValues( getInputFloatValue(currentObj.fromInput, currentObj.fromValue), getInputFloatValue(currentObj.toInput, currentObj.toValue) );
     currentObj.onSelectorValuesChanged();
   };
-  this.fromInput.on('input', this.inputChanged);
-  this.toInput.on('input', this.inputChanged);
+  this.fromInput.on('change', this.inputChanged);
+  this.toInput.on('change', this.inputChanged);
 
   //Prepares switchBox
   this.switchBox.click( function ( event ) {
@@ -74,6 +76,15 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          }
      });
 
+   this.setDisableable = function (disableable) {
+     if (disableable){
+       this.switchBox.parent().show();
+     } else {
+       this.switchBox.parent().hide();
+       this.setEnabled(true);
+     }
+   }
+
    //Set values method
    this.setValues = function (from, to, source) {
 
@@ -88,7 +99,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
        var moveSlider = source != "slider";
        // Fits values to max range
        if ((to - from) > this.maxRange){
-          if (this.toValue != Math.ceil(to)) {
+          if (this.toValue != fixedPrecision(to, this.precision)) {
             //ToValue was changed
             from = to - this.maxRange;
           } else {
@@ -97,26 +108,25 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           moveSlider = true;
        }
 
-       var step = 1.0;
        if (this.filterData.column == "TIME") {
           //Fixes values to binSize steps
           var projectConfig = getTabForSelector(this.id).projectConfig;
           var binSize = projectConfig.binSize;
-          step = parseFloat(binSize);
+          this.step = parseFloat(binSize);
           this.fromValue = Math.floor (from / binSize) * binSize;
           this.toValue = Math.floor (to / binSize) * binSize;
           projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.95, projectConfig.maxSegmentSize);
        }
 
-       this.fromValue = Math.floor(from);
-       this.toValue = Math.ceil(to);
-       this.fromInput.val( this.fromValue );
-       this.toInput.val( this.toValue );
+       this.fromValue = fixedPrecision(from, this.precision);
+       this.toValue = fixedPrecision(to, this.precision);
+       this.fromInput.val( this.fromValue ).removeClass("wrongValue");
+       this.toInput.val( this.toValue ).removeClass("wrongValue");
        if (moveSlider) {
          this.slider.slider('values', 0, this.fromValue);
          this.slider.slider('values', 1, this.toValue);
        }
-       this.slider.slider("option", "step", step);
+       this.slider.slider("option", "step", this.step);
    }
 
    this.getFilter = function () {
@@ -229,4 +239,16 @@ function sliderSelectors_setFiltersEnabled (selectors_array, source, columnName)
         selector.setEnabled(selector.filterData.replaceColumn == columnName);
       }
   }
+}
+
+function sliderSelectors_getSelectors (selectors_array, source, columnName) {
+  var selectors = [];
+  for (i in selectors_array) {
+    var selector = selectors_array[i];
+    if (selector.filterData.source == source
+        && selector.filterData.replaceColumn == columnName){
+        selectors.push(selector);
+      }
+  }
+  return selectors;
 }
