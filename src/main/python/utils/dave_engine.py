@@ -10,6 +10,7 @@ import copy
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
+from stingray.events import EventList
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
@@ -912,10 +913,10 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
 # @param: filters: array with the filters to apply
 #         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
 # @param: dt: The time resolution of the events.
-# @ref_band_interest : A tuple with minimum and maximum values of the range in the band
+# @param: ref_band_interest : A tuple with minimum and maximum values of the range in the band
 #                      of interest in reference channel.
-# @n_bands: The number of bands to split the refence band
-# @std: The standard deviation
+# @param: n_bands: The number of bands to split the refence band
+# @param: std: The standard deviation
 #
 def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, n_bands, std):
 
@@ -959,6 +960,8 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
             else:
                 logging.warn('get_covariance_spectrum: E column not found!')
+        else:
+            logging.warn('get_covariance_spectrum: Wrong dataset type!')
 
     except:
         logging.error(ExHelper.getException('get_covariance_spectrum'))
@@ -966,6 +969,151 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
     # Preapares the result
     result = push_to_results_array([], energy_arr)
     result = push_to_results_array_with_errors(result, covariance_arr, covariance_err_arr)
+    return result
+
+
+# get_rms_spectrum:
+# Returns the energy values and its correlated rms and rms errors
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: n_bands: The number of bands to split the refence band
+#
+def get_rms_spectrum(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, n_bands):
+    energy_arr = []
+    rms_arr =[]
+    rms_err_arr = []
+    duration = []
+    warnmsg = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            logging.warn("Wrong normalization")
+            return None
+
+        if pds_type not in ['Sng', 'Avg']:
+            logging.warn("Wrong power density spectrum type")
+            return None
+
+        if segm_size == 0:
+            segm_size = None
+
+        # Prepares GTI if passed
+        base_gti = load_gti_from_destination (gti_destination)
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+            min_time = events_table.columns["TIME"].values[0]
+            max_time = events_table.columns["TIME"].values[len(events_table.columns["TIME"].values) - 1]
+            duration = [(max_time - min_time)]
+
+            if "E" in events_table.columns:
+
+                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
+                                                                       events_table.columns["E"].values)])
+
+                min_energy = min(event_list[:,1])
+                energy_range = max(event_list[:,1]) - min_energy
+                energy_step = energy_range / n_bands
+
+                for i in range(n_bands):
+
+                    energy_low = min_energy + (i * energy_step)
+                    energy_high = energy_low + energy_step
+                    energy_arr.extend([(energy_low + energy_high) / 2])
+                    rms, rms_err = 0, 0
+
+                    try:
+                        filtered_event_list = event_list[ (energy_high>event_list[:,1]) & (event_list[:,1]>energy_low) ]
+                        if (len(filtered_event_list) > 0):
+
+                            evt_list = EventList(filtered_event_list[:,0], pi=filtered_event_list[:,1])
+                            if evt_list and evt_list.ncounts > 0:
+
+                                lc = evt_list.to_lc(dt)
+                                if lc:
+
+                                    gti = base_gti
+                                    if not gti:
+                                        gti = lc.gti
+
+                                    if segm_size > lc.tseg:
+                                        segm_size = lc.tseg
+                                        logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + ", segmsize bigger than lc.duration, lc.duration applied instead.")
+
+                                    pds = None
+                                    if pds_type == 'Sng':
+                                        pds = Powerspectrum(lc, norm=norm, gti=gti)
+                                    else:
+                                        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+
+                                    if pds:
+
+                                        if (freq_range[0] < 0):
+                                            freq_low = min(pds.freq)
+                                        else:
+                                            freq_low = freq_range[0]
+
+                                        if (freq_range[1] < 0):
+                                            freq_high = max(pds.freq)
+                                        else:
+                                            freq_high = freq_range[1]
+
+                                        rms, rms_err = pds.compute_rms(freq_low, freq_high)
+
+                                    else:
+                                        logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                                else:
+                                    logging.warn("get_rms_spectrum: can't create lightcurve. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                            else:
+                                logging.warn("get_rms_spectrum: can't create eventlist or counts are 0. Energy range: " + str(energy_low) + " to " + str(energy_high) + ", counts: " + str(len(filtered_event_list)))
+                        else:
+                            logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + " has no events")
+                    except:
+                        logging.warn(ExHelper.getException('get_rms_spectrum: Energy range: ' + str(energy_low) + ' to ' + str(energy_high)))
+
+                    rms_arr.extend([rms])
+                    rms_err_arr.extend([rms_err])
+
+            else:
+                logging.warn('get_rms_spectrum: E column not found!')
+                warnmsg = ['E column not found']
+        else:
+            logging.warn('get_rms_spectrum: Wrong dataset type!')
+            warnmsg = ['Wrong dataset type']
+
+    except:
+        logging.error(ExHelper.getException('get_rms_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
     return result
 
 

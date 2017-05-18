@@ -165,6 +165,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
         currentObj.projectConfig.setSchema(jsonSchema);
         currentObj.toolPanel.onRmfDatasetUploaded(jsonSchema);
         currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+        waitingDialog.hide();
 
       }, currentObj.onSchemaError, null);
     } else {

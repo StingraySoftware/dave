@@ -151,6 +151,16 @@ def get_covariance_spectrum():
             int(request.json['n_bands']), float(request.json['std']))
 
 
+@app.route('/get_rms_spectrum', methods=['POST'])
+def get_rms_spectrum():
+    return DaveEndpoint.get_rms_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'], request.json['freq_range'],
+            int(request.json['n_bands']))
+
+
 @app.route('/get_plot_data_from_models', methods=['POST'])
 def get_plot_data_from_models():
     return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])

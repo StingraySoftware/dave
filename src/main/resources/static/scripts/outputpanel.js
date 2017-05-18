@@ -544,12 +544,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                           filename,
                                                           bck_filename,
                                                           gti_filename,
-                                                          tableName, columnName, "fullScreen", titlePrefix + " DYNAMICAL SPECTRUM" )
-
+                                                          tableName, columnName, "fullScreen", titlePrefix + " DYNAMICAL SPECTRUM" );
       projectConfig.plots.push(dynamical_plot);
       currentObj.appendPlot(dynamical_plot, mustRefreshData);
-      return [lc_plot, pds_plot, dynamical_plot];
 
+      return [lc_plot, pds_plot, dynamical_plot];
     } else {
 
       return [lc_plot, pds_plot];
@@ -576,9 +575,16 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                       false,
                                       projectConfig
                                     );
-
     this.plots.push(covarianceSpectrumPlot);
     this.appendPlot(covarianceSpectrumPlot, true);
+
+    var rmsPlot = this.getRMSPlot ( projectConfig,
+                        projectConfig.filename,
+                        projectConfig.bckFilename,
+                        projectConfig.gtiFilename,
+                        "EVENTS", "PHA", "fullWidth", "RMS vs Energy" )
+    this.plots.push(rmsPlot);
+    this.appendPlot(rmsPlot, true);
 
     /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
                                 projectConfig.rmfFilename, "", "",
@@ -712,6 +718,33 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     });
 
   };
+
+  this.getRMSPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
+
+    log("getRMSPlot: filename: " + filename );
+    return new RmsPlot(
+                      this.generatePlotId("rms_" + filename),
+                      {
+                        filename: filename,
+                        bck_filename: bck_filename,
+                        gti_filename: gti_filename,
+                        styles: { type: "ligthcurve",
+                                  labels: ["Energy(keV)", "RMS"],
+                                  title: title,
+                                  showFitBtn: true },
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:columnName } ],
+                        mandatoryFilters: mandatoryFilters,
+                      },
+                      this.service.request_rms_spectrum,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      this.$toolBar,
+                      cssClass,
+                      false,
+                      projectConfig
+                    );
+  }
 
   this.appendPlot = function (plot, refreshData) {
     this.$body.append(plot.$html);
