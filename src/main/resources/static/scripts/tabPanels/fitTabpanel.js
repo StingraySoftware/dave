@@ -34,14 +34,14 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
       log("FitData received!, FitTabPanel: " + currentObj.id);
       var data = JSON.parse(jsdata);
-      if (!isNull(data)) {
+      if (!isNull(data) && data.length > 0) {
         currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;
         currentObj.addInfoPanel(data[1].values);
+        waitingDialog.hide();
+      } else {
+        showError();
       }
-
-      waitingDialog.hide();
-
     });
 
   };

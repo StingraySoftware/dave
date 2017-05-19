@@ -53,6 +53,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
    this.onUploadError = function ( error ) {
      if (error != undefined) {
        waitingDialog.hide();
+       showError();
        log("onUploadError:" + JSON.stringify(error));
        currentObj.$html.find("#" + currentObj.uploadInputId).val("");
      }

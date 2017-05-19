@@ -113,9 +113,25 @@ function onFitPlotClicked(plot) {
   waitingDialog.show('Preparing new tab ...');
 
   var tab = getTabForSelector(plot.id);
-  addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot, tab.projectConfig);
+  if (!isNull(tab)) {
+    addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot, tab.projectConfig);
+
+    setTimeout( function () {
+      waitingDialog.hide();
+    }, 850);
+  } else {
+    showError(null, "Can't find tab for plot: " + plot.id);
+  }
+}
+
+function showError(errorMsg, exception) {
+
+  if (isNull(errorMsg)) { errorMsg = "Something went wrong!"; }
+
+  waitingDialog.show(errorMsg, { progressType:"warning" });
+  log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
 
   setTimeout( function () {
     waitingDialog.hide();
-  }, 850);
+  }, 1600);
 }

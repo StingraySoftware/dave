@@ -212,7 +212,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
     } else {
       log("onSchemaChangedWithKey error:" + schema);
-      waitingDialog.hide();
+      showError();
     }
   }
 
