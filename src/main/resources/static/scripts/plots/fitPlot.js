@@ -89,8 +89,6 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
   this.setData = function ( data, modelsData, estimatedModelsData, errorsData ) {
 
-    currentObj.updatePlotConfig();
-
     currentObj.showWarn("");
 
     if (isNull(data) || isNull(modelsData)) {

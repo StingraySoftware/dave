@@ -54,6 +54,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.$html.find(".plotTools").append(this.btnBack);
   this.btnBack.click(function(event){
     currentObj.hideSettings();
+    currentObj.refreshData();
   });
 
   //If plot is pds adds Fits button to plot
@@ -113,10 +114,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the Segment length selector
         var tab = getTabForSelector(this.id);
-        var binSize = tab.projectConfig.binSize;
-        var segmSize = !isNull(this.plotConfig.segment_size) ? this.plotConfig.segment_size : Math.max(binSize, tab.projectConfig.avgSegmentSize);
-        var maxSegmentSize = !isNull(this.plotConfig.zAxisType) ? tab.projectConfig.maxSegmentSize / 2 : tab.projectConfig.maxSegmentSize;
-        var maxValue = (maxSegmentSize > 0) ? maxSegmentSize : segmSize * 100;
+        var binSize = this.plotConfig.dt;
+        var segmSize = this.plotConfig.segment_size;
+        var maxValue = (this.plotConfig.maxSegmentSize > 0) ? this.plotConfig.maxSegmentSize : segmSize * 100;
         if (this.plotConfig.duration > 0) {
           maxValue = Math.min(maxValue, this.plotConfig.duration);
         }
@@ -298,20 +298,31 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       this.$html.find(".plot").show();
       this.$html.find(".plotTools").children().show();
       this.btnBack.hide();
-      this.refreshData();
     }
   }
 
   this.updateSettings = function(){
     if (this.settingsPanel.find(".sliderSelector").length > 0) {
-      var settingsVisible = this.settingsVisible;
-      this.settingsVisible = false;
-      this.settingsPanel.find(".leftCol").html("");
-      this.settingsPanel.find(".rightCol").html("");
-      this.showSettings();
-      if (!settingsVisible) {
-        this.hideSettings();
+
+      if (!isNull(this.segmSelector)){
+        if ((this.segmSelector.step != this.plotConfig.binSize)
+            || (this.segmSelector.initToValue != this.plotConfig.maxSegmentSize)) {
+
+          var settingsVisible = this.settingsVisible;
+          this.settingsVisible = false;
+          this.settingsPanel.find(".leftCol").html("");
+          this.settingsPanel.find(".rightCol").html("");
+          this.showSettings();
+          if (!settingsVisible) {
+            this.hideSettings();
+          }
+
+        } else {
+          this.updateSegmSelector();
+          this.segmSelector.setValues(this.plotConfig.segment_size);
+        }
       }
+
     }
   }
 
@@ -346,24 +357,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.updatePlotConfig = function () {
     var tab = getTabForSelector(this.id);
-    var mustUpdateSettings = this.plotConfig.dt != tab.projectConfig.binSize;
-    this.plotConfig.dt = tab.projectConfig.binSize;
-
-    var maxSegmentSize = tab.projectConfig.maxSegmentSize / 4;
-    if (!isNull(this.segmSelector)){
-      this.plotConfig.segment_size = (maxSegmentSize != 0) ? Math.min(maxSegmentSize, this.segmSelector.value) : currentObj.segmSelector.value;
+    if (!isNull(tab)) {
+      this.plotConfig.dt = tab.projectConfig.binSize;
+      this.plotConfig.maxSegmentSize = !isNull(this.plotConfig.zAxisType) ? tab.projectConfig.maxSegmentSize / 2 : tab.projectConfig.maxSegmentSize;
+      this.plotConfig.segment_size = !isNull(this.segmSelector) ? Math.min(this.segmSelector.value, this.plotConfig.maxSegmentSize) : this.plotConfig.maxSegmentSize / 4;
+      this.updateNSegm();
     } else {
-      this.plotConfig.segment_size = maxSegmentSize;
-    }
-    this.updateNSegm();
-
-    if (!isNull(this.segmSelector)){
-      this.updateSegmSelector();
-      this.segmSelector.setValues(this.plotConfig.segment_size);
-    }
-
-    if (mustUpdateSettings){
-      this.updateSettings();
+      log("UpdatePlotConfig plot data " + this.id + " error: Tab not found for plot id");
     }
   }
 
@@ -394,6 +394,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         this.plotConfig.duration = data[2].values[0];
         this.updateNSegm();
       }
+
+      this.updateSettings();
+
     } else {
       this.showWarn("Wrong data received");
     }

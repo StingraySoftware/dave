@@ -209,8 +209,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.setData = function ( data ) {
 
-   currentObj.updatePlotConfig();
-
    currentObj.showWarn("");
 
    if (isNull(data)) {

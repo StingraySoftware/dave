@@ -280,7 +280,10 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
       }
       currentObj.toolPanel.undoBtn.prop('disabled', (currentObj.prevAction == null));
       //Stores a action on prevAction tmp var, uses $.extend for cloning data (new obj reference)
-      currentObj.prevAction = { type: actionType, actionData: $.extend(true, [], actionData), binSize: this.projectConfig.binSize };
+      currentObj.prevAction = { type: actionType,
+                                actionData: $.extend(true, [], actionData),
+                                binSize: this.projectConfig.binSize,
+                                maxSegmentSize: this.projectConfig.maxSegmentSize };
   }
 
   this.undoHistory = function () {
@@ -312,6 +315,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
                var filters = action.actionData;
                currentObj.toolPanel.setFilters(filters);
                currentObj.setBinSize(action.binSize);
+               currentObj.projectConfig.maxSegmentSize = action.maxSegmentSize;
                currentObj.outputPanel.onDatasetValuesChanged(filters);
                break;
 
