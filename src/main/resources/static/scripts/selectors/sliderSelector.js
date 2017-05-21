@@ -226,7 +226,7 @@ function sliderSelectors_setFilters (filters, selectors_array) {
       filterSetted = selectors_array[i].setFilter(filters[f]);
       if (filterSetted) {break;}
     }
-    if (!filterSetted) {
+    if (!filterSetted && isNull(selectors_array[i].filterData.replaceColumn)) {
       selectors_array[i].setEnabled(false);
     }
   }

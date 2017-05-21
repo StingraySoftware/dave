@@ -301,11 +301,15 @@ function ToolPanel (id,
           //Prepares Energy color filters
           this.createColorSelectors(column);
           this.onColorFilterTypeChanged("E");
-          var colorFilterTypeRadios = this.$html.find(".colorFilterType").find("input");
-          colorFilterTypeRadios.filter('[value=PHA]').prop('checked', false).checkboxradio('refresh');
-          colorFilterTypeRadios.filter('[value=E]').prop('checked', true).checkboxradio('refresh');
+          this.setColorFilterRadios("E");
         }
     }
+  }
+
+  this.setColorFilterRadios = function (column) {
+    var colorFilterTypeRadios = this.$html.find(".colorFilterType").find("input");
+    colorFilterTypeRadios.filter('[value=PHA]').prop('checked', column == "PHA").checkboxradio('refresh');
+    colorFilterTypeRadios.filter('[value=E]').prop('checked', column == "E").checkboxradio('refresh');
   }
 
   this.applyFilters = function (filters) {
@@ -313,6 +317,30 @@ function ToolPanel (id,
   }
 
   this.setFilters = function (filters) {
+    for (f in filters) {
+      if (!isNull(filters[f].source)
+        && !isNull(filters[f].replaceColumn)
+        && filters[f].source == 'ColorSelector') {
+        //Sets Energy or Channels filters visible
+        var tab = getTabForSelector(currentObj.id);
+        var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
+        if ((tab.projectConfig.rmfFilename == "")
+            || filters[f].replaceColumn == "PHA") {
+          selectorsContainer.find(".colorSelectors_E").hide();
+          selectorsContainer.find(".colorSelectors_PHA").show();
+          sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
+          currentObj.setColorFilterRadios("PHA");
+          currentObj.replaceColumn = "PHA";
+        } else {
+          selectorsContainer.find(".colorSelectors_PHA").hide();
+          selectorsContainer.find(".colorSelectors_E").show();
+          sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
+          currentObj.setColorFilterRadios("E");
+          currentObj.replaceColumn = "E";
+        }
+        break;
+      }
+    }
     sliderSelectors_setFilters(filters, currentObj.selectors_array);
   }
 
