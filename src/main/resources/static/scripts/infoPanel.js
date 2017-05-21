@@ -14,14 +14,14 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
                    '<button class="btn btn-default btnShowAll"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>' +
                    '<button class="btn btn-default btnHide"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                   '<h3>' + title + '</h3>' +
+                   '<h3>' + title + ':</h3>' +
                    '<table class="properties"></table>' +
                  '</div>');
 
   this.container = this.$html.find(".properties");
 
   if (!isNull(toolbar)){
-    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> HEADER INFO</button>');
+    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> ' + title + '</button>');
     this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();

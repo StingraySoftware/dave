@@ -95,15 +95,15 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     // Adds FITS info if found
     if (!isNull(projectConfig.schema["EVENTS"])) {
-      this.addInfoPanel( "EVENTS HEADER:", "EVENTS", projectConfig.schema );
+      this.addInfoPanel( "EVENTS", projectConfig.schema );
     } else if (!isNull(projectConfig.schema["RATE"])) {
-      this.addInfoPanel( "LIGHTCURVE HEADER:", "RATE", projectConfig.schema );
+      this.addInfoPanel( "RATE", projectConfig.schema );
     }
   }
 
-  this.addInfoPanel = function ( title, tableName, schema ) {
+  this.addInfoPanel = function ( tableName, schema ) {
     if (!isNull(schema[tableName]["HEADER"])) {
-      this.infoPanel = new InfoPanel("infoPanel", title, schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
+      this.infoPanel = new InfoPanel("infoPanel", "Header File Information", schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
       this.$body.append(this.infoPanel.$html);
     }
   }
@@ -173,7 +173,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
-                                        "B/A LC",
+                                        "Softness Light Curve (B/A)",
                                         [], "fullWidth", false );
     baLcPlot.getDataFromServerFn = null; //Disable calls to server
 
@@ -182,7 +182,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
-                                        "D/C LC",
+                                        "Hardness Light Curve (D/C)",
                                         [], "fullWidth", false );
     dcLcPlot.getDataFromServerFn = null; //Disable calls to server
 
@@ -192,7 +192,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                       gti_filename,
                                       "EVENTS",
                                       ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
-                                      "SRC LC",
+                                      "Total Light Curve",
                                       [], "fullWidth", false ),
 
               baLcPlot,
@@ -203,7 +203,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["D/C Color Ratio(c/s)", "B/A Color Ratio(c/s)"], "Color-Color Diagram",
+                                                        ["D/C Color Ratio(c/s)", "B/A Color Ratio(c/s)"], "Color-Color Diagram (CCD)",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
@@ -214,7 +214,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["Total Count Rate (c/s)", "B/A Color Ratio(c/s)"], "Softness Intensity Diagram",
+                                                        ["Total Count Rate (c/s)", "B/A Color Ratio(c/s)"], "Softness Intensity Diagram (SID)",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_A" } ],
                                                         "", true, baLcPlot ),
@@ -223,7 +223,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["Total Count Rate (c/s)", "D/C Color Ratio(c/s)"], "Hardness Intensity Diagram",
+                                                        ["Total Count Rate (c/s)", "D/C Color Ratio(c/s)"], "Hardness Intensity Diagram (HID)",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_C" } ],
                                                         "", true, dcLcPlot ),
@@ -232,14 +232,14 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "fullWidth", "SRC PDS" ),
+                                  "EVENTS", "PHA", "fullWidth", "Total Power Density Spectrum (PDS)" ),
 
               this.getLightCurvePlot ( filename,
                                         bck_filename,
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
-                                        "A LC",
+                                        "Light Curve Range=A",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
                                         "", false ),
 
@@ -247,7 +247,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "A PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=A",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ]),
 
               this.getLightCurvePlot ( filename,
@@ -255,7 +255,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
-                                        "B LC",
+                                        "Light Curve Range=B",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
                                         "", false ),
 
@@ -263,7 +263,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "B PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=B",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ]),
 
               this.getLightCurvePlot ( filename,
@@ -271,7 +271,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
-                                        "C LC",
+                                        "Light Curve Range=C",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
                                         "", false ),
 
@@ -279,7 +279,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "C PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=C",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ]),
 
               this.getLightCurvePlot ( filename,
@@ -287,7 +287,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                         gti_filename,
                                         "EVENTS",
                                         ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
-                                        "D LC",
+                                        "Light Curve Range=D",
                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
                                         "", false ),
 
@@ -295,14 +295,14 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "D PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=D",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ]),
 
               this.getDynamicalSpectrumPlot ( projectConfig,
                                               filename,
                                               bck_filename,
                                               gti_filename,
-                                              "EVENTS", "PHA", "fullScreen", "SRC DYNAMICAL SPECTRUM" ),
+                                              "EVENTS", "PHA", "fullScreen", "Total Dynamical Power Spectrum" ),
 
               this.getPlot (this.id + "_phaVsCounts_" + filename,
                             filename, bck_filename, gti_filename,
@@ -489,7 +489,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             joined_lc_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("SRC"),
                                                                       cache_key,
                                                                       ["Total Count Rate (c/s)", newKeySufix + " Color Ratio"],
-                                                                      ((newKeySufix == "B/A") ? "Softness Intensity Diagram" : "Hardness Intensity Diagram"),
+                                                                      ((newKeySufix == "B/A") ? "Softness Intensity Diagram (SID)" : "Hardness Intensity Diagram (HID)"),
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
             currentObj.appendPlot(joined_lc_plot);
@@ -501,7 +501,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                 var abcd_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("LC_B/A"),
                                                                       projectConfig.getFile("LC_D/C"),
                                                                       ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
-                                                                      "Color-Color Diagram", "", true);
+                                                                      "Color-Color Diagram (CCD)", "", true);
                 projectConfig.plots.push(abcd_plot);
                 currentObj.appendPlot(abcd_plot);
             }
@@ -522,19 +522,37 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     var yLabel = ((titlePrefix == "B/A") || (titlePrefix == "D/C")) ? "Color Ratio" : "Count Rate(c/s)";
 
+    var title = titlePrefix + " LC";
+    if (titlePrefix == "SRC") {
+      title = "Total Light Curve";
+    } else if (titlePrefix.startsWith("LC")) {
+      title = "Light Curve Range=" + titlePrefix.replace("LC", "");
+    } else if (titlePrefix == "B/A") {
+      title = "Softness Light Curve (B/A)";
+    } else if (titlePrefix == "D/C") {
+      title = "Hardness Light Curve (D/C)";
+    }
+
     var lc_plot = currentObj.getLightCurvePlot ( filename, bck_filename, gti_filename,
                                                 tableName,
                                                 ["TIME (" + projectConfig.timeUnit  + ")", yLabel],
-                                                titlePrefix + " LC",
+                                                title,
                                                 [], cssClass, false);
     projectConfig.plots.push(lc_plot);
     currentObj.appendPlot(lc_plot, mustRefreshData);
 
     var pds_plot = null;
     if ((titlePrefix != "B/A") && (titlePrefix != "D/C")) {
+
+      var title = titlePrefix + " PDS";
+      if (titlePrefix == "SRC") {
+        title = "Total Power Density Spectrum (PDS)";
+      } else if (titlePrefix.startsWith("LC")) {
+        title = "Power Density Spectrum Range=" + titlePrefix.replace("LC", "");
+      }
+
       pds_plot = this.getPDSPlot ( projectConfig, filename, bck_filename, gti_filename,
-                                      tableName, columnName, cssClass, titlePrefix + " PDS" );
-      pds_plot.plotConfig.styles.title = titlePrefix + " PDS";
+                                      tableName, columnName, cssClass, title );
       projectConfig.plots.push(pds_plot);
       currentObj.appendPlot(pds_plot, mustRefreshData);
     }
@@ -544,7 +562,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                           filename,
                                                           bck_filename,
                                                           gti_filename,
-                                                          tableName, columnName, "fullScreen", titlePrefix + " DYNAMICAL SPECTRUM" );
+                                                          tableName, columnName, "fullScreen", "Total Dynamical Power Spectrum" );
       projectConfig.plots.push(dynamical_plot);
       currentObj.appendPlot(dynamical_plot, mustRefreshData);
 
