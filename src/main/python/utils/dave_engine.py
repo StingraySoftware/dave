@@ -1270,13 +1270,13 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                                         filters, axis, dt, nsegm, segm_size, norm, pds_type)
         if pds:
 
-            logging.debug('get_bootstrap_results pds.freq: ' + str(len(pds.freq)))
-            logging.debug('get_bootstrap_results pds.power: ' + str(len(pds.power)))
+            #logging.debug('get_bootstrap_results pds.freq: ' + str(len(pds.freq)))
+            #logging.debug('get_bootstrap_results pds.power: ' + str(len(pds.power)))
 
             # Creates the model from dave_model
             fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
 
-            logging.debug('get_bootstrap_results fit_model: ' + str(fit_model))
+            #logging.debug('get_bootstrap_results fit_model: ' + str(fit_model))
 
             if fit_model:
 
@@ -1284,7 +1284,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                 #             then fit the simulated PDS and record the new model params and the PDS values
 
                 rms, rms_err = pds.compute_rms(min(pds.freq), max(pds.freq))
-                logging.debug('get_bootstrap_results pds.rms: ' + str(rms))
+                #logging.debug('get_bootstrap_results pds.rms: ' + str(rms))
 
                 N = int(math.ceil(segm_size * nsegm))
                 if seed < 0:
@@ -1298,17 +1298,17 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         the_simulator = simulator.Simulator(N=N, dt=dt, mean=mean,
                                                              rms=rms, red_noise=red_noise, random_state=seed)
 
-                        logging.debug('get_bootstrap_results for i: ' + str(i) + ' the_simulator: ' + str(the_simulator))
+                        #logging.debug('get_bootstrap_results for i: ' + str(i) + ' the_simulator: ' + str(the_simulator))
 
                         lc = the_simulator.simulate(fit_model)
 
-                        logging.debug('get_bootstrap_results for i: ' + str(i) + ' lc.time: ' + str(len(lc.time)))
-                        logging.debug('get_bootstrap_results for i: ' + str(i) + ' lc.counts: ' + str(len(lc.counts)))
+                        #logging.debug('get_bootstrap_results for i: ' + str(i) + ' lc.time: ' + str(len(lc.time)))
+                        #logging.debug('get_bootstrap_results for i: ' + str(i) + ' lc.counts: ' + str(len(lc.counts)))
 
                         pds = AveragedPowerspectrum(lc, segm_size)
 
-                        logging.debug('get_bootstrap_results for i: ' + str(i) + ' pds.freq: ' + str(len(pds.freq)))
-                        logging.debug('get_bootstrap_results for i: ' + str(i) + ' pds.power: ' + str(len(pds.power)))
+                        #logging.debug('get_bootstrap_results for i: ' + str(i) + ' pds.freq: ' + str(len(pds.freq)))
+                        #logging.debug('get_bootstrap_results for i: ' + str(i) + ' pds.power: ' + str(len(pds.power)))
 
                         parest, res = fit_powerspectrum(pds, fit_model, starting_pars,
                                         max_post=False, priors=None, fitmethod="L-BFGS-B")

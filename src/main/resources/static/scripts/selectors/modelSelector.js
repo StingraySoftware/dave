@@ -55,7 +55,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
   }).hide();
 
   this.getRandomColor = function () {
-    return '#'+Math.floor(Math.random()*16777215).toString(16);
+    return '#'+ fillWithZeros(Math.floor(Math.random()*16777215).toString(16), 6);
   }
 
   this.addModel = function (model){
@@ -76,14 +76,24 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
         models.push(model);
       }
     }
+
+    if (!estimated) {
+      if (models.length > 0) {
+        currentObj.$html.find(".actionsContainer").show();
+      } else {
+        currentObj.$html.find(".actionsContainer").hide();
+      }
+    }
+
     return models;
   };
 
   this.setEstimation = function (params, showApplyBtn) {
     var idx = 0;
+    var visibleModelsCount = this.getModels().length;
     for (i in this.models){
       if (this.models[i].visible) {
-        this.models[i].setEstimation(params, idx);
+        this.models[i].setEstimation(params, (visibleModelsCount > 1) ? idx : -1);
         idx ++;
       }
     }
@@ -146,7 +156,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   //Prepares switchBox
   this.$html.find("#switch_" + this.id).click( function ( event ) {
     currentObj.visible = !currentObj.visible;
-    currentObj.onValuesChanged();
+    if (!currentObj.onValuesChanged()) { currentObj.onModelsChangedFn(); }
     if (currentObj.visible) {
       $(this).switchClass("fa-plus-square", "fa-minus-square");
       currentObj.$html.find(".paramContainer").fadeIn();
@@ -173,10 +183,12 @@ function Model(idx, title, type, color, onModelsChangedFn) {
                           '</div>');
 
       if (this.isFixedParam(paramName)){
+        //If param is fixed, just set it as fixed
         $paramHtml.find(".switch-btn").switchClass("fa-square-o", "fa-check-square-o");
         $paramHtml.find("input").addClass("fixed");
         $paramHtml.find("input").attr("disabled", true);
       } else if (!isNull(this[paramName + "Err"])){
+        //If we have errors calculated for this param show it
         var error = this[paramName + "Err"];
         var $errorHtml = $('<div class="error">' +
                               '<div class="err">+/-' + Math.abs(error).toFixed(3) + '</div>' +
@@ -185,6 +197,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
 
       } else if (!isNull(this[paramName + "Est"])){
         if (this[paramName + "Est"].value != this[paramName]){
+          //If the estimation is not applied, shows the estimation near the input
           var estimation = this[paramName + "Est"];
           var $estimationHtml = $('<div class="estimation">' +
                                     '<a href="#" class="applySngBtn" param="' + paramName + '"><i class="fa fa-check-circle" aria-hidden="true"></i></a>' +
@@ -197,9 +210,12 @@ function Model(idx, title, type, color, onModelsChangedFn) {
             currentObj.onModelsChangedFn();
           });
           $paramHtml.append($estimationHtml);
-        } else {
-          $paramHtml.find("input").addClass("applied");
         }
+      }
+
+      //Sets the text as green if has same value that the estimation (applied)
+      if (!isNull(this[paramName + "Est"]) && this[paramName + "Est"].value == this[paramName]) {
+        $paramHtml.find("input").addClass("applied");
       }
 
       $paramContainer.append($paramHtml);
@@ -214,10 +230,11 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   }
 
   this.onValuesChanged = function(){
+    var modelChanged = false;
+
     try {
       var modelParams = currentObj.getParammeters();
       var paramContainer = currentObj.$html.find(".paramContainer");
-      var modelChanged = false;
 
       for (p in modelParams){
         var paramName = modelParams[p];
@@ -235,6 +252,8 @@ function Model(idx, title, type, color, onModelsChangedFn) {
     } catch (e) {
       log("onValuesChanged error, model" + currentObj.id + ", error: " + e);
     }
+
+    return modelChanged;
   }
 
   this.getModel = function (estimated) {
@@ -271,7 +290,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
     var modelParams = this.getParammeters();
 
     for (p in modelParams){
-      var paramName = modelParams[p] + "_" + modelIdx;
+      var paramName = modelParams[p] + ((modelIdx != -1) ? "_" + modelIdx : "");
 
       for (i in params){
         var param = params[i];
@@ -305,7 +324,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   this.applyEstimation = function (paramName) {
     if (!isNull(this[paramName + "Est"])){
       this[paramName] = this[paramName + "Est"].value;
-      this[paramName + "Est"] = null;
+      //this[paramName + "Est"] = null;
     }
   }
 

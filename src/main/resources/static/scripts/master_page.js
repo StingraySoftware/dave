@@ -80,6 +80,12 @@ function getInputValue($input, type, defaultValue) {
   }
 }
 
+function fillWithZeros(num, length) {
+  num = ""+num;
+  while(num.length < length) num = "0"+num;
+  return num;
+}
+
 function closest(arr, closestTo){
     var closest = Math.max.apply(null, arr);
     for(var i = 0; i < arr.length; i++){
