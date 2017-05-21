@@ -64,6 +64,11 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.onDatasetChanged = function ( filenames, selectorKey ) {
 
+    if (selectorKey == "SRC") {
+      //If SRC file was load just create a new project config
+      currentObj.projectConfig = new ProjectConfig();
+    }
+
     if (filenames.length == 1) {
 
       currentObj.projectConfig.setFiles(selectorKey, [], filenames[0]);
@@ -112,14 +117,28 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
 
   this.onLcDatasetChanged = function ( filenames, selectorKey ) {
 
+    if (selectorKey == "SRC") {
+      //If SRC file was load just create a new project config
+      currentObj.projectConfig = new ProjectConfig();
+    }
+
     if (filenames.length == 1) {
 
       log("onLcDatasetChanged " + selectorKey + ": " + filenames[0]);
       currentObj.projectConfig.setFile(selectorKey, filenames[0]);
       if (currentObj.projectConfig.hasSchema()) {
 
-        currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
+        //Cleans previous plots for this selectorKey
+        currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
+        currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
+        if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
+          currentObj.projectConfig.setFile("LC_B/A", "");
+        } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
+          currentObj.projectConfig.setFile("LC_D/C", "");
+        }
 
+        //Add the new plots for this selectorKey
+        currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
         currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
         currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
       }

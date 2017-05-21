@@ -17,6 +17,7 @@ function ProjectConfig(){
   this.timeUnit = "s";
   this.totalDuration = 0;
   this.plots = [];
+  this.plotsIdsByKey = {};
   this.rmfData = [];
 
   this.hasSchema = function (schema) {
@@ -165,5 +166,28 @@ function ProjectConfig(){
 
   this.binSizeCouldHaveAliasing = function () {
     return this.binSize != this.minBinSize && this.binSize < (this.minBinSize * 2.0);
+  }
+
+  this.addPlotId = function (plotId, key) {
+    if (!isNull(key)) {
+      if (isNull(this.plotsIdsByKey[key])){
+        this.plotsIdsByKey[key] = [];
+      }
+      this.plotsIdsByKey[key].push(plotId);
+    }
+  }
+
+  this.getPlotsIdsByKey = function (key) {
+    if (!isNull(this.plotsIdsByKey[key])) {
+      return this.plotsIdsByKey[key];
+    }
+
+    return [];
+  }
+
+  this.cleanPlotsIdsKey = function (key) {
+    if (!isNull(this.plotsIdsByKey[key])) {
+      this.plotsIdsByKey[key] = [];
+    }
   }
 }

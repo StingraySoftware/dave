@@ -39,7 +39,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                 '</div>');
 
  if (!isNull(toolbar)) {
-   this.btnShow = $('<button class="btn btn-default btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();

@@ -21,7 +21,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.container = this.$html.find(".properties");
 
   if (!isNull(toolbar)){
-    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> ' + title + '</button>');
+    this.btnShow = $('<button class="btn  btn-default btnShow ' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> ' + title + '</button>');
     this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();

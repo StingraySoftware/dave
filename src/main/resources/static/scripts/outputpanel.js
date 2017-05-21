@@ -103,7 +103,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   this.addInfoPanel = function ( tableName, schema ) {
     if (!isNull(schema[tableName]["HEADER"])) {
-      this.infoPanel = new InfoPanel("infoPanel", "Header File Information", schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
+      this.infoPanel = new InfoPanel(this.generatePlotId("infoPanel"), "Header File Information", schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
       this.$body.append(this.infoPanel.$html);
     }
   }
@@ -492,6 +492,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                                       ((newKeySufix == "B/A") ? "Softness Intensity Diagram (SID)" : "Hardness Intensity Diagram (HID)"),
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
+            currentObj.plots.push(joined_lc_plot);
+            projectConfig.addPlotId(joined_lc_plot.id, ((newKeySufix == "B/A") ? "LCB" : "LCD"));
+            projectConfig.addPlotId(joined_lc_plot.id, ((newKeySufix == "B/A") ? "LCA" : "LCC"));
             currentObj.appendPlot(joined_lc_plot);
 
             //After getting A/B and C/D we can calculate the color to color plot
@@ -503,6 +506,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                                       ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
                                                                       "Color-Color Diagram (CCD)", "", true);
                 projectConfig.plots.push(abcd_plot);
+                currentObj.plots.push(abcd_plot);
+                projectConfig.addPlotId(abcd_plot.id, "LCA");
+                projectConfig.addPlotId(abcd_plot.id, "LCB");
+                projectConfig.addPlotId(abcd_plot.id, "LCC");
+                projectConfig.addPlotId(abcd_plot.id, "LCD");
                 currentObj.appendPlot(abcd_plot);
             }
           }
@@ -539,6 +547,16 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                 title,
                                                 [], cssClass, false);
     projectConfig.plots.push(lc_plot);
+    currentObj.plots.push(lc_plot);
+    if (titlePrefix == "B/A"){
+      projectConfig.addPlotId(lc_plot.id, "LCA");
+      projectConfig.addPlotId(lc_plot.id, "LCB");
+    } else if (titlePrefix == "D/C"){
+      projectConfig.addPlotId(lc_plot.id, "LCC");
+      projectConfig.addPlotId(lc_plot.id, "LCD");
+    } else {
+      projectConfig.addPlotId(lc_plot.id, titlePrefix);
+    }
     currentObj.appendPlot(lc_plot, mustRefreshData);
 
     var pds_plot = null;
@@ -554,6 +572,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       pds_plot = this.getPDSPlot ( projectConfig, filename, bck_filename, gti_filename,
                                       tableName, columnName, cssClass, title );
       projectConfig.plots.push(pds_plot);
+      currentObj.plots.push(pds_plot);
+      projectConfig.addPlotId(pds_plot.id, titlePrefix);
       currentObj.appendPlot(pds_plot, mustRefreshData);
     }
 
@@ -564,6 +584,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                           gti_filename,
                                                           tableName, columnName, "fullScreen", "Total Dynamical Power Spectrum" );
       projectConfig.plots.push(dynamical_plot);
+      projectConfig.addPlotId(dynamical_plot.id, "SRC");
       currentObj.appendPlot(dynamical_plot, mustRefreshData);
 
       return [lc_plot, pds_plot, dynamical_plot];
@@ -768,6 +789,20 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.$body.append(plot.$html);
     if (isNull(refreshData) || refreshData) {
       plot.onDatasetValuesChanged(this.getFilters());
+    }
+  }
+
+  this.removePlotsById = function (plotIds) {
+    for (plotIdx in plotIds){
+      var plotId = plotIds[plotIdx];
+      var plot = this.getPlotById(plotId);
+      if (!isNull(plot)) {
+        plot.$html.remove();
+        this.$toolBar.find("." + plot.id).remove();
+        this.plots = this.plots.filter(function(plot) {
+                          return plot.id !== plotId;
+                      });
+      }
     }
   }
 
