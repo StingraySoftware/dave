@@ -94,6 +94,12 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           var swap = from;
           from = to;
           to = swap;
+       } else if (from == to) {
+         if (to + this.step > this.initToValue){
+           from -= this.step;
+         } else {
+           to += this.step;
+         }
        }
 
        var moveSlider = source != "slider";
@@ -115,7 +121,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           this.step = parseFloat(binSize);
           this.fromValue = Math.floor (from / binSize) * binSize;
           this.toValue = Math.floor (to / binSize) * binSize;
-          projectConfig.maxSegmentSize = Math.min ((this.toValue - this.fromValue) * 0.95, projectConfig.maxSegmentSize);
+          projectConfig.maxSegmentSize = Math.max ((this.toValue - this.fromValue) * 0.95, this.step);
        }
 
        this.fromValue = fixedPrecision(from, this.precision);

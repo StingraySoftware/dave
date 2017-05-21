@@ -116,6 +116,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         var tab = getTabForSelector(this.id);
         var binSize = this.plotConfig.dt;
         var segmSize = this.plotConfig.segment_size;
+        var minValue = binSize * 6;
         var maxValue = (this.plotConfig.maxSegmentSize > 0) ? this.plotConfig.maxSegmentSize : segmSize * 100;
         if (this.plotConfig.duration > 0) {
           maxValue = Math.min(maxValue, this.plotConfig.duration);
@@ -124,7 +125,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         this.segmSelector = new BinSelector(this.id + "_segmSelector",
                                           "Segment Length (" + tab.projectConfig.timeUnit  + "):",
                                           "From",
-                                          binSize, maxValue, binSize, segmSize,
+                                          minValue, maxValue, binSize, segmSize,
                                           this.onSegmSelectorValuesChanged);
         this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "):  Nº Segments: " + this.plotConfig.nsegm);
         this.segmSelector.slider.slider({
