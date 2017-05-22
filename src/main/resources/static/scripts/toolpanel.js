@@ -18,6 +18,7 @@ function ToolPanel (id,
   this.$html = cloneHtmlElement(id, classSelector);
   container.html(this.$html);
   this.$html.show();
+  this.filters = [];
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.analyzeContainer = this.$html.find(".analyzeContainer");
@@ -312,10 +313,12 @@ function ToolPanel (id,
     colorFilterTypeRadios.filter('[value=E]').prop('checked', column == "E").checkboxradio('refresh');
   }
 
+  //Called to set selector values when plot area has selected
   this.applyFilters = function (filters) {
     sliderSelectors_applyFilters(filters, currentObj.selectors_array);
   }
 
+  //Called for setting filters after undo or clear action, or load filters file
   this.setFilters = function (filters) {
     for (f in filters) {
       if (!isNull(filters[f].source)
@@ -342,10 +345,11 @@ function ToolPanel (id,
       }
     }
     sliderSelectors_setFilters(filters, currentObj.selectors_array);
+    currentObj.filters = filters;
   }
 
   this.getFilters = function () {
-    return sliderSelectors_getFilters(currentObj.selectors_array);
+    return currentObj.filters;
   }
 
   this.onSelectorValuesChanged = function () {
@@ -433,8 +437,8 @@ function ToolPanel (id,
 
   this.refresh = function () {
     currentObj.refreshFloatingBtn.hide();
-    var filters = sliderSelectors_getFilters(currentObj.selectors_array)
-    getTabForSelector(currentObj.id).onFiltersChanged(filters);
+    currentObj.filters = sliderSelectors_getFilters(currentObj.selectors_array);
+    getTabForSelector(currentObj.id).onFiltersChanged(currentObj.filters);
   }
 
   this.containsId = function (id) {
@@ -463,9 +467,10 @@ function ToolPanel (id,
   }
 
   this.saveFilters = function () {
-    var filename = getTabForSelector(currentObj.id).projectConfig.filename.replace(/\./g,'');;
-    var filters = sliderSelectors_getFilters(currentObj.selectors_array);
-    var action = { type: "filters", actionData: $.extend(true, [], filters), binSize: this.binSelector.value };
+    var filename = getTabForSelector(currentObj.id).projectConfig.filename.replace(/\./g,'');
+    var action = { type: "filters",
+                   actionData: $.extend(true, [], currentObj.filters),
+                   binSize: currentObj.binSelector.value };
     var a = document.createElement("a");
     var file = new Blob([JSON.stringify(action)], {type: 'text/plain'});
     a.href = URL.createObjectURL(file);
