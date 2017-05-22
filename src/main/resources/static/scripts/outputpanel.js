@@ -724,7 +724,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
       if (!isNull(paramsData.linkedPlotId)) {
         var joinedLcTimePlot = currentObj.getPlotById(paramsData.linkedPlotId);
-        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
+        var dataValues = { values: data[1].values };
+        var dataErrors = { values: data[1].error_values };
+        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], dataValues, dataErrors, data[3], data[4] ]) : null);
       }
     });
 

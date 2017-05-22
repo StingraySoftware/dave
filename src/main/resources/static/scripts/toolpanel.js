@@ -252,6 +252,9 @@ function ToolPanel (id,
       //Adds color selectors, PHA filters
       this.createColorSelectors (pha_column);
     }
+
+    //Sets initial filters to ToolPanel
+    currentObj.filters = sliderSelectors_getFilters(currentObj.selectors_array);
   }
 
   this.createColorSelectors = function (column) {

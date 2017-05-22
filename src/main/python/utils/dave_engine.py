@@ -260,7 +260,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
         # Sets lc values
         time_vals = lc.time
         count_rate = lc.countrate
-        error_values = []  # TODO: Implement error values on Stingray -> lc.countrate_err
+        error_values = lc.countrate_err
 
         # Sets gtis ranges
         gti_start_values = lc.gti[:, 0]
@@ -401,11 +401,15 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
             # Preapares the result
             logging.debug("Result divided lightcurves ....")
             if len(color_keys) == 2:
-                result = push_to_results_array([], src_lc.countrate)
+                result = push_to_results_array_with_errors([], src_lc.countrate, src_lc.countrate_err)
             else:
-                result = push_divided_values_to_results_array([], lightcurves[2].countrate, lightcurves[3].countrate)
+                count_rate, count_rate_error = get_divided_values_and_error (lightcurves[2].countrate, lightcurves[3].countrate,
+                                                                            lightcurves[2].countrate_err, lightcurves[3].countrate_err)
+                result = push_to_results_array_with_errors([], count_rate, count_rate_error)
 
-            result = push_divided_values_to_results_array(result, lightcurves[0].countrate, lightcurves[1].countrate)
+            count_rate, count_rate_error = get_divided_values_and_error (lightcurves[0].countrate, lightcurves[1].countrate,
+                                                                        lightcurves[0].countrate_err, lightcurves[1].countrate_err)
+            result = push_to_results_array_with_errors(result, count_rate, count_rate_error)
 
             if len(color_keys) == 2:
                 result = push_to_results_array(result, src_lc.time)
@@ -455,18 +459,8 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
 
             ret_lc_ds = lc0_ds.clone(True)
 
-            with np.errstate(all='ignore'): # Ignore divisions by 0 and others
-                count_rate = np.nan_to_num(count_rate_0 / count_rate_1)
-                if count_rate_error_0.shape == count_rate_error_1.shape == count_rate_0.shape:
-                    count_rate_error = np.nan_to_num((count_rate_error_0/count_rate_1) + ((count_rate_error_1 * count_rate_0)/(count_rate_1 * count_rate_1)))
-                else:
-                    logging.warn("count_rate_error_0.shape: " + str(count_rate_error_0.shape))
-                    logging.warn("count_rate_error_1.shape: " + str(count_rate_error_1.shape))
-                    logging.warn("count_rate_0.shape: " + str(count_rate_0.shape))
-                    logging.warn("count_rate_1.shape: " + str(count_rate_1.shape))
-                    count_rate_error = np.array([])
-            count_rate[count_rate > BIG_NUMBER]=0
-            count_rate_error[count_rate_error > BIG_NUMBER]=0
+            count_rate, count_rate_error = get_divided_values_and_error (count_rate_0, count_rate_1,
+                                                                        count_rate_error_0, count_rate_error_1)
 
             ret_lc_ds.tables["RATE"].columns["RATE"].clear()
             ret_lc_ds.tables["RATE"].columns["RATE"].add_values(count_rate, count_rate_error)
@@ -518,7 +512,7 @@ def get_lightcurve_ds_from_events_ds(destination, axis, dt):
             #Changes lc format to stingray_addons format
             tmp_lc = {}
             tmp_lc['lc'] = lc.countrate
-            tmp_lc['elc'] = []  # TODO: Get error from lightcurve -> lc.countrate_err
+            tmp_lc['elc'] = lc.countrate_err
             tmp_lc['time'] = lc.time
             tmp_lc['GTI'] = lc.gti
 
@@ -1432,19 +1426,13 @@ def push_to_results_array (result, values):
     result.append(column)
     return result
 
+
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
     column["values"] = values
     column["error_values"] = errors
     result.append(column)
     return result
-
-def push_divided_values_to_results_array (result, values0, values1):
-    divided_values = []
-    with np.errstate(all='ignore'): # Ignore divisions by 0 and others
-        divided_values = np.nan_to_num(values0 / values1)
-    divided_values[divided_values > BIG_NUMBER]=0
-    return push_to_results_array(result, divided_values)
 
 
 def get_color_axis_for_ds():
@@ -1595,3 +1583,13 @@ def load_gti_from_destination (gti_destination):
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
             logging.debug("Load GTI success")
     return gti
+
+def get_divided_values_and_error (values_0, values_1, error_0, error_1):
+    divided_error = np.array([])
+    with np.errstate(all='ignore'): # Ignore divisions by 0 and others
+        divided_values = np.nan_to_num(values_0 / values_1)
+        if error_0.shape == error_1.shape == values_0.shape:
+            divided_error = np.nan_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
+    divided_values[divided_values > BIG_NUMBER]=0
+    divided_error[divided_error > BIG_NUMBER]=0
+    return divided_values, divided_error
