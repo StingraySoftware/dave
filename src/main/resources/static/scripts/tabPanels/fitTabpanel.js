@@ -169,7 +169,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(),
                                         this.onModelsChanged,
                                         this.onFitClicked,
-                                        this.applyBootstrap);
+                                        this.applyBootstrap,
+                                        isNull(plot.plotConfig.styles.title) ? plot.plotConfig.filename : plot.plotConfig.styles.title);
 
   this.plot = new FitPlot(plot.id + "_" + (new Date()).getTime(),
                            $.extend(true, {}, plot.plotConfig),

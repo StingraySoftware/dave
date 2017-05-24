@@ -1,15 +1,20 @@
 //Model Selector: Container with all supported models
-function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) {
+function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, filename) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.onModelsChangedFn = onModelsChangedFn;
   this.onFitClickedFn = onFitClickedFn;
   this.applyBootstrapFn = applyBootstrapFn;
+  this.filename = filename.replace(/\./g,'').replace(/\ /g,'');
 
   this.models = [];
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
+                  '<div class="floatingContainer">' +
+                    '<button class="btn button btnLoad"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                  '</div>' +
                   '<div class="buttonsContainer">' +
                     '<button class="btn btn-info btnGaussian"><i class="fa fa-plus" aria-hidden="true"></i> Gaussian</button>' +
                     '<button class="btn btn-info btnLorentz"><i class="fa fa-plus" aria-hidden="true"></i> Lorentz</button>' +
@@ -25,20 +30,29 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
                   '</div>' +
                 '</div>');
 
+
+  this.$html.find(".btnLoad").click(function () {
+    currentObj.loadModels();
+  });
+
+  this.$html.find(".btnSave").click(function () {
+    currentObj.saveModels();
+  });
+
   this.$html.find(".btnGaussian").click(function () {
-    currentObj.addModel(new GaussianModel(currentObj.models.length, currentObj.getRandomColor(), currentObj.onModelsChangedFn));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Gaussian", color:currentObj.getRandomColor() }));
   });
 
   this.$html.find(".btnLorentz").click(function () {
-    currentObj.addModel(new LorentzModel(currentObj.models.length, currentObj.getRandomColor(), currentObj.onModelsChangedFn));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Lorentz", color:currentObj.getRandomColor() }));
   });
 
   this.$html.find(".btnPowerLaw").click(function () {
-    currentObj.addModel(new PowerLawModel(currentObj.models.length, currentObj.getRandomColor(), currentObj.onModelsChangedFn));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"PowerLaw", color:currentObj.getRandomColor() }));
   });
 
   this.$html.find(".btnBrokenPowerLaw").click(function () {
-    currentObj.addModel(new BrokenPowerLawModel(currentObj.models.length, currentObj.getRandomColor(), currentObj.onModelsChangedFn));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"BrokenPowerLaw", color:currentObj.getRandomColor() }));
   });
 
   this.$html.find(".fitBtn").click(function () {
@@ -58,14 +72,42 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
     return '#'+ fillWithZeros(Math.floor(Math.random()*16777215).toString(16), 6);
   }
 
-  this.addModel = function (model){
+  this.getModelFromDaveModel = function (daveModel) {
+    var model = null;
+    if (daveModel.type == "Gaussian") {
+      model = new GaussianModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+    } else if (daveModel.type == "Lorentz") {
+      model = new LorentzModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+    } else if (daveModel.type == "PowerLaw") {
+      model = new PowerLawModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+    } else if (daveModel.type == "BrokenPowerLaw") {
+      model = new BrokenPowerLawModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+    }
+
+    if (!isNull(model) && Object.keys(daveModel).length > 2) {
+        //If is loaded model, not only default params model
+        model = $.extend(true, model, daveModel);
+        if (!isNull(daveModel.fixed)){
+          for (i in daveModel.fixed){
+            model.switchFixedParam(daveModel.fixed[i]);
+          }
+        }
+        model.setInputs();
+    }
+
+    return model;
+  }
+
+  this.addModel = function (model, refresh){
     if (this.$html.find(".modelsContainer").find(".combinedLbl").length == 0) {
       this.$html.find(".modelsContainer").append('<h3 class="combinedLbl" style="color: ' + CombinedModelColor + '">- Combined Model</h3>');
     }
     this.models.push(model);
     this.$html.find(".modelsContainer").append(model.$html);
     this.$html.find(".fitBtn").show();
-    this.onModelsChangedFn();
+    if (isNull(refresh) || refresh) {
+      this.onModelsChangedFn();
+    }
   }
 
   this.getModels = function (estimated){
@@ -83,6 +125,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
       } else {
         currentObj.$html.find(".actionsContainer").hide();
       }
+      currentObj.$html.find(".btnSave").prop('disabled', models.length == 0);
     }
 
     return models;
@@ -121,6 +164,53 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn) 
     this.$html.find(".applyBtn").hide();
     this.$html.find(".bootstrapBtn").hide();
   };
+
+  this.saveModels = function () {
+    var a = document.createElement("a");
+    var file = new Blob([JSON.stringify(currentObj.getModels())], {type: 'text/plain'});
+    a.href = URL.createObjectURL(file);
+    a.download = currentObj.filename + "_models.json";
+    a.click();
+  }
+
+  this.loadModels = function () {
+    var input = $('<input type="file" id="load-input" />');
+    input.on('change', function (e) {
+      if (e.target.files.length == 1) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+          reader.onload = function(e) {
+            try {
+              var models = JSON.parse(e.target.result);
+              currentObj.clearModels();
+              for (i in models){
+                var model = null;
+                if (!isNull(models[i].type) && !isNull(models[i].color)){
+                  model = currentObj.getModelFromDaveModel(models[i]);
+                }
+                if (!isNull(model)){
+                  currentObj.addModel(model, false);
+                } else {
+                 showError("File is not supported as models");
+                 return;
+                }
+              }
+              currentObj.onModelsChangedFn();
+           } catch (e) {
+             showError("File is not supported as models", e);
+           }
+          };
+          reader.readAsText(file);
+      }
+     });
+     input.click();
+  }
+
+  this.clearModels = function() {
+    this.models = [];
+    this.$html.find(".modelsContainer").html("");
+    this.$html.find(".actionsContainer").hide();
+  }
 
   log ("new ModelSelector id: " + this.id);
 

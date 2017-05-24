@@ -30,7 +30,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   }
 
   this.prepareButton = function ( buttonElem, panel ) {
-    buttonElem.button().bind("click", function( event ) {
+    buttonElem.button().click(function () {
       currentObj.wfSelector.find("li").removeClass('active');
       $(this).parent().addClass("active");
       currentObj.setCurrentPanel(panel);
@@ -52,7 +52,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.addCloseButton = function () {
     var closeTabBtn = $('<i class="fa fa-times closeIcon closeTabPanel" aria-hidden="true"></i>')
     this.$navItem.find("." + this.navItemClass).append(closeTabBtn);
-    closeTabBtn.bind("click", function( event ) {
+    closeTabBtn.click(function () {
       currentObj.close();
     });
   }
@@ -416,7 +416,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.wfSelector.find(".loadBtn").parent().addClass('active');
   this.wfSelector.find(".wfSelectorDisableable").hide();
 
-  this.$navItem.find("." + this.navItemClass).bind("click", function( event ) {
+  this.$navItem.find("." + this.navItemClass).click(function () {
     currentObj.show();
   });
 

@@ -486,3 +486,8 @@ input.wrongValue {
   margin-top: 0px;
   margin-left: 0px;
 }
+
+.modelSelector .floatingContainer {
+    float: right;
+    margin-top: -30px;
+}

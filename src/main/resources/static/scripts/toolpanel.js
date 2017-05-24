@@ -470,10 +470,12 @@ function ToolPanel (id,
   }
 
   this.saveFilters = function () {
-    var filename = getTabForSelector(currentObj.id).projectConfig.filename.replace(/\./g,'');
+    var projectConfig = getTabForSelector(currentObj.id).projectConfig;
+    var filename = projectConfig.filename.replace(/\./g,'');
     var action = { type: "filters",
                    actionData: $.extend(true, [], currentObj.filters),
-                   binSize: currentObj.binSelector.value };
+                   binSize: projectConfig.binSize,
+                   maxSegmentSize: projectConfig.maxSegmentSize };
     var a = document.createElement("a");
     var file = new Blob([JSON.stringify(action)], {type: 'text/plain'});
     a.href = URL.createObjectURL(file);
@@ -490,9 +492,13 @@ function ToolPanel (id,
           reader.onload = function(e) {
             try {
               var action = JSON.parse(e.target.result);
-              getTabForSelector(currentObj.id).applyAction(action);
+              if (!isNull(action.type) && !isNull(action.actionData)){
+                getTabForSelector(currentObj.id).applyAction(action);
+              } else {
+                showError("File is not supported as filters");
+              }
             } catch (e) {
-              log("ToolPanel error loading filters: " + e);
+              showError("File is not supported as filters", e);
             }
           };
           reader.readAsText(file);
@@ -538,32 +544,32 @@ function ToolPanel (id,
   this.addFileSelector(this.lcDFileSelector);
   this.lcDFileSelector.hide();
 
-  this.clearBtn.bind("click", function( event ) {
+  this.clearBtn.click(function () {
       currentObj.resetHistory();
   });
 
-  this.undoBtn.bind("click", function( event ) {
+  this.undoBtn.click(function () {
       currentObj.undoHistory();
   });
 
-  this.loadBtn.bind("click", function( event ) {
+  this.loadBtn.click(function () {
       currentObj.loadFilters();
   });
 
-  this.saveBtn.bind("click", function( event ) {
+  this.saveBtn.click(function () {
       currentObj.saveFilters();
   });
 
-  this.refreshBtn.bind("click", function( event ) {
+  this.refreshBtn.click(function () {
       currentObj.refresh();
   });
 
   this.refreshFloatingBtn.hide();
-  this.refreshFloatingBtn.bind("click", function( event ) {
+  this.refreshFloatingBtn.click(function () {
       currentObj.refresh();
   });
 
-  this.dragDropBtn.bind("click", function( event ) {
+  this.dragDropBtn.click(function () {
       currentObj.dragDropBtn.toggleClass("btn-success");
       currentObj.dragDropEnabled = currentObj.dragDropBtn.hasClass("btn-success");
       currentObj.onDragDropChanged(currentObj.dragDropEnabled);

@@ -14,7 +14,7 @@ $(document).ready(function () {
   theService = new Service (DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
 
-  $("#navbar").find(".addTabPanel").bind("click", function( event ) {
+  $("#navbar").find(".addTabPanel").click(function () {
     addTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
   });
 
