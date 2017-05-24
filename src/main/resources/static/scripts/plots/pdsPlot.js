@@ -25,6 +25,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.plotConfig.duration = projectConfig.totalDuration;
     this.plotConfig.segment_size = projectConfig.avgSegmentSize;
     this.plotConfig.minRebinSize = projectConfig.minBinSize;
+    this.plotConfig.rebinSize = projectConfig.minBinSize;
     this.plotConfig.maxRebinSize = projectConfig.totalDuration;
   }
 
@@ -97,9 +98,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                 '<h3>Type</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Sng">Single</label>' +
-                                  '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng">' +
+                                  '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng" ' + getCheckedState(this.plotConfig.type == "Sng") + '>' +
                                   '<label for="' + this.id + '_Avg">Averaged</label>' +
-                                  '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Avg" value="Avg" checked="checked">' +
+                                  '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Avg" value="Avg" ' + getCheckedState(this.plotConfig.type == "Avg") + '>' +
                                 '</fieldset>' +
                               '</div>');
 
@@ -150,13 +151,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                               '<h3>Normalization</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_leahy">Leahy</label>' +
-                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_leahy" value="leahy" checked="checked">' +
+                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_leahy" value="leahy" ' + getCheckedState(this.plotConfig.norm == "leahy") + '>' +
                                 '<label for="' + this.id + '_frac">Frac</label>' +
-                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_frac" value="frac">' +
+                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_frac" value="frac" ' + getCheckedState(this.plotConfig.norm == "frac") + '>' +
                                 '<label for="' + this.id + '_abs">Abs</label>' +
-                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_abs" value="abs">' +
+                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_abs" value="abs" ' + getCheckedState(this.plotConfig.norm == "abs") + '>' +
                                 '<label for="' + this.id + '_none">None</label>' +
-                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_none" value="none">' +
+                                '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_none" value="none" ' + getCheckedState(this.plotConfig.norm == "none") + '>' +
                               '</fieldset>' +
                             '</div>');
 
@@ -173,7 +174,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         this.binSelector = new BinSelector(this.id + "_binSelector",
                                           "Binning (Freq):",
                                           "From",
-                                          this.plotConfig.minRebinSize, this.plotConfig.maxRebinSize, this.plotConfig.minRebinSize, this.plotConfig.minRebinSize,
+                                          this.plotConfig.minRebinSize, this.plotConfig.maxRebinSize, this.plotConfig.minRebinSize, this.plotConfig.rebinSize,
                                           this.onBinSelectorValuesChanged);
         this.binSelector.setDisableable(true);
         this.binSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
@@ -199,15 +200,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
 
         // Creates the X axis type radio buttons
-        var XlinearChecked = (this.plotConfig.xAxisType == "linear") ? 'checked="checked"' : "";
-        var XlogChecked = (this.plotConfig.xAxisType == "log") ? 'checked="checked"' : "";
         this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
                               '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Xlinear">Linear</label>' +
-                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + XlinearChecked + '>' +
+                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + getCheckedState(this.plotConfig.xAxisType == "linear") + '>' +
                                 '<label for="' + this.id + '_Xlog">Logarithmic</label>' +
-                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlog" value="log" ' + XlogChecked + '>' +
+                                '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlog" value="log" ' + getCheckedState(this.plotConfig.xAxisType == "log") + '>' +
                               '</fieldset>' +
                             '</div>');
 
@@ -221,15 +220,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
 
         // Creates the Y axis type radio buttons
-        var YlinearChecked = (this.plotConfig.yAxisType == "linear") ? 'checked="checked"' : "";
-        var YlogChecked = (this.plotConfig.yAxisType == "log") ? 'checked="checked"' : "";
         this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
                               '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Ylinear">Linear</label>' +
-                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + YlinearChecked + '>' +
+                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + getCheckedState(this.plotConfig.yAxisType == "linear") + '>' +
                                 '<label for="' + this.id + '_Ylog">Logarithmic</label>' +
-                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylog" value="log" ' + YlogChecked + '>' +
+                                '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylog" value="log" ' + getCheckedState(this.plotConfig.yAxisType == "log") + '>' +
                               '</fieldset>' +
                             '</div>');
 
@@ -243,15 +240,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         if (!isNull(this.plotConfig.zAxisType)) {
           // Creates the X axis type radio buttons
-          var ZlinearChecked = (this.plotConfig.zAxisType == "linear") ? 'checked="checked"' : "";
-          var ZlogChecked = (this.plotConfig.zAxisType == "log") ? 'checked="checked"' : "";
           this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
                                 '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Zlinear">Linear</label>' +
-                                  '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + ZlinearChecked + '>' +
+                                  '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + getCheckedState(this.plotConfig.zAxisType == "linear") + '>' +
                                   '<label for="' + this.id + '_Zlog">Logarithmic</label>' +
-                                  '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlog" value="log" ' + ZlogChecked + '>' +
+                                  '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlog" value="log" ' + getCheckedState(this.plotConfig.zAxisType == "log") + '>' +
                                 '</fieldset>' +
                               '</div>');
 
@@ -269,9 +264,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                               '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_TypeXY">Power x Frequency</label>' +
-                                '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" checked="checked">' +
+                                '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" ' + getCheckedState(this.plotConfig.plotType == "X*Y") + '>' +
                                 '<label for="' + this.id + '_TypeX">Power</label>' +
-                                '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeX" value="X">' +
+                                '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeX" value="X" ' + getCheckedState(this.plotConfig.plotType == "X") + '>' +
                               '</fieldset>' +
                             '</div>');
 
@@ -431,6 +426,11 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         this.plotConfig.styles.title);
 
     plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+
+    if (this.plotConfig.plotType == "X*Y") {
+      plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots
+      plotlyConfig.layout.yaxis.titlefont.size = 12;
+    }
 
     return plotlyConfig;
   }

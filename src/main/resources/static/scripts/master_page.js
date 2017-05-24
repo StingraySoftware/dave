@@ -141,3 +141,7 @@ function showError(errorMsg, exception) {
     waitingDialog.hide();
   }, 1600);
 }
+
+function getCheckedState(value) {
+  return value ? 'checked="checked"' : "";
+}
