@@ -458,8 +458,18 @@ input.wrongValue {
 
 .colorScale canvas {
   border: 1px solid black;
+}
+
+.colorScale .colorScaleCanvas {
   width: 100%;
   height: 10px;
+}
+
+.colorScale .colorPlotCanvas {
+  width: 80px;
+  height: 80px;
+  float: left;
+  margin-top: 8px;
 }
 
 .colorScale .sliderSelector {
@@ -468,10 +478,11 @@ input.wrongValue {
 }
 .colorScale .sliderSelector h3 {
     font-size: 0.95em;
+    padding-left: 100px;
 }
 
 .colorScale .sliderSelector .selectorContainer {
-    width: 50%;
+    width: 40%;
     float: right;
     margin-top: -20px;
 }
