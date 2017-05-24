@@ -196,6 +196,7 @@ function TabPanel (id, classSelector, navItemClass, service, navBarList, panelCo
   this.onArfUploaded = function () {
     log("onArfUploaded:");
     currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
+    waitingDialog.hide();
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
