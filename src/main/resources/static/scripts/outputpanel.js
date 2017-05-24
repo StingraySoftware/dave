@@ -788,7 +788,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.appendPlot = function (plot, refreshData) {
-    this.$body.append(plot.$html);
+    if (this.$body.find(".infoPanel").length > 0) {
+      plot.$html.insertBefore(this.$body.find(".infoPanel"));
+    } else {
+      this.$body.append(plot.$html);
+    }
     if (isNull(refreshData) || refreshData) {
       plot.onDatasetValuesChanged(this.getFilters());
     }
