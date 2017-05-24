@@ -9,7 +9,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.showAll = false;
   this.defaultTags = [ "TSTART", "TSTOP", "TIMEUNIT", "TIMESYS", "DURATION", "FRMTIME",
                        "DATE-OBS", "DATE-END", "OBJECT", "OBSERVER", "TELESCOP", "INSTRUME",
-                       "OBS_ID", "OBS_MODE", "EXP_ID"];
+                       "OBS_ID", "OBS_MODE", "EXP_ID", "MJDREF", "MJDREFF", "MJDREFI"];
 
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
                    '<button class="btn btn-default btnShowAll"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>' +
