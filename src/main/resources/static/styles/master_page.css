@@ -322,6 +322,15 @@ h3
   font-size: 1em;
 }
 
+.fileSelector .fileName {
+  margin-right: 10px;
+  color: #ececec;
+}
+
+.fileSelector .btnChange {
+  font-size: 0.85em;
+}
+
 .btnRefreshFloating {
   position: fixed;
   right: 16px;

@@ -13,16 +13,23 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
   fileSelectorCounter ++;
 
   this.$html = $('<div class="fileSelector ' + id + '">' +
+                    '<h3>' + label + '</h3>' +
+                    '<label class="fileName">' +
+                    '</label>' +
+                    '<button class="btn btn-primary btnChoose"><i class="fa fa-folder-open" aria-hidden="true"></i> Choose files</button>' +
+                    '<button class="btn btn-warning btnChange">Change</button>' +
                     '<form action="" method="POST" enctype="multipart/form-data">' +
-                      '<h3>' + label + '</h3>' +
-                      '<label class="fileBtn">' +
-                        '<input id="' + this.uploadInputId + '" name="file" type="file" style="width:100%" multiple/>' +
-                      '</label>' +
-                   '</form>' +
-                 '</div>');
+                      '<input id="' + this.uploadInputId + '" name="file" type="file" style="width:100%" multiple/>' +
+                      '</form>' +
+                  '</div>');
 
-  this.$html.find("#" + currentObj.uploadInputId).on('change', function () {
+  this.$input = this.$html.find("#" + this.uploadInputId);
+  this.$input.hide();
 
+  this.btnChoose = this.$html.find(".btnChoose");
+  this.btnChange = this.$html.find(".btnChange");
+
+  this.$input.on('change', function () {
       if (this.files.length > 0) {
        if (this.files.length == 1) {
 
@@ -42,20 +49,45 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                                        if (jsonRes.error != undefined) {
                                          currentObj.onUploadError(jsonRes.error);
                                        } else {
+                                         currentObj.onUploadSuccess(jsonRes);
                                          currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
                                        };
                                    },
                            currentObj.onUploadError,
                            formData);
+     } else {
+       currentObj.onUploadSuccess();
      }
    });
 
+   this.$html.find(".btn").click(function () {
+     currentObj.$input.focus().click();
+   });
+
+   this.onUploadSuccess = function ( filenames ) {
+     var text = "";
+     if (!isNull(filenames)) {
+      if (filenames.length == 1) {
+        text = filenames[0];
+      }
+     }
+     this.$html.find(".fileName").html(text);
+
+     if (text == "") {
+       this.btnChange.hide();
+       this.btnChoose.show();
+     } else {
+       this.btnChoose.hide();
+       this.btnChange.show();
+     }
+   }
+
    this.onUploadError = function ( error ) {
-     if (error != undefined) {
+     if (!isNull(error)) {
        waitingDialog.hide();
        showError();
        log("onUploadError:" + JSON.stringify(error));
-       currentObj.$html.find("#" + currentObj.uploadInputId).val("");
+       currentObj.$input.val("");
      }
    }
 
@@ -72,6 +104,8 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                                      '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
                                    '</div></a>');
    }
+
+   this.onUploadSuccess();
 
    log ("new fileSelector id: " + id + ", label: " + label + ", inputId: " + this.uploadInputId);
 
