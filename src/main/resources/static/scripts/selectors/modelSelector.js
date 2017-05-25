@@ -14,6 +14,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
                   '<div class="floatingContainer">' +
                     '<button class="btn button btnLoad"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
                     '<button class="btn button btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnCopy"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="buttonsContainer">' +
                     '<button class="btn btn-info btnGaussian"><i class="fa fa-plus" aria-hidden="true"></i> Gaussian</button>' +
@@ -37,6 +38,10 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
 
   this.$html.find(".btnSave").click(function () {
     currentObj.saveModels();
+  });
+
+  this.$html.find(".btnCopy").click(function () {
+    copyToClipboard(currentObj.modelsToLaTeX());
   });
 
   this.$html.find(".btnGaussian").click(function () {
@@ -204,6 +209,17 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
       }
      });
      input.click();
+  }
+
+  this.modelsToLaTeX = function() {
+    var laTeX = "\\begin{tabular}{ l | c | c } \n \\hline \n";
+    for (i in this.models){
+      if (this.models[i].visible) {
+        laTeX += this.models[i].toLaTeXRows();
+      }
+    }
+    laTeX += "\\hline \n \\end{tabular}";
+    return laTeX;
   }
 
   this.clearModels = function() {
@@ -437,6 +453,31 @@ function Model(idx, title, type, color, onModelsChangedFn) {
     } else {
       this[paramName + "Fixed"] = true;
     }
+  }
+
+  this.toLaTeXRows = function() {
+    var laTexRows = "";
+    var modelParams = this.getParammeters();
+
+    for (p in modelParams){
+      var paramName = modelParams[p];
+      var paramValue = "---";
+      var paramErr = "---";
+      if (!isNull(this[paramName + "Est"])){
+        paramValue = this[paramName + "Est"].value.toFixed(3);
+        paramErr = this[paramName + "Est"].err.toFixed(3);
+      } else {
+        paramValue = this[paramName].toFixed(3);
+      }
+
+      if (this.isFixedParam(paramName)){
+        paramErr = "fixed";
+      }
+
+      laTexRows += this.type + " " + this.idx + " " + paramName + " & " + paramValue + " & " + paramErr + " \\\\ \n";
+    }
+
+    return laTexRows;
   }
 
   log ("new Model id: " + this.id);

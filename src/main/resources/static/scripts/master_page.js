@@ -145,3 +145,9 @@ function showError(errorMsg, exception) {
 function getCheckedState(value) {
   return value ? 'checked="checked"' : "";
 }
+
+function copyToClipboard(text) {
+  const {clipboard} = require('electron');
+  clipboard.writeText(text);
+  alert("Copied to clipboard:\n" + text);
+}
