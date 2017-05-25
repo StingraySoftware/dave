@@ -576,6 +576,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       var csvContent = "data:text/csv;charset=utf-8,";
       data[0].values.forEach(function(values, index){
          var infoArray = [data[0].values[index], data[1].values[index]];
+         if (data.length > 2 && (data[1].values.length == data[2].values.length)) {
+           infoArray.push(data[2].values[index]); //Adds errors if available
+         }
          dataString = Array.prototype.join.call(infoArray, ",");
          csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
       });
