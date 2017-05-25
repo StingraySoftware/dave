@@ -9,7 +9,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
 
-  TabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
+  WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //FitTabPanel METHODS:
   this.addPlot = function (plot){

@@ -117,7 +117,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         var tab = getTabForSelector(this.id);
         var binSize = this.plotConfig.dt;
         var segmSize = this.plotConfig.segment_size;
-        var minValue = binSize * 6;
+        var minValue = binSize * CONFIG.MIN_SEGMENT_MULTIPLIER;
         var maxValue = (this.plotConfig.maxSegmentSize > 0) ? this.plotConfig.maxSegmentSize : segmSize * 100;
         if (this.plotConfig.duration > 0) {
           maxValue = Math.min(maxValue, this.plotConfig.duration);
@@ -356,7 +356,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     if (!isNull(tab)) {
       this.plotConfig.dt = tab.projectConfig.binSize;
       this.plotConfig.maxSegmentSize = !isNull(this.plotConfig.zAxisType) ? tab.projectConfig.maxSegmentSize / 2 : tab.projectConfig.maxSegmentSize;
-      this.plotConfig.segment_size = !isNull(this.segmSelector) ? Math.min(this.segmSelector.value, this.plotConfig.maxSegmentSize) : this.plotConfig.maxSegmentSize / 4;
+      this.plotConfig.segment_size = !isNull(this.segmSelector) ? Math.min(this.segmSelector.value, this.plotConfig.maxSegmentSize) : this.plotConfig.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
       this.updateNSegm();
     } else {
       log("UpdatePlotConfig plot data " + this.id + " error: Tab not found for plot id");
@@ -376,7 +376,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         }
       } else if (data[0].values.length > 1) {
           this.plotConfig.minRebinSize = data[0].values[1] - data[0].values[0];
-          this.plotConfig.maxRebinSize = (data[0].values[data[0].values.length - 1] - data[0].values[0]) / 4;
+          this.plotConfig.maxRebinSize = (data[0].values[data[0].values.length - 1] - data[0].values[0]) / CONFIG.DEFAULT_SEGMENT_DIVIDER;
       }
 
       if (this.plotConfig.plotType == "X*Y") {

@@ -125,11 +125,11 @@ function ToolPanel (id,
       //Caluculates max, min and step values for slider from time ranges
       var timeColumn = schema["EVENTS"]["TIME"];
       maxTimeRange = timeColumn.max_value - timeColumn.min_value;
-      if (timeColumn.count > MAX_PLOT_POINTS) {
-        timeRatio = MAX_PLOT_POINTS / timeColumn.count;
+      if (timeColumn.count > CONFIG.MAX_PLOT_POINTS) {
+        timeRatio = CONFIG.MAX_PLOT_POINTS / timeColumn.count;
         maxTimeRange *= timeRatio;
       }
-      var binSize = maxTimeRange / MIN_PLOT_POINTS;
+      var binSize = maxTimeRange / CONFIG.MIN_PLOT_POINTS;
       var multiplier = 1;
 
       //If binSize is smaller than 1.0 find the divisor
@@ -139,9 +139,9 @@ function ToolPanel (id,
       }
 
       var tmpStep = (1.0 / multiplier) / 100.0;
-      if ((binSize / tmpStep) > MAX_PLOT_POINTS) {
-        //Fix step for not allowing more plot point than MAX_PLOT_POINTS
-        tmpStep = binSize / MAX_PLOT_POINTS;
+      if ((binSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
+        //Fix step for not allowing more plot point than CONFIG.MAX_PLOT_POINTS
+        tmpStep = binSize / CONFIG.MAX_PLOT_POINTS;
       }
       minBinSize = tmpStep;
       maxBinSize = binSize;
@@ -177,8 +177,8 @@ function ToolPanel (id,
 
       var timeColumn = schema["RATE"]["TIME"];
       maxTimeRange = timeColumn.max_value - timeColumn.min_value;
-      if (timeColumn.count > MAX_PLOT_POINTS) {
-        timeRatio = MAX_PLOT_POINTS / timeColumn.count;
+      if (timeColumn.count > CONFIG.MAX_PLOT_POINTS) {
+        timeRatio = CONFIG.MAX_PLOT_POINTS / timeColumn.count;
         maxTimeRange *= timeRatio;
       }
     }
@@ -209,7 +209,7 @@ function ToolPanel (id,
                                               this.selectors_array);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if ((columnName == "TIME") && (timeRatio < 1)) { //If full events were cropped to MAX_PLOT_POINTS
+            if ((columnName == "TIME") && (timeRatio < 1)) { //If full events were cropped to CONFIG.MAX_PLOT_POINTS
                 selector.setMaxRange(maxTimeRange);
                 selector.setEnabled (true);
             }

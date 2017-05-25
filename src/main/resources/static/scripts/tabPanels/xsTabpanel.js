@@ -9,7 +9,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
 
-  TabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
+  WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //XSTabPanel METHODS:
 
