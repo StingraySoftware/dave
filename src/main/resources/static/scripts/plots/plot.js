@@ -22,6 +22,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.minY = 0;
   this.maxX = 0;
   this.maxY = 0;
+  this.onHoverTimeout = null;
 
   this.$html = $('<div id="' + this.id + '" class="plotContainer ' + this.cssClass + '">' +
                   '<div class="loading">' +
@@ -377,16 +378,22 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     }
 
     this.plotElem.on('plotly_hover', function(data){
-      var coords = currentObj.getCoordsFromPlotlyHoverEvent(data);
-      if (coords != null){
-        currentObj.onHover(coords);
 
-        var evt_data = currentObj.getSwitchedCoords({ x: coords.x, y: coords.y });
-        evt_data.labels = currentObj.plotConfig.styles.labels;
-        currentObj.sendPlotEvent('on_hover', evt_data);
-      }
+      if (currentObj.onHoverTimeout != null) { clearTimeout(currentObj.onHoverTimeout); }
+
+      currentObj.onHoverTimeout = setTimeout(function(){
+        var coords = currentObj.getCoordsFromPlotlyHoverEvent(data);
+        if (coords != null){
+          currentObj.onHover(coords);
+
+          var evt_data = currentObj.getSwitchedCoords({ x: coords.x, y: coords.y });
+          evt_data.labels = currentObj.plotConfig.styles.labels;
+          currentObj.sendPlotEvent('on_hover', evt_data);
+        }
+      }, 300);
 
     }).on('plotly_unhover', function(data){
+      if (currentObj.onHoverTimeout != null) { clearTimeout(currentObj.onHoverTimeout); }
       currentObj.onUnHover();
       currentObj.sendPlotEvent('on_unhover', {});
     });
@@ -401,11 +408,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      var pt = data.points[0];
      if (this.tracesCount == this.getPlotDefaultTracesCount() || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
        var error_x = null;
-       var error_y = null;
        if (!isNull(pt.data.error_x)
           && !isNull(pt.data.error_x.array)
           && pt.pointNumber < pt.data.error_x.array.length) {
          error_x = pt.data.error_x.array[pt.pointNumber];
+       }
+       var error_y = null;
+       if (!isNull(pt.data.error_y)
+          && !isNull(pt.data.error_y.array)
+          && pt.pointNumber < pt.data.error_y.array.length) {
          error_y = pt.data.error_y.array[pt.pointNumber];
        }
        return { x: pt.x, y: pt.y, error_x: error_x, error_y: error_y, label: pt.data.name };
@@ -473,10 +484,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        var error_x_string = "";
        var error_y_string = "";
        if (!isNull(coords.error_x)) {
-         error_x_string= "+/-" + coords.error_x.toFixed(3);
+         error_x_string= " +/-" + coords.error_x.toFixed(3);
        }
        if (!isNull(coords.error_y)){
-         error_y_string= "+/-" + coords.error_y.toFixed(3);
+         error_y_string= " +/-" + coords.error_y.toFixed(3);
        }
        return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
      } catch (ex) {
