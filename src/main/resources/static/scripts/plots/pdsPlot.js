@@ -110,6 +110,11 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           this.typeRadios.find("fieldset").controlgroup();
           $typeRadios.change(function() {
             currentObj.plotConfig.type = this.value;
+            if (currentObj.plotConfig.type == "Sng"){
+              currentObj.segmSelector.$html.hide();
+            } else {
+              currentObj.segmSelector.$html.show();
+            }
           });
         }
 
@@ -144,7 +149,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
            currentObj.onSegmSelectorValuesChanged();
         };
         this.settingsPanel.find(".leftCol").append(this.segmSelector.$html);
-
+        if (this.plotConfig.type == "Sng"){
+          this.segmSelector.$html.hide();
+        }
 
         // Creates the Normalization radio buttons
         this.normRadios = $('<div class="pdsNorm">' +
