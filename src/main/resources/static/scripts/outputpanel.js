@@ -168,32 +168,78 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getFitsTablePlots: filename: " + filename );
 
-    baLcPlot = this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
-                                        "Softness Light Curve (B/A)",
-                                        [], "fullWidth", false );
+    var lcPlot = this.getLightCurvePlot ( filename,
+                                          bck_filename,
+                                          gti_filename,
+                                          "EVENTS",
+                                          ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
+                                          "Total Light Curve",
+                                          [], "fullWidth", false );
+
+    var aLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
+                                            "Light Curve Range=A",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var bLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
+                                            "Light Curve Range=B",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var cLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
+                                            "Light Curve Range=C",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var dLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
+                                            "Light Curve Range=D",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var baLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
+                                            "Softness Light Curve (B/A)",
+                                            [], "fullWidth", false );
     baLcPlot.getDataFromServerFn = null; //Disable calls to server
 
-    dcLcPlot = this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
-                                        "Hardness Light Curve (D/C)",
-                                        [], "fullWidth", false );
+    var dcLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
+                                            "Hardness Light Curve (D/C)",
+                                            [], "fullWidth", false );
     dcLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     return [
-              this.getLightCurvePlot ( filename,
-                                      bck_filename,
-                                      gti_filename,
-                                      "EVENTS",
-                                      ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
-                                      "Total Light Curve",
-                                      [], "fullWidth", false ),
+              lcPlot,
+
+              aLcPlot,
+
+              bLcPlot,
+
+              cLcPlot,
+
+              dLcPlot,
 
               baLcPlot,
 
@@ -234,30 +280,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   gti_filename,
                                   "EVENTS", "PHA", "fullWidth", "Total Power Density Spectrum (PDS)" ),
 
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
-                                        "Light Curve Range=A",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
-                                        "", false ),
-
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
                                   "EVENTS", "PHA", "", "Power Density Spectrum Range=A",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ]),
-
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
-                                        "Light Curve Range=B",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
-                                        "", false ),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
@@ -266,30 +294,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   "EVENTS", "PHA", "", "Power Density Spectrum Range=B",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ]),
 
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
-                                        "Light Curve Range=C",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
-                                        "", false ),
-
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
                                   "EVENTS", "PHA", "", "Power Density Spectrum Range=C",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ]),
-
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
-                                        "Light Curve Range=D",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
-                                        "", false ),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
