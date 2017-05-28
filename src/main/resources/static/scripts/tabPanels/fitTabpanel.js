@@ -131,6 +131,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
          }
        }
      });
+     $bootstrapDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
   this.addInfoPanel = function ( statsData ) {

@@ -164,7 +164,19 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         var jsonSchema = JSON.parse(schema);
         currentObj.projectConfig.setSchema(jsonSchema);
         currentObj.toolPanel.onRmfDatasetUploaded(jsonSchema);
+
+        //Cleans previous plots for RMF key
+        currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
+        currentObj.projectConfig.cleanPlotsIdsKey("RMF");
+
+        //Add RMF plots
         currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+
+        //Enable Spectral Timing Section
+        if (!currentObj.toolPanel.isSectionEnabled("TimingPlot")){
+          currentObj.toolPanel.toggleEnabledSection("TimingPlot");
+        }
+
         waitingDialog.hide();
 
       }, currentObj.onSchemaError, null);
@@ -176,7 +188,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onArfUploaded = function () {
     log("onArfUploaded:");
-    currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
+    //currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
     waitingDialog.hide();
   }
 
@@ -190,12 +202,39 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (selectorKey == "SRC"){
 
+        //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(jsonSchema);
         currentObj.setTitle(currentObj.projectConfig.filename);
         currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
+
+        //Prepare sections
+        var timingPlotsButtons = [];
+        var crossSpectraBtn = $('<button class="btn btn-default btnShow ' + this.id + ' crossSpectraBtn ExtraButton">' +
+                                  '<i class="fa fa-area-chart" aria-hidden="true"></i> Cross Spectrum' +
+                                '</button>');
+        crossSpectraBtn.click(function(event){
+           currentObj.showCrossSpectraSelection();
+        });
+        timingPlotsButtons.push(crossSpectraBtn);
+
+        var sections = [
+            { cssClass: "LcPlot", title:"Light Curves and Colors" },
+            { cssClass: "PDSPlot", title:"Power Density Spectra" },
+            { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons }
+        ];
+
+        currentObj.toolPanel.setAnalisysSections(sections);
+        currentObj.outputPanel.setAnalisysSections(sections);
+
+        //Prepare toolPanel filters, workflow config and load outputPanel plots
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
         currentObj.enableWfSelector();
         currentObj.refreshPlotsData();
+
+        //Set enabled section by default
+        if (sections.length > 0) {
+          this.toolPanel.toggleEnabledSection(sections[0].cssClass);
+        }
 
         //Reset History and add default filters
         currentObj.actionsHistory = [];
@@ -343,6 +382,62 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
     this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
     this.wfSelector.find(".wfSelectorDisableable").fadeIn();
+  }
+
+  this.showCrossSpectraSelection = function () {
+    var switchablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
+    if (switchablePlots.length > 1) {
+      if (switchablePlots.length == 2) {
+        //If there is only two lc plots, select both
+        for (i in switchablePlots) {
+           if (!switchablePlots[i].$html.hasClass("plotSelected")){
+             switchablePlots[i].btnSelect.click();
+           }
+         };
+      } else {
+        //Else show dialog for choose the desired plots
+        var lcPlotButtons = "";
+        for (i in switchablePlots) {
+           var plot = switchablePlots[i];
+           lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + (plot.$html.hasClass("plotSelected")?" plotSelected":"") + '" plotId="' + plot.id + '">' +
+                               '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
+                             '</button>';
+         };
+
+        var $xSpectraDialog = $('<div id="xSpectraDialog_' + currentObj.id +  '" title="Select two light curves:">' +
+                                    '<div class="xsDialogContainer">' +
+                                      lcPlotButtons +
+                                    '</div>' +
+                                '</div>');
+
+        $xSpectraDialog.find("button").click(function(event){
+           var btn = $(this);
+           btn.toggleClass("plotSelected");
+           var plotId = btn.attr("plotId");
+           var plot = currentObj.outputPanel.getPlotById(plotId);
+           plot.btnSelect.click();
+           if ($(this).parent().find(".plotSelected").length > 1) {
+                $xSpectraDialog.dialog('close');
+                $xSpectraDialog.remove();
+           }
+        });
+
+        currentObj.$html.append($xSpectraDialog);
+        $xSpectraDialog.dialog({
+           width: 450,
+           modal: true,
+           buttons: {
+             'Cancel': function() {
+                $(this).dialog('close');
+                $xSpectraDialog.remove();
+             }
+           }
+         });
+         $xSpectraDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+      }
+    } else {
+      showMsg("At least two visibles ligth curves are requiered");
+    }
   }
 
   this.destroy = function () {

@@ -507,6 +507,81 @@ function ToolPanel (id,
      input.click();
   }
 
+  this.setAnalisysSections = function (sections) {
+    if (sections.length > 0) {
+      this.$html.find(".analyzeContainer").html("");
+      for (i in sections) {
+        this.addAnalisysSection(sections[i]);
+      };
+    }
+  }
+
+  this.addAnalisysSection = function (section) {
+    var $section = $('<div class="Section Disabled ' + section.cssClass + '">' +
+                      '<div class="switch-wrapper">' +
+                      '  <div id="switch_' + section.cssClass + '_' + this.id + '" section="' + section.cssClass + '" class="switch-btn fa fa-square-o" aria-hidden="true"></div>' +
+                      '</div>' +
+                      '<h3>' + section.title + '</h3>' +
+                      '<div class="sectionContainer">' +
+                      '</div>' +
+                    '</div>');
+
+    $section.find(".sectionContainer").hide();
+    $section.find(".switch-btn").click( function ( event ) {
+      currentObj.toggleEnabledSection($(this).attr("section"));
+    });
+
+    if (!isNull(section.extraButtons)){
+      for (i in section.extraButtons) {
+        $section.find(".sectionContainer").append(section.extraButtons[i]);
+      };
+    }
+
+    this.$html.find(".analyzeContainer").append($section);
+  }
+
+  this.isSectionEnabled = function (sectionClass) {
+    var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
+    var $switchBtn = $section.find(".switch-btn");
+    return $switchBtn.hasClass("fa-check-square-o");
+  }
+
+  this.toggleEnabledSection = function (sectionClass) {
+    var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
+    var $switchBtn = $section.find(".switch-btn");
+    var outputPanel = getTabForSelector(this.id).outputPanel;
+    var plots = outputPanel.$html.find(".plotContainer." + sectionClass);
+
+    if ($switchBtn.hasClass("fa-square-o")) {
+      $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
+      $section.find(".sectionContainer").show();
+      $section.removeClass("Disabled");
+      if (plots.length > 0) {
+        outputPanel.$html.find(".Section." + sectionClass).show();
+        $.each( plots, function(i, $plot) {
+          var plot = outputPanel.getPlotById($plot.id);
+          if (!isNull(plot) && plot.isVisible){
+            plot.$html.show();
+            plot.refreshData();
+          }
+        });
+      }
+    } else {
+      $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
+      $section.find(".sectionContainer").hide();
+      $section.addClass("Disabled");
+      if (plots.length > 0) {
+        outputPanel.$html.find(".Section." + sectionClass).hide();
+        $.each( outputPanel.$html.find(".plotContainer." + sectionClass), function(i, $plot) {
+          var plot = outputPanel.getPlotById($plot.id);
+          if (!isNull(plot) && plot.isVisible){
+            plot.$html.hide();
+          }
+        });
+      }
+    }
+  }
+
   //Normal file selectors, SRC is valid on both events files and lightcurves
   this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Src File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.srcFileSelector);

@@ -32,7 +32,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div class="plotTools">' +
                     '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
                     '<button class="btn btn-default btnFullScreen">' +
-                      '<i class="fa ' + ((this.cssClass.startsWith("full")) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
+                      '<i class="fa ' + ((this.cssClass.indexOf("full") > -1) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
                     '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
@@ -53,7 +53,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      btnShowText = this.plotConfig.styles.title;
    }
    this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
-   toolbar.find(".container").append(this.btnShow);
+   toolbar.append(this.btnShow);
 
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
@@ -71,16 +71,20 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.show = function (){
    currentObj.isVisible = true;
    currentObj.$html.show();
-   currentObj.btnShow.removeClass("plotHidden");
-   currentObj.btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+   var tab = getTabForSelector(currentObj.id);
+   var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
+   btnShow.removeClass("plotHidden");
+   btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
    currentObj.refreshData();
  }
 
  this.hide = function (){
    currentObj.isVisible = false;
    currentObj.$html.hide();
-   currentObj.btnShow.addClass("plotHidden");
-   currentObj.btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+   var tab = getTabForSelector(currentObj.id);
+   var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
+   btnShow.addClass("plotHidden");
+   btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
  }
 
  this.showLoading = function (){
@@ -127,6 +131,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         }
       }
     });
+    saveDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
     currentObj.$html.append(saveDialog);
  });
 
@@ -148,6 +153,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      currentObj.$html.toggleClass("plotSelected");
      OnPlotSelected();
    });
+ }
+
+ this.isSelectable = function(){
+   return !isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable;
  }
 
  this.onDatasetValuesChanged = function ( filters ) {

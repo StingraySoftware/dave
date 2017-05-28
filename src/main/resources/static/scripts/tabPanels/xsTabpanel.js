@@ -102,7 +102,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
                                 styles: { type: "ligthcurve",
                                           labels: ["Frequency (Hz)", "Power"],
-                                          title: "XSpectrum" }
+                                          title: "Cross Spectrum" }
                               },
                               this.getXSDataFromServer, //Only XSpectra plot triggers receive new data from server
                               this.outputPanel.onFiltersChangedFromPlot,

@@ -177,9 +177,9 @@ h3
   padding: 0;
 }
 
-.plotContainer.plotSelected
+.plotSelected
 {
-  border: 1px solid #ff0000;
+  border: 1px solid #ff0000 !important;
 }
 
 .plotContainer .plot{
@@ -335,7 +335,7 @@ h3
   position: fixed;
   right: 16px;
   top: 60px;
-  z-index: 1100;
+  z-index: 1020;
   width: 120px;
   height: 40px;
   font-size: 1.4em;
@@ -344,7 +344,7 @@ h3
 .toolbar {
   position: fixed;
   top: 60px;
-  z-index: 1100;
+  z-index: 1020;
   margin-left: 10px;
 }
 
@@ -362,7 +362,23 @@ h3
   margin-top: 10px;
 }
 
-.outputPanelToolBar .container .btn {
+.outputPanelToolBar .Section h3 {
+    padding-bottom: 0px;
+    margin-bottom: 4px;
+    margin-top: 10px;
+    color: #e0e0e0;
+    font-size: 0.92em;
+}
+
+.toolPanelContainer .Section h3 {
+  color: #ff7d1b;
+}
+
+.Section .sectionContainer {
+  padding-left: 10px;
+}
+
+.sectionContainer .btn, .outputPanelToolBar .btn, .xsDialogContainer .btn {
   display: block;
   background: none;
   color: #d4a34a;
@@ -373,12 +389,20 @@ h3
   font-size: 0.95em;
 }
 
-.outputPanelToolBar .container .btn:hover {
+.sectionContainer .btn:active, .outputPanelToolBar .btn:active, .xsDialogContainer .btn:active{
+  background: #3a3a3a !important;
+}
+
+.sectionContainer .btn:hover, .outputPanelToolBar .btn:hover, .xsDialogContainer .btn:hover {
   color: #ffcf78 !important;
 }
 
-.outputPanelToolBar .container .btn.plotHidden {
+.sectionContainer .btn.plotHidden, .outputPanelToolBar .btn.plotHidden, .toolPanelContainer .Section.Disabled h3 {
   color: gray;
+}
+
+.sectionContainer .btn.ExtraButton {
+  color: #d47d47;
 }
 
 .btnShowToolbar {
@@ -449,6 +473,14 @@ h3
   margin-top: 2px;
 }
 
+.ui-dialog{
+  z-index: 1030 !important;
+}
+
+.ui-dialog .ui-dialog-titlebar-close{
+  padding-top: 0px;
+}
+
 .ui-dialog-content .row {
   margin-left: 12px;
   margin-right: 3px;
@@ -459,6 +491,10 @@ h3
   width: 60px;
   height: 25px;
   text-align: right;
+}
+
+.xsDialogContainer {
+    padding: 20px;
 }
 
 input.wrongValue {

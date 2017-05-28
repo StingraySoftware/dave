@@ -145,16 +145,17 @@ function onSettingsClicked() {
   showSettingsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
 }
 
-function showError(errorMsg, exception) {
-
-  if (isNull(errorMsg)) { errorMsg = "Something went wrong!"; }
-
-  waitingDialog.show(errorMsg, { progressType:"warning" });
-  log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
-
+function showMsg(msg, progressType) {
+  waitingDialog.show(msg, { progressType: ((isNull(progressType)) ? "success" : progressType ) });
   setTimeout( function () {
     waitingDialog.hide();
   }, 1600);
+}
+
+function showError(errorMsg, exception) {
+  if (isNull(errorMsg)) { errorMsg = "Something went wrong!"; }
+  showMsg(errorMsg, "warning");
+  log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
 }
 
 function getCheckedState(value) {

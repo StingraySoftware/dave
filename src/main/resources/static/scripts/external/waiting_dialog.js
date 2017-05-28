@@ -54,7 +54,7 @@ var waitingDialog = waitingDialog || (function ($) {
 					settings.onHide.call($dialog);
 				});
 			}
-      $dialog.find('.ui-dialog-titlebar-close').click(function(event){
+      $dialog.find('.ui-dialog-titlebar-close').html('<i class="fa fa-times" aria-hidden="true"></i>').click(function(event){
          $dialog.modal('hide');
       });
 			// Opening dialog

@@ -33,6 +33,23 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$btnShowToolbar.hide();
   this.$toolBar.hide();
 
+  this.setAnalisysSections = function (sections) {
+    this.$toolBar.find(".container").html("");
+    for (i in sections) {
+      this.addToolbarSection(sections[i]);
+    };
+  }
+
+  this.addToolbarSection = function (section) {
+    var $section = $('<div class="Section ' + section.cssClass + '">' +
+                      '<h3>' + section.title + ':</h3>' +
+                      '<div class="sectionContainer">' +
+                      '</div>' +
+                    '</div>');
+    $section.hide();
+    this.$toolBar.find(".container").append($section);
+  }
+
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!isNull(projectConfig.schema["RATE"])) {
@@ -88,7 +105,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     // Clears output panel
     this.$body.html("");
-    this.$toolBar.find(".container").html("");
 
     // Adds plots
     this.initPlots(projectConfig);
@@ -312,15 +328,15 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                               filename,
                                               bck_filename,
                                               gti_filename,
-                                              "EVENTS", "PHA", "fullScreen", "Total Dynamical Power Spectrum" ),
+                                              "EVENTS", "PHA", "fullScreen", "Total Dynamical Power Spectrum" )
 
-              this.getPlot (this.id + "_phaVsCounts_" + filename,
+              /* , this.getPlot (this.id + "_phaVsCounts_" + filename,
                             filename, bck_filename, gti_filename,
                             { type: "2d",
                               labels: ["Channel", "Counts"],
                               title: "Channel counts" },
                             [ { table: "EVENTS", column:"PHA" } ],
-                            this.service.request_histogram, "")
+                            this.service.request_histogram, "")*/
           ];
   }
 
@@ -364,8 +380,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_lightcurve,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot " + cssClass,
                       switchable
                     );
   }
@@ -385,8 +401,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_joined_lightcurves,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot " + cssClass,
                       switchable
                     );
   }
@@ -414,8 +430,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       (isNull(linkedPlot)) ? this.service.request_divided_lightcurves_from_colors : this.getDividedLightCurvesFromColorsDataFromServer,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot " + cssClass,
                       switchable
                     );
   }
@@ -440,8 +456,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_power_density_spectrum,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".PDSPlot").find(".sectionContainer"),
+                      "PDSPlot " + cssClass,
                       false,
                       projectConfig
                     );
@@ -468,8 +484,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_dynamical_spectrum,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".PDSPlot").find(".sectionContainer"),
+                      "PDSPlot " + cssClass,
                       false,
                       projectConfig
                     );
@@ -502,7 +518,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                                       ((newKeySufix == "B/A") ? "Softness Intensity Diagram (SID)" : "Hardness Intensity Diagram (HID)"),
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
-            currentObj.plots.push(joined_lc_plot);
             projectConfig.addPlotId(joined_lc_plot.id, ((newKeySufix == "B/A") ? "LCB" : "LCD"));
             projectConfig.addPlotId(joined_lc_plot.id, ((newKeySufix == "B/A") ? "LCA" : "LCC"));
             currentObj.appendPlot(joined_lc_plot);
@@ -516,7 +531,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                                       ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
                                                                       "Color-Color Diagram (CCD)", "", true);
                 projectConfig.plots.push(abcd_plot);
-                currentObj.plots.push(abcd_plot);
                 projectConfig.addPlotId(abcd_plot.id, "LCA");
                 projectConfig.addPlotId(abcd_plot.id, "LCB");
                 projectConfig.addPlotId(abcd_plot.id, "LCC");
@@ -557,7 +571,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                 title,
                                                 [], cssClass, false);
     projectConfig.plots.push(lc_plot);
-    currentObj.plots.push(lc_plot);
     if (titlePrefix == "B/A"){
       projectConfig.addPlotId(lc_plot.id, "LCA");
       projectConfig.addPlotId(lc_plot.id, "LCB");
@@ -582,7 +595,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       pds_plot = this.getPDSPlot ( projectConfig, filename, bck_filename, gti_filename,
                                       tableName, columnName, cssClass, title );
       projectConfig.plots.push(pds_plot);
-      currentObj.plots.push(pds_plot);
       projectConfig.addPlotId(pds_plot.id, titlePrefix);
       currentObj.appendPlot(pds_plot, mustRefreshData);
     }
@@ -619,12 +631,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                       this.service.request_covariance_spectrum,
                                       this.onFiltersChangedFromPlot,
                                       this.onPlotReady,
-                                      this.$toolBar,
-                                      "fullWidth",
+                                      getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),
+                                      "TimingPlot fullWidth",
                                       false,
                                       projectConfig
                                     );
     this.plots.push(covarianceSpectrumPlot);
+    projectConfig.addPlotId(covarianceSpectrumPlot.id, "RMF");
     this.appendPlot(covarianceSpectrumPlot, true);
 
     var rmsPlot = this.getRMSPlot ( projectConfig,
@@ -633,6 +646,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         projectConfig.gtiFilename,
                         "EVENTS", "PHA", "fullWidth", "RMS vs Energy" )
     this.plots.push(rmsPlot);
+    projectConfig.addPlotId(rmsPlot.id, "RMF");
     this.appendPlot(rmsPlot, true);
 
     /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
@@ -647,11 +661,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.plots.push(rmfPlot);
     this.appendPlot(rmfPlot, true);*/
 
-    this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
+    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
   }
 
-  this.addArfPlots = function (projectConfig){
-    /*var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
+  /*this.addArfPlots = function (projectConfig){
+    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
                                 projectConfig.arfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Energy (keV)", "Effective area (cm^2)"],
@@ -661,12 +675,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 null, "");
 
     this.plots.push(arfPlot);
-    this.appendPlot(arfPlot, true);*/
+    this.appendPlot(arfPlot, true);
 
-    this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
-  }
+    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
+  }*/
 
-  this.tryAddEnergyAndUnfoldedSpectrumPlot = function (projectConfig) {
+  /*this.tryAddEnergyAndUnfoldedSpectrumPlot = function (projectConfig) {
 
     if ((projectConfig.filename != "") && (projectConfig.arfFilename != "") && (projectConfig.rmfFilename != "")){
 
@@ -695,7 +709,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.plots.push(energySpectrumPlot);
       currentObj.appendPlot(energySpectrumPlot, true);
 
-      /*var unfoldedSpectrumPlot = new Plot(
+      var unfoldedSpectrumPlot = new Plot(
                                 this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
                                 {
                                   styles:{ type: "2d",
@@ -714,13 +728,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       unfoldedSpectrumPlot.plotConfig.yAxisType = "log";
       currentObj.unfoldedSpectrumPlotIdx = currentObj.plots.length;
       currentObj.plots.push(unfoldedSpectrumPlot);
-      currentObj.appendPlot(unfoldedSpectrumPlot, false);*/
+      currentObj.appendPlot(unfoldedSpectrumPlot, false);
 
       return true;
     }
 
     return false;
-  }
+  }*/
 
   this.getDividedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
 
@@ -790,8 +804,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_rms_spectrum,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),
+                      "TimingPlot " + cssClass,
                       false,
                       projectConfig
                     );
@@ -809,12 +823,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.removePlotsById = function (plotIds) {
+    var tab = getTabForSelector(this.id);
     for (plotIdx in plotIds){
       var plotId = plotIds[plotIdx];
       var plot = this.getPlotById(plotId);
       if (!isNull(plot)) {
         plot.$html.remove();
-        this.$toolBar.find("." + plot.id).remove();
+        tab.$html.find(".sectionContainer").find("." + plot.id).remove();
         this.plots = this.plots.filter(function(plot) {
                           return plot.id !== plotId;
                       });
