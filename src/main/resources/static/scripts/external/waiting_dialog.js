@@ -9,7 +9,7 @@ var waitingDialog = waitingDialog || (function ($) {
 
 	// Creating modal dialog's DOM
 	var $dialog = $(
-		'<div class="modal fade" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true" style="padding-top:15%; overflow-y:visible;">' +
+		'<div class="modal fade waitingDialog" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-hidden="true" style="padding-top:15%; overflow-y:visible;">' +
 		'<div class="modal-dialog modal-m">' +
 		'<div class="modal-content">' +
       '<button style="float: right; padding: 2px; margin: 4px;" class="ui-dialog-titlebar-close">x</button>' +
@@ -65,7 +65,17 @@ var waitingDialog = waitingDialog || (function ($) {
 		 */
 		hide: function () {
 			$dialog.modal('hide');
-		}
+		},
+
+    hideProgress: function () {
+      $dialog.find(".progress").html('<div class="progress-bar" style="width: 100%">');
+    },
+
+    setProgress: function (progressPercent) {
+      $dialog.find(".progress").html('<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="' + progressPercent + '" aria-valuemin="0" aria-valuemax="100" style="width:' + progressPercent + '%">' +
+                                         progressPercent + '% Complete' +
+                                      '</div>');
+    }
 	};
 
 })(jQuery);

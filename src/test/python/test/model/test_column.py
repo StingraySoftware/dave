@@ -62,12 +62,6 @@ def test_get_shema(s, v, e):
     assert schema["min_value"] == v
     assert "max_value" in schema
     assert schema["max_value"] == v
-    assert "error_count" in schema
-    assert schema["error_count"] == 1
-    assert "error_min_value" in schema
-    assert schema["error_min_value"] == e
-    assert "error_max_value" in schema
-    assert schema["error_max_value"] == e
 
 
 @given(

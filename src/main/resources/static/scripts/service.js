@@ -5,7 +5,7 @@ function Service (base_url) {
 
   this.base_url = base_url;
 
-  this.upload_form_data = function (successFn, errorFn, formData) {
+  this.upload_form_data = function (successFn, progressFn, errorFn, formData) {
     $.ajax({
        url: thisService.base_url + "/upload",
        type: 'POST',
@@ -17,7 +17,17 @@ function Service (base_url) {
        //Options to tell jQuery not to process data or worry about content-type.
        cache: false,
        contentType: false,
-       processData: false
+       processData: false,
+
+       // Custom XMLHttpRequest
+        xhr: function() {
+            var myXhr = $.ajaxSettings.xhr();
+            if (myXhr.upload) {
+                // For handling the progress of the upload
+                myXhr.upload.addEventListener('progress', progressFn, false);
+            }
+            return myXhr;
+        }
      });
    };
 

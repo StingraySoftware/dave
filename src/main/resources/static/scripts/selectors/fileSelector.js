@@ -53,6 +53,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                                          currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
                                        };
                                    },
+                           currentObj.onUploadProgress,
                            currentObj.onUploadError,
                            formData);
      } else {
@@ -65,6 +66,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
    });
 
    this.onUploadSuccess = function ( filenames ) {
+     waitingDialog.hideProgress();
      var text = "";
      if (!isNull(filenames)) {
       if (filenames.length == 1) {
@@ -82,7 +84,14 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      }
    }
 
+   this.onUploadProgress = function ( e ) {
+     if (e.lengthComputable) {
+        waitingDialog.setProgress(Math.ceil((e.loaded/e.total) * 100));
+      }
+   }
+
    this.onUploadError = function ( error ) {
+     waitingDialog.hideProgress();
      if (!isNull(error)) {
        waitingDialog.hide();
        showError();
