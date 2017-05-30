@@ -44,6 +44,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
     var modelsConfig = { x_values: currentObj.data[0].values, estimated: estimated = isNull(estimated) || !estimated };
 
     if (modelsConfig.estimated){
+      currentObj.errorsData = null;
       currentObj.modelsData = null;
       currentObj.models = currentObj.getModelsFn(false);
       modelsConfig.models = currentObj.models;
@@ -65,10 +66,10 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
         if (currentObj.getModelsFn(true).length > 0){
           currentObj.refreshModelsData (true);
         } else {
-          currentObj.setData(currentObj.data, currentObj.modelsData, null, this.errorsData);
+          currentObj.setData(currentObj.data, currentObj.modelsData, null, currentObj.errorsData);
         }
       } else {
-        currentObj.setData(currentObj.data, currentObj.modelsData, data, this.errorsData);
+        currentObj.setData(currentObj.data, currentObj.modelsData, data, currentObj.errorsData);
       }
     } else {
       currentObj.showWarn("Wrong models data received");
@@ -80,8 +81,8 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
   this.setErrorData = function (values, errors) {
     if (!isNull(values) && !isNull(errors)) {
-      this.errorsData = { values : values, errors: errors };
-      this.setData(this.data, this.modelsData, null, this.errorsData);
+      currentObj.errorsData = { values : values, errors: errors };
+      currentObj.setData(currentObj.data, currentObj.modelsData, null, currentObj.errorsData);
     }
   }
 
