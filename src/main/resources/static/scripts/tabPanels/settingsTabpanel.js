@@ -26,14 +26,14 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                           'Main settings:' +
                         '</h3>' +
                         '<div class="settingsContainer">' +
-                          '<p>Minimun points to plot: <input id="MIN_PLOT_POINTS_' + this.id + '" class="inputMIN_PLOT_POINTS" type="text" name="MIN_PLOT_POINTS_' + this.id + '" placeholder="' + CONFIG.MIN_PLOT_POINTS + '" value="' + CONFIG.MIN_PLOT_POINTS + '" /></p>' +
-                          '<p>Maximun points to plot: <input id="MAX_PLOT_POINTS_' + this.id + '" class="inputMAX_PLOT_POINTS" type="text" name="MAX_PLOT_POINTS_' + this.id + '" placeholder="' + CONFIG.MAX_PLOT_POINTS + '" value="' + CONFIG.MAX_PLOT_POINTS + '" /></p>' +
+                          '<p>Minimum points to plot: <input id="MIN_PLOT_POINTS_' + this.id + '" class="inputMIN_PLOT_POINTS" type="text" name="MIN_PLOT_POINTS_' + this.id + '" placeholder="' + CONFIG.MIN_PLOT_POINTS + '" value="' + CONFIG.MIN_PLOT_POINTS + '" /></p>' +
+                          '<p>Maximum points to plot: <input id="MAX_PLOT_POINTS_' + this.id + '" class="inputMAX_PLOT_POINTS" type="text" name="MAX_PLOT_POINTS_' + this.id + '" placeholder="' + CONFIG.MAX_PLOT_POINTS + '" value="' + CONFIG.MAX_PLOT_POINTS + '" /></p>' +
                         '</div>' +
                         '<h3>' +
                           'Power density spectrum settings:' +
                         '</h3>' +
                         '<div class="settingsContainer">' +
-                          '<p>Minimun segment size: BinSize *<input id="MIN_SEGMENT_MULTIPLIER_' + this.id + '" class="inputMIN_SEGMENT_MULTIPLIER" type="text" name="MIN_SEGMENT_MULTIPLIER_' + this.id + '" placeholder="' + CONFIG.MIN_SEGMENT_MULTIPLIER + '" value="' + CONFIG.MIN_SEGMENT_MULTIPLIER + '" /></p>' +
+                          '<p>Minimum segment size: BinSize *<input id="MIN_SEGMENT_MULTIPLIER_' + this.id + '" class="inputMIN_SEGMENT_MULTIPLIER" type="text" name="MIN_SEGMENT_MULTIPLIER_' + this.id + '" placeholder="' + CONFIG.MIN_SEGMENT_MULTIPLIER + '" value="' + CONFIG.MIN_SEGMENT_MULTIPLIER + '" /></p>' +
                           '<p>Default segment size: TotalTime /<input id="DEFAULT_SEGMENT_DIVIDER_' + this.id + '" class="inputDEFAULT_SEGMENT_DIVIDER" type="text" name="DEFAULT_SEGMENT_DIVIDER_' + this.id + '" placeholder="' + CONFIG.DEFAULT_SEGMENT_DIVIDER + '" value="' + CONFIG.DEFAULT_SEGMENT_DIVIDER + '" /></p>' +
                         '</div>');
 
