@@ -112,11 +112,10 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              if (!isNull(data) && data.length > 0) {
                currentObj.modelSelector.setEstimation(data[0].values, false);
                currentObj.plot.setErrorData(data[1].values, data[2].values);
+               waitingDialog.hide();
              } else {
-               log("Bootstrap wrong data received!!");
+               showError("Bootstrap wrong data received!!");
              }
-
-             waitingDialog.hide();
 
            });
 

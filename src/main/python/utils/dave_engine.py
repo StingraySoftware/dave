@@ -1275,11 +1275,18 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 
                 if mean <= 0:
                     mean = lc.meanrate
+                logging.debug('get_bootstrap_results lc.meanrate: ' + str(lc.meanrate))
 
                 if seed < 0:
                     seed = None
 
-                N = max([(len(lc.time) + 1), int(math.ceil(segm_size * nsegm))])
+                # N = max([(len(lc.time) + 1), int(math.ceil(segm_size * nsegm))])
+                # logging.debug('get_bootstrap_results len(lc.time): ' + str((len(lc.time) + 1)))
+                # logging.debug('get_bootstrap_results segm_size * nsegm: ' + str(int(math.ceil(segm_size * nsegm))))
+                bins_per_segm = int(math.ceil(segm_size / dt))
+                N = int(math.ceil(bins_per_segm / 1024) * 1024)  # max([ bins_per_segm, 1024 ])
+                #logging.debug('get_bootstrap_results bins_per_segm: ' + str(bins_per_segm))
+                #logging.debug('get_bootstrap_results N: ' + str(N))
 
                 models_params = []
                 powers = []
