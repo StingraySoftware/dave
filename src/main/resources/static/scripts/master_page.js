@@ -145,16 +145,31 @@ function onSettingsClicked() {
   showSettingsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
 }
 
-function showMsg(msg, progressType) {
-  waitingDialog.show(msg, { progressType: ((isNull(progressType)) ? "success" : progressType ) });
-  setTimeout( function () {
-    waitingDialog.hide();
-  }, 1600);
+function showMsg(title, msg) {
+  var $msgDialog = $('<div id="msgdialog" title="' + title + '">' +
+                      '<p>' + msg + '</p>' +
+                    '</div>');
+  $("body").append($msgDialog);
+  $msgDialog.dialog({
+     modal: true,
+     buttons: {
+       'OK': function() {
+          $(this).dialog('close');
+          $msgDialog.remove();
+       }
+     }
+   });
+   $msgDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 }
 
 function showError(errorMsg, exception) {
   if (isNull(errorMsg)) { errorMsg = "Something went wrong!"; }
-  showMsg(errorMsg, "warning");
+
+  waitingDialog.show(errorMsg, { progressType: "warning" });
+  setTimeout( function () {
+    waitingDialog.hide();
+  }, 2500);
+
   log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
 }
 

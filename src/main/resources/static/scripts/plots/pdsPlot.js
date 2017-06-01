@@ -95,7 +95,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         if (isNull(this.plotConfig.styles.showPdsType) || this.plotConfig.styles.showPdsType){
           // Creates PDS type radio buttons
           this.typeRadios = $('<div class="pdsType">' +
-                                '<h3>Type</h3>' +
+                                '<h3>PDS Type:</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Sng">Single</label>' +
                                   '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng" ' + getCheckedState(this.plotConfig.type == "Sng") + '>' +
@@ -133,7 +133,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                           "From",
                                           minValue, maxValue, binSize, segmSize,
                                           this.onSegmSelectorValuesChanged);
-        this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "):  Nº Segments: " + this.plotConfig.nsegm);
+        this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit + "): <span style='font-size: 0.75em'>Nº Segments= " + this.plotConfig.nsegm + "</span>");
         this.segmSelector.slider.slider({
                min: this.segmSelector.fromValue,
                max: this.segmSelector.toValue,
@@ -155,7 +155,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the Normalization radio buttons
         this.normRadios = $('<div class="pdsNorm">' +
-                              '<h3>Normalization</h3>' +
+                              '<h3>Normalization:</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_leahy">Leahy</label>' +
                                 '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_leahy" value="leahy" ' + getCheckedState(this.plotConfig.norm == "leahy") + '>' +
@@ -208,7 +208,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the X axis type radio buttons
         this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
-                              '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type:</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Xlinear">Linear</label>' +
                                 '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + getCheckedState(this.plotConfig.xAxisType == "linear") + '>' +
@@ -228,7 +228,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the Y axis type radio buttons
         this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
-                              '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type:</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_Ylinear">Linear</label>' +
                                 '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + getCheckedState(this.plotConfig.yAxisType == "linear") + '>' +
@@ -248,7 +248,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         if (!isNull(this.plotConfig.zAxisType)) {
           // Creates the X axis type radio buttons
           this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
-                                '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type</h3>' +
+                                '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type:</h3>' +
                                 '<fieldset>' +
                                   '<label for="' + this.id + '_Zlinear">Linear</label>' +
                                   '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + getCheckedState(this.plotConfig.zAxisType == "linear") + '>' +
@@ -268,7 +268,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         // Creates the plot type radio buttons
         this.plotTypeRadios = $('<div class="pdsPlotType">' +
-                              '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data</h3>' +
+                              '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data:</h3>' +
                               '<fieldset>' +
                                 '<label for="' + this.id + '_TypeXY">Power x Frequency</label>' +
                                 '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" ' + getCheckedState(this.plotConfig.plotType == "X*Y") + '>' +
@@ -343,7 +343,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.updateSegmSelector = function () {
     var tab = getTabForSelector(currentObj.id);
-    currentObj.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "):  Nº Segments: " + currentObj.plotConfig.nsegm);
+    currentObj.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "): <span style='font-size: 0.75em'>Nº Segments= " + currentObj.plotConfig.nsegm + "</span>");
 
     if (Math.floor(currentObj.plotConfig.nsegm) <= 1){
       //If NSegm = 1, set normalization to leahy
@@ -378,6 +378,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
           var rebinnedData = this.rebinData(data[0].values, data[1].values, this.plotConfig.rebinSize, "sum");
           data[0].values = rebinnedData.x;
           data[1].values = rebinnedData.y;
+          data[1].error_values = null;
         } catch (ex) {
           log("Rebin plot data " + this.id + " error: " + ex);
         }
@@ -387,8 +388,12 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       }
 
       if (this.plotConfig.plotType == "X*Y") {
+        var computeErrors = !isNull(data[1].error_values) && (data[1].values.length == data[1].error_values.length);
         for (i in data[0].values) {
           data[1].values[i] = data[1].values[i] * data[0].values[i];
+          if (computeErrors){
+            data[1].error_values[i] = data[1].error_values[i] * data[0].values[i];
+          }
         }
       }
 
@@ -427,7 +432,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.getPlotlyConfig = function (data) {
 
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
-                                        [], [], [],
+                                        [], isNull(data[1].error_values) ? [] : data[1].error_values, [],
                                         this.getLabel(0),
                                         this.getLabel(1),
                                         this.plotConfig.styles.title);

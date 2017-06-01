@@ -418,56 +418,54 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.showCrossSpectraSelection = function () {
     var switchablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
     if (switchablePlots.length > 1) {
-      if (switchablePlots.length == 2) {
-        //If there is only two lc plots, select both
-        for (i in switchablePlots) {
-           if (!switchablePlots[i].$html.hasClass("plotSelected")){
-             switchablePlots[i].btnSelect.click();
-           }
-         };
-      } else {
-        //Else show dialog for choose the desired plots
-        var lcPlotButtons = "";
-        for (i in switchablePlots) {
-           var plot = switchablePlots[i];
-           lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + (plot.$html.hasClass("plotSelected")?" plotSelected":"") + '" plotId="' + plot.id + '">' +
-                               '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
-                             '</button>';
-         };
 
-        var $xSpectraDialog = $('<div id="xSpectraDialog_' + currentObj.id +  '" title="Select two light curves:">' +
-                                    '<div class="xsDialogContainer">' +
-                                      lcPlotButtons +
-                                    '</div>' +
-                                '</div>');
+      //Else show dialog for choose the desired plots
+      var lcPlotButtons = "";
+      for (i in switchablePlots) {
+         var plot = switchablePlots[i];
+         lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + (plot.$html.hasClass("plotSelected")?" plotSelected":"") + '" plotId="' + plot.id + '">' +
+                             '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
+                           '</button>';
+       };
 
-        $xSpectraDialog.find("button").click(function(event){
-           var btn = $(this);
-           btn.toggleClass("plotSelected");
-           var plotId = btn.attr("plotId");
-           var plot = currentObj.outputPanel.getPlotById(plotId);
-           plot.btnSelect.click();
-           if ($(this).parent().find(".plotSelected").length > 1) {
-                $xSpectraDialog.dialog('close');
-                $xSpectraDialog.remove();
-           }
-        });
+      var $xSpectraDialog = $('<div id="xSpectraDialog_' + currentObj.id +  '" title="Select two light curves:">' +
+                                  '<div class="xsDialogContainer">' +
+                                    lcPlotButtons +
+                                  '</div>' +
+                              '</div>');
 
-        currentObj.$html.append($xSpectraDialog);
-        $xSpectraDialog.dialog({
-           width: 450,
-           modal: true,
-           buttons: {
-             'Cancel': function() {
-                $(this).dialog('close');
-                $xSpectraDialog.remove();
-             }
+      $xSpectraDialog.find("button").click(function(event){
+         var btn = $(this);
+         btn.toggleClass("plotSelected");
+         var plotId = btn.attr("plotId");
+         var plot = currentObj.outputPanel.getPlotById(plotId);
+         plot.btnSelect.click();
+         if ($(this).parent().find(".plotSelected").length > 1) {
+              $xSpectraDialog.dialog('close');
+              $xSpectraDialog.remove();
+         }
+      });
+
+      currentObj.$html.append($xSpectraDialog);
+      $xSpectraDialog.dialog({
+         width: 450,
+         modal: true,
+         buttons: {
+           'Cancel': function() {
+              $(this).dialog('close');
+              $xSpectraDialog.remove();
            }
-         });
-         $xSpectraDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
-      }
+         }
+       });
+       $xSpectraDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+
     } else {
-      showMsg("At least two visibles ligth curves are requiered");
+      var lcPlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() });
+      showMsg("Spectral Timing:", "At least two plots of type Light Curve must be visible/enabled for continue. " +
+                                  "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons for enabling plots" +
+                                  ((lcPlots.length > 4) ? "." : " or use the Load section for uploading more Light Curve's files." +
+                                  "</br> Also you can use the <i class='fa fa-thumb-tack' aria-hidden='true'></i> button to select two Ligth Curve's plots" +
+                                  " of the same Tab or from different Tabs for creating a Cross Spectrum Tab."));
     }
   }
 

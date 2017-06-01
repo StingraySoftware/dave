@@ -552,6 +552,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
     freq = []
     power = []
+    power_err = []
     duration = []
     warnmsg = []
 
@@ -561,6 +562,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
         if pds:
             freq = pds.freq
             power = pds.power
+            power_err = pds.power_err
 
             duration = [lc.tseg]
             warnmsg = [""]
@@ -578,7 +580,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
-    result = push_to_results_array(result, power)
+    result = push_to_results_array_with_errors(result, power, power_err)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
     return result
@@ -713,6 +715,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     freq = []
     power = []
+    power_err = []
     time_lag_array = []
     coherence_array = []
     duration = []
@@ -793,6 +796,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         if xs:
             freq = xs.freq
             power = xs.power
+            power_err = xs.power_err
             time_lag, time_lag_err = xs.time_lag()
             coherence, coherence_err = xs.coherence()
 
@@ -829,7 +833,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
     result = push_to_results_array([], freq)
-    result = push_to_results_array(result, power)
+    result = push_to_results_array_with_errors(result, power, power_err)
     result = push_to_results_array(result, time_lag_array)
     result = push_to_results_array(result, coherence_array)
     result = push_to_results_array(result, duration)
@@ -987,12 +991,13 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 # @param: n_bands: The number of bands to split the refence band
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, n_bands):
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, energy_range, n_bands):
     energy_arr = []
     rms_arr =[]
     rms_err_arr = []
     duration = []
     warnmsg = []
+    freq_min_max = [-1, -1]
 
     try:
 
@@ -1029,8 +1034,16 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                 event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
                                                                        events_table.columns["E"].values)])
 
-                min_energy = min(event_list[:,1])
-                energy_range = max(event_list[:,1]) - min_energy
+                if energy_range[0] < 0:
+                    min_energy = min(event_list[:,1])
+                else:
+                    min_energy = energy_range[0]
+
+                if energy_range[1] >= min_energy:
+                    energy_range = energy_range[1] - min_energy
+                else:
+                    energy_range = max(event_list[:,1]) - min_energy
+
                 energy_step = energy_range / n_bands
 
                 for i in range(n_bands):
@@ -1066,15 +1079,21 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                                     if pds:
 
-                                        if (freq_range[0] < 0):
+                                        if freq_range[0] < 0:
                                             freq_low = min(pds.freq)
                                         else:
                                             freq_low = freq_range[0]
 
-                                        if (freq_range[1] < 0):
+                                        if freq_min_max[0] >= 0:
+                                            freq_min_max[0] = min([freq_min_max[0], freq_low])
+                                        else:
+                                            freq_min_max[0] = freq_low
+
+                                        if freq_range[1] < 0:
                                             freq_high = max(pds.freq)
                                         else:
                                             freq_high = freq_range[1]
+                                        freq_min_max[1] = max([freq_min_max[1], freq_high])
 
                                         rms, rms_err = pds.compute_rms(freq_low, freq_high)
 
@@ -1108,6 +1127,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
     result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
+    result = push_to_results_array(result, freq_min_max)
     return result
 
 

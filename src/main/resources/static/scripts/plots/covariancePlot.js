@@ -61,7 +61,7 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
 
   this.onReferenceBandValuesChanged = function() {
     try {
-      currentObj.plotConfig.n_bands = Math.floor(currentObj.refBandSelector.toValue - currentObj.refBandSelector.fromValue);
+      currentObj.plotConfig.n_bands = Math.max.apply(Math, [1, Math.floor(currentObj.refBandSelector.toValue - currentObj.refBandSelector.fromValue)]);
       currentObj.settingsPanel.find(".inputNBands").val(currentObj.plotConfig.n_bands);
       currentObj.plotConfig.ref_band_interest = [currentObj.refBandSelector.fromValue, currentObj.refBandSelector.toValue];
     } catch (e) {
@@ -70,11 +70,11 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
   }
 
   this.onNBandsChanged = function(){
-    currentObj.plotConfig.n_bands = getInputIntValue(currentObj.settingsPanel.find(".inputNBands"), currentObj.plotConfig.n_bands);
+    currentObj.plotConfig.n_bands = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNBands"), currentObj.plotConfig.n_bands, 1, CONFIG.MAX_PLOT_POINTS);
   }
 
   this.onStdChanged = function(){
-    currentObj.plotConfig.std = getInputFloatValue(currentObj.settingsPanel.find(".inputStd"), currentObj.plotConfig.std);
+    currentObj.plotConfig.std = getInputIntValueCropped(currentObj.settingsPanel.find(".inputStd"), currentObj.plotConfig.std, -1, CONFIG.MAX_PLOT_POINTS);
   }
 
   //CovariancePlot plot attributes:

@@ -510,7 +510,8 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
 
 
 def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, n_bands):
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                    freq_range, energy_range, n_bands):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -538,10 +539,12 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_spectrum: norm %s" % norm)
     logging.debug("get_rms_spectrum: type %s" % pds_type)
     logging.debug("get_rms_spectrum: freq_range %s" % freq_range)
+    logging.debug("get_rms_spectrum: energy_range %s" % energy_range)
     logging.debug("get_rms_spectrum: n_bands %s" % n_bands)
 
     data = DaveEngine.get_rms_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, n_bands)
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                        freq_range, energy_range, n_bands)
 
     logging.debug("get_rms_spectrum: Finish!")
 
