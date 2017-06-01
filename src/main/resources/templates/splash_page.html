@@ -13,25 +13,19 @@
     <style>
       body {
         background: url(../static/img/bg.jpg);
-        background-position: center center;
+        background-position: center bottom;
         background-repeat: no-repeat;
         background-attachment: fixed;
         background-size: cover;
       }
-      @font-face {
-      	font-family: Furore;
-      	src: url("../static/fonts/Furore.otf") format("opentype");
+
+      .progress {
+        margin-left: 25%;
+        width: 43%;
+        position: fixed;
+        bottom: 50px;
       }
-      .col-sm-12 { margin-top: 15%; padding-left: 8px; padding-right: 8px; }
-      .row {margin-top: 0px;}
-      .logotype {
-          font-family: Furore;
-          color: #DD4814;
-          font-size: 20px;
-      }
-      .titletype {
-          font-size:70px;
-      }
+
     </style>
 
     <!-- Insert this line above script imports for solve Electron import issues -->
@@ -64,10 +58,8 @@
     <div class="container fluid">
       <div class="row">
         <div class="col-sm-12 text-center">
-          <div class="logotype titletype">DAVE</div>
-          <div class="logotype">Powered by TIMELAB</div>
-          <br/>
-          <div class="progress progress-striped active" style="margin-top:60px; margin-bottom:0; margin-left:25%; width: 50%">
+
+          <div class="progress progress-striped active">
             <div class="progress-bar" style="width: 100%"></div>
           </div>
 

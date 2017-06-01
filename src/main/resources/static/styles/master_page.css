@@ -1,7 +1,7 @@
 
 @font-face {
-  font-family: Furore;
-  src: url("../fonts/Furore.otf") format("opentype");
+  font-family: Archangelsk;
+  src: url("../fonts/Archangelsk.ttf");
 }
 
 html,body,.container {
@@ -16,17 +16,20 @@ h3
 }
 
 .navbar-static-top {
+  font-family: Archangelsk;
   background-color: #222;
   margin-bottom: 0px;
 }
 
 .navbar .navbar-brand {
-  font-family: Furore;
-  color: #DD4814;
-  font-size: 20px;
+  font-family: Archangelsk;
+  width: 90px;
+  color: #FE3200;
+  font-size: 24px;
 }
 
 .side-nav {
+  font-family: Archangelsk;
   width: 90px;
 }
 
