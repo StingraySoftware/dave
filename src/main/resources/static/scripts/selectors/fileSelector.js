@@ -62,8 +62,12 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
    });
 
    this.$html.find(".btn").click(function () {
-     currentObj.$input.focus().click();
+     currentObj.showSelectFile();
    });
+
+   this.showSelectFile = function () {
+     this.$input.focus().click();
+   };
 
    this.onUploadSuccess = function ( filenames ) {
      waitingDialog.hideProgress();

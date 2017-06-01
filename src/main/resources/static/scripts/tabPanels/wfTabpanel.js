@@ -175,7 +175,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Enable Spectral Timing Section
         if (!currentObj.toolPanel.isSectionEnabled("TimingPlot")){
           currentObj.toolPanel.toggleEnabledSection("TimingPlot");
+        } else {
+          currentObj.outputPanel.setToolbarSectionVisible("TimingPlot", true);
         }
+
+        //Hides upload RMF buttons from Analyze tab
+        currentObj.toolPanel.$html.find(".rmsBtn").remove();
+        currentObj.toolPanel.$html.find(".covarianceBtn").remove();
 
         waitingDialog.hide();
 
@@ -209,14 +215,30 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         //Prepare sections
         var timingPlotsButtons = [];
-        var crossSpectraBtn = $('<button class="btn btn-default btnShow ' + this.id + ' crossSpectraBtn ExtraButton">' +
-                                  '<i class="fa fa-area-chart" aria-hidden="true"></i> Cross Spectrum' +
-                                '</button>');
-        crossSpectraBtn.click(function(event){
-           currentObj.showCrossSpectraSelection();
-        });
-        timingPlotsButtons.push(crossSpectraBtn);
+        timingPlotsButtons = currentObj.addButtonToArray("Cross Spectrum",
+                                                          "crossSpectraBtn",
+                                                          currentObj.showCrossSpectraSelection,
+                                                          timingPlotsButtons);
 
+        timingPlotsButtons = currentObj.addButtonToArray("Frequency lag",
+                                                          "freqLagBtn",
+                                                          currentObj.showCrossSpectraSelection,
+                                                          timingPlotsButtons);
+
+        timingPlotsButtons = currentObj.addButtonToArray("Coherence",
+                                                          "coherenceBtn",
+                                                          currentObj.showCrossSpectraSelection,
+                                                          timingPlotsButtons);
+
+        timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
+                                                          "covarianceBtn",
+                                                          currentObj.showUploadRMFDialog,
+                                                          timingPlotsButtons);
+
+        timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
+                                                          "rmsBtn",
+                                                          currentObj.showUploadRMFDialog,
+                                                          timingPlotsButtons);
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
             { cssClass: "PDSPlot", title:"Power Density Spectra" },
@@ -254,6 +276,15 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("onSchemaChangedWithKey error:" + schema);
       showError();
     }
+  }
+
+  this.addButtonToArray = function (buttonText, buttonClass, buttonFn, array) {
+    var btn = $('<button class="btn btn-default btnShow ' + this.id + ' ' + buttonClass + ' ExtraButton">' +
+                  '<i class="fa fa-area-chart" aria-hidden="true"></i> ' + buttonText +
+                '</button>');
+    btn.click(buttonFn);
+    array.push(btn);
+    return array;
   }
 
   this.onSchemaChangedMultipleFiles = function ( result, params ) {
@@ -438,6 +469,33 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     } else {
       showMsg("At least two visibles ligth curves are requiered");
     }
+  }
+
+  this.showUploadRMFDialog = function () {
+    //Show upload RMF file
+    var $uploadRMFDialog = $('<div id="uploadRMFDialog_' + currentObj.id +  '" title="Upload RMF file:">' +
+                                '<div class="rmfDialogContainer">' +
+                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum" and "RMS spectrum"</p>' +
+                                '</div>' +
+                            '</div>');
+
+    currentObj.$html.append($uploadRMFDialog);
+    $uploadRMFDialog.dialog({
+       width: 450,
+       modal: true,
+       buttons: {
+         'Upload RMF file': function() {
+            currentObj.toolPanel.rmfFileSelector.showSelectFile();
+            $(this).dialog('close');
+            $uploadRMFDialog.remove();
+         },
+         'Cancel': function() {
+            $(this).dialog('close');
+            $uploadRMFDialog.remove();
+         }
+       }
+     });
+     $uploadRMFDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
   this.destroy = function () {

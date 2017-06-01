@@ -50,6 +50,32 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.$toolBar.find(".container").append($section);
   }
 
+  this.setToolbarSectionVisible = function (sectionClass, visible) {
+    if (visible) {
+        currentObj.$html.find(".Section." + sectionClass).show();
+    } else {
+        currentObj.$html.find(".Section." + sectionClass).hide();
+    }
+  }
+
+  this.setEnabledSection = function (sectionClass, enabled) {
+    var plots = currentObj.$html.find(".plotContainer." + sectionClass);
+    if (plots.length > 0) {
+      currentObj.setToolbarSectionVisible(sectionClass, enabled);
+      $.each( plots, function(i, $plot) {
+        var plot = currentObj.getPlotById($plot.id);
+        if (!isNull(plot) && plot.isVisible){
+          if (enabled) {
+            plot.$html.show();
+            plot.refreshData();
+          } else {
+            plot.$html.hide();
+          }
+        }
+      });
+    }
+  }
+
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (!isNull(projectConfig.schema["RATE"])) {

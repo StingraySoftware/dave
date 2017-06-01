@@ -372,7 +372,7 @@ function ToolPanel (id,
         if (rmfFileDiv.children().length == 0) {
           var rmfBtn = $('<button class="btn btn-warning btnRmf"> Upload RMF file </button>');
           rmfBtn.click(function () {
-            currentObj.rmfFileSelector.$html.find("#" + currentObj.rmfFileSelector.uploadInputId).focus().click();
+            currentObj.rmfFileSelector.showSelectFile();
           });
           rmfFileDiv.html('<p class="text-warning">RMF file is requiered for processing energy values:</p>');
           rmfFileDiv.append(rmfBtn);
@@ -549,36 +549,17 @@ function ToolPanel (id,
   this.toggleEnabledSection = function (sectionClass) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
     var $switchBtn = $section.find(".switch-btn");
-    var outputPanel = getTabForSelector(this.id).outputPanel;
-    var plots = outputPanel.$html.find(".plotContainer." + sectionClass);
 
     if ($switchBtn.hasClass("fa-square-o")) {
       $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
       $section.find(".sectionContainer").show();
       $section.removeClass("Disabled");
-      if (plots.length > 0) {
-        outputPanel.$html.find(".Section." + sectionClass).show();
-        $.each( plots, function(i, $plot) {
-          var plot = outputPanel.getPlotById($plot.id);
-          if (!isNull(plot) && plot.isVisible){
-            plot.$html.show();
-            plot.refreshData();
-          }
-        });
-      }
+      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
     } else {
       $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
       $section.find(".sectionContainer").hide();
       $section.addClass("Disabled");
-      if (plots.length > 0) {
-        outputPanel.$html.find(".Section." + sectionClass).hide();
-        $.each( outputPanel.$html.find(".plotContainer." + sectionClass), function(i, $plot) {
-          var plot = outputPanel.getPlotById($plot.id);
-          if (!isNull(plot) && plot.isVisible){
-            plot.$html.hide();
-          }
-        });
-      }
+      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
     }
   }
 
