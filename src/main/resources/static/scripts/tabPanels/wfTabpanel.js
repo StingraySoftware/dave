@@ -461,11 +461,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     } else {
       var lcPlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() });
-      showMsg("Spectral Timing:", "At least two plots of type Light Curve must be visible/enabled for continue. " +
-                                  "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons for enabling plots" +
-                                  ((lcPlots.length > 4) ? "." : " or use the Load section for uploading more Light Curve's files." +
+      showMsg("Spectral Timing:", "At least two plots of type Light Curve must be visible/enabled to continue. " +
+                                  "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots" +
+                                  ((lcPlots.length > 4) ? "." : " or use the Load section to upload more Light Curve's files." +
                                   "</br> Also you can use the <i class='fa fa-thumb-tack' aria-hidden='true'></i> button to select two Ligth Curve's plots" +
-                                  " of the same Tab or from different Tabs for creating a Cross Spectrum Tab."));
+                                  " of the same Tab or from different Tabs to create a Cross Spectrum Tab."));
     }
   }
 
