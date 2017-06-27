@@ -21,6 +21,7 @@ from stingray.simulator import simulator
 import sys
 
 BIG_NUMBER = 9999999999999
+PRECISSION = 4
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
@@ -1441,15 +1442,15 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 
 def push_to_results_array (result, values):
     column = dict()
-    column["values"] = values
+    column["values"] = np.around(values, decimals=PRECISSION)
     result.append(column)
     return result
 
 
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
-    column["values"] = values
-    column["error_values"] = errors
+    column["values"] = np.around(values, decimals=PRECISSION)
+    column["error_values"] = np.around(errors, decimals=PRECISSION)
     result.append(column)
     return result
 

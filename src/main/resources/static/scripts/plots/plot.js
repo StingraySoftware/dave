@@ -177,27 +177,32 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  };
 
  this.refreshData = function () {
-   this.setReadyState(false);
+   if (this.isReady) {
+     this.setReadyState(false);
 
-   if (isNull(this.getDataFromServerFn)) {
-     if (!isNull(this.parentPlotId)) {
-       var tab = getTabForSelector(this.id);
-       var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
-       if (!parentPlot.isVisible) {
-          log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
-          parentPlot.refreshData();
-          return;
-       } else if (parentPlot.isReady) {
-          this.setReadyState(true);
+     if (isNull(this.getDataFromServerFn)) {
+       if (!isNull(this.parentPlotId)) {
+         var tab = getTabForSelector(this.id);
+         var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
+         if (!parentPlot.isVisible) {
+            log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
+            parentPlot.refreshData();
+            return;
+         } else if (parentPlot.isReady) {
+            this.setReadyState(true);
+         }
        }
+
+       log("Avoid request data, no service function setted, Plot" + this.id);
+       return;
+     } else {
+       this.updatePlotConfig();
+       this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
      }
-
-     log("Avoid request data, no service function setted, Plot" + this.id);
-     return;
+     
+   } else {
+     log("Avoid refreshData, plot is not ready. Plot" + this.id);
    }
-
-   this.updatePlotConfig();
-   this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
  }
 
  this.updatePlotConfig = function () {

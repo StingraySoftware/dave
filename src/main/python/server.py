@@ -11,6 +11,7 @@ matplotlib.use('TkAgg')  # Changes the matplotlib framework
 import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
 import utils.dave_logger as Logger
+from utils.np_encoder import NPEncoder
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -38,6 +39,19 @@ UPLOADS_TARGET = os.path.join(APP_ROOT, 'uploadeddataset')
 
 app.secret_key = os.urandom(24)
 
+app.json_encoder = NPEncoder
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+# ------ Configure Compressing -----
+# Tested on DAVE but the doesn't improves performance,
+# sure is a good choice for improving DAVE if runs on a remote server
+# Change environment.yml to add to pip: "- flask-compress==1.4.0"
+# Add import: "from flask_compress import Compress",
+# Uncomment following code:
+# COMPRESS_MIMETYPES = ['text/html', 'text/css', 'text/xml', 'application/json', 'application/javascript']
+# COMPRESS_LEVEL = 6
+# COMPRESS_MIN_SIZE = 500
+# Compress(app)
 
 # Routes methods
 @app.route('/upload', methods=['GET', 'POST'])

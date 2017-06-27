@@ -6,6 +6,11 @@ import utils.dave_logger as logging
 BIG_NUMBER = 9999999999999
 
 class NPEncoder(json.JSONEncoder):
+
+    """Minify JSON output."""
+    item_separator = ','
+    key_separator = ':'
+
     def default(self, obj):
         try:
             if isinstance(obj, int):
