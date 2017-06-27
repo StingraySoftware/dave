@@ -185,6 +185,11 @@ h3
   border: 1px solid #ff0000 !important;
 }
 
+.plotHover
+{
+  border: 1px solid #222222 !important;
+}
+
 .plotContainer .plot{
   overflow: hidden;
   height: 305px;
@@ -212,7 +217,7 @@ h3
   overflow-y: scroll;
 }
 
-.plotContainer .loading
+.plotContainer .loading, .plotContainer .hoverDisabler
 {
   width: 100%;
   height: 100%;
@@ -231,6 +236,11 @@ h3
 
 .loadingGif img {
   width: 100%;
+}
+
+.plotContainer .hoverDisabler
+{
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .plotContainer .settings h3

@@ -13,6 +13,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.isVisible = true;
   this.isReady = true;
   this.isSwitched = false;
+  this.hoverEnabled = false;
   this.cssClass = (cssClass != undefined) ? cssClass : "";
   this.switchable = (switchable != undefined) ? switchable : false;
   this.data = null;
@@ -22,11 +23,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.minY = 0;
   this.maxX = 0;
   this.maxY = 0;
-  this.onHoverTimeout = null;
 
   this.$html = $('<div id="' + this.id + '" class="plotContainer ' + this.cssClass + '">' +
                   '<div class="loading">' +
                     '<div class="loadingGif"><img src="static/img/loading.gif"/></div>' +
+                  '</div>' +
+                  '<div class="hoverDisabler">' +
                   '</div>' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
@@ -312,9 +314,18 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.redrawPlot = function (plotlyConfig) {
    try {
      if (plotlyConfig != null) {
-       Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
-       this.plotElem = this.$html.find(".plot")[0];
+
        this.tracesCount = plotlyConfig.data.length;
+
+       //Adds the crosshairs to the plot
+       plotlyConfig.data.push(getCrossLine ([this.minX, this.minX], [this.minY, this.maxY]));
+       plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [this.minY, this.minY]));
+
+       //Creates the plot
+       Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+
+       this.plotElem = this.$html.find(".plot")[0];
+
        this.registerPlotEvents()
        this.resize();
 
@@ -338,25 +349,29 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.resize = function () {
-   try {
-     if (this.plotElem != null) {
-       var update = {
-         width: $(this.plotElem).width(),
-         height: $(this.plotElem).height()
-       };
+   currentObj.clearTimeouts();
 
-       Plotly.relayout(this.plotId, update);
+   currentObj.resizeTimeout = setTimeout(function(){
+     try {
+       if (currentObj.plotElem != null) {
+         var size = {
+           width: $(currentObj.plotElem).width(),
+           height: $(currentObj.plotElem).height()
+         };
+
+         Plotly.relayout(currentObj.plotId, size);
+       }
+     } catch (ex) {
+       log("Resize plot " + currentObj.id + " error: " + ex);
      }
-   } catch (ex) {
-     log("Resize plot " + this.id + " error: " + ex);
-   }
+   }, CONFIG.INMEDIATE_TIMEOUT);
  }
 
  this.registerPlotEvents = function () {
 
-   if((this.plotConfig.styles.type == "2d")
-      || (this.plotConfig.styles.type == "ligthcurve")
-      || (this.plotConfig.styles.type == "colors_ligthcurve")) {
+   if ((this.plotConfig.styles.type == "2d")
+        || (this.plotConfig.styles.type == "ligthcurve")
+        || (this.plotConfig.styles.type == "colors_ligthcurve")) {
 
      this.plotElem.on('plotly_selected', (eventData) => {
 
@@ -384,28 +399,98 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       }
 
       })
-    }
 
-    this.plotElem.on('plotly_hover', function(data){
+      this.plotElem.on('plotly_hover', function(data){
 
-      if (currentObj.onHoverTimeout != null) { clearTimeout(currentObj.onHoverTimeout); }
+        if (currentObj.hoverEnabled){
+          currentObj.clearTimeouts();
+          currentObj.hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
 
-      currentObj.onHoverTimeout = setTimeout(function(){
-        var coords = currentObj.getCoordsFromPlotlyHoverEvent(data);
-        if (coords != null){
-          currentObj.onHover(coords);
+          currentObj.onHoverTimeout = setTimeout(function(){
+            if (!isNull(currentObj.hoverCoords)){
+              currentObj.onHover(currentObj.hoverCoords);
 
-          var evt_data = currentObj.getSwitchedCoords({ x: coords.x, y: coords.y });
-          evt_data.labels = currentObj.plotConfig.styles.labels;
-          currentObj.sendPlotEvent('on_hover', evt_data);
+              var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
+              evt_data.labels = currentObj.plotConfig.styles.labels;
+              currentObj.sendPlotEvent('on_hover', evt_data);
+            }
+          }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
         }
-      }, 300);
 
-    }).on('plotly_unhover', function(data){
-      if (currentObj.onHoverTimeout != null) { clearTimeout(currentObj.onHoverTimeout); }
-      currentObj.onUnHover();
-      currentObj.sendPlotEvent('on_unhover', {});
-    });
+      }).on('plotly_unhover', function(data){
+        if (currentObj.hoverEnabled){
+          currentObj.onUnHoverEvent();
+        }
+      });
+
+      if (isNull(this.plotEventsRegistered)){
+        this.plotEventsRegistered = true;
+
+        $( this.$html ).click(function(e) {
+          currentObj.setHoverEventsEnabled(!currentObj.hoverEnabled);
+        }).mouseenter(function() {
+
+          if (!currentObj.hoverEnabled && isNull(currentObj.mouseEntered)){
+
+            currentObj.$html.addClass("plotHover");
+
+            currentObj.clearTimeouts();
+            currentObj.mouseEntered = true;
+
+            currentObj.onMouseEnterTimeout = setTimeout(function(){
+              if (!isNull(currentObj.mouseEntered)){
+                currentObj.setHoverEventsEnabled(true);
+              }
+            }, CONFIG.PLOT_ENABLE_HOVER_TIMEOUT);
+
+          } else {
+            currentObj.onUnHoverEvent();
+          }
+
+        }).mouseleave(function() {
+
+          currentObj.$html.removeClass("plotHover");
+
+          currentObj.onHoverStartTime = null;
+          currentObj.mouseEntered = null;
+          currentObj.onUnHoverEvent();
+
+          if (currentObj.hoverEnabled){
+            currentObj.setHoverEventsEnabled(false);
+          }
+
+        });
+      }
+
+    }
+  }
+
+  this.setHoverEventsEnabled = function (enabled) {
+    this.hoverEnabled = enabled;
+    if (this.hoverEnabled){
+      this.$html.find(".hoverDisabler").hide();
+    } else {
+      this.$html.find(".hoverDisabler").show();
+      currentObj.onUnHoverEvent();
+    }
+  }
+
+  this.clearTimeouts = function () {
+    if (!isNull(currentObj.resizeTimeout)) { clearTimeout(currentObj.resizeTimeout); currentObj.resizeTimeout = null; }
+    if (!isNull(currentObj.onMouseEnterTimeout)) { clearTimeout(currentObj.onMouseEnterTimeout); currentObj.onMouseEnterTimeout = null; }
+    if (!isNull(currentObj.onHoverTimeout)) { clearTimeout(currentObj.onHoverTimeout); currentObj.onHoverTimeout = null; }
+    if (!isNull(currentObj.onUnHoverTimeout)) { clearTimeout(currentObj.onUnHoverTimeout); currentObj.onUnHoverTimeout = null; }
+  }
+
+  this.onUnHoverEvent = function () {
+    if (!isNull(currentObj.hoverCoords)){
+      currentObj.hoverCoords = null;
+      currentObj.clearTimeouts();
+      currentObj.onUnHoverTimeout = setTimeout(function(){
+        currentObj.onUnHover();
+        currentObj.sendPlotEvent('on_unhover', {});
+      }, CONFIG.INMEDIATE_TIMEOUT);
+    }
   }
 
   this.getPlotDefaultTracesCount = function (){
@@ -468,15 +553,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.onHover = function (coords){
-   if (coords != null) {
-     this.setLegendText( this.getLegendTextForPoint(coords) );
-     this.showCross(coords.x, coords.y);
-   }
+    if (coords != null) {
+       this.setLegendText( this.getLegendTextForPoint(coords) );
+       setTimeout(function(){
+         currentObj.showCross(coords.x, coords.y);
+       }, CONFIG.INMEDIATE_TIMEOUT);
+    }
   }
 
   this.onUnHover = function (){
-   this.setLegendText("");
-   this.hideCrosses();
+    this.setLegendText("");
+    setTimeout(function(){ currentObj.hideCrosses(); }, CONFIG.INMEDIATE_TIMEOUT);
   }
 
   this.getLabel = function (axis) {
@@ -522,30 +609,26 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.showCross = function (x, y){
-   Plotly.addTraces(this.plotElem, getCrossLine ([x, x], [this.minY, this.maxY]));
-   Plotly.addTraces(this.plotElem, getCrossLine ([this.minX, this.maxX], [y, y]));
-   this.addedTraces += 2;
+   // update two crosshair traces with new data and make it visible
+   var update = { x: [[x, x], [this.minX, this.maxX]],
+                  y: [[this.minY, this.maxY], [y, y]],
+                  visible: true };
+   Plotly.restyle(this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
   }
 
   this.hideCrosses = function (){
-   var newaddedTraces = this.addedTraces;
-   for (i = this.addedTraces + this.tracesCount; i > this.tracesCount; i--) {
-     try {
-       Plotly.deleteTraces(currentObj.plotElem, i - 1);
-       newaddedTraces --;
-     } catch (e) {
-       //log("deleteTraces: ERROR ex: " + e);
-     }
-   }
-   this.addedTraces = newaddedTraces;
+   // hide two crosshair traces
+   Plotly.restyle(this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
   }
 
   this.sendPlotEvent = function (evt_name, evt_data) {
-    //Sends event to all plots inside the tab
-    var tab = getTabForSelector(this.id);
-    if (tab != null) {
-      tab.broadcastEventToPlots(evt_name, evt_data, this.id);
-    }
+    //Sends event to all plots inside the tab, uses setTimeout for avoid blocking calls
+    setTimeout(function(){
+      var tab = getTabForSelector(currentObj.id);
+      if (tab != null) {
+        tab.broadcastEventToPlots(evt_name, evt_data, currentObj.id);
+      }
+    }, CONFIG.INMEDIATE_TIMEOUT);
   }
 
   this.receivePlotEvent = function (evt_name, evt_data, senderId) {
@@ -674,90 +757,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       && gti_stop.length > 0
       && gti_start.length == gti_stop.length) {
 
-      //var last = -1;
       for (i in gti_start){
         if (i > 0) {
           if (gti_stop[i - 1] < gti_start[i]) {
             wti_ranges.push([gti_stop[i - 1], gti_start[i]]);
           }
-          //last = gti_stop[i];
-        } /*else if (gti_start[0] > timevals[0]) {
-            //This adds WTI range before first event
-            wti_ranges.push([timevals[0], gti_start[0]]);
-        }*/
+        }
       }
-
-      /* This adds WTI range after last event
-      if (last > timevals[timevals.length -1]) {
-        wti_ranges.push([timevals[timevals.length -1], last]);
-      }*/
    }
 
    return wti_ranges;
   }
-
-  /*
-  // detectWtiRangesFromData IS NOT USED, JUST KEEPED FOR POSIBLE FURTHER USE
-  this.detectWtiRangesFromData = function (data) {
-
-   //Prepares Wrong Time Intervals for background highlight
-
-   if (data[0].values.length == 0) {
-      return [];
-   }
-
-   var wti_x_ranges = [];
-   var last_x = data[0].values[data[0].values.length - 1];
-   var x = data[0].values[0];
-   var totalElapsed = last_x - x;
-   var prevX = x - 1;
-   var prevY = 0;
-   var prevPrevX = x - 2;
-   var trigger_ratio = 10;  // The ratio of elapsed time versus prev elapsed for triggering a gap
-   var elapsed_avg = 0;
-
-   for (i in data[0].values) {
-
-       x = data[0].values[i];
-       y = data[1].values[i];
-       var elapsed = x - prevX;
-
-       if (y > 0){
-         if (elapsed_avg > 0) {
-           var ratio = elapsed / elapsed_avg;
-
-           if (prevX > prevPrevX && prevPrevX > 0 && elapsed_avg != 1) {
-             if (ratio > trigger_ratio) {
-               //Looks that we are outside a GTI
-               //Sets range start to end, x is the end index of the gti
-               var wtiStart = prevX + (prevX - prevPrevX)/2;
-               var wtiStop = x - (prevX - prevPrevX)/2;
-               if (totalElapsed / (wtiStop - wtiStart) < trigger_ratio) {
-                 // If WTI is at least the tenth part of total time
-                 wti_x_ranges.push([wtiStart, wtiStop]);
-               }
-             }
-           }
-
-           // Calulates the ne elapsed_avg with the latest 5 vals, avoid break avg with gaps
-           if (ratio < trigger_ratio || elapsed_avg == 1) {
-             elapsed_avg += (elapsed - elapsed_avg) * 0.2;
-           }
-
-         } else {
-           elapsed_avg = elapsed;
-         }
-
-         prevPrevX = prevX;
-         prevX = x;
-       }
-
-       prevY = y;
-   }
-
-   return wti_x_ranges;
-  }// --END detectWtiRangesFromData IS NOT USED, JUST KEEPED FOR POSIBLE FURTHER USE
-  */
 
   log ("new plot id: " + this.id);
 
