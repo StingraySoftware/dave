@@ -4,13 +4,11 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
 
   var currentObj = this;
 
-  var schema = projectConfig.schema;
-  if (!isNull(schema["EVENTS"])) {
-      table = schema["EVENTS"];
-      if (!isNull(table["E"])){
+  if (projectConfig.schema.isEventsFile()) {
+      var column = projectConfig.schema.getTable()["E"];
+      if (!isNull(column)){
 
         //Adds Reference Band filter
-        var column = table["E"];
         plotConfig.ref_band_interest = [column.min_value, column.max_value];
         plotConfig.n_bands = Math.floor(column.max_value - column.min_value);
         plotConfig.std = -1;

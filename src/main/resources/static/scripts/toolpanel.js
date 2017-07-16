@@ -90,69 +90,61 @@ function ToolPanel (id,
     this.$html.find("." + panel).show();
   }
 
-  this.onDatasetSchemaChanged = function ( projectConfig ) {
+  this.onTimeRangeChanged = function (timeRange) {
+    if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
+      this.binSelector.setMinMaxValues(timeRange / CONFIG.MAX_PLOT_POINTS, timeRange / CONFIG.MIN_PLOT_POINTS);
+    }
+  }
 
-    var schema = projectConfig.schema;
+  this.onDatasetSchemaChanged = function ( projectConfig ) {
 
     currentObj.selectors_array = [];
     currentObj.$html.find(".sliderSelector").remove();
 
     //Adds the Bin selector
-    if (this.binSelector != null){
+    if (!isNull(this.binSelector)){
       this.binSelector.$html.remove();
     }
 
-    var maxTimeRange = -1;
-    var timeRatio = 1;
-
-    if (schema["EVENTS"] !== undefined){
-
-      //SRC file is an EVENTS file:
+    if (projectConfig.schema.isEventsFile()){
 
       this.showEventsSelectors();
 
-      if (isNull(schema["EVENTS"]["PHA"])){
+      if (!projectConfig.schema.hasColumn("PHA")){
           //PHA Column doesn't exist, show we can't apply RMF or ARF files
           this.rmfFileSelector.disable("PHA column not found in SRC file");
           this.arfFileSelector.disable("PHA column not found in SRC file");
       }
 
+      //Caluculates max, min and step values for slider with time ranges
       var minBinSize = 1;
-      var maxBinSize = 1;
       var initValue = 1;
       var step = 1;
-
-      //Caluculates max, min and step values for slider from time ranges
-      var timeColumn = schema["EVENTS"]["TIME"];
-      maxTimeRange = timeColumn.max_value - timeColumn.min_value;
-      if (timeColumn.count > CONFIG.MAX_PLOT_POINTS) {
-        timeRatio = CONFIG.MAX_PLOT_POINTS / timeColumn.count;
-        maxTimeRange *= timeRatio;
-      }
-      var binSize = maxTimeRange / CONFIG.MIN_PLOT_POINTS;
       var multiplier = 1;
 
       //If binSize is smaller than 1.0 find the divisor
-      while (binSize * multiplier < 1)
-      {
+      while (projectConfig.maxBinSize * multiplier < 1) {
         multiplier *= 10;
       }
 
       var tmpStep = (1.0 / multiplier) / 100.0;
-      if ((binSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
+      if ((projectConfig.maxBinSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
         //Fix step for not allowing more plot point than CONFIG.MAX_PLOT_POINTS
-        tmpStep = binSize / CONFIG.MAX_PLOT_POINTS;
+        tmpStep = projectConfig.maxBinSize / CONFIG.MAX_PLOT_POINTS;
       }
       minBinSize = tmpStep;
-      maxBinSize = binSize;
       step = minBinSize / 100.0; // We need at least 100 steps on slider
 
       if (projectConfig.minBinSize > 0) {
-        initValue = projectConfig.minBinSize;
         minBinSize = projectConfig.minBinSize;
-        step = projectConfig.minBinSize;
+        var minAvailableBinSize = projectConfig.getMaxTimeRange() / CONFIG.MAX_PLOT_POINTS;
+        if (CONFIG.AUTO_BINSIZE && (minAvailableBinSize > minBinSize)){
+          minBinSize = minAvailableBinSize;
+        }
+        initValue = minBinSize;
+        step = minBinSize;
       } else {
-        initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+        initValue = (projectConfig.maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
       }
 
       projectConfig.binSize = initValue;
@@ -160,13 +152,11 @@ function ToolPanel (id,
       this.binSelector = new BinSelector(this.id + "_binSelector",
                                         "BIN SIZE (" + projectConfig.timeUnit  + "):",
                                         "From",
-                                        minBinSize, maxBinSize, step, initValue,
+                                        minBinSize, projectConfig.maxBinSize, step, initValue,
                                         this.onSelectorValuesChanged);
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
-    } else if (schema["RATE"] !== undefined){
-
-      //SRC file is an LIGHTCURVE file:
+    } else if (projectConfig.schema.isLightCurveFile()){
 
       this.showLcSelectors();
 
@@ -174,22 +164,14 @@ function ToolPanel (id,
                       '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
                     '</div>');
       this.$html.find(".selectorsContainer").append(binDiv);
-
-      var timeColumn = schema["RATE"]["TIME"];
-      maxTimeRange = timeColumn.max_value - timeColumn.min_value;
-      if (timeColumn.count > CONFIG.MAX_PLOT_POINTS) {
-        timeRatio = CONFIG.MAX_PLOT_POINTS / timeColumn.count;
-        maxTimeRange *= timeRatio;
-      }
     }
 
     var pha_column = null;
 
     //Adds the rest of selectors from dataset columns
-    for (tableName in schema) {
+    for (tableName in projectConfig.schema.contents) {
       if (tableName != "GTI") {
-
-        var table = schema[tableName];
+        var table = projectConfig.schema.contents[tableName];
 
         for (columnName in table) {
           var column = table[columnName];
@@ -209,9 +191,13 @@ function ToolPanel (id,
                                               this.selectors_array);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if ((columnName == "TIME") && (timeRatio < 1)) { //If full events were cropped to CONFIG.MAX_PLOT_POINTS
-                selector.setMaxRange(maxTimeRange);
-                selector.setEnabled (true);
+            if ((columnName == "TIME")
+                && !CONFIG.AUTO_BINSIZE
+                && projectConfig.isMaxTimeRangeRatioFixed()) {
+
+                  //If full events were cropped to CONFIG.MAX_PLOT_POINTS
+                  selector.setMaxRange(projectConfig.getMaxTimeRange());
+                  selector.setEnabled (true);
             }
 
             if (tableName == "EVENTS" && columnName == "PHA") {
@@ -288,25 +274,24 @@ function ToolPanel (id,
   }
 
   this.onRmfDatasetUploaded = function ( schema ) {
-    if (!isNull(schema["EVENTS"])) {
-        table = schema["EVENTS"];
-        if (!isNull(table["E"])){
-          //Adds Energy general filter
-          var column = table["E"];
-          var selector = new sliderSelector(this.id + "_Energy",
-                                            "Energy (keV):",
-                                            { table:"EVENTS", column:"E" },
-                                            "From", "To",
-                                            column.min_value, column.max_value,
-                                            this.onSelectorValuesChanged,
-                                            this.selectors_array);
-          selector.$html.insertAfter("." + this.id + "_TIME");
+    if (schema.isEventsFile()) {
+      var column = schema.getTable()["E"];
+      if (!isNull(column)){
+        //Adds Energy general filter
+        var selector = new sliderSelector(this.id + "_Energy",
+                                          "Energy (keV):",
+                                          { table:"EVENTS", column:"E" },
+                                          "From", "To",
+                                          column.min_value, column.max_value,
+                                          this.onSelectorValuesChanged,
+                                          this.selectors_array);
+        selector.$html.insertAfter("." + this.id + "_TIME");
 
-          //Prepares Energy color filters
-          this.createColorSelectors(column);
-          this.onColorFilterTypeChanged("E");
-          this.setColorFilterRadios("E");
-        }
+        //Prepares Energy color filters
+        this.createColorSelectors(column);
+        this.onColorFilterTypeChanged("E");
+        this.setColorFilterRadios("E");
+      }
     }
   }
 

@@ -116,12 +116,13 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
        if (this.filterData.column == "TIME") {
           //Fixes values to binSize steps
-          var projectConfig = getTabForSelector(this.id).projectConfig;
-          var binSize = projectConfig.binSize;
+          var tabPanel = getTabForSelector(this.id);
+          var binSize = tabPanel.projectConfig.binSize;
           this.step = parseFloat(binSize);
           this.fromValue = Math.floor (from / binSize) * binSize;
           this.toValue = Math.floor (to / binSize) * binSize;
-          projectConfig.maxSegmentSize = Math.max ((this.toValue - this.fromValue) * 0.95, this.step);
+          var timeRange = Math.max ((this.toValue - this.fromValue) * 0.95, this.step);
+          tabPanel.onTimeRangeChanged(timeRange);
        }
 
        this.fromValue = fixedPrecision(from, this.precision);

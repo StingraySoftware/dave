@@ -2,20 +2,20 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   var currentObj = this;
   plotConfig.styles.showFitBtn = false;
-
-  var schema = projectConfig.schema;
   plotConfig.n_bands = 10;
   plotConfig.freq_range = [-1, -1];
   plotConfig.default_freq_range = [-1, -1];
   plotConfig.energy_range = [-1, -1];
   plotConfig.default_energy_range = [-1, -1];
-  if (!isNull(schema["EVENTS"])) {
-      table = schema["EVENTS"];
-      if (!isNull(table["E"])){
+
+  if (projectConfig.schema.isEventsFile()) {
+      var column = projectConfig.schema.getTable()["E"];
+      if (!isNull(column)){
+
         //Adds Reference Band filter
-        plotConfig.n_bands = Math.floor(table["E"].max_value - table["E"].min_value);
-        plotConfig.energy_range = [table["E"].min_value, table["E"].max_value];
-        plotConfig.default_energy_range = [table["E"].min_value, table["E"].max_value];
+        plotConfig.n_bands = Math.floor(column.max_value - column.min_value);
+        plotConfig.energy_range = [column.min_value, column.max_value];
+        plotConfig.default_energy_range = [column.min_value, column.max_value];
       } else {
         log("RmsPlot error, plot" + currentObj.id + ", NO ENERGY COLUMN ON SCHEMA");
       }

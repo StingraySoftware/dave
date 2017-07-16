@@ -78,7 +78,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
-    if (!isNull(projectConfig.schema["RATE"])) {
+    if (projectConfig.schema.isLightCurveFile()) {
 
       //If fits is a Lightcurve
       if (projectConfig.plots.length == 0) {
@@ -136,10 +136,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.initPlots(projectConfig);
 
     // Adds FITS info if found
-    if (!isNull(projectConfig.schema["EVENTS"])) {
-      this.addInfoPanel( "EVENTS", projectConfig.schema );
-    } else if (!isNull(projectConfig.schema["RATE"])) {
-      this.addInfoPanel( "RATE", projectConfig.schema );
+    if (projectConfig.schema.isEventsFile()) {
+      this.addInfoPanel( "EVENTS", projectConfig.schema.contents );
+    } else if (projectConfig.schema.isLightCurveFile()) {
+      this.addInfoPanel( "RATE", projectConfig.schema.contents );
     }
   }
 

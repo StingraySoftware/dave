@@ -11,6 +11,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   this.toValue = toValue;
   this.value = initValue;
   this.step = step;
+  this.precision = 3;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.onSelectorEnabledChanged = null;
 
@@ -54,26 +55,10 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   };
   this.fromInput.on('change', this.inputChanged);
 
-  //Creates the slider
-  this.slider.slider({
-         min: this.fromValue,
-         max: this.toValue,
-         values: [this.value],
-         step: this.step,
-         slide: function( event, ui ) {
-           var sliderId = event.target.id.replace("slider-", "");
-           var tab = getTabForSelector(sliderId);
-           if (tab != null){
-             tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
-             tab.toolPanel.binSelector.onSelectorValuesChanged();
-           }
-         }
-     });
-
    //Set values method
    this.setValues = function (value, source) {
      this.value = Math.min(Math.max(parseFloat(value), this.initFromValue), this.initToValue);
-     this.fromInput.val( this.value ).removeClass("wrongValue");
+     this.fromInput.val( fixedPrecision(this.value, this.precision) ).removeClass("wrongValue");
      if (source != "slider") {
        this.slider.slider('values', 0, this.value);
      }
@@ -102,6 +87,37 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      }
    }
 
+   this.setMinMaxValues = function (minValue, maxValue) {
+     this.fromValue = minValue;
+     this.initFromValue = this.fromValue;
+     this.step = this.fromValue;
+     this.toValue = maxValue;
+     this.initToValue = this.toValue;
+     this.$html.find("#slider-" + this.id).remove();
+     this.slider = $('<div id="slider-' + this.id + '" class="selectorSlider"></div>');
+     this.container.append(this.slider);
+     this.createSlider();
+     this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
+   }
+
+   this.createSlider = function () {
+     this.slider.slider({
+            min: this.fromValue,
+            max: this.toValue,
+            values: [this.value],
+            step: this.step,
+            slide: function( event, ui ) {
+              var sliderId = event.target.id.replace("slider-", "");
+              var tab = getTabForSelector(sliderId);
+              if (tab != null){
+                tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
+                tab.toolPanel.binSelector.onSelectorValuesChanged();
+              }
+            }
+        });
+      this.setValues( this.value );
+   }
+
    this.showWarn = function (msg) {
      this.$html.find(".btnWarn").remove();
      if (!isNull(msg) && msg != ""){
@@ -112,7 +128,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
    }
 
    //Init from-to values
-   this.setValues( this.value );
+   this.createSlider();
 
    log ("new binSelector id: " + this.id + ", Value: " + this.value + ", fromValue: " + this.fromValue + ", toValue: " + this.toValue + ", step: " + this.step);
 

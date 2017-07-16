@@ -9,6 +9,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getDataFromServerFn = getDataFromServerFn;
   this.onFiltersChanged = onFiltersChangedFn;
   this.onPlotReady = onPlotReadyFn;
+  this.currentRequest = null;
   this.isLoading = true;
   this.isVisible = true;
   this.isReady = true;
@@ -177,31 +178,31 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  };
 
  this.refreshData = function () {
-   if (this.isReady) {
-     this.setReadyState(false);
+   this.setReadyState(false);
 
-     if (isNull(this.getDataFromServerFn)) {
-       if (!isNull(this.parentPlotId)) {
-         var tab = getTabForSelector(this.id);
-         var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
-         if (!parentPlot.isVisible) {
-            log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
-            parentPlot.refreshData();
-            return;
-         } else if (parentPlot.isReady) {
-            this.setReadyState(true);
-         }
+   if (isNull(this.getDataFromServerFn)) {
+     if (!isNull(this.parentPlotId)) {
+       var tab = getTabForSelector(this.id);
+       var parentPlot = tab.outputPanel.getPlotById(this.parentPlotId);
+       if (!parentPlot.isVisible) {
+          log("Force parent plot to refresh data, Plot: " + this.id+ " , ParentPlot: " + parentPlot.id);
+          parentPlot.refreshData();
+          return;
+       } else if (parentPlot.isReady) {
+          this.setReadyState(true);
        }
-
-       log("Avoid request data, no service function setted, Plot" + this.id);
-       return;
-     } else {
-       this.updatePlotConfig();
-       this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
      }
-     
+
+     log("Avoid request data, no service function setted, Plot" + this.id);
+     return;
    } else {
-     log("Avoid refreshData, plot is not ready. Plot" + this.id);
+     this.updatePlotConfig();
+
+     if (!isNull(this.currentRequest) && !isNull(this.currentRequest.abort)) {
+       this.currentRequest.abort();
+     }
+
+     this.currentRequest = this.getDataFromServerFn( this.plotConfig, this.onPlotDataReceived );
    }
  }
 
@@ -211,7 +212,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.onPlotDataReceived = function ( data ) {
+
+   if (!isNull(data.abort)){
+     return; //Comes from request abort call.
+   }
+
    log("onPlotDataReceived passed data!, plot" + currentObj.id);
+
+   currentObj.currentRequest = null;
    data = JSON.parse(data);
 
    if (data != null) {

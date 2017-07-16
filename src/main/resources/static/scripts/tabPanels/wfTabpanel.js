@@ -158,12 +158,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       currentObj.projectConfig.setRmfData(result);
 
-      currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( schema, params ){
+      currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, function( jsonSchema, params ){
 
         log("onRmfApplied: Success!");
-        var jsonSchema = JSON.parse(schema);
-        currentObj.projectConfig.setSchema(jsonSchema);
-        currentObj.toolPanel.onRmfDatasetUploaded(jsonSchema);
+        var schema = JSON.parse(jsonSchema);
+        currentObj.projectConfig.setSchema(schema);
+        currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
         //Cleans previous plots for RMF key
         currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
@@ -334,6 +334,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onFiltersChangedFromPlot = function (filters) {
     log("onFiltersChangedFromPlot: filters: " + JSON.stringify(filters));
     currentObj.toolPanel.applyFilters(filters);
+  }
+
+  this.onTimeRangeChanged = function (timeRange) {
+    log("onTimeRangeChanged: timeRange: " + timeRange);
+    currentObj.projectConfig.maxSegmentSize = timeRange;
+    currentObj.toolPanel.onTimeRangeChanged(timeRange);
   }
 
   this.getReplaceColumn = function () {
