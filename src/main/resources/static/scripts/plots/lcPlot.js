@@ -45,6 +45,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.showSettings = function(){
     if (!this.settingsVisible) {
       this.settingsVisible = true;
+      this.setHoverDisablerEnabled(false);
       var height = parseInt(this.$html.find(".plot").height());
       this.$html.find(".plot").hide();
       this.$html.find(".plotTools").children().hide();
@@ -107,6 +108,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.hideSettings = function(){
     if (this.settingsVisible) {
       this.settingsVisible = false;
+      this.setHoverDisablerEnabled(true);
       this.settingsPanel.hide();
       this.$html.find(".plot").show();
       this.$html.find(".plotTools").children().show();

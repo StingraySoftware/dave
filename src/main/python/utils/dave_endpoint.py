@@ -509,6 +509,48 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
     return json.dumps(data, cls=NPEncoder)
 
 
+def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                    freq_range, energy_range, n_bands):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_phase_lag_spectrum src: %s" % src_filename)
+    logging.debug("get_phase_lag_spectrum bck: %s" % bck_filename)
+    logging.debug("get_phase_lag_spectrum gti: %s" % gti_filename)
+    logging.debug("get_phase_lag_spectrum: filters %s" % filters)
+    logging.debug("get_phase_lag_spectrum: axis %s" % axis)
+    logging.debug("get_phase_lag_spectrum: dt %f" % dt)
+    logging.debug("get_phase_lag_spectrum: nsegm %f" % nsegm)
+    logging.debug("get_phase_lag_spectrum: segm_size %f" % segm_size)
+    logging.debug("get_phase_lag_spectrum: norm %s" % norm)
+    logging.debug("get_phase_lag_spectrum: type %s" % pds_type)
+    logging.debug("get_phase_lag_spectrum: freq_range %s" % freq_range)
+    logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
+    logging.debug("get_phase_lag_spectrum: n_bands %s" % n_bands)
+
+    data = DaveEngine.get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                        freq_range, energy_range, n_bands)
+
+    logging.debug("get_phase_lag_spectrum: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
 def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
                     filters, axis, dt, nsegm, segm_size, norm, pds_type,
                     freq_range, energy_range, n_bands):

@@ -114,6 +114,10 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_covariance_spectrum", data, fn);
   };
 
+  this.request_phase_lag_spectrum  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_phase_lag_spectrum", data, fn);
+  };
+
   this.request_rms_spectrum  = function ( data, fn ) {
     return thisService.make_ajax_call("get_rms_spectrum", data, fn);
   };

@@ -675,6 +675,15 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     projectConfig.addPlotId(rmsPlot.id, "RMF");
     this.appendPlot(rmsPlot, true);
 
+    var phaseLagPlot = this.getPhaseLagPlot ( projectConfig,
+                        projectConfig.filename,
+                        projectConfig.bckFilename,
+                        projectConfig.gtiFilename,
+                        "EVENTS", "PHA", "fullWidth", "Phase lag vs Energy" )
+    this.plots.push(phaseLagPlot);
+    projectConfig.addPlotId(phaseLagPlot.id, "RMF");
+    this.appendPlot(phaseLagPlot, true);
+
     /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
                                 projectConfig.rmfFilename, "", "",
                                 { type: "2d",
@@ -809,6 +818,33 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     });
 
   };
+
+  this.getPhaseLagPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
+
+    log("getPhaseLagPlot: filename: " + filename );
+    return new PhaseLagPlot(
+                      this.generatePlotId("phaseLag_" + filename),
+                      {
+                        filename: filename,
+                        bck_filename: bck_filename,
+                        gti_filename: gti_filename,
+                        styles: { type: "ligthcurve",
+                                  labels: ["Energy(keV)", "Phase lag"],
+                                  title: title,
+                                  showFitBtn: true },
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:columnName } ],
+                        mandatoryFilters: mandatoryFilters,
+                      },
+                      this.service.request_phase_lag_spectrum,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),
+                      "TimingPlot " + cssClass,
+                      false,
+                      projectConfig
+                    );
+  }
 
   this.getRMSPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
 

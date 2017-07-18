@@ -162,7 +162,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         log("onRmfApplied: Success!");
         var schema = JSON.parse(jsonSchema);
-        currentObj.projectConfig.setSchema(schema);
+        currentObj.projectConfig.updateSchema(schema);
         currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
         //Cleans previous plots for RMF key
@@ -182,6 +182,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Hides upload RMF buttons from Analyze tab
         currentObj.toolPanel.$html.find(".rmsBtn").remove();
         currentObj.toolPanel.$html.find(".covarianceBtn").remove();
+        currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
         waitingDialog.hide();
 
@@ -239,6 +240,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                           "rmsBtn",
                                                           currentObj.showUploadRMFDialog,
                                                           timingPlotsButtons);
+
+        timingPlotsButtons = currentObj.addButtonToArray("Phase lag spectrum",
+                                                          "phaseLagBtn",
+                                                          currentObj.showUploadRMFDialog,
+                                                          timingPlotsButtons);
+
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
             { cssClass: "PDSPlot", title:"Power Density Spectra" },
@@ -338,8 +345,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onTimeRangeChanged = function (timeRange) {
     log("onTimeRangeChanged: timeRange: " + timeRange);
-    currentObj.projectConfig.maxSegmentSize = timeRange;
-    currentObj.toolPanel.onTimeRangeChanged(timeRange);
+    this.updateTimeRange(timeRange);
+    this.toolPanel.onTimeRangeChanged(timeRange);
+  }
+
+  this.updateTimeRange = function (timeRange) {
+    this.projectConfig.maxSegmentSize = timeRange * 0.95; //Math.min (timeRange * 0.95, currentObj.projectConfig.maxSegmentSize);
+    this.projectConfig.avgSegmentSize = this.projectConfig.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
   }
 
   this.getReplaceColumn = function () {
@@ -479,7 +491,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Show upload RMF file
     var $uploadRMFDialog = $('<div id="uploadRMFDialog_' + currentObj.id +  '" title="Upload RMF file:">' +
                                 '<div class="rmfDialogContainer">' +
-                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum" and "RMS spectrum"</p>' +
+                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum", "RMS spectrum" and "Phase lag spectrum"</p>' +
                                 '</div>' +
                             '</div>');
 

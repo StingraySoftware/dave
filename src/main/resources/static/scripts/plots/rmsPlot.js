@@ -8,6 +8,8 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   plotConfig.energy_range = [-1, -1];
   plotConfig.default_energy_range = [-1, -1];
 
+  this.freq_range_title = "RMS Frequency range (Hz):";
+
   if (projectConfig.schema.isEventsFile()) {
       var column = projectConfig.schema.getTable()["E"];
       if (!isNull(column)){
@@ -54,7 +56,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     //Adds frequency range selector
     var freqRange = this.getDefaultFreqRange();
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
-                                      "RMS Frequency range (Hz):",
+                                      this.freq_range_title,
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
                                       "From", "To",
                                       freqRange[0], freqRange[1],

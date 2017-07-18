@@ -14,6 +14,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.isVisible = true;
   this.isReady = true;
   this.isSwitched = false;
+  this.hoverDisablerEnabled = true;
   this.hoverEnabled = false;
   this.cssClass = (cssClass != undefined) ? cssClass : "";
   this.switchable = (switchable != undefined) ? switchable : false;
@@ -479,12 +480,24 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.setHoverEventsEnabled = function (enabled) {
-    this.hoverEnabled = enabled;
-    if (this.hoverEnabled){
+    if (this.hoverDisablerEnabled){
+      this.hoverEnabled = enabled;
+      if (this.hoverEnabled){
+        this.$html.find(".hoverDisabler").hide();
+      } else {
+        this.$html.find(".hoverDisabler").show();
+        currentObj.onUnHoverEvent();
+      }
+    }
+  }
+
+  this.setHoverDisablerEnabled = function (enabled) {
+    this.hoverDisablerEnabled = enabled;
+    if (!this.hoverDisablerEnabled){
+      this.setHoverEventsEnabled(false);
       this.$html.find(".hoverDisabler").hide();
     } else {
-      this.$html.find(".hoverDisabler").show();
-      currentObj.onUnHoverEvent();
+      this.setHoverEventsEnabled(true);
     }
   }
 
