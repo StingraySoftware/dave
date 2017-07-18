@@ -33,7 +33,7 @@ function ProjectConfig(){
 
   this.setSchema = function (schema) {
 
-    this.schema = new Schema(schema);
+    this.updateSchema(schema);
 
     // Sets the time unit
     this.timeUnit = this.schema.getTimeUnit();
@@ -52,6 +52,10 @@ function ProjectConfig(){
     //Sets the segment size for spectrums
     this.maxSegmentSize = this.schema.getMaxSegmentSize();
     this.avgSegmentSize = this.schema.getAvgSegmentSize();
+  }
+
+  this.updateSchema = function (schema) {
+    this.schema = new Schema(schema);
   }
 
   this.setFiles = function (selectorKey, filenames, filename) {

@@ -14,6 +14,7 @@ from stingray.events import EventList
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
+from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
 from stingray.modeling import fit_powerspectrum
@@ -971,6 +972,140 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
     return result
 
 
+# get_phase_lag_spectrum:
+# Returns the energy values and its correlated phase lag and lag errors
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
+# @param: n_bands: The number of bands to split the refence band
+#
+def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            freq_range, energy_range, n_bands):
+
+    energy_arr = []
+    lag_arr =[]
+    lag_err_arr = []
+    duration = []
+    warnmsg = []
+    freq_min_max = [-1, -1]
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            logging.warn("Wrong normalization")
+            return None
+
+        if pds_type not in ['Sng', 'Avg']:
+            logging.warn("Wrong power density spectrum type")
+            return None
+
+        if segm_size == 0:
+            segm_size = None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+            min_time = events_table.columns["TIME"].values[0]
+            max_time = events_table.columns["TIME"].values[len(events_table.columns["TIME"].values) - 1]
+            duration = [(max_time - min_time)]
+
+            if "E" in events_table.columns:
+
+                pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                               filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                if pds:
+
+                    #Preapares the eventlist with energies and gtis
+                    event_list = EventList()
+                    event_list.time = np.array(events_table.columns["TIME"].values)
+                    event_list.ncounts = len(event_list.time)
+                    event_list.gti = gti
+                    event_list.energy = np.array(events_table.columns["E"].values)
+
+                    # Calculates the energy range
+                    if energy_range[0] < 0:
+                        min_energy = min(event_list.energy)
+                    else:
+                        min_energy = energy_range[0]
+
+                    if energy_range[1] >= min_energy:
+                        max_energy = energy_range[1]
+                    else:
+                        max_energy = max(event_list.energy)
+
+                    # Calculates the frequency range
+                    if freq_range[0] < 0:
+                        freq_low = min(pds.freq)
+                    else:
+                        freq_low = freq_range[0]
+                    freq_min_max[0] = freq_low
+
+                    if freq_range[1] < 0:
+                        freq_high = max(pds.freq)
+                    else:
+                        freq_high = freq_range[1]
+                    freq_min_max[1] = max([freq_min_max[1], freq_high])
+
+                    # Sets the energy ranges
+                    energy_spec = (min_energy, max_energy, n_bands, "lin")
+                    ref_band = [min_energy, max_energy]
+
+                    # Calculates the Phase Lag Spectrum
+                    les = LagEnergySpectrum(event_list, freq_min_max,
+                                            energy_spec, ref_band,
+                                            bin_time=dt,
+                                            segment_size=segm_size)
+
+                    energy_arr = np.array([(ei[0] + ei[1])/2 for ei in les.energy_intervals])
+                    lag_arr = les.spectrum
+                    lag_err_arr = les.spectrum_error
+
+                else:
+                    logging.warn("get_phase_lag_spectrum: can't create power density spectrum.")
+                    warnmsg = ['Cant create PDS']
+            else:
+                logging.warn('get_phase_lag_spectrum: E column not found!')
+                warnmsg = ['E column not found']
+        else:
+            logging.warn('get_phase_lag_spectrum: Wrong dataset type!')
+            warnmsg = ['Wrong dataset type']
+
+    except:
+        logging.error(ExHelper.getException('get_phase_lag_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, lag_arr, lag_err_arr)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
+    result = push_to_results_array(result, freq_min_max)
+    return result
+
+
 # get_rms_spectrum:
 # Returns the energy values and its correlated rms and rms errors
 #
@@ -989,6 +1124,8 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: freq_range: A tuple with minimum and maximum values of the
 #         range of frequency, send [-1, -1] for use all frequencies
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
@@ -1442,7 +1579,10 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 
 def push_to_results_array (result, values):
     column = dict()
-    column["values"] = np.around(values, decimals=PRECISSION)
+    try:
+        column["values"] = np.around(values, decimals=PRECISSION)
+    except:
+        column["values"] = values
     result.append(column)
     return result
 

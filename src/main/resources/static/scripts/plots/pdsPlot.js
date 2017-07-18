@@ -23,6 +23,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   if (!isNull(projectConfig)) {
     // Prepare PDS Plot attributes from projectConfig
     this.plotConfig.duration = projectConfig.totalDuration;
+    this.plotConfig.maxSegmentSize = projectConfig.maxSegmentSize;
     this.plotConfig.segment_size = projectConfig.avgSegmentSize;
     this.plotConfig.minRebinSize = projectConfig.minBinSize;
     this.plotConfig.rebinSize = projectConfig.minBinSize;
@@ -76,6 +77,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.showSettings = function(){
     if (!this.settingsVisible) {
       this.settingsVisible = true;
+      this.setHoverDisablerEnabled(false);
       var height = parseInt(this.$html.find(".plot").height());
       this.$html.find(".plot").hide();
       this.$html.find(".plotTools").children().hide();
@@ -133,7 +135,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                           "From",
                                           minValue, maxValue, binSize, segmSize,
                                           this.onSegmSelectorValuesChanged);
-        this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit + "): <span style='font-size: 0.75em'>Nº Segments= " + this.plotConfig.nsegm + "</span>");
+        this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit + "): <span style='font-size: 0.75em'>Nº Segments= " + fixedPrecision(this.plotConfig.nsegm, 2) + "</span>");
         this.segmSelector.slider.slider({
                min: this.segmSelector.fromValue,
                max: this.segmSelector.toValue,
@@ -297,6 +299,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.hideSettings = function(){
     if (this.settingsVisible) {
       this.settingsVisible = false;
+      this.setHoverDisablerEnabled(true);
       this.settingsPanel.hide();
       this.$html.find(".plot").show();
       this.$html.find(".plotTools").children().show();
@@ -338,12 +341,12 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   }
 
   this.updateNSegm = function() {
-     this.plotConfig.nsegm =  parseFloat(fixedPrecision(this.plotConfig.duration / this.plotConfig.segment_size, 2));
+     this.plotConfig.nsegm =  this.plotConfig.duration / this.plotConfig.segment_size;
   }
 
   this.updateSegmSelector = function () {
     var tab = getTabForSelector(currentObj.id);
-    currentObj.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "): <span style='font-size: 0.75em'>Nº Segments= " + currentObj.plotConfig.nsegm + "</span>");
+    currentObj.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit  + "): <span style='font-size: 0.75em'>Nº Segments= " + fixedPrecision(currentObj.plotConfig.nsegm, 2) + "</span>");
 
     if (Math.floor(currentObj.plotConfig.nsegm) <= 1){
       //If NSegm = 1, set normalization to leahy
