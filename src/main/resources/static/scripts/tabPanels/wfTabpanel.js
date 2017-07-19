@@ -172,12 +172,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Add RMF plots
         currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
-        //Enable Spectral Timing Section
+        /*//Enable Spectral Timing Section
         if (!currentObj.toolPanel.isSectionEnabled("TimingPlot")){
           currentObj.toolPanel.toggleEnabledSection("TimingPlot");
         } else {
           currentObj.outputPanel.setToolbarSectionVisible("TimingPlot", true);
-        }
+        }*/
 
         //Hides upload RMF buttons from Analyze tab
         currentObj.toolPanel.$html.find(".rmsBtn").remove();
@@ -231,20 +231,23 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                           currentObj.showCrossSpectraSelection,
                                                           timingPlotsButtons);
 
-        timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
-                                                          "covarianceBtn",
-                                                          currentObj.showUploadRMFDialog,
-                                                          timingPlotsButtons);
+        if (currentObj.projectConfig.schema.isEventsFile()) {
+          //Adds
+          timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
+                                                            "covarianceBtn",
+                                                            function () { currentObj.showUploadRMFDialog("covariance") },
+                                                            timingPlotsButtons);
 
-        timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
-                                                          "rmsBtn",
-                                                          currentObj.showUploadRMFDialog,
-                                                          timingPlotsButtons);
+          timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
+                                                            "rmsBtn",
+                                                            function () { currentObj.showUploadRMFDialog("rms") },
+                                                            timingPlotsButtons);
 
-        timingPlotsButtons = currentObj.addButtonToArray("Phase lag spectrum",
-                                                          "phaseLagBtn",
-                                                          currentObj.showUploadRMFDialog,
-                                                          timingPlotsButtons);
+          timingPlotsButtons = currentObj.addButtonToArray("Phase lag spectrum",
+                                                            "phaseLagBtn",
+                                                            function () { currentObj.showUploadRMFDialog("phaseLag") },
+                                                            timingPlotsButtons);
+        }
 
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
@@ -487,7 +490,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
   }
 
-  this.showUploadRMFDialog = function () {
+  this.showUploadRMFDialog = function (plotType) {
     //Show upload RMF file
     var $uploadRMFDialog = $('<div id="uploadRMFDialog_' + currentObj.id +  '" title="Upload RMF file:">' +
                                 '<div class="rmfDialogContainer">' +
@@ -495,6 +498,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 '</div>' +
                             '</div>');
 
+    currentObj.outputPanel.waitingPlotType = plotType;
     currentObj.$html.append($uploadRMFDialog);
     $uploadRMFDialog.dialog({
        width: 450,
