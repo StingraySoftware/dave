@@ -175,12 +175,16 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
 
+    # Adds the lag of the first event to the start time of observation
+    events_start_time += max(fits_data.ev_list[0] - events_start_time, 0)
+
     gti_start = fits_data.gti_list[:, 0] - events_start_time
     gti_end = fits_data.gti_list[:, 1] - events_start_time
 
     logging.debug("Read Events fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
 
     event_values = fits_data.ev_list - events_start_time
+    event_values[0] = 0 # This is because double substraction could return small negative values for 0
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments,
                                                 fits_data.additional_data, [],

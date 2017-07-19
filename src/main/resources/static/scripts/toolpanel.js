@@ -176,7 +176,7 @@ function ToolPanel (id,
         for (columnName in table) {
           var column = table[columnName];
           if (!CONFIG.EXCLUDED_FILTERS.includes(columnName) && column.min_value < column.max_value) {
-            
+
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
@@ -193,7 +193,7 @@ function ToolPanel (id,
             this.$html.find(".selectorsContainer").append(selector.$html);
 
             if ((columnName == "TIME")
-                && !CONFIG.AUTO_BINSIZE
+                && (!CONFIG.AUTO_BINSIZE || projectConfig.schema.isLightCurveFile())
                 && projectConfig.isMaxTimeRangeRatioFixed()) {
 
                   //If full events were cropped to CONFIG.MAX_PLOT_POINTS
