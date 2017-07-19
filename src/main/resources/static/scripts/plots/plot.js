@@ -247,7 +247,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      currentObj.data = currentObj.prepareData(data);
      currentObj.updateMinMaxCoords();
 
-     var plotlyConfig = currentObj.getPlotlyConfig(data);
+     var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
      currentObj.redrawPlot(plotlyConfig);
 
      if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){

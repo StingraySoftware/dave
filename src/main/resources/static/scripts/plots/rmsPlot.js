@@ -45,7 +45,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.plotConfig.n_bands = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNBands"), currentObj.plotConfig.n_bands, 1, CONFIG.MAX_PLOT_POINTS);
   }
 
-  this.settingCreated = function(){
+  this.onSettingsCreated = function(){
 
     //Hides pds settings controls that doesn't apply to rms plot
     this.binSelector.$html.hide();

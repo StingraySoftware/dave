@@ -220,7 +220,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     return colorscale;
   }
 
-  this.settingCreated = function(){
+  this.onSettingsCreated = function(){
 
     // Hides axis types if is 2d plot
     if (this.plotConfig.plotStyle == "2d") {

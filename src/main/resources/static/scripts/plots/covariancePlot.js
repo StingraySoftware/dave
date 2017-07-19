@@ -19,45 +19,9 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
     log("CovariancePlot error, plot" + currentObj.id + ", NO EVENTS TABLE ON SCHEMA");
   }
 
-  Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
+  PlotWithSettings.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
   //Covariance plot methods:
-
-  this.setSettingsTitle = function (title) {
-    this.settingsPanel.find(".title").find("h3").first().html(title);
-  }
-
-  this.showSettings = function(){
-    if (!this.settingsVisible) {
-      this.settingsVisible = true;
-      this.setHoverDisablerEnabled(false);
-      var height = parseInt(this.$html.find(".plot").height());
-      this.$html.find(".plot").hide();
-      this.$html.find(".plotTools").children().hide();
-      this.btnBack.show();
-      this.settingsPanel.show();
-      this.settingsPanel.css({ 'height': height + 'px' });
-
-      var title = 'Settings:';
-      if (!isNull(this.plotConfig.styles.title)){
-        title = this.plotConfig.styles.title + ' Settings:';
-      }
-
-      this.setSettingsTitle(title);
-    }
-  }
-
-  this.hideSettings = function(){
-    if (this.settingsVisible) {
-      this.settingsVisible = false;
-      this.setHoverDisablerEnabled(true);
-      this.settingsPanel.hide();
-      this.$html.find(".plot").show();
-      this.$html.find(".plotTools").children().show();
-      this.btnBack.hide();
-      this.refreshData();
-    }
-  }
 
   this.onReferenceBandValuesChanged = function() {
     try {
@@ -78,20 +42,7 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
   }
 
   //CovariancePlot plot attributes:
-  this.settingsVisible = false;
-
   if (!isNull(this.plotConfig.ref_band_interest)){
-    this.settingsPanel = $('<div class="settings">' +
-                              '<div class="row title"><h3>Settings:</h3></div>' +
-                              '<div class="row">' +
-                                '<div class="col-xs-6 leftCol">' +
-                                '</div>' +
-                                '<div class="col-xs-6 rightCol">' +
-                                '</div>' +
-                              '</div>' +
-                            '</div>');
-    this.settingsPanel.hide();
-    this.$html.prepend(this.settingsPanel);
 
     //Prepares settingsPanel controls
     this.refBandSelector = new sliderSelector(this.id + "_RefBand",
@@ -119,19 +70,6 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
 
     this.settingsPanel.find(".rightCol").append('<p>Standard deviation (<0 Default): <input id="std_' + this.id + '" class="inputStd" type="text" name="std_' + this.id + '" placeholder="' + this.plotConfig.std + '" value="' + this.plotConfig.std + '" /></p>');
     this.settingsPanel.find(".rightCol").find(".inputStd").on('change', this.onStdChanged);
-
-    this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '"><i class="fa fa-cog" aria-hidden="true"></i></button>');
-    this.$html.find(".plotTools").append(this.btnSettings);
-    this.btnSettings.click(function(event){
-      currentObj.showSettings();
-    });
-
-    this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
-    this.btnBack.hide();
-    this.$html.find(".plotTools").append(this.btnBack);
-    this.btnBack.click(function(event){
-      currentObj.hideSettings();
-    });
   }
 
   log ("new CovariancePlot id: " + this.id);
