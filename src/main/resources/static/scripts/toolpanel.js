@@ -175,7 +175,8 @@ function ToolPanel (id,
 
         for (columnName in table) {
           var column = table[columnName];
-          if ((columnName != "HEADER") && (columnName != "HEADER_COMMENTS") && (columnName != "E") && column.min_value < column.max_value) {
+          if (!CONFIG.EXCLUDED_FILTERS.includes(columnName) && column.min_value < column.max_value) {
+            
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
