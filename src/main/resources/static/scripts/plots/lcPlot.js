@@ -4,10 +4,9 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   var currentObj = this;
 
-  Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
+  PlotWithSettings.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
   //LC plot attributes:
-  this.settingsVisible = false;
   this.baselineEnabled = false;
 
   this.baseline_opts = {};
@@ -15,114 +14,54 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.baseline_opts.p = { default:0.01, min:0.001, max: 1}; //Baseline Asymmetry ranges
   this.baseline_opts.niter = { default:10, min:1, max: 1000}; //Baseline N iterations ranges
 
-  this.settingsPanel = $('<div class="settings">' +
-                            '<div class="row title"><h3>Settings:</h3></div>' +
-                            '<div class="row">' +
-                              '<div class="col-xs-6 leftCol">' +
-                              '</div>' +
-                              '<div class="col-xs-6 rightCol">' +
-                              '</div>' +
-                            '</div>' +
-                          '</div>');
-  this.settingsPanel.hide();
-  this.$html.prepend(this.settingsPanel);
-
-  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '"><i class="fa fa-cog" aria-hidden="true"></i></button>');
-  this.$html.find(".plotTools").append(this.btnSettings);
-  this.btnSettings.click(function(event){
-    currentObj.showSettings();
-  });
-
-  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
-  this.btnBack.hide();
-  this.$html.find(".plotTools").append(this.btnBack);
-  this.btnBack.click(function(event){
-    currentObj.hideSettings();
-  });
-
-
   //LC plot methods:
+  this.addSettingsControls = function(){
 
-  this.setSettingsTitle = function (title) {
-    this.settingsPanel.find(".title").find("h3").first().html(title);
-  }
+    if (this.settingsPanel.find(".baseline").length == 0) {
 
-  this.showSettings = function(){
-    if (!this.settingsVisible) {
-      this.settingsVisible = true;
-      this.setHoverDisablerEnabled(false);
-      var height = parseInt(this.$html.find(".plot").height());
-      this.$html.find(".plot").hide();
-      this.$html.find(".plotTools").children().hide();
-      this.btnBack.show();
-      this.settingsPanel.show();
-      this.settingsPanel.css({ 'height': height + 'px' });
-
-      var title = 'Settings:';
-      if (!isNull(this.plotConfig.styles.title)){
-        title = this.plotConfig.styles.title + ' Settings:';
-      }
-
-      this.setSettingsTitle(title);
-
-      var tab = getTabForSelector(this.id);
-
-      if (this.settingsPanel.find(".baseline").length == 0) {
-
-        var $baseline = $('<div class="baseline">' +
-                            '<h3>' +
-                              'Draw baseline:' +
-                              '<div class="switch-wrapper">' +
-                                '<div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
-                              '</div>' +
-                            '</h3>' +
-                            '<div class="baselineContainer">' +
-                              '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + this.baseline_opts.lam.default + '" value="' + this.baseline_opts.lam.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.lam.min + '-' + this.baseline_opts.lam.max + '</span></p>' +
-                              '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + this.baseline_opts.p.default + '" value="' + this.baseline_opts.p.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.p.min + '-' + this.baseline_opts.p.max + '</span></p>' +
-                              '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + this.baseline_opts.niter.default + '" value="' + this.baseline_opts.niter.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.niter.min + '-' + this.baseline_opts.niter.max + '</span></p>' +
-                              '<p style="font-size:0.8em; color:#777777;">Algorithm: Asymmetric Least Squares Smoothing (P. Eilers and H. Boelens, 2005)</p>' +
+      var $baseline = $('<div class="baseline">' +
+                          '<h3>' +
+                            'Draw baseline:' +
+                            '<div class="switch-wrapper">' +
+                              '<div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
                             '</div>' +
-                          '</div>');
+                          '</h3>' +
+                          '<div class="baselineContainer">' +
+                            '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + this.baseline_opts.lam.default + '" value="' + this.baseline_opts.lam.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.lam.min + '-' + this.baseline_opts.lam.max + '</span></p>' +
+                            '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + this.baseline_opts.p.default + '" value="' + this.baseline_opts.p.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.p.min + '-' + this.baseline_opts.p.max + '</span></p>' +
+                            '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + this.baseline_opts.niter.default + '" value="' + this.baseline_opts.niter.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.niter.min + '-' + this.baseline_opts.niter.max + '</span></p>' +
+                            '<p style="font-size:0.8em; color:#777777;">Algorithm: Asymmetric Least Squares Smoothing (P. Eilers and H. Boelens, 2005)</p>' +
+                          '</div>' +
+                        '</div>');
 
-        //Prepares switchBox
-        var switchBox = $baseline.find("#switch_" + this.id);
-        switchBox.click( function ( event ) {
-          currentObj.baselineEnabled = !currentObj.baselineEnabled;
-          currentObj.onBaselineValuesChanged();
-          if (currentObj.baselineEnabled) {
-            $(this).switchClass("fa-plus-square", "fa-minus-square");
-            currentObj.settingsPanel.find(".baselineContainer").fadeIn();
-          } else {
-            $(this).switchClass("fa-minus-square", "fa-plus-square");
-            currentObj.settingsPanel.find(".baselineContainer").fadeOut();
-          }
-        });
+      //Prepares switchBox
+      var switchBox = $baseline.find("#switch_" + this.id);
+      switchBox.click( function ( event ) {
+        currentObj.baselineEnabled = !currentObj.baselineEnabled;
+        currentObj.onBaselineValuesChanged();
+        if (currentObj.baselineEnabled) {
+          $(this).switchClass("fa-plus-square", "fa-minus-square");
+          currentObj.settingsPanel.find(".baselineContainer").fadeIn();
+        } else {
+          $(this).switchClass("fa-minus-square", "fa-plus-square");
+          currentObj.settingsPanel.find(".baselineContainer").fadeOut();
+        }
+      });
 
-        //Prepares input events
-        $baseline.find(".baselineContainer").hide();
-        $baseline.find("input").on('change', this.onBaselineValuesChanged);
+      //Prepares input events
+      $baseline.find(".baselineContainer").hide();
+      $baseline.find("input").on('change', this.onBaselineValuesChanged);
 
-        this.settingsPanel.find(".leftCol").append($baseline);
-      }
-    }
-  }
+      this.settingsPanel.find(".leftCol").append($baseline);
 
-  this.hideSettings = function(){
-    if (this.settingsVisible) {
-      this.settingsVisible = false;
-      this.setHoverDisablerEnabled(true);
-      this.settingsPanel.hide();
-      this.$html.find(".plot").show();
-      this.$html.find(".plotTools").children().show();
-      this.btnBack.hide();
-      this.refreshData();
+      this.onSettingsCreated();
     }
   }
 
   this.onBaselineValuesChanged = function(){
     if (currentObj.baselineEnabled) {
       currentObj.plotConfig.baseline_opts.lam = getInputIntValueCropped(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam, currentObj.baseline_opts.lam.min, currentObj.baseline_opts.lam.max);
-      currentObj.plotConfig.baseline_opts.p = getInputIntValueCropped(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p, currentObj.baseline_opts.p.min, currentObj.baseline_opts.p.max);
+      currentObj.plotConfig.baseline_opts.p = getInputFloatValueCropped(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p, currentObj.baseline_opts.p.min, currentObj.baseline_opts.p.max);
       currentObj.plotConfig.baseline_opts.niter = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter, currentObj.baseline_opts.niter.min, currentObj.baseline_opts.niter.max);
     } else {
       currentObj.disableBaseline();
