@@ -76,9 +76,10 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                               '</div>' +
                             '</h3>' +
                             '<div class="baselineContainer">' +
-                              '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + lamValue + '" value="' + lamValue + '" /></p>' +
-                              '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + pValue + '" value="' + pValue + '" /></p>' +
-                              '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + niterValue + '" value="' + niterValue + '" /></p>' +
+                              '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + lamValue + '" value="' + lamValue + '" /> <span style="font-size:0.8em; color:#777777;">1-100000</span></p>' +
+                              '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + pValue + '" value="' + pValue + '" /> <span style="font-size:0.8em; color:#777777;">0.001-1</span></p>' +
+                              '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + niterValue + '" value="' + niterValue + '" /> <span style="font-size:0.8em; color:#777777;">1-1000</span></p>' +
+                              '<p style="font-size:0.8em; color:#777777;">Algorithm: Asymmetric Least Squares Smoothing (P. Eilers and H. Boelens, 2005)</p>' +
                             '</div>' +
                           '</div>');
 
@@ -119,9 +120,9 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   this.onBaselineValuesChanged = function(){
     if (currentObj.baselineEnabled) {
-      currentObj.plotConfig.baseline_opts.lam = getInputFloatValue(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam);
-      currentObj.plotConfig.baseline_opts.p = getInputFloatValue(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p);
-      currentObj.plotConfig.baseline_opts.niter = getInputIntValue(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter);
+      currentObj.plotConfig.baseline_opts.lam = getInputIntValueCropped(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam, 1, 100000);
+      currentObj.plotConfig.baseline_opts.p = getInputIntValueCropped(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p, 0.001, 1);
+      currentObj.plotConfig.baseline_opts.niter = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter, 1, 1000);
     } else {
       currentObj.disableBaseline();
     }
