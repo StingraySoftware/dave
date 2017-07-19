@@ -664,6 +664,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                     );
     this.plots.push(covarianceSpectrumPlot);
     projectConfig.addPlotId(covarianceSpectrumPlot.id, "RMF");
+    if (this.waitingPlotType != "covariance") { covarianceSpectrumPlot.hide(); }
     this.appendPlot(covarianceSpectrumPlot, true);
 
     var rmsPlot = this.getRMSPlot ( projectConfig,
@@ -673,6 +674,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         "EVENTS", "PHA", "fullWidth", "RMS vs Energy" )
     this.plots.push(rmsPlot);
     projectConfig.addPlotId(rmsPlot.id, "RMF");
+    if (this.waitingPlotType != "rms") { rmsPlot.hide(); }
     this.appendPlot(rmsPlot, true);
 
     var phaseLagPlot = this.getPhaseLagPlot ( projectConfig,
@@ -682,6 +684,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         "EVENTS", "PHA", "fullWidth", "Phase lag vs Energy" )
     this.plots.push(phaseLagPlot);
     projectConfig.addPlotId(phaseLagPlot.id, "RMF");
+    if (this.waitingPlotType != "phaseLag") { phaseLagPlot.hide(); }
     this.appendPlot(phaseLagPlot, true);
 
     /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
@@ -692,11 +695,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 [ { table: "EBOUNDS", column:"CHANNEL" },
                                   { table: "EBOUNDS", column:"E_MIN" } ],
                                 null, "");
-
+    rmfPlot.hide();
     this.plots.push(rmfPlot);
     this.appendPlot(rmfPlot, true);*/
 
     //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
+
+    this.waitingPlotType = null;
   }
 
   /*this.addArfPlots = function (projectConfig){
