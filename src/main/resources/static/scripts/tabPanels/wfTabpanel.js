@@ -425,13 +425,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.showCrossSpectraSelection = function () {
-    var switchablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
-    if (switchablePlots.length > 1) {
+    var selectablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
+    if (selectablePlots.length > 1) {
 
       //Else show dialog for choose the desired plots
       var lcPlotButtons = "";
-      for (i in switchablePlots) {
-         var plot = switchablePlots[i];
+      for (i in selectablePlots) {
+         var plot = selectablePlots[i];
          lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + (plot.$html.hasClass("plotSelected")?" plotSelected":"") + '" plotId="' + plot.id + '">' +
                              '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
                            '</button>';
