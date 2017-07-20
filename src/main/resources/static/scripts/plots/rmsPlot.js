@@ -15,9 +15,10 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       if (!isNull(column)){
 
         //Adds Reference Band filter
-        plotConfig.n_bands = Math.floor(column.max_value - column.min_value);
         plotConfig.energy_range = [column.min_value, column.max_value];
         plotConfig.default_energy_range = [column.min_value, column.max_value];
+        plotConfig.n_bands = Math.floor(column.max_value - column.min_value);
+
       } else {
         log("RmsPlot error, plot" + currentObj.id + ", NO ENERGY COLUMN ON SCHEMA");
       }
@@ -35,15 +36,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.plotConfig.freq_range = [currentObj.freqRangeSelector.fromValue, currentObj.freqRangeSelector.toValue];
   }
 
-  this.onEnergyRangeValuesChanged = function() {
-    currentObj.plotConfig.n_bands = Math.max.apply(Math, [1, Math.floor(currentObj.energyRangeSelector.toValue - currentObj.energyRangeSelector.fromValue)]);
-    currentObj.settingsPanel.find(".inputNBands").val(currentObj.plotConfig.n_bands);
-    currentObj.plotConfig.energy_range = [currentObj.energyRangeSelector.fromValue, currentObj.energyRangeSelector.toValue];
-  }
-
-  this.onNBandsChanged = function(){
-    currentObj.plotConfig.n_bands = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNBands"), currentObj.plotConfig.n_bands, 1, CONFIG.MAX_PLOT_POINTS);
-  }
+  this.onNBandsChanged =
 
   this.onSettingsCreated = function(){
 
@@ -80,30 +73,10 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.settingsPanel.find(".rightCol").append(this.freqRangeSelector.$html);
 
     //Adds energy range selector
-    this.energyRangeSelector = new sliderSelector(this.id + "_EnergyRange",
-                                      "Energy range (keV):",
-                                      { table:"EVENTS", column:"E", source: "energy" },
-                                      "From", "To",
-                                      this.plotConfig.default_energy_range[0], this.plotConfig.default_energy_range[1],
-                                      this.onEnergyRangeValuesChanged,
-                                      null);
-    this.energyRangeSelector.slider.slider({
-           min: this.energyRangeSelector.fromValue,
-           max: this.energyRangeSelector.toValue,
-           values: [this.energyRangeSelector.fromValue, this.energyRangeSelector.toValue],
-           step: 1,
-           slide: function( event, ui ) {
-             currentObj.energyRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-             currentObj.onEnergyRangeValuesChanged();
-           }
-       });
-    this.energyRangeSelector.setEnabled(true);
-    this.energyRangeSelector.setValues(this.plotConfig.energy_range[0], this.plotConfig.energy_range[1]);
-    this.settingsPanel.find(".rightCol").append(this.energyRangeSelector.$html);
+    this.addEnergyRangeControlToSetting("Energy range (keV)", ".rightCol");
 
     //Adds number of point control of rms plot
-    this.settingsPanel.find(".rightCol").append('</br><p>Nº Energy Segments: <input id="n_bands_' + this.id + '" class="inputNBands" type="text" name="n_bands_' + this.id + '" placeholder="' + this.plotConfig.n_bands + '" value="' + this.plotConfig.n_bands + '" /></p>');
-    this.settingsPanel.find(".rightCol").find(".inputNBands").on('change', this.onNBandsChanged);
+    this.addNumberOfBandsControlToSettings("Nº Energy Segments", ".rightCol");
   }
 
   this.getDefaultFreqRange = function (){
