@@ -66,10 +66,6 @@ def get_file_dataset(destination):
             # If EBOUNDS extension found, consider the Fits as RMF Fits
             dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
 
-        elif 'SPECRESP' in hdulist:
-            # If SPECRESP extension found, consider the Fits as ARF Fits
-            dataset = get_fits_dataset(hdulist, "ARF", ["SPECRESP"])
-
         else:
             # If not EVENTS or RATE extension found, consider the Fits as GTI Fits
             dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring)

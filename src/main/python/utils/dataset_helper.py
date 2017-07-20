@@ -113,15 +113,6 @@ def is_rmf_dataset(dataset):
     return False
 
 
-def is_arf_dataset(dataset):
-    if dataset:
-        if "SPECRESP" in dataset.tables:
-            if "SPECRESP" in dataset.tables["SPECRESP"].columns:
-                return True
-
-    return False
-
-
 def is_gti_dataset(dataset):
     if dataset:
         if "GTI" in dataset.tables:

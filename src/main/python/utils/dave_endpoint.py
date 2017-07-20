@@ -439,42 +439,6 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    return json.dumps(data, cls=NPEncoder)
 
 
-def get_unfolded_spectrum(src_filename, bck_filename, gti_filename, filters, arf_filename, target):
-    src_destination = get_destination(src_filename, target)
-    if not src_destination:
-        return common_error("Invalid file or cache key for source data")
-
-    bck_destination = ""
-    if bck_filename:
-        bck_destination = get_destination(bck_filename, target)
-        if not bck_destination:
-            return common_error("Invalid file or cache key for backgrund data")
-
-    gti_destination = ""
-    if gti_filename:
-        gti_destination = get_destination(gti_filename, target)
-        if not gti_destination:
-            return common_error("Invalid file or cache key for gti data")
-
-    arf_destination = ""
-    if arf_filename:
-        arf_destination = get_destination(arf_filename, target)
-        if not arf_destination:
-            return common_error("Invalid file or cache key for arf data")
-
-    logging.debug("get_unfolded_spectrum src: %s" % src_filename)
-    logging.debug("get_unfolded_spectrum bck: %s" % bck_filename)
-    logging.debug("get_unfolded_spectrum gti: %s" % gti_filename)
-    logging.debug("get_unfolded_spectrum: filters %s" % filters)
-    logging.debug("get_unfolded_spectrum arf: %s" % arf_filename)
-
-    data = DaveEngine.get_unfolded_spectrum(src_destination, bck_destination, gti_destination, filters, arf_destination)
-
-    logging.debug("get_unfolded_spectrum: Finish!")
-
-    return json.dumps(data, cls=NPEncoder)
-
-
 def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, n_bands, std):
     src_destination = get_destination(src_filename, target)
     if not src_destination:

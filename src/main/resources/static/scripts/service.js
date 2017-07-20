@@ -106,10 +106,6 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_cross_spectrum", data, fn);
   };
 
-  this.request_unfolded_spectrum  = function ( data, fn ) {
-    return thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
-  };
-
   this.request_covariance_spectrum  = function ( data, fn ) {
     return thisService.make_ajax_call("get_covariance_spectrum", data, fn);
   };

@@ -843,67 +843,6 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     return result
 
 
-# get_unfolded_spectrum:
-# Returns a energy array with a linked energy_spectrum array and
-# a unfolded_spectrum array
-#
-# @param: src_destination: source file destination
-# @param: bck_destination: background file destination, is optional
-# @param: gti_destination: gti file destination, is optional
-# @param: filters: array with the filters to apply
-#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
-# @param: arf_destination: file destination of file to apply
-#
-def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, filters, arf_destination):
-
-    energy_arr = []
-    energy_spectrum_arr =[]
-    unfolded_spectrum_arr = []
-
-    try:
-
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            arf_dataset = DaveReader.get_file_dataset(arf_destination)
-            if DsHelper.is_arf_dataset(arf_dataset):
-                # Applies arf data to dataset
-                events_table = filtered_ds.tables["EVENTS"]
-
-                if "E" not in events_table.columns:
-                    logging.warn('get_unfolded_spectrum: E column not found!')
-                    return False
-
-                e_histogram, e_values = DsHelper.get_histogram(events_table.columns["E"].values)
-
-                arf_table = arf_dataset.tables["SPECRESP"]
-                arf_effective_area_array = arf_table.columns["SPECRESP"].values;
-                arf_e_avg_array = [((min + max)/2) for min, max in zip(arf_table.columns["ENERG_LO"].values,
-                                                                       arf_table.columns["ENERG_HI"].values)]
-
-                exposure_time = DsHelper.get_exposure_time(filtered_ds.tables["GTI"])
-
-                for i in range(len(e_values)):
-                    energy = e_values[i]
-                    counts = e_histogram[energy]
-                    idx = DsHelper.find_idx_nearest_val(arf_e_avg_array, energy)
-                    energy_arr.append(energy)
-                    norm_count = (counts / energy) / exposure_time
-                    energy_spectrum_arr.append(norm_count)
-                    unfolded_spectrum_arr.append(norm_count / arf_effective_area_array[idx])
-
-    except:
-        logging.error(ExHelper.getException('get_unfolded_spectrum'))
-
-    # Preapares the result
-    result = push_to_results_array([], energy_arr)
-    result = push_to_results_array(result, energy_spectrum_arr)
-    result = push_to_results_array(result, unfolded_spectrum_arr)
-    return result
-
-
 # get_covariance_spectrum:
 # Returns the energy values and its correlated covariance and covariance errors
 #
