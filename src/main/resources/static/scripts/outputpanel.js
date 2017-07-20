@@ -216,7 +216,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                           "EVENTS",
                                           ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
                                           "Total Light Curve",
-                                          [], "fullWidth", false );
+                                          [], "fullWidth", false, true );
 
     var aLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -225,7 +225,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
                                             "Light Curve Range=A",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var bLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -234,7 +234,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
                                             "Light Curve Range=B",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var cLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -243,7 +243,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
                                             "Light Curve Range=C",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var dLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -252,7 +252,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
                                             "Light Curve Range=D",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var baLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -260,7 +260,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             "EVENTS",
                                             ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
                                             "Softness Light Curve (B/A)",
-                                            [], "fullWidth", false );
+                                            [], "fullWidth", false, false );
     baLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     var dcLcPlot = this.getLightCurvePlot ( filename,
@@ -269,7 +269,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             "EVENTS",
                                             ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
                                             "Hardness Light Curve (D/C)",
-                                            [], "fullWidth", false );
+                                            [], "fullWidth", false, false );
     dcLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     return [
@@ -377,7 +377,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             );
   }
 
-  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable ) {
+  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable, selectable ) {
 
     log("getLightCurvePlot: filename: " + filename );
     return new LcPlot(
@@ -389,7 +389,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         styles: { type: "ligthcurve",
                                   labels: labels,
                                   title: title,
-                                  selectable: true
+                                  selectable: selectable
                                 },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:"PHA" } ],
@@ -570,7 +570,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.addLightcurveAndPdsPlots = function (titlePrefix, filename, bck_filename, gti_filename, tableName, columnName, projectConfig, cssClass, refreshData){
     var mustRefreshData = isNull(refreshData) || refreshData;
 
-    var yLabel = ((titlePrefix == "B/A") || (titlePrefix == "D/C")) ? "Color Ratio" : "Count Rate(c/s)";
+    var isJoinedLc = ((titlePrefix == "B/A") || (titlePrefix == "D/C"));
+    var yLabel = isJoinedLc ? "Color Ratio" : "Count Rate(c/s)";
 
     var title = titlePrefix + " LC";
     if (titlePrefix == "SRC") {
@@ -587,7 +588,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                 tableName,
                                                 ["TIME (" + projectConfig.timeUnit  + ")", yLabel],
                                                 title,
-                                                [], cssClass, false);
+                                                [], cssClass, false, !isJoinedLc);
     projectConfig.plots.push(lc_plot);
     if (titlePrefix == "B/A"){
       projectConfig.addPlotId(lc_plot.id, "LCA");
