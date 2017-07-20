@@ -261,6 +261,8 @@ function ToolPanel (id,
       var max_value = min_value + increment;
       if (column.id == "PHA") {
         selector.precision = 0;
+      } else {
+        selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
       }
       selector.setValues (min_value, max_value);
       selector.setEnabled (true);
@@ -283,6 +285,7 @@ function ToolPanel (id,
                                           column.min_value, column.max_value,
                                           this.onSelectorValuesChanged,
                                           this.selectors_array);
+        selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
         selector.$html.insertAfter("." + this.id + "_TIME");
 
         //Prepares Energy color filters

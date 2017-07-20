@@ -191,13 +191,14 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
              min: this.energyRangeSelector.fromValue,
              max: this.energyRangeSelector.toValue,
              values: [this.energyRangeSelector.fromValue, this.energyRangeSelector.toValue],
-             step: 1,
+             step: CONFIG.ENERGY_FILTER_STEP,
              slide: function( event, ui ) {
                currentObj.energyRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
                currentObj.onEnergyRangeValuesChanged();
              }
          });
 
+      this.energyRangeSelector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
       this.energyRangeSelector.setEnabled(true);
       this.energyRangeSelector.setValues(this.plotConfig.energy_range[0], this.plotConfig.energy_range[1]);
       this.settingsPanel.find(columnClass).append(this.energyRangeSelector.$html);

@@ -13,6 +13,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.toValue = toValue;
   this.maxRange = this.initToValue - this.initFromValue;
   this.precision = 3;
+  this.fixed_step = null; // Sets the value step for snaping, fixed_step = 0.5 -> values: ... -1.0, -0.5, 0.0, 0.5, 1.0 ...
   this.step = 1.0;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
@@ -114,19 +115,19 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           moveSlider = true;
        }
 
+       this.fromValue = from;
+       this.toValue = to;
+
        if (this.filterData.column == "TIME") {
           //Fixes values to binSize steps
           var tabPanel = getTabForSelector(this.id);
-          var binSize = tabPanel.projectConfig.binSize;
-          this.step = parseFloat(binSize);
-          this.fromValue = Math.floor (from / binSize) * binSize;
-          this.toValue = Math.floor (to / binSize) * binSize;
-          var timeRange = Math.max ((this.toValue - this.fromValue) * 0.95, this.step);
-          tabPanel.onTimeRangeChanged(timeRange);
+          this.step = parseFloat(tabPanel.projectConfig.binSize);
+          this.fixed_step = this.step;
        }
 
-       this.fromValue = fixedPrecision(from, this.precision);
-       this.toValue = fixedPrecision(to, this.precision);
+       this.snapValuesToStep();
+       this.snapValuesToPrecision();
+
        this.fromInput.val( this.fromValue ).removeClass("wrongValue");
        this.toInput.val( this.toValue ).removeClass("wrongValue");
        if (moveSlider) {
@@ -134,6 +135,29 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          this.slider.slider('values', 1, this.toValue);
        }
        this.slider.slider("option", "step", this.step);
+
+       if (this.filterData.column == "TIME") {
+         //Notifies that time range has changed
+         tabPanel.onTimeRangeChanged(Math.max ((this.toValue - this.fromValue) * 0.95, this.step));
+       }
+   }
+
+   this.setFixedStep = function (fixed_step) {
+     this.step = fixed_step;
+     this.fixed_step = fixed_step;
+     this.setValues( this.fromValue, this.toValue );
+   }
+
+   this.snapValuesToStep = function () {
+     if ( !isNull(this.fixed_step) ) {
+       this.fromValue = Math.floor (this.fromValue / this.fixed_step) * this.fixed_step;
+       this.toValue = Math.ceil (this.toValue / this.fixed_step) * this.fixed_step;
+     }
+   }
+
+   this.snapValuesToPrecision = function () {
+     this.fromValue = fixedPrecision(this.fromValue, this.precision);
+     this.toValue = fixedPrecision(this.toValue, this.precision);
    }
 
    this.getFilter = function () {
