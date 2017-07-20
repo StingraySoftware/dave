@@ -355,14 +355,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                               bck_filename,
                                               gti_filename,
                                               "EVENTS", "PHA", "fullScreen", "Total Dynamical Power Spectrum" )
-
-              /* , this.getPlot (this.id + "_phaVsCounts_" + filename,
-                            filename, bck_filename, gti_filename,
-                            { type: "2d",
-                              labels: ["Channel", "Counts"],
-                              title: "Channel counts" },
-                            [ { table: "EVENTS", column:"PHA" } ],
-                            this.service.request_histogram, "")*/
           ];
   }
 
@@ -687,94 +679,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     if (this.waitingPlotType != "phaseLag") { phaseLagPlot.hide(); }
     this.appendPlot(phaseLagPlot, true);
 
-    /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
-                                projectConfig.rmfFilename, "", "",
-                                { type: "2d",
-                                  labels: ["Channel", "Energy (keV)"],
-                                  title: "RMF" },
-                                [ { table: "EBOUNDS", column:"CHANNEL" },
-                                  { table: "EBOUNDS", column:"E_MIN" } ],
-                                null, "");
-    rmfPlot.hide();
-    this.plots.push(rmfPlot);
-    this.appendPlot(rmfPlot, true);*/
-
-    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
-
     this.waitingPlotType = null;
   }
-
-  /*this.addArfPlots = function (projectConfig){
-    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
-                                projectConfig.arfFilename, "", "",
-                                { type: "2d",
-                                  labels: ["Energy (keV)", "Effective area (cm^2)"],
-                                  title: "ARF" },
-                                [ { table: "SPECRESP", column:"ENERG_LO" },
-                                  { table: "SPECRESP", column:"SPECRESP" } ],
-                                null, "");
-
-    this.plots.push(arfPlot);
-    this.appendPlot(arfPlot, true);
-
-    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
-  }*/
-
-  /*this.tryAddEnergyAndUnfoldedSpectrumPlot = function (projectConfig) {
-
-    if ((projectConfig.filename != "") && (projectConfig.arfFilename != "") && (projectConfig.rmfFilename != "")){
-
-      var energySpectrumPlot = new Plot(
-                                this.generatePlotId("energySpectrum_" + projectConfig.filename),
-                                {
-                                  filename: projectConfig.filename,
-                                  bck_filename: projectConfig.bckFilename,
-                                  gti_filename: projectConfig.gtiFilename,
-                                  arf_filename: projectConfig.arfFilename,
-                                  styles:{ type: "2d",
-                                           labels: ["Energy(keV)", "Counts s^-1 keV^-1"],
-                                           title: "Energy Spectrum" }
-                                },
-                                currentObj.getUnfoldedSpectrumDataFromServer,
-                                currentObj.onFiltersChangedFromPlot,
-                                currentObj.onPlotReady,
-                                currentObj.$toolBar,
-                                "fullWidth",
-                                false
-                              );
-
-      energySpectrumPlot.plotConfig.xAxisType = "log";
-      energySpectrumPlot.plotConfig.yAxisType = "log";
-      currentObj.energySpectrumPlotIdx = currentObj.plots.length;
-      currentObj.plots.push(energySpectrumPlot);
-      currentObj.appendPlot(energySpectrumPlot, true);
-
-      var unfoldedSpectrumPlot = new Plot(
-                                this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
-                                {
-                                  styles:{ type: "2d",
-                                           labels: ["Energy(keV)", "Ph s^-1 cm^-2 keV^-1"],
-                                           title: "Unfolded Spectrum" }
-                                },
-                                null,
-                                currentObj.onFiltersChangedFromPlot,
-                                currentObj.onPlotReady,
-                                currentObj.$toolBar,
-                                "",
-                                false
-                              );
-
-      unfoldedSpectrumPlot.plotConfig.xAxisType = "log";
-      unfoldedSpectrumPlot.plotConfig.yAxisType = "log";
-      currentObj.unfoldedSpectrumPlotIdx = currentObj.plots.length;
-      currentObj.plots.push(unfoldedSpectrumPlot);
-      currentObj.appendPlot(unfoldedSpectrumPlot, false);
-
-      return true;
-    }
-
-    return false;
-  }*/
 
   this.getDividedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
 
@@ -791,34 +697,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
         var dataValues = { values: data[1].values };
         var dataErrors = { values: data[1].error_values };
         joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], dataValues, dataErrors, data[3], data[4] ]) : null);
-      }
-    });
-
-  };
-
-  this.getUnfoldedSpectrumDataFromServer = function (paramsData, fn) {
-
-    log("OutputPanel getUnfoldedSpectrumDataFromServer...");
-
-    currentObj.service.request_unfolded_spectrum(paramsData, function( jsdata ) {
-      data = JSON.parse(jsdata);
-
-      if (data == null) {
-        log("request_unfolded_spectrum data null, outputPanel: " + currentObj.id);
-        return;
-
-      } else {
-
-        var energySpectrumPlot = currentObj.plots[currentObj.energySpectrumPlotIdx];
-        if (energySpectrumPlot.isVisible) {
-          energySpectrumPlot.setData($.extend(true, [], [ data[0], data[1] ]));
-        }
-
-        /*var unfoldedSpectrumPlot = currentObj.plots[currentObj.unfoldedSpectrumPlotIdx];
-        if (unfoldedSpectrumPlot.isVisible) {
-          unfoldedSpectrumPlot.setData($.extend(true, [], [ data[0], data[2] ]));
-        }*/
-
       }
     });
 

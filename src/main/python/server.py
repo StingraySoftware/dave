@@ -150,13 +150,6 @@ def get_cross_spectrum():
             request.json['norm'], request.json['type'])
 
 
-@app.route('/get_unfolded_spectrum', methods=['POST'])
-def get_unfolded_spectrum():
-    return DaveEndpoint.get_unfolded_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
-            request.json['arf_filename'], UPLOADS_TARGET)
-
-
 @app.route('/get_covariance_spectrum', methods=['POST'])
 def get_covariance_spectrum():
     return DaveEndpoint.get_covariance_spectrum(request.json['filename'],

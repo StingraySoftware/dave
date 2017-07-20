@@ -65,10 +65,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         waitingDialog.show('Applying RMF: ' + filenames[0]);
         currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
-      } else if ((selectorKey == "ARF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Applying ARF: ' + filenames[0]);
-        currentObj.projectConfig.setFile("ARF", filenames[0]);
-        currentObj.onArfUploaded();
       }
 
     } else if (filenames.length > 1){
@@ -84,10 +80,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       } else if (selectorKey == "RMF") {
         log("onDatasetChanged: RMF files doesn't support multiple selection!");
         return;
-      } else if (selectorKey == "ARF") {
-        log("onDatasetChanged: ARF files doesn't support multiple selection!");
-        return;
       }
+
       currentObj.onSchemaChangedMultipleFiles(null, params);
 
     } else {
@@ -191,12 +185,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("onRmfApplied error:" + JSON.stringify(result));
       waitingDialog.hide();
     }
-  }
-
-  this.onArfUploaded = function () {
-    log("onArfUploaded:");
-    //currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
-    waitingDialog.hide();
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
