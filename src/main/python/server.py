@@ -155,7 +155,7 @@ def get_covariance_spectrum():
     return DaveEndpoint.get_covariance_spectrum(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
             UPLOADS_TARGET, float(request.json['dt']), request.json['ref_band_interest'],
-            int(request.json['n_bands']), float(request.json['std']))
+            request.json['energy_range'], int(request.json['n_bands']), float(request.json['std']))
 
 
 @app.route('/get_phase_lag_spectrum', methods=['POST'])

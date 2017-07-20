@@ -439,7 +439,7 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    return json.dumps(data, cls=NPEncoder)
 
 
-def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, n_bands, std):
+def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, energy_range, n_bands, std):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -462,11 +462,12 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
     logging.debug("get_covariance_spectrum: filters %s" % filters)
     logging.debug("get_covariance_spectrum dt: %s" % dt)
     logging.debug("get_covariance_spectrum ref_band_interest: %s" % ref_band_interest)
+    logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
     logging.debug("get_covariance_spectrum n_bands: %s" % n_bands)
     logging.debug("get_covariance_spectrum std: %s" % std)
 
     data = DaveEngine.get_covariance_spectrum(src_destination, bck_destination, gti_destination,
-                                            filters, dt, ref_band_interest, n_bands, std)
+                                            filters, dt, ref_band_interest, energy_range, n_bands, std)
 
     logging.debug("get_covariance_spectrum: Finish!")
 

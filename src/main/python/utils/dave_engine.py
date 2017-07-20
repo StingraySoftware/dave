@@ -854,10 +854,12 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 # @param: dt: The time resolution of the events.
 # @param: ref_band_interest : A tuple with minimum and maximum values of the range in the band
 #                      of interest in reference channel.
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
 # @param: std: The standard deviation
 #
-def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, n_bands, std):
+def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, energy_range, n_bands, std):
 
     energy_arr = []
     covariance_arr =[]
@@ -877,12 +879,12 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                 event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
                                                                        events_table.columns["E"].values)])
 
-                band_width = ref_band_interest[1] - ref_band_interest[0]
+                band_width = energy_range[1] - energy_range[0]
                 band_step = band_width / n_bands
-                from_val = ref_band_interest[0]
+                from_val = energy_range[0]
                 band_interest = []
                 for i in range(n_bands):
-                    band_interest.extend([[ref_band_interest[0] + (i * band_step), ref_band_interest[0] + ((i + 1) * band_step)]])
+                    band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
 
                 if std < 0:
                     std = None
