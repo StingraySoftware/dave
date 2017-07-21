@@ -10,13 +10,21 @@ function ProjectConfig(){
   this.rmfFilename = "";
   this.arfFilename = "";
   this.selectorFilenames = [];
+
   this.binSize = 0;
   this.minBinSize = 0;
+  this.maxBinSize = 0;
+
   this.avgSegmentSize = 0;
   this.maxSegmentSize = 0;
+
   this.timeUnit = "s";
   this.totalDuration = 0;
+  this.eventCountRatio = 1.0;
+
   this.plots = [];
+  this.plotsIdsByKey = {};
+
   this.rmfData = [];
 
   this.hasSchema = function (schema) {
@@ -25,76 +33,25 @@ function ProjectConfig(){
 
   this.setSchema = function (schema) {
 
-    this.schema = schema;
+    this.schema = new Schema(schema);
 
-    var tableHeader = null;
-    var table = null;
+    // Sets the time unit
+    this.timeUnit = this.schema.getTimeUnit();
 
-    if (!isNull(schema["EVENTS"])) {
-        table = schema["EVENTS"];
-    } else if (!isNull(schema["RATE"])) {
-        table = schema["RATE"];
-    }
+    // Sets the total duration
+    this.totalDuration = this.schema.getTotalDuration();
 
-    if (!isNull(table)) {
+    // Sets the event count ratio
+    this.eventCountRatio = Math.min (CONFIG.MAX_PLOT_POINTS / this.schema.getEventsCount(), 1.0);
 
-      if (!isNull(table["HEADER"])) {
-        tableHeader = table["HEADER"];
-      }
-
-      if (!isNull(tableHeader)) {
-
-          // Sets the time unit
-          if (!isNull(tableHeader["TUNIT1"])) {
-            this.timeUnit = tableHeader["TUNIT1"];
-          }
-
-          // Sets the time resolution
-          if (!isNull(tableHeader["TIMEDEL"])) {
-            this.minBinSize = parseFloat(tableHeader["TIMEDEL"]);
-          } else if (!isNull(tableHeader["FRMTIME"])) {
-            this.minBinSize = parseInt(tableHeader["FRMTIME"]) / 1000;
-          } else {
-            this.minBinSize = 1.0;
-          }
-          this.binSize = this.minBinSize;
-
-          // Sets the total duration
-          if (!isNull(tableHeader["TSTART"])
-              && !isNull(tableHeader["TSTOP"])) {
-
-            var start = parseInt(tableHeader["TSTART"]);
-            var stop = parseInt(tableHeader["TSTOP"]);
-            this.totalDuration = stop - start;
-
-          } else if (!isNull(tableHeader["TSTARTI"])
-                      && !isNull(tableHeader["TSTOPI"])
-                      && !isNull(tableHeader["TSTARTF"])
-                      && !isNull(tableHeader["TSTOPF"])) {
-
-            var start = parseInt(tableHeader["TSTARTI"]) + parseFloat(tableHeader["TSTARTF"]);
-            var stop = parseInt(tableHeader["TSTOPI"]) + parseFloat(tableHeader["TSTOPF"]);
-            this.totalDuration = stop - start;
-          }
-      }
-    }
+    // Sets the time resolution
+    this.minBinSize = this.schema.getTimeResolution();
+    this.maxBinSize = this.totalDuration / CONFIG.MIN_PLOT_POINTS;
+    this.binSize = this.minBinSize;
 
     //Sets the segment size for spectrums
-    this.avgSegmentSize = this.minBinSize;
-    this.maxSegmentSize = this.totalDuration * 0.95;
-    if (!isNull(schema["GTI"])) {
-      var gtiTable = schema["GTI"];
-      if (!isNull(gtiTable["START"])
-          && !isNull(gtiTable["STOP"])) {
-        if (gtiTable["START"].count > 1) {
-          //If there are more than one gti then get segmSize from avg gti size
-          this.avgSegmentSize = gtiTable["STOP"].min_value - gtiTable["START"].min_value;
-        } else {
-          //Else set segmSize from splitting totalDuration by 30
-          this.avgSegmentSize = this.totalDuration / 30;
-        }
-      }
-    }
+    this.maxSegmentSize = this.schema.getMaxSegmentSize();
+    this.avgSegmentSize = this.schema.getAvgSegmentSize();
   }
 
   this.setFiles = function (selectorKey, filenames, filename) {
@@ -151,6 +108,18 @@ function ProjectConfig(){
     return -1;
   }
 
+  this.binSizeCouldHaveAliasing = function () {
+    return this.binSize != this.minBinSize && this.binSize < (this.minBinSize * 2.0);
+  }
+
+  this.getMaxTimeRange = function () {
+    return this.totalDuration * this.eventCountRatio;
+  }
+
+  this.isMaxTimeRangeRatioFixed = function () {
+    return this.eventCountRatio < 1.0;
+  }
+
   this.updateFromProjectConfigs = function (projectConfigs) {
     for (i in projectConfigs) {
       this.totalDuration = (this.totalDuration != 0) ? Math.min(this.totalDuration, projectConfigs[i].totalDuration) : projectConfigs[i].totalDuration;
@@ -163,7 +132,26 @@ function ProjectConfig(){
     this.binSize = Math.max(this.binSize, this.minBinSize);
   }
 
-  this.binSizeCouldHaveAliasing = function () {
-    return this.binSize != this.minBinSize && this.binSize < (this.minBinSize * 2.0);
+  this.addPlotId = function (plotId, key) {
+    if (!isNull(key)) {
+      if (isNull(this.plotsIdsByKey[key])){
+        this.plotsIdsByKey[key] = [];
+      }
+      this.plotsIdsByKey[key].push(plotId);
+    }
+  }
+
+  this.getPlotsIdsByKey = function (key) {
+    if (!isNull(this.plotsIdsByKey[key])) {
+      return this.plotsIdsByKey[key];
+    }
+
+    return [];
+  }
+
+  this.cleanPlotsIdsKey = function (key) {
+    if (!isNull(this.plotsIdsByKey[key])) {
+      this.plotsIdsByKey[key] = [];
+    }
   }
 }

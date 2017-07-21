@@ -17,7 +17,7 @@ class Column:
         schema = dict()
         schema["id"] = self.id
         self.add_list_to_schema("", self.values, schema)
-        self.add_list_to_schema("error_", self.error_values, schema)
+        #self.add_list_to_schema("error_", self.error_values, schema)
         return schema
 
     def add_list_to_schema(self, list_prefix, dlist, schema):
@@ -26,12 +26,10 @@ class Column:
             schema[list_prefix + "count"] = count
             schema[list_prefix + "min_value"] = min(dlist)
             schema[list_prefix + "max_value"] = max(dlist)
-            schema[list_prefix + "avg_value"] = float(sum(dlist)) / count
         else:
             schema[list_prefix + "count"] = 0
             schema[list_prefix + "min_value"] = 0
             schema[list_prefix + "max_value"] = 0
-            schema[list_prefix + "avg_value"] = 0
         return schema
 
     def clone(self, with_values=True):

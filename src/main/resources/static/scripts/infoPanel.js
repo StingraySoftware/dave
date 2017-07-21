@@ -9,19 +9,19 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.showAll = false;
   this.defaultTags = [ "TSTART", "TSTOP", "TIMEUNIT", "TIMESYS", "DURATION", "FRMTIME",
                        "DATE-OBS", "DATE-END", "OBJECT", "OBSERVER", "TELESCOP", "INSTRUME",
-                       "OBS_ID", "OBS_MODE", "EXP_ID"];
+                       "OBS_ID", "OBS_MODE", "EXP_ID", "MJDREF", "MJDREFF", "MJDREFI" ];
 
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
-                   '<button class="btn btn-default btnShowAll"><i class="fa fa-arrows-alt" aria-hidden="true"></i></button>' +
+                   '<button class="btn btn-default btnShowAll"><i class="fa fa-plus-square-o" aria-hidden="true"></i></button>' +
                    '<button class="btn btn-default btnHide"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                   '<h3>' + title + '</h3>' +
+                   '<h3>' + title + ':</h3>' +
                    '<table class="properties"></table>' +
                  '</div>');
 
   this.container = this.$html.find(".properties");
 
   if (!isNull(toolbar)){
-    this.btnShow = $('<button class="btn btnShow' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> HEADER INFO</button>');
+    this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i> ' + title + '</button>');
     this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
@@ -39,6 +39,11 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
     this.btnShowAll = this.$html.find(".btnShowAll");
     this.btnShowAll.click(function(event){
       currentObj.showAll = !currentObj.showAll;
+      if (currentObj.showAll) {
+        currentObj.btnShowAll.find("i").switchClass("fa-plus-square-o", "fa-minus-square-o");
+      } else {
+        currentObj.btnShowAll.find("i").switchClass("fa-minus-square-o", "fa-plus-square-o");
+      }
       currentObj.redraw();
     });
 
@@ -51,7 +56,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
     currentObj.isVisible = true;
     currentObj.$html.show();
     currentObj.btnShow.removeClass("plotHidden");
-    currentObj.btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+    currentObj.btnShow.find("i").switchClass("fa-eye-slash", "fa-eye");
     currentObj.redraw();
   }
 
@@ -59,7 +64,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
     currentObj.isVisible = false;
     currentObj.$html.hide();
     currentObj.btnShow.addClass("plotHidden");
-    currentObj.btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+    currentObj.btnShow.find("i").switchClass("fa-eye", "fa-eye-slash");
   }
 
   this.getPropertyHtml = function(tag, value, comment) {

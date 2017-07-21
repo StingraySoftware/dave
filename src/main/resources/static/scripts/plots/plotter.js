@@ -338,7 +338,8 @@ function getShapesFromWti (wti_x_ranges) {
 }
 
 function getCrossLine (xrange, yrange){
-  return { x: xrange,
+  return { visible: false,
+           x: xrange,
            y: yrange,
            mode:"lines",
            showlegend: false,

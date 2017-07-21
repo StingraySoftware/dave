@@ -259,6 +259,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     this.colorScale = $('<div class="colorScale">' +
                           '<h3>Color scale:</h3>' +
                           '<canvas class="colorScaleCanvas"></canvas>' +
+                          '<canvas class="colorPlotCanvas"></canvas>' +
                         '</div>');
 
     // Creates the X0 selector
@@ -307,7 +308,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
 
     // Creates the X0 selector
     this.mSelector = new BinSelector(this.id + "_mSelector",
-                                      "y0:",
+                                      "m:",
                                       "From",
                                       0.0, 1.0, 0.01, 0.25,
                                       this.onMSelectorValuesChanged);
@@ -329,6 +330,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
 
     this.settingsPanel.find(".leftCol").append(this.colorScale);
     this.drawColorScale();
+    this.drawColorScalePlot();
   }
 
   this.onFreqSelectorValuesChanged = function(){
@@ -339,21 +341,25 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
   this.onX0SelectorValuesChanged = function(){
     currentObj.plotConfig.colorScale.x0 = currentObj.x0Selector.value;
     currentObj.drawColorScale();
+    currentObj.drawColorScalePlot();
   }
 
   this.onY0SelectorValuesChanged = function(){
     currentObj.plotConfig.colorScale.y0 = currentObj.y0Selector.value;
     currentObj.drawColorScale();
+    currentObj.drawColorScalePlot();
   }
 
   this.onMSelectorValuesChanged = function(){
     currentObj.plotConfig.colorScale.m = Math.pow(currentObj.mSelector.value * 4, 3);
     currentObj.drawColorScale();
+    currentObj.drawColorScalePlot();
   }
 
   this.drawColorScale = function () {
     var canvas = this.colorScale.find(".colorScaleCanvas")[0];
     var context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
     var colorscale = this.getColorScale();
     var lineWidth = canvas.width / colorscale.length;
 
@@ -363,6 +369,28 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
       context.lineTo(lineWidth * i + lineWidth/2, canvas.height);
       context.lineWidth = lineWidth;
       context.strokeStyle = colorscale[i][1];
+      context.stroke();
+    }
+  }
+
+  this.drawColorScalePlot = function () {
+    var canvas = this.colorScale.find(".colorPlotCanvas")[0];
+    var context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    var colorscale = this.getColorScale();
+    var lineWidth = canvas.width / colorscale.length;
+    var x0 = this.plotConfig.colorScale.x0;
+    var y0 = this.plotConfig.colorScale.y0;
+    var m = this.plotConfig.colorScale.m;
+    var prevC = canvas.height - Math.max(Math.min(Math.floor(canvas.height * ((-y0)*m + x0)), canvas.height), 0);
+    for (i in colorscale) {
+      context.beginPath();
+      var x = i / colorscale.length;
+      var c = canvas.height - Math.max(Math.min(Math.floor(canvas.height * ((x - y0)*m + x0)), canvas.height), 0);
+      context.moveTo(lineWidth * i, prevC);
+      context.lineTo(lineWidth * i + lineWidth, c);
+      prevC = c;
+      context.lineWidth = 1;
       context.stroke();
     }
   }

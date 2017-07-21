@@ -1,13 +1,13 @@
 
 @font-face {
-  font-family: Furore;
-  src: url("../fonts/Furore.otf") format("opentype");
+  font-family: Archangelsk;
+  src: url("../fonts/Archangelsk.ttf");
 }
 
 html,body,.container {
-    height: 100%;
-    width: 100%;
-    margin: 0;
+  height: 100%;
+  width: 100%;
+  margin: 0;
 }
 
 h3
@@ -16,17 +16,20 @@ h3
 }
 
 .navbar-static-top {
+  font-family: Archangelsk;
   background-color: #222;
   margin-bottom: 0px;
 }
 
 .navbar .navbar-brand {
-  font-family: Furore;
-  color: #DD4814;
-  font-size: 20px;
+  font-family: Archangelsk;
+  width: 90px;
+  color: #FE3200;
+  font-size: 24px;
 }
 
 .side-nav {
+  font-family: Archangelsk;
   width: 90px;
 }
 
@@ -55,39 +58,39 @@ h3
 
 .daveContainer.container:before
 {
-    content: '';
-    display: block;
-    float: left;
-    height: 100%;
+  content: '';
+  display: block;
+  float: left;
+  height: 100%;
 }
 
 .daveContainer .fill
 {
-    position: relative;
+  position: relative;
 }
 
 .daveContainer .fill:after
 {
-    content: '';
-    display: block;
-    clear: left;
+  content: '';
+  display: block;
+  clear: left;
 }
 
 .daveContainer .wrapper
 {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 .wfSelectorContainer, .toolPanelContainer, .outputPanelContainer, .height_100
 {
-    float: left;
-    position: static;
-    height: 100%;
-    max-height: 100% !important;
-    overflow-x: hidden;
-    overflow-y: scroll;
+  float: left;
+  position: static;
+  height: 100%;
+  max-height: 100% !important;
+  overflow-x: hidden;
+  overflow-y: scroll;
 }
 
 .wfSelectorContainer
@@ -177,9 +180,14 @@ h3
   padding: 0;
 }
 
-.plotContainer.plotSelected
+.plotSelected
 {
-  border: 1px solid #ff0000;
+  border: 1px solid #ff0000 !important;
+}
+
+.plotHover
+{
+  border: 1px solid #222222 !important;
 }
 
 .plotContainer .plot{
@@ -209,7 +217,7 @@ h3
   overflow-y: scroll;
 }
 
-.plotContainer .loading
+.plotContainer .loading, .plotContainer .hoverDisabler
 {
   width: 100%;
   height: 100%;
@@ -221,13 +229,18 @@ h3
 }
 
 .loadingGif {
-    width: 120px;
-    margin: auto;
-    margin-top: 80px;
+  width: 120px;
+  margin: auto;
+  margin-top: 80px;
 }
 
 .loadingGif img {
-    width: 100%;
+  width: 100%;
+}
+
+.plotContainer .hoverDisabler
+{
+  background-color: rgba(0, 0, 0, 0.03);
 }
 
 .plotContainer .settings h3
@@ -322,11 +335,20 @@ h3
   font-size: 1em;
 }
 
+.fileSelector .fileName {
+  margin-right: 10px;
+  color: #ececec;
+}
+
+.fileSelector .btnChange {
+  font-size: 0.85em;
+}
+
 .btnRefreshFloating {
   position: fixed;
   right: 16px;
   top: 60px;
-  z-index: 9999;
+  z-index: 1020;
   width: 120px;
   height: 40px;
   font-size: 1.4em;
@@ -335,7 +357,7 @@ h3
 .toolbar {
   position: fixed;
   top: 60px;
-  z-index: 1000;
+  z-index: 1020;
   margin-left: 10px;
 }
 
@@ -343,33 +365,57 @@ h3
   border: 1px solid #000000;
   background: #4a4a4a;
   border-radius: 8px;
-  width: 260px;
+  width: 300px;
   padding-bottom: 16px;
 }
 
 .outputPanelToolBar h3 {
-    font-size: 1em;
-    color: white;
+  font-size: 1em;
+  color: white;
+  margin-top: 10px;
+}
+
+.outputPanelToolBar .Section h3 {
+    padding-bottom: 0px;
+    margin-bottom: 4px;
     margin-top: 10px;
+    color: #e0e0e0;
+    font-size: 0.92em;
 }
 
-.outputPanelToolBar .container .btn {
-    display: block;
-    background: none;
-    color: #d4a34a;
-    border: none;
-    box-shadow: none;
-    text-shadow: none;
-    margin-left: -10px;
-    font-size: 0.95em;
+.toolPanelContainer .Section h3 {
+  color: #ff7d1b;
 }
 
-.outputPanelToolBar .container .btn:hover {
-    color: #ffcf78 !important;
+.Section .sectionContainer {
+  padding-left: 10px;
 }
 
-.outputPanelToolBar .container .btn.plotHidden {
-    color: gray;
+.sectionContainer .btn, .outputPanelToolBar .btn, .xsDialogContainer .btn {
+  display: block;
+  background: none;
+  color: #d4a34a;
+  border: none;
+  box-shadow: none;
+  text-shadow: none;
+  margin-left: -10px;
+  font-size: 0.95em;
+}
+
+.sectionContainer .btn:active, .outputPanelToolBar .btn:active, .xsDialogContainer .btn:active{
+  background: #3a3a3a !important;
+}
+
+.sectionContainer .btn:hover, .outputPanelToolBar .btn:hover, .xsDialogContainer .btn:hover {
+  color: #ffcf78 !important;
+}
+
+.sectionContainer .btn.plotHidden, .outputPanelToolBar .btn.plotHidden, .toolPanelContainer .Section.Disabled h3 {
+  color: gray;
+}
+
+.sectionContainer .btn.ExtraButton {
+  color: #d47d47;
 }
 
 .btnShowToolbar {
@@ -391,9 +437,9 @@ h3
 }
 
 .actionsContainer .btn {
-    font-size: 1.2em;
-    width: 49%;
-    margin-top: 30px;
+  font-size: 1.2em;
+  width: 49%;
+  margin-top: 30px;
 }
 
 .paramContainer input[type="text"] {
@@ -409,24 +455,24 @@ h3
 }
 
 .paramContainer .applied {
-    color: #5cb85c;
+  color: #5cb85c;
 }
 
 .paramContainer .fixed {
-    color: #121212;
+  color: #121212;
 }
 
 .paramContainer .estimation, .paramContainer .error {
-    float: right;
-    font-size: 0.8em;
-    color: #5cb85c;
-    width: 70px;
-    text-align: right;
+  float: right;
+  font-size: 0.8em;
+  color: #5cb85c;
+  width: 70px;
+  text-align: right;
 }
 
 .estimation a.applySngBtn {
-    float: left;
-    color: #5cb85c;
+  float: left;
+  color: #5cb85c;
 }
 
 .estimation .err {
@@ -435,21 +481,33 @@ h3
 }
 
 .error .err {
-    color: red;
-    font-size: 1.2em;
-    margin-top: 2px;
+  color: red;
+  font-size: 1.2em;
+  margin-top: 2px;
+}
+
+.ui-dialog{
+  z-index: 1030 !important;
+}
+
+.ui-dialog .ui-dialog-titlebar-close{
+  padding-top: 0px;
 }
 
 .ui-dialog-content .row {
-    margin-left: 12px;
-    margin-right: 3px;
+  margin-left: 12px;
+  margin-right: 3px;
 }
 
 .ui-dialog-content input {
-    float: right;
-    width: 60px;
-    height: 25px;
-    text-align: right;
+  float: right;
+  width: 60px;
+  height: 25px;
+  text-align: right;
+}
+
+.xsDialogContainer {
+    padding: 20px;
 }
 
 input.wrongValue {
@@ -458,22 +516,34 @@ input.wrongValue {
 
 .colorScale canvas {
   border: 1px solid black;
+}
+
+.colorScale .colorScaleCanvas {
   width: 100%;
   height: 10px;
 }
 
-.colorScale .sliderSelector {
-    padding-left: 10px;
-    padding-right: 10px;
+.colorScale .colorPlotCanvas {
+  width: 80px;
+  height: 80px;
+  float: left;
+  margin-top: 8px;
 }
+
+.colorScale .sliderSelector {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 .colorScale .sliderSelector h3 {
-    font-size: 0.95em;
+  font-size: 0.95em;
+  padding-left: 100px;
 }
 
 .colorScale .sliderSelector .selectorContainer {
-    width: 50%;
-    float: right;
-    margin-top: -20px;
+  width: 40%;
+  float: right;
+  margin-top: -20px;
 }
 
 .colorScale .sliderSelector .selectorContainer input{
@@ -485,4 +555,30 @@ input.wrongValue {
 .colorScale .sliderSelector .selectorContainer .selectorSlider{
   margin-top: 0px;
   margin-left: 0px;
+}
+
+.modelSelector .floatingContainer {
+  float: right;
+  margin-top: -30px;
+}
+
+.TabPanel.Settings .wfSelectorContainer, .TabPanel.Settings .outputPanelContainer
+{
+  display: none;
+}
+
+.TabPanel.Settings .toolPanelContainer
+{
+  width: 100%;
+}
+
+.TabPanel.Settings h2
+{
+  color: rgb(245, 243, 243);
+  font-size: 1.5em;
+}
+
+.TabPanel.Settings h3
+{
+  color: #d0d0d0;
 }

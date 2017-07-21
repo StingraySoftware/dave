@@ -1,26 +1,25 @@
-
-var DOMAIN_URL = "http://localhost:5000"; //Set as Dave Server Ip:Port
-var MIN_PLOT_POINTS = 2;
-var MAX_PLOT_POINTS = 30000;
-
 var theService = null;
 
 $(document).ready(function () {
   waitingDialog.show('Creating environment');
 
   Logger.show();
-  log("App started!! ->" + DOMAIN_URL);
+  log("App started!! ->" + CONFIG.DOMAIN_URL);
 
-  theService = new Service (DOMAIN_URL);
+  theService = new Service(CONFIG.DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
 
-  $("#navbar").find(".addTabPanel").bind("click", function( event ) {
-    addTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+  $("#navbar").find(".addTabPanel").click(function () {
+    addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+  });
+
+  $("#right-navbar").find(".showSettingsTab").click(function () {
+    onSettingsClicked();
   });
 
   $("#navbar").find(".addTabPanel").click();
 
-  log("App Ready!! ->" + DOMAIN_URL);
+  log("App Ready!! ->" + CONFIG.DOMAIN_URL);
 
   waitingDialog.hide();
 });
@@ -49,8 +48,20 @@ function getInputIntValue($input, defaultValue) {
   return getInputValue($input, "int", defaultValue);
 }
 
+function getInputIntValueCropped ($input, defaultValue, min, max) {
+  var value = Math.min(Math.max(getInputIntValue($input, defaultValue), min), max);
+  $input.val(value).removeClass("wrongValue");
+  return value;
+}
+
 function getInputFloatValue($input, defaultValue) {
   return getInputValue($input, "float", defaultValue);
+}
+
+function getInputFloatValueCropped ($input, defaultValue, min, max) {
+  var value = Math.min(Math.max(getInputFloatValue($input, defaultValue), min), max);
+  $input.val(value).removeClass("wrongValue");
+  return value;
 }
 
 function getInputValue($input, type, defaultValue) {
@@ -78,6 +89,12 @@ function getInputValue($input, type, defaultValue) {
     $input.addClass("wrongValue");
     return defaultValue;
   }
+}
+
+function fillWithZeros(num, length) {
+  num = ""+num;
+  while(num.length < length) num = "0"+num;
+  return num;
 }
 
 function closest(arr, closestTo){
@@ -113,9 +130,55 @@ function onFitPlotClicked(plot) {
   waitingDialog.show('Preparing new tab ...');
 
   var tab = getTabForSelector(plot.id);
-  addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot, tab.projectConfig);
+  if (!isNull(tab)) {
+    addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot, tab.projectConfig);
 
+    setTimeout( function () {
+      waitingDialog.hide();
+    }, 850);
+  } else {
+    showError(null, "Can't find tab for plot: " + plot.id);
+  }
+}
+
+function onSettingsClicked() {
+  showSettingsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+}
+
+function showMsg(title, msg) {
+  var $msgDialog = $('<div id="msgdialog" title="' + title + '">' +
+                      '<p>' + msg + '</p>' +
+                    '</div>');
+  $("body").append($msgDialog);
+  $msgDialog.dialog({
+     modal: true,
+     buttons: {
+       'OK': function() {
+          $(this).dialog('close');
+          $msgDialog.remove();
+       }
+     }
+   });
+   $msgDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+}
+
+function showError(errorMsg, exception) {
+  if (isNull(errorMsg)) { errorMsg = "Something went wrong!"; }
+
+  waitingDialog.show(errorMsg, { progressType: "warning" });
   setTimeout( function () {
     waitingDialog.hide();
-  }, 850);
+  }, 2500);
+
+  log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
+}
+
+function getCheckedState(value) {
+  return value ? 'checked="checked"' : "";
+}
+
+function copyToClipboard(text) {
+  const {clipboard} = require('electron');
+  clipboard.writeText(text);
+  alert("Copied to clipboard:\n" + text);
 }

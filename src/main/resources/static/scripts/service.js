@@ -5,7 +5,7 @@ function Service (base_url) {
 
   this.base_url = base_url;
 
-  this.upload_form_data = function (successFn, errorFn, formData) {
+  this.upload_form_data = function (successFn, progressFn, errorFn, formData) {
     $.ajax({
        url: thisService.base_url + "/upload",
        type: 'POST',
@@ -17,7 +17,17 @@ function Service (base_url) {
        //Options to tell jQuery not to process data or worry about content-type.
        cache: false,
        contentType: false,
-       processData: false
+       processData: false,
+
+       // Custom XMLHttpRequest
+        xhr: function() {
+            var myXhr = $.ajaxSettings.xhr();
+            if (myXhr.upload) {
+                // For handling the progress of the upload
+                myXhr.upload.addEventListener('progress', progressFn, false);
+            }
+            return myXhr;
+        }
      });
    };
 
@@ -46,7 +56,7 @@ function Service (base_url) {
       log(callName + " plot " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
     }
     try {
-      $.ajax({
+      return $.ajax({
          type : "POST",
          url : thisService.base_url + "/" + callName,
          data: JSON.stringify(data, null, '\t'),
@@ -56,63 +66,68 @@ function Service (base_url) {
       });
     } catch (e) {
       fn({ "error" : e });
+      return null;
     }
   };
 
   this.request_plot_data = function (data, fn) {
-    thisService.make_ajax_call("get_plot_data", data, fn);
+    return thisService.make_ajax_call("get_plot_data", data, fn);
   };
 
   this.request_histogram = function (data, fn) {
-    thisService.make_ajax_call("get_histogram", data, fn);
+    return thisService.make_ajax_call("get_histogram", data, fn);
   };
 
   this.request_lightcurve = function (data, fn) {
-    thisService.make_ajax_call("get_lightcurve", data, fn);
+    return thisService.make_ajax_call("get_lightcurve", data, fn);
   };
 
   this.request_divided_lightcurves_from_colors = function (data, fn) {
-    thisService.make_ajax_call("get_divided_lightcurves_from_colors", data, fn);
+    return thisService.make_ajax_call("get_divided_lightcurves_from_colors", data, fn);
   };
 
   this.request_joined_lightcurves = function (data, fn) {
-    thisService.make_ajax_call("get_joined_lightcurves", data, fn);
+    return thisService.make_ajax_call("get_joined_lightcurves", data, fn);
   };
 
   this.request_divided_lightcurve_ds = function (data, fn) {
-    thisService.make_ajax_call("get_divided_lightcurve_ds", data, fn);
+    return thisService.make_ajax_call("get_divided_lightcurve_ds", data, fn);
   };
 
   this.request_power_density_spectrum = function (data, fn) {
-    thisService.make_ajax_call("get_power_density_spectrum", data, fn);
+    return thisService.make_ajax_call("get_power_density_spectrum", data, fn);
   };
 
   this.request_dynamical_spectrum = function (data, fn) {
-    thisService.make_ajax_call("get_dynamical_spectrum", data, fn);
+    return thisService.make_ajax_call("get_dynamical_spectrum", data, fn);
   };
 
   this.request_cross_spectrum = function (data, fn) {
-    thisService.make_ajax_call("get_cross_spectrum", data, fn);
+    return thisService.make_ajax_call("get_cross_spectrum", data, fn);
   };
 
   this.request_unfolded_spectrum  = function ( data, fn ) {
-    thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
+    return thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
   };
 
   this.request_covariance_spectrum  = function ( data, fn ) {
-    thisService.make_ajax_call("get_covariance_spectrum", data, fn);
+    return thisService.make_ajax_call("get_covariance_spectrum", data, fn);
+  };
+
+  this.request_rms_spectrum  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_rms_spectrum", data, fn);
   };
 
   this.request_plot_data_from_models  = function ( data, fn ) {
-    thisService.make_ajax_call("get_plot_data_from_models", data, fn);
+    return thisService.make_ajax_call("get_plot_data_from_models", data, fn);
   };
 
   this.request_fit_powerspectrum_result = function (data, fn) {
-    thisService.make_ajax_call("get_fit_powerspectrum_result", data, fn);
+    return thisService.make_ajax_call("get_fit_powerspectrum_result", data, fn);
   };
 
   this.request_bootstrap_results  = function ( data, fn ) {
-    thisService.make_ajax_call("get_bootstrap_results", data, fn);
+    return thisService.make_ajax_call("get_bootstrap_results", data, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

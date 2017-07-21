@@ -33,9 +33,52 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$btnShowToolbar.hide();
   this.$toolBar.hide();
 
+  this.setAnalisysSections = function (sections) {
+    this.$toolBar.find(".container").html("");
+    for (i in sections) {
+      this.addToolbarSection(sections[i]);
+    };
+  }
+
+  this.addToolbarSection = function (section) {
+    var $section = $('<div class="Section ' + section.cssClass + '">' +
+                      '<h3>' + section.title + ':</h3>' +
+                      '<div class="sectionContainer">' +
+                      '</div>' +
+                    '</div>');
+    $section.hide();
+    this.$toolBar.find(".container").append($section);
+  }
+
+  this.setToolbarSectionVisible = function (sectionClass, visible) {
+    if (visible) {
+        currentObj.$html.find(".Section." + sectionClass).show();
+    } else {
+        currentObj.$html.find(".Section." + sectionClass).hide();
+    }
+  }
+
+  this.setEnabledSection = function (sectionClass, enabled) {
+    var plots = currentObj.$html.find(".plotContainer." + sectionClass);
+    if (plots.length > 0) {
+      currentObj.setToolbarSectionVisible(sectionClass, enabled);
+      $.each( plots, function(i, $plot) {
+        var plot = currentObj.getPlotById($plot.id);
+        if (!isNull(plot) && plot.isVisible){
+          if (enabled) {
+            plot.$html.show();
+            plot.refreshData();
+          } else {
+            plot.$html.hide();
+          }
+        }
+      });
+    }
+  }
+
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
-    if (!isNull(projectConfig.schema["RATE"])) {
+    if (projectConfig.schema.isLightCurveFile()) {
 
       //If fits is a Lightcurve
       if (projectConfig.plots.length == 0) {
@@ -60,7 +103,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     //ADDS PLOTS TO PANEL
     for (i in this.plots) {
       this.$body.append(this.plots[i].$html);
-      if (i > 0) { //TODO: Change this condition...
+      if (i >= CONFIG.INITIAL_VISIBLE_PLOTS) {
         this.plots[i].hide();
       }
     };
@@ -88,22 +131,21 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     // Clears output panel
     this.$body.html("");
-    this.$toolBar.find(".container").html("");
 
     // Adds plots
     this.initPlots(projectConfig);
 
     // Adds FITS info if found
-    if (!isNull(projectConfig.schema["EVENTS"])) {
-      this.addInfoPanel( "EVENTS HEADER:", "EVENTS", projectConfig.schema );
-    } else if (!isNull(projectConfig.schema["RATE"])) {
-      this.addInfoPanel( "LIGHTCURVE HEADER:", "RATE", projectConfig.schema );
+    if (projectConfig.schema.isEventsFile()) {
+      this.addInfoPanel( "EVENTS", projectConfig.schema.contents );
+    } else if (projectConfig.schema.isLightCurveFile()) {
+      this.addInfoPanel( "RATE", projectConfig.schema.contents );
     }
   }
 
-  this.addInfoPanel = function ( title, tableName, schema ) {
+  this.addInfoPanel = function ( tableName, schema ) {
     if (!isNull(schema[tableName]["HEADER"])) {
-      this.infoPanel = new InfoPanel("infoPanel", title, schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
+      this.infoPanel = new InfoPanel(this.generatePlotId("infoPanel"), "Header File Information", schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
       this.$body.append(this.infoPanel.$html);
     }
   }
@@ -168,32 +210,78 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     log("getFitsTablePlots: filename: " + filename );
 
-    baLcPlot = this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
-                                        "B/A LC",
-                                        [], "fullWidth", false );
+    var lcPlot = this.getLightCurvePlot ( filename,
+                                          bck_filename,
+                                          gti_filename,
+                                          "EVENTS",
+                                          ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
+                                          "Total Light Curve",
+                                          [], "fullWidth", false );
+
+    var aLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
+                                            "Light Curve Range=A",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var bLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
+                                            "Light Curve Range=B",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var cLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
+                                            "Light Curve Range=C",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var dLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
+                                            "Light Curve Range=D",
+                                            [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
+                                            "", false );
+
+    var baLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
+                                            "Softness Light Curve (B/A)",
+                                            [], "fullWidth", false );
     baLcPlot.getDataFromServerFn = null; //Disable calls to server
 
-    dcLcPlot = this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
-                                        "D/C LC",
-                                        [], "fullWidth", false );
+    var dcLcPlot = this.getLightCurvePlot ( filename,
+                                            bck_filename,
+                                            gti_filename,
+                                            "EVENTS",
+                                            ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
+                                            "Hardness Light Curve (D/C)",
+                                            [], "fullWidth", false );
     dcLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     return [
-              this.getLightCurvePlot ( filename,
-                                      bck_filename,
-                                      gti_filename,
-                                      "EVENTS",
-                                      ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
-                                      "SRC LC",
-                                      [], "fullWidth", false ),
+              lcPlot,
+
+              aLcPlot,
+
+              bLcPlot,
+
+              cLcPlot,
+
+              dLcPlot,
 
               baLcPlot,
 
@@ -203,7 +291,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["D/C Color Ratio(c/s)", "B/A Color Ratio(c/s)"], "Color-Color Diagram",
+                                                        ["D/C Color Ratio(c/s)", "B/A Color Ratio(c/s)"], "Color-Color Diagram (CCD)",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_A" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
@@ -214,7 +302,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["Total Count Rate (c/s)", "B/A Color Ratio(c/s)"], "Softness Intensity Diagram",
+                                                        ["Total Count Rate (c/s)", "B/A Color Ratio(c/s)"], "Softness Intensity Diagram (SID)",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_B" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_A" } ],
                                                         "", true, baLcPlot ),
@@ -223,7 +311,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                         bck_filename,
                                                         gti_filename,
                                                         "EVENTS",
-                                                        ["Total Count Rate (c/s)", "D/C Color Ratio(c/s)"], "Hardness Intensity Diagram",
+                                                        ["Total Count Rate (c/s)", "D/C Color Ratio(c/s)"], "Hardness Intensity Diagram (HID)",
                                                         [ { source: "ColorSelector", table:"EVENTS", column:"Color_D" },
                                                           { source: "ColorSelector", table:"EVENTS", column:"Color_C" } ],
                                                         "", true, dcLcPlot ),
@@ -232,85 +320,49 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "fullWidth", "SRC PDS" ),
-
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
-                                        "A LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
-                                        "", false ),
+                                  "EVENTS", "PHA", "fullWidth", "Total Power Density Spectrum (PDS)" ),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "A PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=A",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ]),
 
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
-                                        "B LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
-                                        "", false ),
-
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "B PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=B",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ]),
 
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
-                                        "C LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
-                                        "", false ),
-
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "C PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=C",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ]),
 
-              this.getLightCurvePlot ( filename,
-                                        bck_filename,
-                                        gti_filename,
-                                        "EVENTS",
-                                        ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
-                                        "D LC",
-                                        [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
-                                        "", false ),
-
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "EVENTS", "PHA", "", "D PDS",
+                                  "EVENTS", "PHA", "", "Power Density Spectrum Range=D",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ]),
 
               this.getDynamicalSpectrumPlot ( projectConfig,
                                               filename,
                                               bck_filename,
                                               gti_filename,
-                                              "EVENTS", "PHA", "fullScreen", "SRC DYNAMICAL SPECTRUM" ),
+                                              "EVENTS", "PHA", "fullScreen", "Total Dynamical Power Spectrum" )
 
-              this.getPlot (this.id + "_phaVsCounts_" + filename,
+              /* , this.getPlot (this.id + "_phaVsCounts_" + filename,
                             filename, bck_filename, gti_filename,
                             { type: "2d",
                               labels: ["Channel", "Counts"],
                               title: "Channel counts" },
                             [ { table: "EVENTS", column:"PHA" } ],
-                            this.service.request_histogram, "")
+                            this.service.request_histogram, "")*/
           ];
   }
 
@@ -354,8 +406,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_lightcurve,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot " + cssClass,
                       switchable
                     );
   }
@@ -375,8 +427,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_joined_lightcurves,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot " + cssClass,
                       switchable
                     );
   }
@@ -404,8 +456,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       (isNull(linkedPlot)) ? this.service.request_divided_lightcurves_from_colors : this.getDividedLightCurvesFromColorsDataFromServer,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot " + cssClass,
                       switchable
                     );
   }
@@ -430,8 +482,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_power_density_spectrum,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".PDSPlot").find(".sectionContainer"),
+                      "PDSPlot " + cssClass,
                       false,
                       projectConfig
                     );
@@ -458,8 +510,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       this.service.request_dynamical_spectrum,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
-                      this.$toolBar,
-                      cssClass,
+                      getTabForSelector(this.id).$html.find(".PDSPlot").find(".sectionContainer"),
+                      "PDSPlot " + cssClass,
                       false,
                       projectConfig
                     );
@@ -489,9 +541,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             joined_lc_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("SRC"),
                                                                       cache_key,
                                                                       ["Total Count Rate (c/s)", newKeySufix + " Color Ratio"],
-                                                                      ((newKeySufix == "B/A") ? "Softness Intensity Diagram" : "Hardness Intensity Diagram"),
+                                                                      ((newKeySufix == "B/A") ? "Softness Intensity Diagram (SID)" : "Hardness Intensity Diagram (HID)"),
                                                                       "", true);
             projectConfig.plots.push(joined_lc_plot);
+            projectConfig.addPlotId(joined_lc_plot.id, ((newKeySufix == "B/A") ? "LCB" : "LCD"));
+            projectConfig.addPlotId(joined_lc_plot.id, ((newKeySufix == "B/A") ? "LCA" : "LCC"));
             currentObj.appendPlot(joined_lc_plot);
 
             //After getting A/B and C/D we can calculate the color to color plot
@@ -501,8 +555,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                 var abcd_plot = currentObj.getJoinedLightCurvesPlot ( projectConfig.getFile("LC_B/A"),
                                                                       projectConfig.getFile("LC_D/C"),
                                                                       ["B/A Color Ratio(c/s)", "D/C Color Ratio"],
-                                                                      "Color-Color Diagram", "", true);
+                                                                      "Color-Color Diagram (CCD)", "", true);
                 projectConfig.plots.push(abcd_plot);
+                projectConfig.addPlotId(abcd_plot.id, "LCA");
+                projectConfig.addPlotId(abcd_plot.id, "LCB");
+                projectConfig.addPlotId(abcd_plot.id, "LCC");
+                projectConfig.addPlotId(abcd_plot.id, "LCD");
                 currentObj.appendPlot(abcd_plot);
             }
           }
@@ -522,20 +580,48 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
     var yLabel = ((titlePrefix == "B/A") || (titlePrefix == "D/C")) ? "Color Ratio" : "Count Rate(c/s)";
 
+    var title = titlePrefix + " LC";
+    if (titlePrefix == "SRC") {
+      title = "Total Light Curve";
+    } else if (titlePrefix.startsWith("LC")) {
+      title = "Light Curve Range=" + titlePrefix.replace("LC", "");
+    } else if (titlePrefix == "B/A") {
+      title = "Softness Light Curve (B/A)";
+    } else if (titlePrefix == "D/C") {
+      title = "Hardness Light Curve (D/C)";
+    }
+
     var lc_plot = currentObj.getLightCurvePlot ( filename, bck_filename, gti_filename,
                                                 tableName,
                                                 ["TIME (" + projectConfig.timeUnit  + ")", yLabel],
-                                                titlePrefix + " LC",
+                                                title,
                                                 [], cssClass, false);
     projectConfig.plots.push(lc_plot);
+    if (titlePrefix == "B/A"){
+      projectConfig.addPlotId(lc_plot.id, "LCA");
+      projectConfig.addPlotId(lc_plot.id, "LCB");
+    } else if (titlePrefix == "D/C"){
+      projectConfig.addPlotId(lc_plot.id, "LCC");
+      projectConfig.addPlotId(lc_plot.id, "LCD");
+    } else {
+      projectConfig.addPlotId(lc_plot.id, titlePrefix);
+    }
     currentObj.appendPlot(lc_plot, mustRefreshData);
 
     var pds_plot = null;
     if ((titlePrefix != "B/A") && (titlePrefix != "D/C")) {
+
+      var title = titlePrefix + " PDS";
+      if (titlePrefix == "SRC") {
+        title = "Total Power Density Spectrum (PDS)";
+      } else if (titlePrefix.startsWith("LC")) {
+        title = "Power Density Spectrum Range=" + titlePrefix.replace("LC", "");
+      }
+
       pds_plot = this.getPDSPlot ( projectConfig, filename, bck_filename, gti_filename,
-                                      tableName, columnName, cssClass, titlePrefix + " PDS" );
-      pds_plot.plotConfig.styles.title = titlePrefix + " PDS";
+                                      tableName, columnName, cssClass, title );
       projectConfig.plots.push(pds_plot);
+      projectConfig.addPlotId(pds_plot.id, titlePrefix);
       currentObj.appendPlot(pds_plot, mustRefreshData);
     }
 
@@ -544,12 +630,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                           filename,
                                                           bck_filename,
                                                           gti_filename,
-                                                          tableName, columnName, "fullScreen", titlePrefix + " DYNAMICAL SPECTRUM" )
-
+                                                          tableName, columnName, "fullScreen", "Total Dynamical Power Spectrum" );
       projectConfig.plots.push(dynamical_plot);
+      projectConfig.addPlotId(dynamical_plot.id, "SRC");
       currentObj.appendPlot(dynamical_plot, mustRefreshData);
-      return [lc_plot, pds_plot, dynamical_plot];
 
+      return [lc_plot, pds_plot, dynamical_plot];
     } else {
 
       return [lc_plot, pds_plot];
@@ -571,14 +657,23 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                       this.service.request_covariance_spectrum,
                                       this.onFiltersChangedFromPlot,
                                       this.onPlotReady,
-                                      this.$toolBar,
-                                      "fullWidth",
+                                      getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),
+                                      "TimingPlot fullWidth",
                                       false,
                                       projectConfig
                                     );
-
     this.plots.push(covarianceSpectrumPlot);
+    projectConfig.addPlotId(covarianceSpectrumPlot.id, "RMF");
     this.appendPlot(covarianceSpectrumPlot, true);
+
+    var rmsPlot = this.getRMSPlot ( projectConfig,
+                        projectConfig.filename,
+                        projectConfig.bckFilename,
+                        projectConfig.gtiFilename,
+                        "EVENTS", "PHA", "fullWidth", "RMS vs Energy" )
+    this.plots.push(rmsPlot);
+    projectConfig.addPlotId(rmsPlot.id, "RMF");
+    this.appendPlot(rmsPlot, true);
 
     /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
                                 projectConfig.rmfFilename, "", "",
@@ -592,11 +687,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     this.plots.push(rmfPlot);
     this.appendPlot(rmfPlot, true);*/
 
-    this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
+    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
   }
 
-  this.addArfPlots = function (projectConfig){
-    /*var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
+  /*this.addArfPlots = function (projectConfig){
+    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
                                 projectConfig.arfFilename, "", "",
                                 { type: "2d",
                                   labels: ["Energy (keV)", "Effective area (cm^2)"],
@@ -606,12 +701,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                 null, "");
 
     this.plots.push(arfPlot);
-    this.appendPlot(arfPlot, true);*/
+    this.appendPlot(arfPlot, true);
 
-    this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
-  }
+    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
+  }*/
 
-  this.tryAddEnergyAndUnfoldedSpectrumPlot = function (projectConfig) {
+  /*this.tryAddEnergyAndUnfoldedSpectrumPlot = function (projectConfig) {
 
     if ((projectConfig.filename != "") && (projectConfig.arfFilename != "") && (projectConfig.rmfFilename != "")){
 
@@ -640,7 +735,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.plots.push(energySpectrumPlot);
       currentObj.appendPlot(energySpectrumPlot, true);
 
-      /*var unfoldedSpectrumPlot = new Plot(
+      var unfoldedSpectrumPlot = new Plot(
                                 this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
                                 {
                                   styles:{ type: "2d",
@@ -659,13 +754,13 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       unfoldedSpectrumPlot.plotConfig.yAxisType = "log";
       currentObj.unfoldedSpectrumPlotIdx = currentObj.plots.length;
       currentObj.plots.push(unfoldedSpectrumPlot);
-      currentObj.appendPlot(unfoldedSpectrumPlot, false);*/
+      currentObj.appendPlot(unfoldedSpectrumPlot, false);
 
       return true;
     }
 
     return false;
-  }
+  }*/
 
   this.getDividedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
 
@@ -679,7 +774,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
       if (!isNull(paramsData.linkedPlotId)) {
         var joinedLcTimePlot = currentObj.getPlotById(paramsData.linkedPlotId);
-        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], data[1], [], data[3], data[4] ]) : null);
+        var dataValues = { values: data[1].values };
+        var dataErrors = { values: data[1].error_values };
+        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], dataValues, dataErrors, data[3], data[4] ]) : null);
       }
     });
 
@@ -713,10 +810,56 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   };
 
+  this.getRMSPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
+
+    log("getRMSPlot: filename: " + filename );
+    return new RmsPlot(
+                      this.generatePlotId("rms_" + filename),
+                      {
+                        filename: filename,
+                        bck_filename: bck_filename,
+                        gti_filename: gti_filename,
+                        styles: { type: "ligthcurve",
+                                  labels: ["Energy(keV)", "RMS"],
+                                  title: title,
+                                  showFitBtn: true },
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:columnName } ],
+                        mandatoryFilters: mandatoryFilters,
+                      },
+                      this.service.request_rms_spectrum,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),
+                      "TimingPlot " + cssClass,
+                      false,
+                      projectConfig
+                    );
+  }
+
   this.appendPlot = function (plot, refreshData) {
-    this.$body.append(plot.$html);
+    if (this.$body.find(".infoPanel").length > 0) {
+      plot.$html.insertBefore(this.$body.find(".infoPanel"));
+    } else {
+      this.$body.append(plot.$html);
+    }
     if (isNull(refreshData) || refreshData) {
       plot.onDatasetValuesChanged(this.getFilters());
+    }
+  }
+
+  this.removePlotsById = function (plotIds) {
+    var tab = getTabForSelector(this.id);
+    for (plotIdx in plotIds){
+      var plotId = plotIds[plotIdx];
+      var plot = this.getPlotById(plotId);
+      if (!isNull(plot)) {
+        plot.$html.remove();
+        tab.$html.find(".sectionContainer").find("." + plot.id).remove();
+        this.plots = this.plots.filter(function(plot) {
+                          return plot.id !== plotId;
+                      });
+      }
     }
   }
 

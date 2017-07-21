@@ -9,7 +9,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
 
-  TabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
+  WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //XSTabPanel METHODS:
 
@@ -102,7 +102,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
                                 styles: { type: "ligthcurve",
                                           labels: ["Frequency (Hz)", "Power"],
-                                          title: "XSpectrum" }
+                                          title: "Cross Spectrum" }
                               },
                               this.getXSDataFromServer, //Only XSpectra plot triggers receive new data from server
                               this.outputPanel.onFiltersChangedFromPlot,

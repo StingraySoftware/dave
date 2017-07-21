@@ -18,6 +18,7 @@ function ToolPanel (id,
   this.$html = cloneHtmlElement(id, classSelector);
   container.html(this.$html);
   this.$html.show();
+  this.filters = [];
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.analyzeContainer = this.$html.find(".analyzeContainer");
@@ -89,69 +90,61 @@ function ToolPanel (id,
     this.$html.find("." + panel).show();
   }
 
-  this.onDatasetSchemaChanged = function ( projectConfig ) {
+  this.onTimeRangeChanged = function (timeRange) {
+    if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
+      this.binSelector.setMinMaxValues(timeRange / CONFIG.MAX_PLOT_POINTS, timeRange / CONFIG.MIN_PLOT_POINTS);
+    }
+  }
 
-    var schema = projectConfig.schema;
+  this.onDatasetSchemaChanged = function ( projectConfig ) {
 
     currentObj.selectors_array = [];
     currentObj.$html.find(".sliderSelector").remove();
 
     //Adds the Bin selector
-    if (this.binSelector != null){
+    if (!isNull(this.binSelector)){
       this.binSelector.$html.remove();
     }
 
-    var maxTimeRange = -1;
-    var timeRatio = 1;
-
-    if (schema["EVENTS"] !== undefined){
-
-      //SRC file is an EVENTS file:
+    if (projectConfig.schema.isEventsFile()){
 
       this.showEventsSelectors();
 
-      if (isNull(schema["EVENTS"]["PHA"])){
+      if (!projectConfig.schema.hasColumn("PHA")){
           //PHA Column doesn't exist, show we can't apply RMF or ARF files
           this.rmfFileSelector.disable("PHA column not found in SRC file");
           this.arfFileSelector.disable("PHA column not found in SRC file");
       }
 
+      //Caluculates max, min and step values for slider with time ranges
       var minBinSize = 1;
-      var maxBinSize = 1;
       var initValue = 1;
       var step = 1;
-
-      //Caluculates max, min and step values for slider from time ranges
-      var timeColumn = schema["EVENTS"]["TIME"];
-      maxTimeRange = timeColumn.max_value - timeColumn.min_value;
-      if (timeColumn.count > MAX_PLOT_POINTS) {
-        timeRatio = MAX_PLOT_POINTS / timeColumn.count;
-        maxTimeRange *= timeRatio;
-      }
-      var binSize = maxTimeRange / MIN_PLOT_POINTS;
       var multiplier = 1;
 
       //If binSize is smaller than 1.0 find the divisor
-      while (binSize * multiplier < 1)
-      {
+      while (projectConfig.maxBinSize * multiplier < 1) {
         multiplier *= 10;
       }
 
       var tmpStep = (1.0 / multiplier) / 100.0;
-      if ((binSize / tmpStep) > MAX_PLOT_POINTS) {
-        //Fix step for not allowing more plot point than MAX_PLOT_POINTS
-        tmpStep = binSize / MAX_PLOT_POINTS;
+      if ((projectConfig.maxBinSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
+        //Fix step for not allowing more plot point than CONFIG.MAX_PLOT_POINTS
+        tmpStep = projectConfig.maxBinSize / CONFIG.MAX_PLOT_POINTS;
       }
       minBinSize = tmpStep;
-      maxBinSize = binSize;
       step = minBinSize / 100.0; // We need at least 100 steps on slider
 
       if (projectConfig.minBinSize > 0) {
-        initValue = projectConfig.minBinSize;
         minBinSize = projectConfig.minBinSize;
-        step = projectConfig.minBinSize;
+        var minAvailableBinSize = projectConfig.getMaxTimeRange() / CONFIG.MAX_PLOT_POINTS;
+        if (CONFIG.AUTO_BINSIZE && (minAvailableBinSize > minBinSize)){
+          minBinSize = minAvailableBinSize;
+        }
+        initValue = minBinSize;
+        step = minBinSize;
       } else {
-        initValue = (maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+        initValue = (projectConfig.maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
       }
 
       projectConfig.binSize = initValue;
@@ -159,13 +152,11 @@ function ToolPanel (id,
       this.binSelector = new BinSelector(this.id + "_binSelector",
                                         "BIN SIZE (" + projectConfig.timeUnit  + "):",
                                         "From",
-                                        minBinSize, maxBinSize, step, initValue,
+                                        minBinSize, projectConfig.maxBinSize, step, initValue,
                                         this.onSelectorValuesChanged);
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
-    } else if (schema["RATE"] !== undefined){
-
-      //SRC file is an LIGHTCURVE file:
+    } else if (projectConfig.schema.isLightCurveFile()){
 
       this.showLcSelectors();
 
@@ -173,22 +164,14 @@ function ToolPanel (id,
                       '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
                     '</div>');
       this.$html.find(".selectorsContainer").append(binDiv);
-
-      var timeColumn = schema["RATE"]["TIME"];
-      maxTimeRange = timeColumn.max_value - timeColumn.min_value;
-      if (timeColumn.count > MAX_PLOT_POINTS) {
-        timeRatio = MAX_PLOT_POINTS / timeColumn.count;
-        maxTimeRange *= timeRatio;
-      }
     }
 
     var pha_column = null;
 
     //Adds the rest of selectors from dataset columns
-    for (tableName in schema) {
+    for (tableName in projectConfig.schema.contents) {
       if (tableName != "GTI") {
-
-        var table = schema[tableName];
+        var table = projectConfig.schema.contents[tableName];
 
         for (columnName in table) {
           var column = table[columnName];
@@ -208,9 +191,13 @@ function ToolPanel (id,
                                               this.selectors_array);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if ((columnName == "TIME") && (timeRatio < 1)) { //If full events were cropped to MAX_PLOT_POINTS
-                selector.setMaxRange(maxTimeRange);
-                selector.setEnabled (true);
+            if ((columnName == "TIME")
+                && !CONFIG.AUTO_BINSIZE
+                && projectConfig.isMaxTimeRangeRatioFixed()) {
+
+                  //If full events were cropped to CONFIG.MAX_PLOT_POINTS
+                  selector.setMaxRange(projectConfig.getMaxTimeRange());
+                  selector.setEnabled (true);
             }
 
             if (tableName == "EVENTS" && columnName == "PHA") {
@@ -251,6 +238,9 @@ function ToolPanel (id,
       //Adds color selectors, PHA filters
       this.createColorSelectors (pha_column);
     }
+
+    //Sets initial filters to ToolPanel
+    currentObj.filters = sliderSelectors_getFilters(currentObj.selectors_array);
   }
 
   this.createColorSelectors = function (column) {
@@ -284,40 +274,70 @@ function ToolPanel (id,
   }
 
   this.onRmfDatasetUploaded = function ( schema ) {
-    if (!isNull(schema["EVENTS"])) {
-        table = schema["EVENTS"];
-        if (!isNull(table["E"])){
-          //Adds Energy general filter
-          var column = table["E"];
-          var selector = new sliderSelector(this.id + "_Energy",
-                                            "Energy (keV):",
-                                            { table:"EVENTS", column:"E" },
-                                            "From", "To",
-                                            column.min_value, column.max_value,
-                                            this.onSelectorValuesChanged,
-                                            this.selectors_array);
-          selector.$html.insertAfter("." + this.id + "_TIME");
+    if (schema.isEventsFile()) {
+      var column = schema.getTable()["E"];
+      if (!isNull(column)){
+        //Adds Energy general filter
+        var selector = new sliderSelector(this.id + "_Energy",
+                                          "Energy (keV):",
+                                          { table:"EVENTS", column:"E" },
+                                          "From", "To",
+                                          column.min_value, column.max_value,
+                                          this.onSelectorValuesChanged,
+                                          this.selectors_array);
+        selector.$html.insertAfter("." + this.id + "_TIME");
 
-          //Prepares Energy color filters
-          this.createColorSelectors(column);
-          this.onColorFilterTypeChanged("E");
-          var colorFilterTypeRadios = this.$html.find(".colorFilterType").find("input");
-          colorFilterTypeRadios.filter('[value=PHA]').prop('checked', false).checkboxradio('refresh');
-          colorFilterTypeRadios.filter('[value=E]').prop('checked', true).checkboxradio('refresh');
-        }
+        //Prepares Energy color filters
+        this.createColorSelectors(column);
+        this.onColorFilterTypeChanged("E");
+        this.setColorFilterRadios("E");
+      }
     }
   }
 
+  this.setColorFilterRadios = function (column) {
+    var colorFilterTypeRadios = this.$html.find(".colorFilterType").find("input");
+    colorFilterTypeRadios.filter('[value=PHA]').prop('checked', column == "PHA").checkboxradio('refresh');
+    colorFilterTypeRadios.filter('[value=E]').prop('checked', column == "E").checkboxradio('refresh');
+  }
+
+  //Called to set selector values when plot area has selected
   this.applyFilters = function (filters) {
     sliderSelectors_applyFilters(filters, currentObj.selectors_array);
   }
 
+  //Called for setting filters after undo or clear action, or load filters file
   this.setFilters = function (filters) {
+    for (f in filters) {
+      if (!isNull(filters[f].source)
+        && !isNull(filters[f].replaceColumn)
+        && filters[f].source == 'ColorSelector') {
+        //Sets Energy or Channels filters visible
+        var tab = getTabForSelector(currentObj.id);
+        var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
+        if ((tab.projectConfig.rmfFilename == "")
+            || filters[f].replaceColumn == "PHA") {
+          selectorsContainer.find(".colorSelectors_E").hide();
+          selectorsContainer.find(".colorSelectors_PHA").show();
+          sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
+          currentObj.setColorFilterRadios("PHA");
+          currentObj.replaceColumn = "PHA";
+        } else {
+          selectorsContainer.find(".colorSelectors_PHA").hide();
+          selectorsContainer.find(".colorSelectors_E").show();
+          sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
+          currentObj.setColorFilterRadios("E");
+          currentObj.replaceColumn = "E";
+        }
+        break;
+      }
+    }
     sliderSelectors_setFilters(filters, currentObj.selectors_array);
+    currentObj.filters = filters;
   }
 
   this.getFilters = function () {
-    return sliderSelectors_getFilters(currentObj.selectors_array);
+    return currentObj.filters;
   }
 
   this.onSelectorValuesChanged = function () {
@@ -337,7 +357,7 @@ function ToolPanel (id,
         if (rmfFileDiv.children().length == 0) {
           var rmfBtn = $('<button class="btn btn-warning btnRmf"> Upload RMF file </button>');
           rmfBtn.click(function () {
-            currentObj.rmfFileSelector.$html.find("#" + currentObj.rmfFileSelector.uploadInputId).focus().click();
+            currentObj.rmfFileSelector.showSelectFile();
           });
           rmfFileDiv.html('<p class="text-warning">RMF file is requiered for processing energy values:</p>');
           rmfFileDiv.append(rmfBtn);
@@ -405,8 +425,8 @@ function ToolPanel (id,
 
   this.refresh = function () {
     currentObj.refreshFloatingBtn.hide();
-    var filters = sliderSelectors_getFilters(currentObj.selectors_array)
-    getTabForSelector(currentObj.id).onFiltersChanged(filters);
+    currentObj.filters = sliderSelectors_getFilters(currentObj.selectors_array);
+    getTabForSelector(currentObj.id).onFiltersChanged(currentObj.filters);
   }
 
   this.containsId = function (id) {
@@ -435,9 +455,12 @@ function ToolPanel (id,
   }
 
   this.saveFilters = function () {
-    var filename = getTabForSelector(currentObj.id).projectConfig.filename.replace(/\./g,'');;
-    var filters = sliderSelectors_getFilters(currentObj.selectors_array);
-    var action = { type: "filters", actionData: $.extend(true, [], filters), binSize: this.binSelector.value };
+    var projectConfig = getTabForSelector(currentObj.id).projectConfig;
+    var filename = projectConfig.filename.replace(/\./g,'');
+    var action = { type: "filters",
+                   actionData: $.extend(true, [], currentObj.filters),
+                   binSize: projectConfig.binSize,
+                   maxSegmentSize: projectConfig.maxSegmentSize };
     var a = document.createElement("a");
     var file = new Blob([JSON.stringify(action)], {type: 'text/plain'});
     a.href = URL.createObjectURL(file);
@@ -454,15 +477,75 @@ function ToolPanel (id,
           reader.onload = function(e) {
             try {
               var action = JSON.parse(e.target.result);
-              getTabForSelector(currentObj.id).applyAction(action);
+              if (!isNull(action.type) && !isNull(action.actionData)){
+                getTabForSelector(currentObj.id).applyAction(action);
+              } else {
+                showError("File is not supported as filters");
+              }
             } catch (e) {
-              log("ToolPanel error loading filters: " + e);
+              showError("File is not supported as filters", e);
             }
           };
           reader.readAsText(file);
       }
      });
      input.click();
+  }
+
+  this.setAnalisysSections = function (sections) {
+    if (sections.length > 0) {
+      this.$html.find(".analyzeContainer").html("");
+      for (i in sections) {
+        this.addAnalisysSection(sections[i]);
+      };
+    }
+  }
+
+  this.addAnalisysSection = function (section) {
+    var $section = $('<div class="Section Disabled ' + section.cssClass + '">' +
+                      '<div class="switch-wrapper">' +
+                      '  <div id="switch_' + section.cssClass + '_' + this.id + '" section="' + section.cssClass + '" class="switch-btn fa fa-square-o" aria-hidden="true"></div>' +
+                      '</div>' +
+                      '<h3>' + section.title + '</h3>' +
+                      '<div class="sectionContainer">' +
+                      '</div>' +
+                    '</div>');
+
+    $section.find(".sectionContainer").hide();
+    $section.find(".switch-btn").click( function ( event ) {
+      currentObj.toggleEnabledSection($(this).attr("section"));
+    });
+
+    if (!isNull(section.extraButtons)){
+      for (i in section.extraButtons) {
+        $section.find(".sectionContainer").append(section.extraButtons[i]);
+      };
+    }
+
+    this.$html.find(".analyzeContainer").append($section);
+  }
+
+  this.isSectionEnabled = function (sectionClass) {
+    var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
+    var $switchBtn = $section.find(".switch-btn");
+    return $switchBtn.hasClass("fa-check-square-o");
+  }
+
+  this.toggleEnabledSection = function (sectionClass) {
+    var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
+    var $switchBtn = $section.find(".switch-btn");
+
+    if ($switchBtn.hasClass("fa-square-o")) {
+      $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
+      $section.find(".sectionContainer").show();
+      $section.removeClass("Disabled");
+      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
+    } else {
+      $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
+      $section.find(".sectionContainer").hide();
+      $section.addClass("Disabled");
+      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
+    }
   }
 
   //Normal file selectors, SRC is valid on both events files and lightcurves
@@ -502,32 +585,32 @@ function ToolPanel (id,
   this.addFileSelector(this.lcDFileSelector);
   this.lcDFileSelector.hide();
 
-  this.clearBtn.bind("click", function( event ) {
+  this.clearBtn.click(function () {
       currentObj.resetHistory();
   });
 
-  this.undoBtn.bind("click", function( event ) {
+  this.undoBtn.click(function () {
       currentObj.undoHistory();
   });
 
-  this.loadBtn.bind("click", function( event ) {
+  this.loadBtn.click(function () {
       currentObj.loadFilters();
   });
 
-  this.saveBtn.bind("click", function( event ) {
+  this.saveBtn.click(function () {
       currentObj.saveFilters();
   });
 
-  this.refreshBtn.bind("click", function( event ) {
+  this.refreshBtn.click(function () {
       currentObj.refresh();
   });
 
   this.refreshFloatingBtn.hide();
-  this.refreshFloatingBtn.bind("click", function( event ) {
+  this.refreshFloatingBtn.click(function () {
       currentObj.refresh();
   });
 
-  this.dragDropBtn.bind("click", function( event ) {
+  this.dragDropBtn.click(function () {
       currentObj.dragDropBtn.toggleClass("btn-success");
       currentObj.dragDropEnabled = currentObj.dragDropBtn.hasClass("btn-success");
       currentObj.onDragDropChanged(currentObj.dragDropEnabled);

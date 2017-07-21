@@ -9,7 +9,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
 
-  TabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
+  WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //FitTabPanel METHODS:
   this.addPlot = function (plot){
@@ -34,14 +34,14 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
       log("FitData received!, FitTabPanel: " + currentObj.id);
       var data = JSON.parse(jsdata);
-      if (!isNull(data)) {
+      if (!isNull(data) && data.length > 0) {
         currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;
         currentObj.addInfoPanel(data[1].values);
+        waitingDialog.hide();
+      } else {
+        showError();
       }
-
-      waitingDialog.hide();
-
     });
 
   };
@@ -50,8 +50,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
     var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
     paramsData.models = currentObj.modelSelector.getModels(false);
-    paramsData.n_iter = 100;
-    paramsData.mean = 0.1;
+    paramsData.n_iter = 250;
+    paramsData.mean = 0;
     paramsData.red_noise = 1;
     paramsData.seed = -1;
 
@@ -63,11 +63,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                                     '<input name="n_iter" id="n_iter_' + currentObj.id + '" class="input_n_iter" type="text" placeholder="' + paramsData.n_iter + '" value="' + paramsData.n_iter + '" />' +
                                   '</div>' +
                                   '<div class="row">' +
-                                    '<label for="mean">Lightcurve mean:</label>' +
+                                    '<label for="mean">Lightcurve mean (default = 0):</label>' +
                                     '<input name="mean" id="mean_' + currentObj.id + '" class="input_mean" type="text" placeholder="' + paramsData.mean + '" value="' + paramsData.mean + '" />' +
                                   '</div>' +
                                   '<div class="row">' +
-                                    '<label for="red_noise">Red noise level:</label>' +
+                                    '<label for="red_noise">Red noise level (default = 1):</label>' +
                                     '<input name="red_noise" id="red_noise_' + currentObj.id + '" class="input_red_noise" type="text" placeholder="' + paramsData.red_noise + '" value="' + paramsData.red_noise + '" />' +
                                   '</div>' +
                                   '<div class="row">' +
@@ -112,11 +112,10 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              if (!isNull(data) && data.length > 0) {
                currentObj.modelSelector.setEstimation(data[0].values, false);
                currentObj.plot.setErrorData(data[1].values, data[2].values);
+               waitingDialog.hide();
              } else {
-               log("Bootstrap wrong data received!!");
+               showError("Bootstrap wrong data received!!");
              }
-
-             waitingDialog.hide();
 
            });
 
@@ -131,11 +130,12 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
          }
        }
      });
+     $bootstrapDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
   this.addInfoPanel = function ( statsData ) {
     this.outputPanel.$body.find(".infoPanel").remove();
-    this.infoPanel = new InfoPanel("infoPanel", "Fitting statistics:", statsData, [], null);
+    this.infoPanel = new InfoPanel("infoPanel", "Fitting statistics", statsData, [], null);
     this.infoPanel.redraw = function() {
 
       var content = "<tr><td> Number of data points = " + this.header.count + "</td></tr>";
@@ -169,7 +169,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(),
                                         this.onModelsChanged,
                                         this.onFitClicked,
-                                        this.applyBootstrap);
+                                        this.applyBootstrap,
+                                        isNull(plot.plotConfig.styles.title) ? plot.plotConfig.filename : plot.plotConfig.styles.title);
 
   this.plot = new FitPlot(plot.id + "_" + (new Date()).getTime(),
                            $.extend(true, {}, plot.plotConfig),

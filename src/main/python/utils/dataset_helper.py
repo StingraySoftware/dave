@@ -43,6 +43,7 @@ def get_lightcurve_from_lc_dataset(dataset, gti=None):
     # Extract axis values
     time_data = np.array(dataset.tables["RATE"].columns["TIME"].values)
     counts = np.array(dataset.tables["RATE"].columns["RATE"].values)
+    err_counts = np.array(dataset.tables["RATE"].columns["RATE"].error_values)
 
     # Extract GTIs
     if not gti:
@@ -50,9 +51,9 @@ def get_lightcurve_from_lc_dataset(dataset, gti=None):
 
     # Returns the EventList
     if len(gti) > 0:
-        return Lightcurve(time_data, counts, input_counts=True, gti=gti)
+        return Lightcurve(time_data, counts, err=err_counts, input_counts=True, gti=gti)
     else:
-        return Lightcurve(time_data, counts, input_counts=True)
+        return Lightcurve(time_data, counts, err=err_counts, input_counts=True)
 
 
 def get_empty_gti_table():
@@ -233,6 +234,15 @@ def get_columns_as_dict(columns, column):
     return ds_columns
 
 
+# Returns a dictionary with the error_values of the table columns values
+def get_columns_errors_as_dict(columns, column):
+    ds_columns_errors = dict()
+    for column_name in columns:
+        if column_name != column:
+            ds_columns_errors[column_name] = columns[column_name].error_values
+    return ds_columns_errors
+
+
 # Returns a new dataset filtered by a GTI_Dataset
 def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS", column='TIME'):
 
@@ -251,7 +261,9 @@ def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS",
 
     st_gtis = get_stingray_gti_from_gti_table(gti_dataset.tables["GTI"])
     ev_list = hdu_table.columns[column].values
+    ev_list_err = hdu_table.columns[column].error_values
     ds_columns = get_columns_as_dict (src_dataset.tables[hduname].columns, column)
+    ds_columns_errors = get_columns_errors_as_dict (src_dataset.tables[hduname].columns, column)
 
     # Gets start time of observation
     events_start_time = 0
@@ -262,13 +274,14 @@ def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS",
     gti_end = st_gtis[:, 1] - events_start_time
 
     update_dataset_filtering_by_gti (dataset.tables[hduname], dataset.tables["GTI"],
-                                ev_list, ds_columns, gti_start, gti_end, additional_columns, column)
+                                ev_list, ev_list_err, ds_columns, ds_columns_errors,
+                                gti_start, gti_end, additional_columns, column)
     return dataset
 
 
 # Returns a Dataset filtered by Gtis
-def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, gti_start, gti_end,
-                                    additional_columns, column='TIME',
+def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, ds_columns, ds_columns_errors,
+                                    gti_start, gti_end, additional_columns, column='TIME',
                                     filter_start=None, filter_end=None, must_filter=False):
     start_event_idx = 0
     end_event_idx = 0
@@ -311,11 +324,15 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ds_columns, g
                 gti_table.columns["END_EVENT_IDX"].add_value(end_event_idx)
 
                 # Insert values at range on dataset
-                hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx])
+                hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx],
+                                                     ev_list_err[start_event_idx:end_event_idx])
                 for i in range(len(additional_columns)):
                     ad_column=additional_columns[i]
                     values=ds_columns[ad_column][start_event_idx:end_event_idx]
-                    hdu_table.columns[ad_column].add_values(values)
+                    error_values=[]
+                    if ad_column in ds_columns_errors and len(ds_columns_errors[ad_column]) > end_event_idx:
+                        error_values=ds_columns_errors[ad_column][start_event_idx:end_event_idx]
+                    hdu_table.columns[ad_column].add_values(values, error_values)
 
             else:
                 logging.info("No data point in GTI # %s: GTI (from, to)=(%f, %f); event list (from, to)=(%d, %d)" % (gti_index, start, end, start_event_idx, end_event_idx))

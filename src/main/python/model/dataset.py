@@ -74,16 +74,19 @@ class DataSet:
             return self
 
         columns_values = dict()
+        columns_error_values = dict()
         for column_name in self.tables[hduname].columns:
             if column_name != column:
                 columns_values[column_name] = self.tables[hduname].columns[column_name].values
+                columns_error_values[column_name] = self.tables[hduname].columns[column_name].error_values
 
         ev_list = self.tables[hduname].columns[column].values
+        ev_list_err = self.tables[hduname].columns[column].error_values
         gti_start = self.tables["GTI"].columns["START"].values
         gti_end = self.tables["GTI"].columns["STOP"].values
 
         dataset = get_dataset_applying_gtis(self.id, self.tables[hduname].header, self.tables[hduname].header_comments,
-                                            columns_values, ev_list,
+                                            columns_values, columns_error_values, ev_list, ev_list_err,
                                             gti_start, gti_end,
                                             filter["from"], filter["to"],
                                             hduname, column)
@@ -117,8 +120,8 @@ def get_hdu_type_dataset(dsId, columns, hduname="EVENTS"):
 
 
 # Returns a new dataset with EVENTS and GTIs tables
-def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ev_list, gti_start, gti_end,
-                            filter_start=None, filter_end=None,
+def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ds_columns_errors, ev_list, ev_list_err,
+                            gti_start, gti_end, filter_start=None, filter_end=None,
                             hduname="EVENTS", column='TIME'):
 
     # Prepares additional_columns
@@ -138,8 +141,8 @@ def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ev_list
     must_filter = not ((filter_start is None) or (filter_end is None))
 
     DsHelper.update_dataset_filtering_by_gti(dataset.tables[hduname], dataset.tables["GTI"],
-                                    ev_list, ds_columns, gti_start, gti_end,
-                                    additional_columns, column,
+                                    ev_list, ev_list_err, ds_columns, ds_columns_errors,
+                                    gti_start, gti_end, additional_columns, column,
                                     filter_start, filter_end, must_filter)
 
     return dataset
