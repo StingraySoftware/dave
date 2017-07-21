@@ -288,22 +288,6 @@ def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
     return json.dumps(cache_key, cls=NPEncoder)
 
 
-def get_lightcurve_ds_from_events_ds(filename, target, axis, dt):
-    destination = get_destination(filename, target)
-    if not destination:
-        return common_error("Invalid file or cache key")
-
-    logging.debug("get_lightcurve_ds_from_events_ds filename: %s" % filename)
-    logging.debug("get_lightcurve_ds_from_events_ds: axis %s" % axis)
-    logging.debug("get_lightcurve_ds_from_events_ds: dt %f" % dt)
-
-    cache_key = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, dt)
-
-    logging.debug("get_lightcurve_ds_from_events_ds: Finish! cache_key ->  %s" % cache_key)
-
-    return json.dumps(cache_key, cls=NPEncoder)
-
-
 def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
                                 filters, axis, dt, nsegm, segm_size, norm, pds_type):
     src_destination = get_destination(src_filename, target)

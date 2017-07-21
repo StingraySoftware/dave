@@ -4,11 +4,13 @@ from hypothesis import given
 from hypothesis import example
 from hypothesis.strategies import text
 
+import matplotlib
+matplotlib.use('TkAgg')  # Changes the matplotlib framework
+
 import utils.dave_engine as DaveEngine
 import utils.file_utils as FileUtils
 import utils.dave_reader as DaveReader
 import utils.filters_helper as FltHelper
-
 
 @given(text(min_size=1))
 @example("Test_Input_1.txt")
@@ -54,24 +56,6 @@ def test_get_divided_lightcurve_ds(s):
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_divided_lightcurve_ds(destination, destination)
-
-    assert not os.path.isfile(destination) or len(result) > 0
-
-
-@given(text(min_size=1))
-@example("test.evt")
-def test_get_lightcurve_ds_from_events_ds(s):
-    destination = FileUtils.get_destination(TEST_RESOURCES, s)
-    result = ""
-
-    axis = [dict() for i in range(2)]
-    axis[0]["table"] = "EVENTS"
-    axis[0]["column"] = "TIME"
-    axis[1]["table"] = "EVENTS"
-    axis[1]["column"] = "PHA"
-
-    if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, 16.)
 
     assert not os.path.isfile(destination) or len(result) > 0
 

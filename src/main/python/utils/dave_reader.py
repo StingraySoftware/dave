@@ -50,7 +50,8 @@ def get_file_dataset(destination):
 
         # Opening Fits
         hdulist = fits.open(destination, memmap=True)
-
+        dataset = None
+        
         if 'EVENTS' in hdulist:
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
@@ -66,8 +67,8 @@ def get_file_dataset(destination):
             # If EBOUNDS extension found, consider the Fits as RMF Fits
             dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
 
-        else:
-            # If not EVENTS or RATE extension found, consider the Fits as GTI Fits
+        elif len(set(gtistring.split(",")).intersection(set(hdulist))):
+            # If not EVENTS or RATE extension found, check if is GTI Fits
             dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring)
 
         if dataset:
@@ -114,7 +115,7 @@ def get_fits_dataset(hdulist, dsId, table_ids):
 
                 for i in range(len(header_names)):
                     header_name = header_names[i]
-                    dataset.tables[table_id].columns[header_name].add_values(tbdata.field(i))
+                    dataset.tables[table_id].columns[header_name].add_values(np.nan_to_num(tbdata.field(i)))
             else:
                 logging.warn("Ignored table data: %s" % hdulist[t].name)
         else:

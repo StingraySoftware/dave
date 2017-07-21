@@ -1,12 +1,15 @@
 import hashlib
 from random import randint
+import utils.dave_logger as logging
 
 cached_datasets = dict()
-
+dataset_hits = dict()
+LOG_CACHE_HITS = False
 
 # DATASET CACHE METHODS
 def add(key, dataset):
     cached_datasets[key] = dataset
+    dataset_hits[key] = 1
 
 
 def contains(key):
@@ -17,7 +20,11 @@ def contains(key):
 
 
 def get(key):
+
     if key in cached_datasets:
+        dataset_hits[key] = dataset_hits[key] + 1
+        if LOG_CACHE_HITS:
+            logging.debug("DATASET CACHE: n(" + str(len(cached_datasets)) + ") HITS -> " + str(dataset_hits))
         return cached_datasets[key]
 
     return None
@@ -26,6 +33,7 @@ def get(key):
 def remove(key):
     if key in cached_datasets:
         cached_datasets.pop(key, None)
+        dataset_hits.pop(key, None)
         return True
 
     return False

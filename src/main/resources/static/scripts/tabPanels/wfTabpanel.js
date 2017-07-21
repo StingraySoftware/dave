@@ -132,17 +132,29 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onSrcSchemaChanged = function ( schema, params ) {
     log("onSrcSchemaChanged:" + schema);
-    currentObj.onSchemaChangedWithKey("SRC", schema, params);
+    if (!isNull(schema)){
+      currentObj.onSchemaChangedWithKey("SRC", schema, params);
+    } else {
+      showError("Wrong SRC file!");
+    }
   }
 
   this.onBckSchemaChanged = function ( schema, params ) {
     log("onBckDatasetChanged:" + schema);
-    currentObj.onSchemaChangedWithKey("BCK", schema, params);
+    if (!isNull(schema)){
+      currentObj.onSchemaChangedWithKey("BCK", schema, params);
+    } else {
+      showError("Wrong BCK file!");
+    }
   }
 
   this.onGtiSchemaChanged = function ( schema, params ) {
     log("onGtiSchemaChanged:" + schema);
-    currentObj.onSchemaChangedWithKey("GTI", schema, params);
+    if (!isNull(schema)){
+      currentObj.onSchemaChangedWithKey("GTI", schema, params);
+    } else {
+      showError("Wrong GTI file!");
+    }
   }
 
   this.onRmfApplied = function ( result ) {
@@ -183,7 +195,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }, currentObj.onSchemaError, null);
     } else {
       log("onRmfApplied error:" + JSON.stringify(result));
-      waitingDialog.hide();
+      showError("Wrong RMF file!");
     }
   }
 
@@ -193,7 +205,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
 
     var jsonSchema = JSON.parse(schema);
-    if (isNull(jsonSchema.error)){
+    if (!isNull(jsonSchema) && isNull(jsonSchema.error)){
 
       if (selectorKey == "SRC"){
 

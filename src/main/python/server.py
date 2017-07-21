@@ -42,6 +42,12 @@ app.secret_key = os.urandom(24)
 app.json_encoder = NPEncoder
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
+# ------ Flask Server Profiler -----
+# from werkzeug.contrib.profiler import ProfilerMiddleware
+# app.config['PROFILE'] = True
+# app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[10])
+# ------ END Flask Server Profiler -----
+
 # ------ Configure HTTP Compression -----
 # Tested on DAVE but the doesn't improves performance,
 # sure is a good choice for improving DAVE if runs on a remote server
@@ -52,6 +58,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 # COMPRESS_LEVEL = 6
 # COMPRESS_MIN_SIZE = 500
 # Compress(app)
+# ------ END Configure HTTP Compression -----
 
 # Routes methods
 @app.route('/upload', methods=['GET', 'POST'])
@@ -113,12 +120,6 @@ def get_divided_lightcurves_from_colors():
 def get_divided_lightcurve_ds():
     return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
             request.json['lc1_filename'], UPLOADS_TARGET)
-
-
-@app.route('/get_lightcurve_ds_from_events_ds', methods=['POST'])
-def get_lightcurve_ds_from_events_ds():
-    return DaveEndpoint.get_lightcurve_ds_from_events_ds(request.json['filename'],
-            UPLOADS_TARGET, request.json['axis'], float(request.json['dt']))
 
 
 @app.route('/get_power_density_spectrum', methods=['POST'])

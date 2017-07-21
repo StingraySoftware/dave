@@ -128,10 +128,8 @@ def get_events_dataset_start(dataset):
 
 
 def get_stingray_gti_from_gti_table (gti_table):
-    return np.array([[a, b]
-                         for a, b in zip(gti_table.columns["START"].values,
-                                         gti_table.columns["STOP"].values)],
-                        dtype=np.longdouble)
+    return np.column_stack((gti_table.columns["START"].values,
+                           gti_table.columns["STOP"].values))
 
 
 def get_gti_table_from_stingray_gti (gti):
@@ -319,10 +317,10 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, 
                                                      ev_list_err[start_event_idx:end_event_idx])
                 for i in range(len(additional_columns)):
                     ad_column=additional_columns[i]
-                    values=ds_columns[ad_column][start_event_idx:end_event_idx]
+                    values=np.nan_to_num(ds_columns[ad_column][start_event_idx:end_event_idx])
                     error_values=[]
                     if ad_column in ds_columns_errors and len(ds_columns_errors[ad_column]) > end_event_idx:
-                        error_values=ds_columns_errors[ad_column][start_event_idx:end_event_idx]
+                        error_values=np.nan_to_num(ds_columns_errors[ad_column][start_event_idx:end_event_idx])
                     hdu_table.columns[ad_column].add_values(values, error_values)
 
             else:

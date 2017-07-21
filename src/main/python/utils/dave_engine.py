@@ -6,7 +6,6 @@ import utils.exception_helper as ExHelper
 import utils.plotter as Plotter
 import math
 import numpy as np
-import copy
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
@@ -490,49 +489,6 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
     return ""
 
 
-# get_lightcurve_ds_from_events_ds: Creates a lightcurve dataset
-# from an events dataset and stores it on DsCache, returns the cache key
-#
-# @param: destination: file destination or dataset cache key
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PHA" } ]
-# @param: dt: The time resolution of the events.
-#
-def get_lightcurve_ds_from_events_ds(destination, axis, dt):
-
-    try:
-
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return ""
-
-        dataset = DaveReader.get_file_dataset(destination)
-        lc = get_lightcurve_from_events_dataset(dataset, "", [], "", dt)
-
-        if lc:
-            #Changes lc format to stingray_addons format
-            tmp_lc = {}
-            tmp_lc['lc'] = lc.countrate
-            tmp_lc['elc'] = lc.countrate_err
-            tmp_lc['time'] = lc.time
-            tmp_lc['GTI'] = lc.gti
-
-            lc_dataset = DataSet.get_lightcurve_dataset_from_stingray_lcurve(tmp_lc, dataset.tables["EVENTS"].header, dataset.tables["EVENTS"].header_comments,
-                                                                            "RATE", "TIME")
-            dataset = None  # Dispose memory
-            lc = None  # Dispose memory
-
-            new_cache_key = DsCache.get_key(destination + "|ligthcurve")
-            DsCache.add(new_cache_key, dataset)  # Adds new cached dataset for new key
-            return new_cache_key
-
-    except:
-        logging.error(ExHelper.getException('get_lightcurve_ds_from_events_ds'))
-
-    return ""
-
-
 # get_power_density_spectrum: Returns the PDS of a given dataset
 #
 # @param: src_destination: source file destination
@@ -876,8 +832,8 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
             if "E" in events_table.columns:
 
-                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
-                                                                       events_table.columns["E"].values)])
+                event_list = np.column_stack((events_table.columns["TIME"].values,
+                                             events_table.columns["E"].values))
 
                 band_width = energy_range[1] - energy_range[0]
                 band_step = band_width / n_bands
@@ -1110,8 +1066,8 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
             if "E" in events_table.columns:
 
-                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
-                                                                       events_table.columns["E"].values)])
+                event_list = np.column_stack((events_table.columns["TIME"].values,
+                                             events_table.columns["E"].values))
 
                 if energy_range[0] < 0:
                     min_energy = min(event_list[:,1])
@@ -1591,6 +1547,13 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
 
 
 def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt):
+
+    # Try to get the lightcurve from cache
+    cache_key = "LC_" + DsCache.get_key(filtered_ds.id + bck_destination + gti_destination + str(filters) + str(dt), True)
+    if DsCache.contains(cache_key):
+        logging.debug("Returned cached lightcurve, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        return DsCache.get(cache_key)
+
     eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_ds)
     if not eventlist or len(eventlist.time) == 0:
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
@@ -1601,6 +1564,9 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
     if bck_destination:
         lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
     eventlist = None  # Dispose memory
+
+    DsCache.add(cache_key, lc)
+
     return lc
 
 
@@ -1677,12 +1643,21 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
 
 
 def load_gti_from_destination (gti_destination):
+
+    # Try to get the gtis from cache
+    cache_key = "GTI_" + DsCache.get_key(gti_destination, True)
+    if DsCache.contains(cache_key):
+        logging.debug("Returned cached gtis, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        return DsCache.get(cache_key)
+
     gti = None
     if gti_destination:
         gti_dataset = DaveReader.get_file_dataset(gti_destination)
         if gti_dataset:
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
+            DsCache.add(cache_key, gti)
             logging.debug("Load GTI success")
+
     return gti
 
 def get_divided_values_and_error (values_0, values_1, error_0, error_1):

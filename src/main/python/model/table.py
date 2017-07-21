@@ -52,12 +52,13 @@ class Table:
             filtered_table.columns[tmp_column_name] = Column(tmp_column_name)
 
         column = self.columns[column_name]
-        filtered_indexes = np.array([i for i in range(len(column.values))
-                                        if ((column.values[i] >= filter["from"])
-                                            and (column.values[i] <= filter["to"]))])
 
-        for i in filtered_indexes:
-            filtered_table.add_row(self.get_row(i))
+        values = np.array(column.values)
+        filtered_indexes = np.where((values >= filter["from"]) & (values <= filter["to"]))[0]
+
+        for column_name in self.columns:
+            col_values, col_error_values = self.columns[column_name].get_values(filtered_indexes)
+            filtered_table.columns[column_name].add_values(col_values, col_error_values)
 
         return filtered_table
 
