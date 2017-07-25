@@ -144,8 +144,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Jun 30, 2017 -> https://github.com/StingraySoftware/stingray/commit/a262a039aab4cc2dab74be245d51dd3299dfafc4
-STINGRAY_COMMIT_HASH=a262a039aab4cc2dab74be245d51dd3299dfafc4
+# Jul 24, 2017 -> https://github.com/StingraySoftware/stingray/pull/220/commits/51646b590527bd6151c2ae0b4db22b36657f8d7f
+STINGRAY_COMMIT_HASH=51646b590527bd6151c2ae0b4db22b36657f8d7f
 
 if [ ! -e $STINGRAY_FOLDER ]; then
 
@@ -192,7 +192,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
+		DARWIN_COMPILATION=lib.macosx-10.12-intel-2.7
 		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi

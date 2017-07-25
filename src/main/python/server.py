@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, session
 
 import pkg_resources
