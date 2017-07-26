@@ -23,6 +23,12 @@ class DataSet:
             schema[table_id] = self.tables[table_id].get_schema()
         return schema
 
+    def get_header(self):
+        header = dict()
+        for table_id in self.tables:
+            header[table_id] = self.tables[table_id].get_header()
+        return header
+
     def clone(self, with_values=True):
         dataset = DataSet(self.id)
 

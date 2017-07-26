@@ -37,6 +37,12 @@ function Service (base_url) {
       .fail(errorFn);
   };
 
+  this.get_dataset_header  = function ( filename, fn, errorFn, params ) {
+    $.get( thisService.base_url + "/get_dataset_header", { filename: filename } )
+      .done(function(res){fn(res, params);})
+      .fail(errorFn);
+  };
+
   this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn, params ) {
     $.get( thisService.base_url + "/append_file_to_dataset", { filename: filename, nextfile: nextfile } )
       .done(function(res){fn(res, params);})

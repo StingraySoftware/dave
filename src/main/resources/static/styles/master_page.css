@@ -345,6 +345,11 @@ h3
   font-size: 0.85em;
 }
 
+.fileSelector .InfoText {
+  color: #2e6da4;
+  font-size: 0.85em;
+}
+
 .btnRefreshFloating {
   position: fixed;
   right: 16px;

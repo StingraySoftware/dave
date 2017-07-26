@@ -112,6 +112,17 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           currentObj.projectConfig.setFile("LC_D/C", "");
         }
 
+        if (selectorKey.startsWith("LC") && !selectorKey.startsWith("LC_")){
+          //If uploaded file is a color filtered lightcurve,
+          //tries to get filter info from file header info
+          currentObj.service.get_dataset_header(filenames[0], function( jsonHeader, params ){
+            
+            var rangeText = currentObj.extractEnergyRangeTextFromHeader(JSON.parse(jsonHeader));
+            currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
+          });
+
+        }
+
         //Add the new plots for this selectorKey
         currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
         currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
@@ -328,6 +339,36 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onSchemaError = function ( error ) {
       log("onSchemaError error:" + JSON.stringify(error));
       waitingDialog.hide();
+  }
+
+  this.extractEnergyRangeTextFromHeader = function (header) {
+
+    var tableName = "RATE";
+    var filterColumn = "PI";
+    var searchFieldPrefix = "DSTYP";
+    var unitFieldPrefix = "DSUNI";
+    var valueFieldPrefix = "DSVAL";
+
+    if (!isNull(header) && !isNull(header[tableName])) {
+
+      var rateTable = header[tableName];
+
+      for (i=0; i<20; i++) {
+        //Looks for the searchField index
+        var searchField = searchFieldPrefix + i;
+        if (!isNull(rateTable[searchField]) && rateTable[searchField] == filterColumn){
+          var unit = rateTable[unitFieldPrefix + i];
+          var range = rateTable[valueFieldPrefix + i];
+
+          if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
+            var rangeVals = range.split(":");
+            return "From " + rangeVals[0] + " " + unit + ", to " + rangeVals[1] + " " + unit;
+          }
+        }
+      }
+    }
+
+    return "";
   }
 
   this.refreshPlotsData = function () {

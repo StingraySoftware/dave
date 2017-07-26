@@ -42,12 +42,14 @@ function ToolPanel (id,
   this.dragDropEnabled = false;
 
   this.file_selectors_ids_array = [];
+  this.file_selectors_array = [];
   this.selectors_array = [];
   this.replaceColumn = "PHA";
 
   this.addFileSelector = function (selector) {
     this.$html.find(".fileSelectorsContainer").append(selector.$html);
     this.file_selectors_ids_array.push(selector.id);
+    this.file_selectors_array.push(selector);
   }
 
   this.clearFileSelectors = function () {
@@ -61,6 +63,23 @@ function ToolPanel (id,
                             '<label class="fileBtn">' + filename + '</label>' +
                           '</div>');
      this.$html.find(".fileSelectorsContainer").append($selectedFile);
+  }
+
+  this.setInfoTextToFileSelector = function (selectorKey, infoText) {
+    var fileSelector = this.getFileSelector(selectorKey);
+    if (!isNull(fileSelector)) {
+      fileSelector.showInfoText(infoText);
+    }
+  }
+
+  this.getFileSelector = function (selectorKey) {
+    for (idx in this.file_selectors_array) {
+      if (this.file_selectors_array[idx].selectorKey == selectorKey) {
+        return this.file_selectors_array[idx];
+      }
+    }
+
+    return null;
   }
 
   this.showEventsSelectors = function ( panel ) {

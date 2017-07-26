@@ -21,6 +21,9 @@ class Table:
         self.header = header
         self.header_comments = header_comments
 
+    def get_header(self):
+        return self.header
+
     def get_schema(self):
         schema = dict()
         schema["HEADER"] = self.header

@@ -118,6 +118,10 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                                    '</div></a>');
    }
 
+   this.showInfoText = function (text) {
+     this.$html.find("label").append('<p class="InfoText">' + text + '</a>');
+   }
+
    this.onUploadSuccess();
 
    log ("new fileSelector id: " + id + ", label: " + label + ", inputId: " + this.uploadInputId);

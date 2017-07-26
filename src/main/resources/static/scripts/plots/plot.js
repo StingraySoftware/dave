@@ -209,7 +209,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.updatePlotConfig = function () {
    var tab = getTabForSelector(this.id);
-   this.plotConfig.dt = tab.projectConfig.binSize;
+   if (!isNull(tab)){
+     this.plotConfig.dt = tab.projectConfig.binSize;
+   } else {
+     log("ERROR: Plot not attached to tab, Plot" + this.id);
+   }
  }
 
  this.onPlotDataReceived = function ( data ) {

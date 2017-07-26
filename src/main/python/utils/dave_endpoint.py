@@ -70,6 +70,16 @@ def get_dataset_schema(filename, target):
     return json.dumps(schema, cls=NPEncoder)
 
 
+def get_dataset_header(filename, target):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key, filename: %s" % filename)
+
+    header = DaveEngine.get_dataset_header(destination)
+    return json.dumps(header, cls=NPEncoder)
+
+
+
 # append_file_to_dataset: Appends Fits data to a dataset
 #
 # @param: filename: filename or dataset cache key

@@ -73,6 +73,11 @@ def get_dataset_schema():
     return DaveEndpoint.get_dataset_schema(request.args['filename'], UPLOADS_TARGET)
 
 
+@app.route('/get_dataset_header', methods=['GET'])
+def get_dataset_header():
+    return DaveEndpoint.get_dataset_header(request.args['filename'], UPLOADS_TARGET)
+
+
 @app.route('/append_file_to_dataset', methods=['GET'])
 def append_file_to_dataset():
     return DaveEndpoint.append_file_to_dataset(request.args['filename'], request.args['nextfile'], UPLOADS_TARGET)

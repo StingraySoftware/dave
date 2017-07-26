@@ -25,7 +25,6 @@ PRECISSION = 4
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
-# the plot inside with a given file destination
 #
 # @param: destination: file destination
 #
@@ -33,6 +32,18 @@ def get_dataset_schema(destination):
     dataset = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_schema()
+    else:
+        return None
+
+
+# get_dataset_header: Returns the header info of a dataset of given file
+#
+# @param: destination: file destination
+#
+def get_dataset_header(destination):
+    dataset = DaveReader.get_file_dataset(destination)
+    if dataset:
+        return dataset.get_header()
     else:
         return None
 
