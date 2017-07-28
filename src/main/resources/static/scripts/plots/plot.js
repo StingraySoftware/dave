@@ -422,17 +422,22 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
         if (currentObj.hoverEnabled){
           currentObj.clearTimeouts();
-          currentObj.hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
+          var hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
 
-          currentObj.onHoverTimeout = setTimeout(function(){
-            if (!isNull(currentObj.hoverCoords)){
-              currentObj.onHover(currentObj.hoverCoords);
+          if (!isNull(hoverCoords)){
 
-              var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
-              evt_data.labels = currentObj.plotConfig.styles.labels;
-              currentObj.sendPlotEvent('on_hover', evt_data);
-            }
-          }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
+            currentObj.hoverCoords = hoverCoords;
+
+            currentObj.onHoverTimeout = setTimeout(function(){
+              if (!isNull(currentObj.hoverCoords)){
+                currentObj.onHover(currentObj.hoverCoords);
+
+                var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
+                evt_data.labels = currentObj.plotConfig.styles.labels;
+                currentObj.sendPlotEvent('on_hover', evt_data);
+              }
+            }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
+          }
         }
 
       }).on('plotly_unhover', function(data){
@@ -530,7 +535,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getCoordsFromPlotlyHoverEvent = function (data){
    if (data.points.length == 1) {
      var pt = data.points[0];
-     if (this.tracesCount == this.getPlotDefaultTracesCount() || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
+     if ((pt.curveNumber < this.getPlotDefaultTracesCount()
+          && this.tracesCount == this.getPlotDefaultTracesCount())
+        || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
        var error_x = null;
        if (!isNull(pt.data.error_x)
           && !isNull(pt.data.error_x.array)

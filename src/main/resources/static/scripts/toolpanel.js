@@ -109,7 +109,12 @@ function ToolPanel (id,
 
   this.onTimeRangeChanged = function (timeRange) {
     if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
-      this.binSelector.setMinMaxValues(timeRange / CONFIG.MAX_PLOT_POINTS, timeRange / CONFIG.MIN_PLOT_POINTS);
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)){
+        var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, tab.projectConfig.minBinSize);
+        var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, tab.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
+        this.binSelector.setMinMaxValues(minValue, maxValue);
+      }
     }
   }
 
