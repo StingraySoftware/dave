@@ -56,6 +56,11 @@ def get_lightcurve_from_lc_dataset(dataset, gti=None):
         return Lightcurve(time_data, counts, err=err_counts, input_counts=True)
 
 
+# Returns an Stingray Lightcurve
+def get_lightcurve(time_data, counts, err_counts, gti):
+    return Lightcurve(time_data, counts, err=err_counts, input_counts=True, gti=gti)
+
+
 def get_empty_gti_table():
     table = Table("GTI")
     table.add_columns(["START", "STOP", "START_EVENT_IDX", "END_EVENT_IDX"])

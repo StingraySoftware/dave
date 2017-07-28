@@ -26,6 +26,15 @@ def get_time_filter(filters):
     return None
 
 
+# Returns the filter refered to RATE from a list of filters
+def get_rate_filter(filters):
+    for filter in filters:
+        if filter["column"] == "RATE":
+            return filter
+
+    return None
+
+
 # Returns the filters applied to a passed bin size
 def apply_bin_size_to_filters(filters, bin_size):
 

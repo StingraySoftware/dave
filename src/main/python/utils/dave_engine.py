@@ -188,54 +188,6 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
     return None
 
 
-# get_histogram: Returns data for the histogram of passed axis
-#
-# @param: src_destination: source file destination
-# @param: bck_destination: background file destination, is optional
-# @param: gti_destination: gti file destination, is optional
-# @param: filters: array with the filters to apply
-#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "EVENTS", column = "PHA" }]
-#
-def get_histogram(src_destination, bck_destination, gti_destination, filters, axis):
-
-    axis_values = []
-    counts = []
-
-    try:
-        if len(axis) != 1:
-            logging.warn("Wrong number of axis")
-            return None
-
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            # Counts channel hits
-            if not check_axis_in_dataset(filtered_ds, axis):
-                logging.warn('get_histogram: Wrong axis for this dataset')
-                return None
-            axis_data = filtered_ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values
-            counted_data, axis_values = DsHelper.get_histogram(axis_data)
-            counts = np.array([counted_data[axis_value] for axis_value in axis_values])
-
-        else:
-            logging.warn("Wrong dataset type")
-            return None
-
-        filtered_ds = None  # Dispose memory
-
-    except:
-        logging.error(ExHelper.getException('get_histogram'))
-
-    # Preapares the result
-    result = push_to_results_array([], axis_values)
-    result = push_to_results_array(result, counts)
-    return result
-
-
 # get_lightcurve: Returns the data for the Lightcurve
 #
 # @param: src_destination: source file destination
@@ -1575,6 +1527,16 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
     if bck_destination:
         lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
     eventlist = None  # Dispose memory
+
+    # Applies rate filter to lightcurve countrate if filter has been sent
+    rate_filter = FltHelper.get_rate_filter(filters)
+    if rate_filter:
+        logging.debug("Filtering lightcurve with countrates: from: " + str(rate_filter["from"]) + ", to: " + str(rate_filter["to"]))
+        filtered_indexes = np.where((lc.countrate >= rate_filter["from"]) & (lc.countrate <= rate_filter["to"]))[0]
+        lc = DsHelper.get_lightcurve(lc.time[filtered_indexes],
+                            lc.counts[filtered_indexes],
+                            lc.counts_err[filtered_indexes],
+                            lc.gti)
 
     DsCache.add(cache_key, lc)
 

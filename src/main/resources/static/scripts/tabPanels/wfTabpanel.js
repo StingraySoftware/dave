@@ -116,7 +116,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           //If uploaded file is a color filtered lightcurve,
           //tries to get filter info from file header info
           currentObj.service.get_dataset_header(filenames[0], function( jsonHeader, params ){
-            
+
             var rangeText = currentObj.extractEnergyRangeTextFromHeader(JSON.parse(jsonHeader));
             currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
           });
@@ -371,6 +371,23 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     return "";
   }
 
+  this.updateMinMaxCountRate = function (minRate, maxRate) {
+    if (this.projectConfig.schema.isEventsFile()) {
+
+      minRate = Math.floor (minRate);
+      maxRate = Math.ceil (maxRate);
+
+      if (!currentObj.toolPanel.isCountRateSliderCreated()) {
+        //Creates the rate slider if not created yet:
+        currentObj.toolPanel.createCountRateSlider(minRate, maxRate);
+      } else {
+        //Udpated rate slider min and max values
+        currentObj.toolPanel.updateCountRateSlider(minRate, maxRate);
+      }
+
+    }
+  }
+
   this.refreshPlotsData = function () {
     currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
     currentObj.outputPanel.onDatasetValuesChanged();
@@ -388,7 +405,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onTimeRangeChanged = function (timeRange) {
-    log("onTimeRangeChanged: timeRange: " + timeRange);
     this.updateTimeRange(timeRange);
     this.toolPanel.onTimeRangeChanged(timeRange);
   }

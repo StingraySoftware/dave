@@ -385,6 +385,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }, CONFIG.INMEDIATE_TIMEOUT);
  }
 
+ this.mustPropagateAxisFilter = function (axis) {
+   return this.plotConfig.styles.labels[axis].startsWith(this.plotConfig.axis[axis].column);
+ }
+
+ this.getAxisForPropagation = function (axis) {
+   return this.plotConfig.axis[axis];
+ }
+
  this.registerPlotEvents = function () {
 
    if ((this.plotConfig.styles.type == "2d")
@@ -400,15 +408,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
          //If plot data for label[0] is the same as axis[0] data,
          // else label data is calculated/derived with some process
-         if (this.plotConfig.styles.labels[0].startsWith(this.plotConfig.axis[0].column)){
+         if (this.mustPropagateAxisFilter(0)){
           filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
-                                  this.plotConfig.axis[0]));
+                                  this.getAxisForPropagation(0)));
          }
 
          //Same here but for other axis
-         if (this.plotConfig.styles.labels[1].startsWith(this.plotConfig.axis[1].column)){
+         if (this.mustPropagateAxisFilter(1)){
             filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
-                                  this.plotConfig.axis[1]));
+                                  this.getAxisForPropagation(1)));
          }
 
          if (filters.length > 0){

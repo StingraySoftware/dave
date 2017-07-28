@@ -116,8 +116,37 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     return plotlyConfig;
   }
 
+  this.updateMinMaxCoords = function (){
+    if (this.data != null) {
+      var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+      this.minX = Math.min.apply(null, this.data[coords.x].values);
+      this.minY = Math.min.apply(null, this.data[coords.y].values);
+      this.maxX = Math.max.apply(null, this.data[coords.x].values);
+      this.maxY = Math.max.apply(null, this.data[coords.y].values);
+
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)){
+        tab.updateMinMaxCountRate(this.minY, this.maxY);
+      }
+    }
+  }
+
   this.getPlotDefaultTracesCount = function (){
       return (currentObj.data.length > 5 && currentObj.data[5].values.length > 0) ? 2 : 1;
+  }
+
+  this.mustPropagateAxisFilter = function (axis) {
+    return (axis == 1) || this.plotConfig.styles.labels[axis].startsWith(this.plotConfig.axis[axis].column);
+  }
+
+  this.getAxisForPropagation = function (axis) {
+    if (axis == 1) {
+      var propagationAxis =  $.extend({}, this.plotConfig.axis[axis]);
+      propagationAxis.column = "RATE";
+      return propagationAxis;
+    } else {
+      return this.plotConfig.axis[axis];
+    }
   }
 
   //LC BaseLine parameters:

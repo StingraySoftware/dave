@@ -95,13 +95,6 @@ def get_plot_data():
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 
-@app.route('/get_histogram', methods=['POST'])
-def get_histogram():
-    return DaveEndpoint.get_histogram(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'])
-
-
 @app.route('/get_lightcurve', methods=['POST'])
 def get_lightcurve():
     return DaveEndpoint.get_lightcurve(request.json['filename'],

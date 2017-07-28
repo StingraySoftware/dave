@@ -71,7 +71,6 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
        } else {
          this.showWarn("");
        }
-       log("New BinSize set: " + tab.projectConfig.binSize);
      }
    }
 

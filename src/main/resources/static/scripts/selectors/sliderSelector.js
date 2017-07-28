@@ -62,20 +62,22 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
     this.switchBox.hide();
   }
 
-  //Creates the slider
-  this.slider.slider({
-         range:true,
-         min: this.fromValue,
-         max: this.toValue,
-         values: [ fromValue, toValue ],
-         slide: function( event, ui ) {
-           var sliderId = event.target.id.replace("slider-", "");
-           var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
-           var sliderWdg = sliderSelectors_array[sliderId];
-           sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-           sliderWdg.onSelectorValuesChanged();
-         }
-     });
+   this.createSlider = function () {
+     this.slider.slider({
+            range:true,
+            min: this.fromValue,
+            max: this.toValue,
+            values: [ fromValue, toValue ],
+            slide: function( event, ui ) {
+              var sliderId = event.target.id.replace("slider-", "");
+              var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
+              var sliderWdg = sliderSelectors_array[sliderId];
+              sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+              sliderWdg.onSelectorValuesChanged();
+            }
+        });
+      this.setValues( this.fromValue, this.toValue );
+   }
 
    this.setDisableable = function (disableable) {
      if (disableable){
@@ -217,8 +219,20 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
      }
    }
 
+   this.setMinMaxValues = function (minValue, maxValue) {
+     this.fromValue = minValue;
+     this.initFromValue = this.fromValue;
+     this.toValue = maxValue;
+     this.initToValue = this.toValue;
+     this.maxRange = this.initToValue - this.initFromValue;
+     this.$html.find("#slider-" + this.id).remove();
+     this.slider = $('<div id="slider-' + this.id + '" class="selectorSlider"></div>');
+     this.container.append(this.slider);
+     this.createSlider();
+   }
+
    //Init from-to values
-   this.setValues( this.initFromValue, this.initToValue );
+   this.createSlider();
 
    //Collapses container
    this.container.hide();
@@ -270,6 +284,16 @@ function sliderSelectors_setFiltersEnabled (selectors_array, source, columnName)
         selector.setEnabled(selector.filterData.replaceColumn == columnName);
       }
   }
+}
+
+function sliderSelectors_getSelector (selectors_array, selectorId) {
+  for (i in selectors_array) {
+    var selector = selectors_array[i];
+    if (selector.id == selectorId ){
+        return selector;
+    }
+  }
+  return null;
 }
 
 function sliderSelectors_getSelectors (selectors_array, source, columnName) {

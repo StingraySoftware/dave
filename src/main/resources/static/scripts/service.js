@@ -80,10 +80,6 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_plot_data", data, fn);
   };
 
-  this.request_histogram = function (data, fn) {
-    return thisService.make_ajax_call("get_histogram", data, fn);
-  };
-
   this.request_lightcurve = function (data, fn) {
     return thisService.make_ajax_call("get_lightcurve", data, fn);
   };
