@@ -55,9 +55,11 @@ pip install -r requirements.txt
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
-python server.py $ENVDIR . &
+python server.py $ENVDIR . & >> $ENVDIR/flaskserver.log 2>&1
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 cd -
 
-wait
+wait $python_pid
+
+exit $?

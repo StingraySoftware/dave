@@ -8,8 +8,8 @@
     <!-- Insert CSS below here for better page render performance -->
     <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/jquery-ui-1.12.1.min.css">
     <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/bootstrap-3.3.7.min.css">
+    <link rel= "stylesheet" type= "text/css" href= "../static/font-awesome-4.7.0/css/font-awesome.min.css">
     <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/bootstrap-theme-3.3.7.min.css">
-    <!--<link rel= "stylesheet" type= "text/css" href= "../static/styles/master_page.css">-->
     <style>
       body {
         background: url(../static/img/bg.jpg);
@@ -19,7 +19,7 @@
         background-size: cover;
       }
 
-      .progress {
+      .mainProgress {
         margin-left: 25%;
         width: 43%;
         position: fixed;
@@ -48,6 +48,27 @@
 
       });
 
+      function isNull (value) {
+        return (value === undefined) || (value == null);
+      }
+
+      function showError(errorMsg) {
+        var errorArr = errorMsg.split("|");
+        waitingDialog.show(errorArr[0], { progressType: "warning" });
+        log("PYTHON SERVER LOG:");
+        logError(errorArr[1]);
+        Logger.open();
+      }
+
+      function logError(errorMsg) {
+        var logMsgs = errorMsg.split("#");
+        for (i in logMsgs) {
+          if (logMsgs[i] != "") {
+            log(logMsgs[i]);
+          }
+        }
+      }
+
     </script>
 
   </head>
@@ -59,7 +80,7 @@
       <div class="row">
         <div class="col-sm-12 text-center">
 
-          <div class="progress progress-striped active">
+          <div class="mainProgress progress progress-striped active">
             <div class="progress-bar" style="width: 100%"></div>
           </div>
 

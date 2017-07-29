@@ -238,8 +238,11 @@ def shutdown_server():
 
 # Setting error handler
 def http_error_handler(error):
-    return render_template("error.html", error=error), error
-
+    try:
+        logging.error('ERROR: http_error_handler ' + str(error))
+        return render_template("error.html", error=error), error
+    except:
+        logging.error('ERROR: http_error_handler --> EXCEPT ')
 
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
     app.error_handler_spec[None][error] = http_error_handler

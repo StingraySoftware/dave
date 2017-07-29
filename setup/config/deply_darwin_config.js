@@ -9,5 +9,6 @@ module.exports = {
     url : 'http://localhost:5000'
   },
   logDebugMode : 'true',
+  logsPath : '$HOME/Dave_work/flaskserver.log',
   splash_path : '/../../../dave/resources/templates/splash_page.html'
 };
