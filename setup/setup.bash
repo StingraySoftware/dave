@@ -135,8 +135,12 @@ echo "Using npm $(npm --version)"
 
 
 # Install Python dependencies
-echo Creating Python environment
-conda env create -f setup/environment.yml
+if conda env list | grep -q "^dave[ ]\+"; then
+  echo "dave virtual Python environment already exists"
+else
+  echo "Creating virtual Python environment dave"
+  conda env create -f setup/environment.yml
+fi
 source activate dave
 
 
