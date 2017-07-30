@@ -13,6 +13,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.toValue = toValue;
   this.maxRange = this.initToValue - this.initFromValue;
   this.precision = 3;
+  this.fixed_step = null; // Sets the value step for snaping, fixed_step = 0.5 -> values: ... -1.0, -0.5, 0.0, 0.5, 1.0 ...
   this.step = 1.0;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
@@ -61,20 +62,22 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
     this.switchBox.hide();
   }
 
-  //Creates the slider
-  this.slider.slider({
-         range:true,
-         min: this.fromValue,
-         max: this.toValue,
-         values: [ fromValue, toValue ],
-         slide: function( event, ui ) {
-           var sliderId = event.target.id.replace("slider-", "");
-           var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
-           var sliderWdg = sliderSelectors_array[sliderId];
-           sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-           sliderWdg.onSelectorValuesChanged();
-         }
-     });
+   this.createSlider = function () {
+     this.slider.slider({
+            range:true,
+            min: this.fromValue,
+            max: this.toValue,
+            values: [ fromValue, toValue ],
+            slide: function( event, ui ) {
+              var sliderId = event.target.id.replace("slider-", "");
+              var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
+              var sliderWdg = sliderSelectors_array[sliderId];
+              sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+              sliderWdg.onSelectorValuesChanged();
+            }
+        });
+      this.setValues( this.fromValue, this.toValue );
+   }
 
    this.setDisableable = function (disableable) {
      if (disableable){
@@ -114,19 +117,19 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
           moveSlider = true;
        }
 
+       this.fromValue = from;
+       this.toValue = to;
+
        if (this.filterData.column == "TIME") {
           //Fixes values to binSize steps
           var tabPanel = getTabForSelector(this.id);
-          var binSize = tabPanel.projectConfig.binSize;
-          this.step = parseFloat(binSize);
-          this.fromValue = Math.floor (from / binSize) * binSize;
-          this.toValue = Math.floor (to / binSize) * binSize;
-          var timeRange = Math.max ((this.toValue - this.fromValue) * 0.95, this.step);
-          tabPanel.onTimeRangeChanged(timeRange);
+          this.step = parseFloat(tabPanel.projectConfig.binSize);
+          this.fixed_step = this.step;
        }
 
-       this.fromValue = fixedPrecision(from, this.precision);
-       this.toValue = fixedPrecision(to, this.precision);
+       this.snapValuesToStep();
+       this.snapValuesToPrecision();
+
        this.fromInput.val( this.fromValue ).removeClass("wrongValue");
        this.toInput.val( this.toValue ).removeClass("wrongValue");
        if (moveSlider) {
@@ -134,6 +137,29 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
          this.slider.slider('values', 1, this.toValue);
        }
        this.slider.slider("option", "step", this.step);
+
+       if (this.filterData.column == "TIME") {
+         //Notifies that time range has changed
+         tabPanel.onTimeRangeChanged(Math.max ((this.toValue - this.fromValue) * 0.95, this.step));
+       }
+   }
+
+   this.setFixedStep = function (fixed_step) {
+     this.step = fixed_step;
+     this.fixed_step = fixed_step;
+     this.setValues( this.fromValue, this.toValue );
+   }
+
+   this.snapValuesToStep = function () {
+     if ( !isNull(this.fixed_step) ) {
+       this.fromValue = Math.floor (this.fromValue / this.fixed_step) * this.fixed_step;
+       this.toValue = Math.ceil (this.toValue / this.fixed_step) * this.fixed_step;
+     }
+   }
+
+   this.snapValuesToPrecision = function () {
+     this.fromValue = fixedPrecision(this.fromValue, this.precision);
+     this.toValue = fixedPrecision(this.toValue, this.precision);
    }
 
    this.getFilter = function () {
@@ -193,8 +219,20 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
      }
    }
 
+   this.setMinMaxValues = function (minValue, maxValue) {
+     this.fromValue = minValue;
+     this.initFromValue = this.fromValue;
+     this.toValue = maxValue;
+     this.initToValue = this.toValue;
+     this.maxRange = this.initToValue - this.initFromValue;
+     this.$html.find("#slider-" + this.id).remove();
+     this.slider = $('<div id="slider-' + this.id + '" class="selectorSlider"></div>');
+     this.container.append(this.slider);
+     this.createSlider();
+   }
+
    //Init from-to values
-   this.setValues( this.initFromValue, this.initToValue );
+   this.createSlider();
 
    //Collapses container
    this.container.hide();
@@ -246,6 +284,16 @@ function sliderSelectors_setFiltersEnabled (selectors_array, source, columnName)
         selector.setEnabled(selector.filterData.replaceColumn == columnName);
       }
   }
+}
+
+function sliderSelectors_getSelector (selectors_array, selectorId) {
+  for (i in selectors_array) {
+    var selector = selectors_array[i];
+    if (selector.id == selectorId ){
+        return selector;
+    }
+  }
+  return null;
 }
 
 function sliderSelectors_getSelectors (selectors_array, source, columnName) {

@@ -6,7 +6,6 @@ import utils.exception_helper as ExHelper
 import utils.plotter as Plotter
 import math
 import numpy as np
-import copy
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
@@ -14,6 +13,7 @@ from stingray.events import EventList
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
+from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
 from stingray.modeling import fit_powerspectrum
@@ -25,7 +25,6 @@ PRECISSION = 4
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
-# the plot inside with a given file destination
 #
 # @param: destination: file destination
 #
@@ -33,6 +32,18 @@ def get_dataset_schema(destination):
     dataset = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_schema()
+    else:
+        return None
+
+
+# get_dataset_header: Returns the header info of a dataset of given file
+#
+# @param: destination: file destination
+#
+def get_dataset_header(destination):
+    dataset = DaveReader.get_file_dataset(destination)
+    if dataset:
+        return dataset.get_header()
     else:
         return None
 
@@ -175,54 +186,6 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         logging.error(ExHelper.getException('get_plot_data'))
 
     return None
-
-
-# get_histogram: Returns data for the histogram of passed axis
-#
-# @param: src_destination: source file destination
-# @param: bck_destination: background file destination, is optional
-# @param: gti_destination: gti file destination, is optional
-# @param: filters: array with the filters to apply
-#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "EVENTS", column = "PHA" }]
-#
-def get_histogram(src_destination, bck_destination, gti_destination, filters, axis):
-
-    axis_values = []
-    counts = []
-
-    try:
-        if len(axis) != 1:
-            logging.warn("Wrong number of axis")
-            return None
-
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            # Counts channel hits
-            if not check_axis_in_dataset(filtered_ds, axis):
-                logging.warn('get_histogram: Wrong axis for this dataset')
-                return None
-            axis_data = filtered_ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values
-            counted_data, axis_values = DsHelper.get_histogram(axis_data)
-            counts = np.array([counted_data[axis_value] for axis_value in axis_values])
-
-        else:
-            logging.warn("Wrong dataset type")
-            return None
-
-        filtered_ds = None  # Dispose memory
-
-    except:
-        logging.error(ExHelper.getException('get_histogram'))
-
-    # Preapares the result
-    result = push_to_results_array([], axis_values)
-    result = push_to_results_array(result, counts)
-    return result
 
 
 # get_lightcurve: Returns the data for the Lightcurve
@@ -485,49 +448,6 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
 
     except:
         logging.error(ExHelper.getException('get_divided_lightcurve_ds'))
-
-    return ""
-
-
-# get_lightcurve_ds_from_events_ds: Creates a lightcurve dataset
-# from an events dataset and stores it on DsCache, returns the cache key
-#
-# @param: destination: file destination or dataset cache key
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PHA" } ]
-# @param: dt: The time resolution of the events.
-#
-def get_lightcurve_ds_from_events_ds(destination, axis, dt):
-
-    try:
-
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return ""
-
-        dataset = DaveReader.get_file_dataset(destination)
-        lc = get_lightcurve_from_events_dataset(dataset, "", [], "", dt)
-
-        if lc:
-            #Changes lc format to stingray_addons format
-            tmp_lc = {}
-            tmp_lc['lc'] = lc.countrate
-            tmp_lc['elc'] = lc.countrate_err
-            tmp_lc['time'] = lc.time
-            tmp_lc['GTI'] = lc.gti
-
-            lc_dataset = DataSet.get_lightcurve_dataset_from_stingray_lcurve(tmp_lc, dataset.tables["EVENTS"].header, dataset.tables["EVENTS"].header_comments,
-                                                                            "RATE", "TIME")
-            dataset = None  # Dispose memory
-            lc = None  # Dispose memory
-
-            new_cache_key = DsCache.get_key(destination + "|ligthcurve")
-            DsCache.add(new_cache_key, dataset)  # Adds new cached dataset for new key
-            return new_cache_key
-
-    except:
-        logging.error(ExHelper.getException('get_lightcurve_ds_from_events_ds'))
 
     return ""
 
@@ -842,67 +762,6 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
     return result
 
 
-# get_unfolded_spectrum:
-# Returns a energy array with a linked energy_spectrum array and
-# a unfolded_spectrum array
-#
-# @param: src_destination: source file destination
-# @param: bck_destination: background file destination, is optional
-# @param: gti_destination: gti file destination, is optional
-# @param: filters: array with the filters to apply
-#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
-# @param: arf_destination: file destination of file to apply
-#
-def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, filters, arf_destination):
-
-    energy_arr = []
-    energy_spectrum_arr =[]
-    unfolded_spectrum_arr = []
-
-    try:
-
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            arf_dataset = DaveReader.get_file_dataset(arf_destination)
-            if DsHelper.is_arf_dataset(arf_dataset):
-                # Applies arf data to dataset
-                events_table = filtered_ds.tables["EVENTS"]
-
-                if "E" not in events_table.columns:
-                    logging.warn('get_unfolded_spectrum: E column not found!')
-                    return False
-
-                e_histogram, e_values = DsHelper.get_histogram(events_table.columns["E"].values)
-
-                arf_table = arf_dataset.tables["SPECRESP"]
-                arf_effective_area_array = arf_table.columns["SPECRESP"].values;
-                arf_e_avg_array = [((min + max)/2) for min, max in zip(arf_table.columns["ENERG_LO"].values,
-                                                                       arf_table.columns["ENERG_HI"].values)]
-
-                exposure_time = DsHelper.get_exposure_time(filtered_ds.tables["GTI"])
-
-                for i in range(len(e_values)):
-                    energy = e_values[i]
-                    counts = e_histogram[energy]
-                    idx = DsHelper.find_idx_nearest_val(arf_e_avg_array, energy)
-                    energy_arr.append(energy)
-                    norm_count = (counts / energy) / exposure_time
-                    energy_spectrum_arr.append(norm_count)
-                    unfolded_spectrum_arr.append(norm_count / arf_effective_area_array[idx])
-
-    except:
-        logging.error(ExHelper.getException('get_unfolded_spectrum'))
-
-    # Preapares the result
-    result = push_to_results_array([], energy_arr)
-    result = push_to_results_array(result, energy_spectrum_arr)
-    result = push_to_results_array(result, unfolded_spectrum_arr)
-    return result
-
-
 # get_covariance_spectrum:
 # Returns the energy values and its correlated covariance and covariance errors
 #
@@ -914,10 +773,12 @@ def get_unfolded_spectrum(src_destination, bck_destination, gti_destination, fil
 # @param: dt: The time resolution of the events.
 # @param: ref_band_interest : A tuple with minimum and maximum values of the range in the band
 #                      of interest in reference channel.
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
 # @param: std: The standard deviation
 #
-def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, n_bands, std):
+def get_covariance_spectrum(src_destination, bck_destination, gti_destination, filters, dt, ref_band_interest, energy_range, n_bands, std):
 
     energy_arr = []
     covariance_arr =[]
@@ -934,15 +795,15 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
             if "E" in events_table.columns:
 
-                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
-                                                                       events_table.columns["E"].values)])
+                event_list = np.column_stack((events_table.columns["TIME"].values,
+                                             events_table.columns["E"].values))
 
-                band_width = ref_band_interest[1] - ref_band_interest[0]
+                band_width = energy_range[1] - energy_range[0]
                 band_step = band_width / n_bands
-                from_val = ref_band_interest[0]
+                from_val = energy_range[0]
                 band_interest = []
                 for i in range(n_bands):
-                    band_interest.extend([[ref_band_interest[0] + (i * band_step), ref_band_interest[0] + ((i + 1) * band_step)]])
+                    band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
 
                 if std < 0:
                     std = None
@@ -971,6 +832,140 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
     return result
 
 
+# get_phase_lag_spectrum:
+# Returns the energy values and its correlated phase lag and lag errors
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
+# @param: n_bands: The number of bands to split the refence band
+#
+def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            freq_range, energy_range, n_bands):
+
+    energy_arr = []
+    lag_arr =[]
+    lag_err_arr = []
+    duration = []
+    warnmsg = []
+    freq_min_max = [-1, -1]
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            logging.warn("Wrong normalization")
+            return None
+
+        if pds_type not in ['Sng', 'Avg']:
+            logging.warn("Wrong power density spectrum type")
+            return None
+
+        if segm_size == 0:
+            segm_size = None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+            min_time = events_table.columns["TIME"].values[0]
+            max_time = events_table.columns["TIME"].values[len(events_table.columns["TIME"].values) - 1]
+            duration = [(max_time - min_time)]
+
+            if "E" in events_table.columns:
+
+                pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                               filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                if pds:
+
+                    #Preapares the eventlist with energies and gtis
+                    event_list = EventList()
+                    event_list.time = np.array(events_table.columns["TIME"].values)
+                    event_list.ncounts = len(event_list.time)
+                    event_list.gti = gti
+                    event_list.energy = np.array(events_table.columns["E"].values)
+
+                    # Calculates the energy range
+                    if energy_range[0] < 0:
+                        min_energy = min(event_list.energy)
+                    else:
+                        min_energy = energy_range[0]
+
+                    if energy_range[1] >= min_energy:
+                        max_energy = energy_range[1]
+                    else:
+                        max_energy = max(event_list.energy)
+
+                    # Calculates the frequency range
+                    if freq_range[0] < 0:
+                        freq_low = min(pds.freq)
+                    else:
+                        freq_low = freq_range[0]
+                    freq_min_max[0] = freq_low
+
+                    if freq_range[1] < 0:
+                        freq_high = max(pds.freq)
+                    else:
+                        freq_high = freq_range[1]
+                    freq_min_max[1] = max([freq_min_max[1], freq_high])
+
+                    # Sets the energy ranges
+                    energy_spec = (min_energy, max_energy, n_bands, "lin")
+                    ref_band = [min_energy, max_energy]
+
+                    # Calculates the Phase Lag Spectrum
+                    les = LagEnergySpectrum(event_list, freq_min_max,
+                                            energy_spec, ref_band,
+                                            bin_time=dt,
+                                            segment_size=segm_size)
+
+                    energy_arr = np.array([(ei[0] + ei[1])/2 for ei in les.energy_intervals])
+                    lag_arr = les.spectrum
+                    lag_err_arr = les.spectrum_error
+
+                else:
+                    logging.warn("get_phase_lag_spectrum: can't create power density spectrum.")
+                    warnmsg = ['Cant create PDS']
+            else:
+                logging.warn('get_phase_lag_spectrum: E column not found!')
+                warnmsg = ['E column not found']
+        else:
+            logging.warn('get_phase_lag_spectrum: Wrong dataset type!')
+            warnmsg = ['Wrong dataset type']
+
+    except:
+        logging.error(ExHelper.getException('get_phase_lag_spectrum'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, lag_arr, lag_err_arr)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
+    result = push_to_results_array(result, freq_min_max)
+    return result
+
+
 # get_rms_spectrum:
 # Returns the energy values and its correlated rms and rms errors
 #
@@ -989,6 +984,8 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: freq_range: A tuple with minimum and maximum values of the
 #         range of frequency, send [-1, -1] for use all frequencies
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
@@ -1032,8 +1029,8 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
             if "E" in events_table.columns:
 
-                event_list = np.array([[time, energy] for time, energy in zip(events_table.columns["TIME"].values,
-                                                                       events_table.columns["E"].values)])
+                event_list = np.column_stack((events_table.columns["TIME"].values,
+                                             events_table.columns["E"].values))
 
                 if energy_range[0] < 0:
                     min_energy = min(event_list[:,1])
@@ -1442,7 +1439,10 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 
 def push_to_results_array (result, values):
     column = dict()
-    column["values"] = np.around(values, decimals=PRECISSION)
+    try:
+        column["values"] = np.around(values, decimals=PRECISSION)
+    except:
+        column["values"] = values
     result.append(column)
     return result
 
@@ -1510,6 +1510,13 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
 
 
 def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt):
+
+    # Try to get the lightcurve from cache
+    cache_key = "LC_" + DsCache.get_key(filtered_ds.id + bck_destination + gti_destination + str(filters) + str(dt), True)
+    if DsCache.contains(cache_key):
+        logging.debug("Returned cached lightcurve, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        return DsCache.get(cache_key)
+
     eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_ds)
     if not eventlist or len(eventlist.time) == 0:
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
@@ -1520,6 +1527,19 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
     if bck_destination:
         lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
     eventlist = None  # Dispose memory
+
+    # Applies rate filter to lightcurve countrate if filter has been sent
+    rate_filter = FltHelper.get_rate_filter(filters)
+    if rate_filter:
+        logging.debug("Filtering lightcurve with countrates: from: " + str(rate_filter["from"]) + ", to: " + str(rate_filter["to"]))
+        filtered_indexes = np.where((lc.countrate >= rate_filter["from"]) & (lc.countrate <= rate_filter["to"]))[0]
+        lc = DsHelper.get_lightcurve(lc.time[filtered_indexes],
+                            lc.counts[filtered_indexes],
+                            lc.counts_err[filtered_indexes],
+                            lc.gti)
+
+    DsCache.add(cache_key, lc)
+
     return lc
 
 
@@ -1596,12 +1616,21 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
 
 
 def load_gti_from_destination (gti_destination):
+
+    # Try to get the gtis from cache
+    cache_key = "GTI_" + DsCache.get_key(gti_destination, True)
+    if DsCache.contains(cache_key):
+        logging.debug("Returned cached gtis, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
+        return DsCache.get(cache_key)
+
     gti = None
     if gti_destination:
         gti_dataset = DaveReader.get_file_dataset(gti_destination)
         if gti_dataset:
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
+            DsCache.add(cache_key, gti)
             logging.debug("Load GTI success")
+
     return gti
 
 def get_divided_values_and_error (values_0, values_1, error_0, error_1):

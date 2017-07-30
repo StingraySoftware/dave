@@ -216,7 +216,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                           "EVENTS",
                                           ["TIME (" + timeUnit  + ")", "Count Rate(c/s)"],
                                           "Total Light Curve",
-                                          [], "fullWidth", false );
+                                          [], "fullWidth", false, true );
 
     var aLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -225,7 +225,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
                                             "Light Curve Range=A",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var bLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -234,7 +234,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
                                             "Light Curve Range=B",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var cLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -243,7 +243,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
                                             "Light Curve Range=C",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var dLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -252,7 +252,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
                                             "Light Curve Range=D",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
-                                            "", false );
+                                            "", false, true );
 
     var baLcPlot = this.getLightCurvePlot ( filename,
                                             bck_filename,
@@ -260,7 +260,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             "EVENTS",
                                             ["TIME (" + timeUnit  + ")", "B/A Color Ratio"],
                                             "Softness Light Curve (B/A)",
-                                            [], "fullWidth", false );
+                                            [], "fullWidth", false, false );
     baLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     var dcLcPlot = this.getLightCurvePlot ( filename,
@@ -269,7 +269,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                             "EVENTS",
                                             ["TIME (" + timeUnit  + ")", "D/C Color Ratio"],
                                             "Hardness Light Curve (D/C)",
-                                            [], "fullWidth", false );
+                                            [], "fullWidth", false, false );
     dcLcPlot.getDataFromServerFn = null; //Disable calls to server
 
     return [
@@ -355,14 +355,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                               bck_filename,
                                               gti_filename,
                                               "EVENTS", "PHA", "fullScreen", "Total Dynamical Power Spectrum" )
-
-              /* , this.getPlot (this.id + "_phaVsCounts_" + filename,
-                            filename, bck_filename, gti_filename,
-                            { type: "2d",
-                              labels: ["Channel", "Counts"],
-                              title: "Channel counts" },
-                            [ { table: "EVENTS", column:"PHA" } ],
-                            this.service.request_histogram, "")*/
           ];
   }
 
@@ -385,7 +377,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             );
   }
 
-  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable ) {
+  this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable, selectable ) {
 
     log("getLightCurvePlot: filename: " + filename );
     return new LcPlot(
@@ -397,7 +389,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         styles: { type: "ligthcurve",
                                   labels: labels,
                                   title: title,
-                                  selectable: true
+                                  selectable: selectable
                                 },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:"PHA" } ],
@@ -578,7 +570,8 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.addLightcurveAndPdsPlots = function (titlePrefix, filename, bck_filename, gti_filename, tableName, columnName, projectConfig, cssClass, refreshData){
     var mustRefreshData = isNull(refreshData) || refreshData;
 
-    var yLabel = ((titlePrefix == "B/A") || (titlePrefix == "D/C")) ? "Color Ratio" : "Count Rate(c/s)";
+    var isJoinedLc = ((titlePrefix == "B/A") || (titlePrefix == "D/C"));
+    var yLabel = isJoinedLc ? "Color Ratio" : "Count Rate(c/s)";
 
     var title = titlePrefix + " LC";
     if (titlePrefix == "SRC") {
@@ -595,7 +588,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                                 tableName,
                                                 ["TIME (" + projectConfig.timeUnit  + ")", yLabel],
                                                 title,
-                                                [], cssClass, false);
+                                                [], cssClass, false, !isJoinedLc);
     projectConfig.plots.push(lc_plot);
     if (titlePrefix == "B/A"){
       projectConfig.addPlotId(lc_plot.id, "LCA");
@@ -664,6 +657,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                                     );
     this.plots.push(covarianceSpectrumPlot);
     projectConfig.addPlotId(covarianceSpectrumPlot.id, "RMF");
+    if (this.waitingPlotType != "covariance") { covarianceSpectrumPlot.hide(); }
     this.appendPlot(covarianceSpectrumPlot, true);
 
     var rmsPlot = this.getRMSPlot ( projectConfig,
@@ -673,94 +667,21 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         "EVENTS", "PHA", "fullWidth", "RMS vs Energy" )
     this.plots.push(rmsPlot);
     projectConfig.addPlotId(rmsPlot.id, "RMF");
+    if (this.waitingPlotType != "rms") { rmsPlot.hide(); }
     this.appendPlot(rmsPlot, true);
 
-    /*var rmfPlot = this.getPlot (this.generatePlotId("rmf_" + projectConfig.rmfFilename),
-                                projectConfig.rmfFilename, "", "",
-                                { type: "2d",
-                                  labels: ["Channel", "Energy (keV)"],
-                                  title: "RMF" },
-                                [ { table: "EBOUNDS", column:"CHANNEL" },
-                                  { table: "EBOUNDS", column:"E_MIN" } ],
-                                null, "");
+    var phaseLagPlot = this.getPhaseLagPlot ( projectConfig,
+                        projectConfig.filename,
+                        projectConfig.bckFilename,
+                        projectConfig.gtiFilename,
+                        "EVENTS", "PHA", "fullWidth", "Phase lag vs Energy" )
+    this.plots.push(phaseLagPlot);
+    projectConfig.addPlotId(phaseLagPlot.id, "RMF");
+    if (this.waitingPlotType != "phaseLag") { phaseLagPlot.hide(); }
+    this.appendPlot(phaseLagPlot, true);
 
-    this.plots.push(rmfPlot);
-    this.appendPlot(rmfPlot, true);*/
-
-    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
+    this.waitingPlotType = null;
   }
-
-  /*this.addArfPlots = function (projectConfig){
-    var arfPlot = this.getPlot (this.generatePlotId("arf_" + projectConfig.arfFilename),
-                                projectConfig.arfFilename, "", "",
-                                { type: "2d",
-                                  labels: ["Energy (keV)", "Effective area (cm^2)"],
-                                  title: "ARF" },
-                                [ { table: "SPECRESP", column:"ENERG_LO" },
-                                  { table: "SPECRESP", column:"SPECRESP" } ],
-                                null, "");
-
-    this.plots.push(arfPlot);
-    this.appendPlot(arfPlot, true);
-
-    //this.tryAddEnergyAndUnfoldedSpectrumPlot(projectConfig);
-  }*/
-
-  /*this.tryAddEnergyAndUnfoldedSpectrumPlot = function (projectConfig) {
-
-    if ((projectConfig.filename != "") && (projectConfig.arfFilename != "") && (projectConfig.rmfFilename != "")){
-
-      var energySpectrumPlot = new Plot(
-                                this.generatePlotId("energySpectrum_" + projectConfig.filename),
-                                {
-                                  filename: projectConfig.filename,
-                                  bck_filename: projectConfig.bckFilename,
-                                  gti_filename: projectConfig.gtiFilename,
-                                  arf_filename: projectConfig.arfFilename,
-                                  styles:{ type: "2d",
-                                           labels: ["Energy(keV)", "Counts s^-1 keV^-1"],
-                                           title: "Energy Spectrum" }
-                                },
-                                currentObj.getUnfoldedSpectrumDataFromServer,
-                                currentObj.onFiltersChangedFromPlot,
-                                currentObj.onPlotReady,
-                                currentObj.$toolBar,
-                                "fullWidth",
-                                false
-                              );
-
-      energySpectrumPlot.plotConfig.xAxisType = "log";
-      energySpectrumPlot.plotConfig.yAxisType = "log";
-      currentObj.energySpectrumPlotIdx = currentObj.plots.length;
-      currentObj.plots.push(energySpectrumPlot);
-      currentObj.appendPlot(energySpectrumPlot, true);
-
-      var unfoldedSpectrumPlot = new Plot(
-                                this.generatePlotId("unfoldedSpectrum_" + projectConfig.filename),
-                                {
-                                  styles:{ type: "2d",
-                                           labels: ["Energy(keV)", "Ph s^-1 cm^-2 keV^-1"],
-                                           title: "Unfolded Spectrum" }
-                                },
-                                null,
-                                currentObj.onFiltersChangedFromPlot,
-                                currentObj.onPlotReady,
-                                currentObj.$toolBar,
-                                "",
-                                false
-                              );
-
-      unfoldedSpectrumPlot.plotConfig.xAxisType = "log";
-      unfoldedSpectrumPlot.plotConfig.yAxisType = "log";
-      currentObj.unfoldedSpectrumPlotIdx = currentObj.plots.length;
-      currentObj.plots.push(unfoldedSpectrumPlot);
-      currentObj.appendPlot(unfoldedSpectrumPlot, false);
-
-      return true;
-    }
-
-    return false;
-  }*/
 
   this.getDividedLightCurvesFromColorsDataFromServer = function (paramsData, fn) {
 
@@ -782,33 +703,32 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   };
 
-  this.getUnfoldedSpectrumDataFromServer = function (paramsData, fn) {
+  this.getPhaseLagPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
 
-    log("OutputPanel getUnfoldedSpectrumDataFromServer...");
-
-    currentObj.service.request_unfolded_spectrum(paramsData, function( jsdata ) {
-      data = JSON.parse(jsdata);
-
-      if (data == null) {
-        log("request_unfolded_spectrum data null, outputPanel: " + currentObj.id);
-        return;
-
-      } else {
-
-        var energySpectrumPlot = currentObj.plots[currentObj.energySpectrumPlotIdx];
-        if (energySpectrumPlot.isVisible) {
-          energySpectrumPlot.setData($.extend(true, [], [ data[0], data[1] ]));
-        }
-
-        /*var unfoldedSpectrumPlot = currentObj.plots[currentObj.unfoldedSpectrumPlotIdx];
-        if (unfoldedSpectrumPlot.isVisible) {
-          unfoldedSpectrumPlot.setData($.extend(true, [], [ data[0], data[2] ]));
-        }*/
-
-      }
-    });
-
-  };
+    log("getPhaseLagPlot: filename: " + filename );
+    return new PhaseLagPlot(
+                      this.generatePlotId("phaseLag_" + filename),
+                      {
+                        filename: filename,
+                        bck_filename: bck_filename,
+                        gti_filename: gti_filename,
+                        styles: { type: "ligthcurve",
+                                  labels: ["Energy(keV)", "Phase lag"],
+                                  title: title,
+                                  showFitBtn: true },
+                        axis: [ { table: tableName, column:"TIME" },
+                                { table: tableName, column:columnName } ],
+                        mandatoryFilters: mandatoryFilters,
+                      },
+                      this.service.request_phase_lag_spectrum,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),
+                      "TimingPlot " + cssClass,
+                      false,
+                      projectConfig
+                    );
+  }
 
   this.getRMSPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName, cssClass, title, mandatoryFilters ) {
 

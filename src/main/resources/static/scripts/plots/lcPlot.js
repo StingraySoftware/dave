@@ -4,122 +4,65 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   var currentObj = this;
 
-  Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
+  PlotWithSettings.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
   //LC plot attributes:
-  this.settingsVisible = false;
   this.baselineEnabled = false;
 
-  this.settingsPanel = $('<div class="settings">' +
-                            '<div class="row title"><h3>Settings:</h3></div>' +
-                            '<div class="row">' +
-                              '<div class="col-xs-6 leftCol">' +
-                              '</div>' +
-                              '<div class="col-xs-6 rightCol">' +
-                              '</div>' +
-                            '</div>' +
-                          '</div>');
-  this.settingsPanel.hide();
-  this.$html.prepend(this.settingsPanel);
-
-  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '"><i class="fa fa-cog" aria-hidden="true"></i></button>');
-  this.$html.find(".plotTools").append(this.btnSettings);
-  this.btnSettings.click(function(event){
-    currentObj.showSettings();
-  });
-
-  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
-  this.btnBack.hide();
-  this.$html.find(".plotTools").append(this.btnBack);
-  this.btnBack.click(function(event){
-    currentObj.hideSettings();
-  });
-
+  this.baseline_opts = {};
+  this.baseline_opts.lam = { default:1000, min:1, max: 100000}; //Baseline Smoothness ranges
+  this.baseline_opts.p = { default:0.01, min:0.001, max: 1}; //Baseline Asymmetry ranges
+  this.baseline_opts.niter = { default:10, min:1, max: 1000}; //Baseline N iterations ranges
 
   //LC plot methods:
+  this.addSettingsControls = function(){
 
-  this.setSettingsTitle = function (title) {
-    this.settingsPanel.find(".title").find("h3").first().html(title);
-  }
+    if (this.settingsPanel.find(".baseline").length == 0) {
 
-  this.showSettings = function(){
-    if (!this.settingsVisible) {
-      this.settingsVisible = true;
-      var height = parseInt(this.$html.find(".plot").height());
-      this.$html.find(".plot").hide();
-      this.$html.find(".plotTools").children().hide();
-      this.btnBack.show();
-      this.settingsPanel.show();
-      this.settingsPanel.css({ 'height': height + 'px' });
-
-      var title = 'Settings:';
-      if (!isNull(this.plotConfig.styles.title)){
-        title = this.plotConfig.styles.title + ' Settings:';
-      }
-
-      this.setSettingsTitle(title);
-
-      var tab = getTabForSelector(this.id);
-
-      if (this.settingsPanel.find(".baseline").length == 0) {
-
-        var lamValue = 1000;
-        var pValue = 0.01;
-        var niterValue = 10;
-
-        var $baseline = $('<div class="baseline">' +
-                            '<h3>' +
-                              'Draw baseline:' +
-                              '<div class="switch-wrapper">' +
-                                '<div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
-                              '</div>' +
-                            '</h3>' +
-                            '<div class="baselineContainer">' +
-                              '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + lamValue + '" value="' + lamValue + '" /></p>' +
-                              '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + pValue + '" value="' + pValue + '" /></p>' +
-                              '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + niterValue + '" value="' + niterValue + '" /></p>' +
+      var $baseline = $('<div class="baseline">' +
+                          '<h3>' +
+                            'Draw baseline:' +
+                            '<div class="switch-wrapper">' +
+                              '<div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
                             '</div>' +
-                          '</div>');
+                          '</h3>' +
+                          '<div class="baselineContainer">' +
+                            '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + this.baseline_opts.lam.default + '" value="' + this.baseline_opts.lam.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.lam.min + '-' + this.baseline_opts.lam.max + '</span></p>' +
+                            '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + this.baseline_opts.p.default + '" value="' + this.baseline_opts.p.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.p.min + '-' + this.baseline_opts.p.max + '</span></p>' +
+                            '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + this.baseline_opts.niter.default + '" value="' + this.baseline_opts.niter.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.niter.min + '-' + this.baseline_opts.niter.max + '</span></p>' +
+                            '<p style="font-size:0.8em; color:#777777;">Algorithm: Asymmetric Least Squares Smoothing (P. Eilers and H. Boelens, 2005)</p>' +
+                          '</div>' +
+                        '</div>');
 
-        //Prepares switchBox
-        var switchBox = $baseline.find("#switch_" + this.id);
-        switchBox.click( function ( event ) {
-          currentObj.baselineEnabled = !currentObj.baselineEnabled;
-          currentObj.onBaselineValuesChanged();
-          if (currentObj.baselineEnabled) {
-            $(this).switchClass("fa-plus-square", "fa-minus-square");
-            currentObj.settingsPanel.find(".baselineContainer").fadeIn();
-          } else {
-            $(this).switchClass("fa-minus-square", "fa-plus-square");
-            currentObj.settingsPanel.find(".baselineContainer").fadeOut();
-          }
-        });
+      //Prepares switchBox
+      var switchBox = $baseline.find("#switch_" + this.id);
+      switchBox.click( function ( event ) {
+        currentObj.baselineEnabled = !currentObj.baselineEnabled;
+        currentObj.onBaselineValuesChanged();
+        if (currentObj.baselineEnabled) {
+          $(this).switchClass("fa-plus-square", "fa-minus-square");
+          currentObj.settingsPanel.find(".baselineContainer").fadeIn();
+        } else {
+          $(this).switchClass("fa-minus-square", "fa-plus-square");
+          currentObj.settingsPanel.find(".baselineContainer").fadeOut();
+        }
+      });
 
-        //Prepares input events
-        $baseline.find(".baselineContainer").hide();
-        $baseline.find("input").on('change', this.onBaselineValuesChanged);
+      //Prepares input events
+      $baseline.find(".baselineContainer").hide();
+      $baseline.find("input").on('change', this.onBaselineValuesChanged);
 
-        this.settingsPanel.find(".leftCol").append($baseline);
-      }
-    }
-  }
+      this.settingsPanel.find(".leftCol").append($baseline);
 
-  this.hideSettings = function(){
-    if (this.settingsVisible) {
-      this.settingsVisible = false;
-      this.settingsPanel.hide();
-      this.$html.find(".plot").show();
-      this.$html.find(".plotTools").children().show();
-      this.btnBack.hide();
-      this.refreshData();
+      this.onSettingsCreated();
     }
   }
 
   this.onBaselineValuesChanged = function(){
     if (currentObj.baselineEnabled) {
-      currentObj.plotConfig.baseline_opts.lam = getInputFloatValue(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam);
-      currentObj.plotConfig.baseline_opts.p = getInputFloatValue(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p);
-      currentObj.plotConfig.baseline_opts.niter = getInputIntValue(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter);
+      currentObj.plotConfig.baseline_opts.lam = getInputIntValueCropped(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam, currentObj.baseline_opts.lam.min, currentObj.baseline_opts.lam.max);
+      currentObj.plotConfig.baseline_opts.p = getInputFloatValueCropped(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p, currentObj.baseline_opts.p.min, currentObj.baseline_opts.p.max);
+      currentObj.plotConfig.baseline_opts.niter = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter, currentObj.baseline_opts.niter.min, currentObj.baseline_opts.niter.max);
     } else {
       currentObj.disableBaseline();
     }
@@ -173,8 +116,37 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     return plotlyConfig;
   }
 
+  this.updateMinMaxCoords = function (){
+    if (this.data != null) {
+      var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+      this.minX = Math.min.apply(null, this.data[coords.x].values);
+      this.minY = Math.min.apply(null, this.data[coords.y].values);
+      this.maxX = Math.max.apply(null, this.data[coords.x].values);
+      this.maxY = Math.max.apply(null, this.data[coords.y].values);
+
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)){
+        tab.updateMinMaxCountRate(this.minY, this.maxY);
+      }
+    }
+  }
+
   this.getPlotDefaultTracesCount = function (){
       return (currentObj.data.length > 5 && currentObj.data[5].values.length > 0) ? 2 : 1;
+  }
+
+  this.mustPropagateAxisFilter = function (axis) {
+    return (axis == 1) || this.plotConfig.styles.labels[axis].startsWith(this.plotConfig.axis[axis].column);
+  }
+
+  this.getAxisForPropagation = function (axis) {
+    if (axis == 1) {
+      var propagationAxis =  $.extend({}, this.plotConfig.axis[axis]);
+      propagationAxis.column = "RATE";
+      return propagationAxis;
+    } else {
+      return this.plotConfig.axis[axis];
+    }
   }
 
   //LC BaseLine parameters:

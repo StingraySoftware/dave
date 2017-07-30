@@ -152,10 +152,8 @@ def lcurve_from_fits(fits_file, gtistring='GTI',
 
     try:
         gtitable = lchdulist[gtistring].data
-        gti_list = np.array([[a, b]
-                             for a, b in zip(gtitable.field('START'),
-                                             gtitable.field('STOP'))],
-                            dtype=np.longdouble)
+        gti_list = np.column_stack((gtitable.field('START'),
+                                    gtitable.field('STOP')))
     except:
         gti_list = create_gti_from_condition(time, good_intervals)
 

@@ -37,6 +37,12 @@ function Service (base_url) {
       .fail(errorFn);
   };
 
+  this.get_dataset_header  = function ( filename, fn, errorFn, params ) {
+    $.get( thisService.base_url + "/get_dataset_header", { filename: filename } )
+      .done(function(res){fn(res, params);})
+      .fail(errorFn);
+  };
+
   this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn, params ) {
     $.get( thisService.base_url + "/append_file_to_dataset", { filename: filename, nextfile: nextfile } )
       .done(function(res){fn(res, params);})
@@ -74,10 +80,6 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_plot_data", data, fn);
   };
 
-  this.request_histogram = function (data, fn) {
-    return thisService.make_ajax_call("get_histogram", data, fn);
-  };
-
   this.request_lightcurve = function (data, fn) {
     return thisService.make_ajax_call("get_lightcurve", data, fn);
   };
@@ -106,12 +108,12 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_cross_spectrum", data, fn);
   };
 
-  this.request_unfolded_spectrum  = function ( data, fn ) {
-    return thisService.make_ajax_call("get_unfolded_spectrum", data, fn);
-  };
-
   this.request_covariance_spectrum  = function ( data, fn ) {
     return thisService.make_ajax_call("get_covariance_spectrum", data, fn);
+  };
+
+  this.request_phase_lag_spectrum  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_phase_lag_spectrum", data, fn);
   };
 
   this.request_rms_spectrum  = function ( data, fn ) {

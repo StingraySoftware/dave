@@ -17,6 +17,16 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     log("XSTabPanel getXSDataFromServer...");
 
+    var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
+    if (timeLagPlot.isVisible) {
+      timeLagPlot.setReadyState(false);
+    }
+
+    var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
+    if (coherencePlot.isVisible) {
+      coherencePlot.setReadyState(false);
+    }
+
     currentObj.service.request_cross_spectrum(paramsData, function( jsdata ) {
 
       log("XSData received!, XSTabPanel: " + currentObj.id);
@@ -58,7 +68,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.addPlot = function (plot){
     this.outputPanel.plots.push(plot);
     this.projectConfig.plots.push(plot);
-    this.outputPanel.appendPlot(plot);
+    this.outputPanel.appendPlot(plot, false);
   };
 
 
@@ -112,13 +122,12 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               false,
                               this.projectConfig
                             );
-
     this.xsPlotIdx = this.outputPanel.plots.length;
     this.addPlot(xsPlot);
 
 
-    //Adds Cross Spectrum Plot to outputPanel
-    var timeLagPlot = new LcPlot(
+    //Adds TimeLag Plot to outputPanel
+    var timeLagPlot = new TimingPlot(
                               this.id + "_timelag_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
@@ -132,13 +141,12 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               "",
                               false
                             );
-
     this.timeLagPlotIdx = this.outputPanel.plots.length;
     this.addPlot(timeLagPlot);
 
 
-    //Adds Cross Spectrum Plot to outputPanel
-    var coherencePlot = new LcPlot(
+    //Adds Coherence Plot to outputPanel
+    var coherencePlot = new TimingPlot(
                               this.id + "_coherence_" + (new Date()).getTime(),
                               {
                                 styles: { type: "ligthcurve",
@@ -152,10 +160,11 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               "",
                               false
                             );
-
     this.coherencePlotIdx = this.outputPanel.plots.length;
     this.addPlot(coherencePlot);
 
+    //Request plot data after all plots were added
+    xsPlot.onDatasetValuesChanged(this.outputPanel.getFilters());
   }
 
   log("XSTabPanel ready! id: " + this.id);

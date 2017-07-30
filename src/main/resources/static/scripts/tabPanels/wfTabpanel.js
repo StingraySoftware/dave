@@ -65,10 +65,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         waitingDialog.show('Applying RMF: ' + filenames[0]);
         currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
-      } else if ((selectorKey == "ARF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Applying ARF: ' + filenames[0]);
-        currentObj.projectConfig.setFile("ARF", filenames[0]);
-        currentObj.onArfUploaded();
       }
 
     } else if (filenames.length > 1){
@@ -84,10 +80,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       } else if (selectorKey == "RMF") {
         log("onDatasetChanged: RMF files doesn't support multiple selection!");
         return;
-      } else if (selectorKey == "ARF") {
-        log("onDatasetChanged: ARF files doesn't support multiple selection!");
-        return;
       }
+
       currentObj.onSchemaChangedMultipleFiles(null, params);
 
     } else {
@@ -118,6 +112,17 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           currentObj.projectConfig.setFile("LC_D/C", "");
         }
 
+        if (selectorKey.startsWith("LC") && !selectorKey.startsWith("LC_")){
+          //If uploaded file is a color filtered lightcurve,
+          //tries to get filter info from file header info
+          currentObj.service.get_dataset_header(filenames[0], function( jsonHeader, params ){
+
+            var rangeText = currentObj.extractEnergyRangeTextFromHeader(JSON.parse(jsonHeader));
+            currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
+          });
+
+        }
+
         //Add the new plots for this selectorKey
         currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
         currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
@@ -138,17 +143,29 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onSrcSchemaChanged = function ( schema, params ) {
     log("onSrcSchemaChanged:" + schema);
-    currentObj.onSchemaChangedWithKey("SRC", schema, params);
+    if (!isNull(schema)){
+      currentObj.onSchemaChangedWithKey("SRC", schema, params);
+    } else {
+      showError("Wrong SRC file!");
+    }
   }
 
   this.onBckSchemaChanged = function ( schema, params ) {
     log("onBckDatasetChanged:" + schema);
-    currentObj.onSchemaChangedWithKey("BCK", schema, params);
+    if (!isNull(schema)){
+      currentObj.onSchemaChangedWithKey("BCK", schema, params);
+    } else {
+      showError("Wrong BCK file!");
+    }
   }
 
   this.onGtiSchemaChanged = function ( schema, params ) {
     log("onGtiSchemaChanged:" + schema);
-    currentObj.onSchemaChangedWithKey("GTI", schema, params);
+    if (!isNull(schema)){
+      currentObj.onSchemaChangedWithKey("GTI", schema, params);
+    } else {
+      showError("Wrong GTI file!");
+    }
   }
 
   this.onRmfApplied = function ( result ) {
@@ -162,7 +179,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         log("onRmfApplied: Success!");
         var schema = JSON.parse(jsonSchema);
-        currentObj.projectConfig.setSchema(schema);
+        currentObj.projectConfig.updateSchema(schema);
         currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
         //Cleans previous plots for RMF key
@@ -172,30 +189,25 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Add RMF plots
         currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
-        //Enable Spectral Timing Section
+        /*//Enable Spectral Timing Section
         if (!currentObj.toolPanel.isSectionEnabled("TimingPlot")){
           currentObj.toolPanel.toggleEnabledSection("TimingPlot");
         } else {
           currentObj.outputPanel.setToolbarSectionVisible("TimingPlot", true);
-        }
+        }*/
 
         //Hides upload RMF buttons from Analyze tab
         currentObj.toolPanel.$html.find(".rmsBtn").remove();
         currentObj.toolPanel.$html.find(".covarianceBtn").remove();
+        currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
         waitingDialog.hide();
 
       }, currentObj.onSchemaError, null);
     } else {
       log("onRmfApplied error:" + JSON.stringify(result));
-      waitingDialog.hide();
+      showError("Wrong RMF file!");
     }
-  }
-
-  this.onArfUploaded = function () {
-    log("onArfUploaded:");
-    //currentObj.outputPanel.addArfPlots (currentObj.projectConfig);
-    waitingDialog.hide();
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
@@ -204,7 +216,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
 
     var jsonSchema = JSON.parse(schema);
-    if (isNull(jsonSchema.error)){
+    if (!isNull(jsonSchema) && isNull(jsonSchema.error)){
 
       if (selectorKey == "SRC"){
 
@@ -230,15 +242,24 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                           currentObj.showCrossSpectraSelection,
                                                           timingPlotsButtons);
 
-        timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
-                                                          "covarianceBtn",
-                                                          currentObj.showUploadRMFDialog,
-                                                          timingPlotsButtons);
+        if (currentObj.projectConfig.schema.isEventsFile()) {
+          //Adds
+          timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
+                                                            "covarianceBtn",
+                                                            function () { currentObj.showUploadRMFDialog("covariance") },
+                                                            timingPlotsButtons);
 
-        timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
-                                                          "rmsBtn",
-                                                          currentObj.showUploadRMFDialog,
-                                                          timingPlotsButtons);
+          timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
+                                                            "rmsBtn",
+                                                            function () { currentObj.showUploadRMFDialog("rms") },
+                                                            timingPlotsButtons);
+
+          timingPlotsButtons = currentObj.addButtonToArray("Phase lag spectrum",
+                                                            "phaseLagBtn",
+                                                            function () { currentObj.showUploadRMFDialog("phaseLag") },
+                                                            timingPlotsButtons);
+        }
+
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
             { cssClass: "PDSPlot", title:"Power Density Spectra" },
@@ -320,6 +341,53 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       waitingDialog.hide();
   }
 
+  this.extractEnergyRangeTextFromHeader = function (header) {
+
+    var tableName = "RATE";
+    var filterColumn = "PI";
+    var searchFieldPrefix = "DSTYP";
+    var unitFieldPrefix = "DSUNI";
+    var valueFieldPrefix = "DSVAL";
+
+    if (!isNull(header) && !isNull(header[tableName])) {
+
+      var rateTable = header[tableName];
+
+      for (i=0; i<20; i++) {
+        //Looks for the searchField index
+        var searchField = searchFieldPrefix + i;
+        if (!isNull(rateTable[searchField]) && rateTable[searchField] == filterColumn){
+          var unit = rateTable[unitFieldPrefix + i];
+          var range = rateTable[valueFieldPrefix + i];
+
+          if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
+            var rangeVals = range.split(":");
+            return "From " + rangeVals[0] + " " + unit + ", to " + rangeVals[1] + " " + unit;
+          }
+        }
+      }
+    }
+
+    return "";
+  }
+
+  this.updateMinMaxCountRate = function (minRate, maxRate) {
+    if (this.projectConfig.schema.isEventsFile()) {
+
+      minRate = Math.floor (minRate);
+      maxRate = Math.ceil (maxRate);
+
+      if (!currentObj.toolPanel.isCountRateSliderCreated()) {
+        //Creates the rate slider if not created yet:
+        currentObj.toolPanel.createCountRateSlider(minRate, maxRate);
+      } else {
+        //Udpated rate slider min and max values
+        currentObj.toolPanel.updateCountRateSlider(minRate, maxRate);
+      }
+
+    }
+  }
+
   this.refreshPlotsData = function () {
     currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
     currentObj.outputPanel.onDatasetValuesChanged();
@@ -337,9 +405,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onTimeRangeChanged = function (timeRange) {
-    log("onTimeRangeChanged: timeRange: " + timeRange);
-    currentObj.projectConfig.maxSegmentSize = timeRange;
-    currentObj.toolPanel.onTimeRangeChanged(timeRange);
+    this.updateTimeRange(timeRange);
+    this.toolPanel.onTimeRangeChanged(timeRange);
+  }
+
+  this.updateTimeRange = function (timeRange) {
+    this.projectConfig.maxSegmentSize = timeRange * 0.95; //Math.min (timeRange * 0.95, currentObj.projectConfig.maxSegmentSize);
+    this.projectConfig.avgSegmentSize = this.projectConfig.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
   }
 
   this.getReplaceColumn = function () {
@@ -422,13 +494,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.showCrossSpectraSelection = function () {
-    var switchablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
-    if (switchablePlots.length > 1) {
+    var selectablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
+    if (selectablePlots.length > 1) {
 
       //Else show dialog for choose the desired plots
       var lcPlotButtons = "";
-      for (i in switchablePlots) {
-         var plot = switchablePlots[i];
+      for (i in selectablePlots) {
+         var plot = selectablePlots[i];
          lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + (plot.$html.hasClass("plotSelected")?" plotSelected":"") + '" plotId="' + plot.id + '">' +
                              '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
                            '</button>';
@@ -475,14 +547,15 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
   }
 
-  this.showUploadRMFDialog = function () {
+  this.showUploadRMFDialog = function (plotType) {
     //Show upload RMF file
     var $uploadRMFDialog = $('<div id="uploadRMFDialog_' + currentObj.id +  '" title="Upload RMF file:">' +
                                 '<div class="rmfDialogContainer">' +
-                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum" and "RMS spectrum"</p>' +
+                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum", "RMS spectrum" and "Phase lag spectrum"</p>' +
                                 '</div>' +
                             '</div>');
 
+    currentObj.outputPanel.waitingPlotType = plotType;
     currentObj.$html.append($uploadRMFDialog);
     $uploadRMFDialog.dialog({
        width: 450,

@@ -180,7 +180,7 @@ h3
   padding: 0;
 }
 
-.plotSelected
+.plotSelected, .plotSelected.plotHover
 {
   border: 1px solid #ff0000 !important;
 }
@@ -240,7 +240,8 @@ h3
 
 .plotContainer .hoverDisabler
 {
-  background-color: rgba(0, 0, 0, 0.03);
+  height: 92%;
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .plotContainer .settings h3
@@ -341,6 +342,11 @@ h3
 }
 
 .fileSelector .btnChange {
+  font-size: 0.85em;
+}
+
+.fileSelector .InfoText {
+  color: #2e6da4;
   font-size: 0.85em;
 }
 

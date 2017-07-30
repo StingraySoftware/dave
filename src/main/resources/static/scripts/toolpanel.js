@@ -42,12 +42,14 @@ function ToolPanel (id,
   this.dragDropEnabled = false;
 
   this.file_selectors_ids_array = [];
+  this.file_selectors_array = [];
   this.selectors_array = [];
   this.replaceColumn = "PHA";
 
   this.addFileSelector = function (selector) {
     this.$html.find(".fileSelectorsContainer").append(selector.$html);
     this.file_selectors_ids_array.push(selector.id);
+    this.file_selectors_array.push(selector);
   }
 
   this.clearFileSelectors = function () {
@@ -63,11 +65,27 @@ function ToolPanel (id,
      this.$html.find(".fileSelectorsContainer").append($selectedFile);
   }
 
+  this.setInfoTextToFileSelector = function (selectorKey, infoText) {
+    var fileSelector = this.getFileSelector(selectorKey);
+    if (!isNull(fileSelector)) {
+      fileSelector.showInfoText(infoText);
+    }
+  }
+
+  this.getFileSelector = function (selectorKey) {
+    for (idx in this.file_selectors_array) {
+      if (this.file_selectors_array[idx].selectorKey == selectorKey) {
+        return this.file_selectors_array[idx];
+      }
+    }
+
+    return null;
+  }
+
   this.showEventsSelectors = function ( panel ) {
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
     this.rmfFileSelector.show();
-    this.arfFileSelector.show();
     this.lcAFileSelector.hide();
     this.lcBFileSelector.hide();
     this.lcCFileSelector.hide();
@@ -78,7 +96,6 @@ function ToolPanel (id,
     this.bckFileSelector.hide();
     this.gtiFileSelector.hide();
     this.rmfFileSelector.hide();
-    this.arfFileSelector.hide();
     this.lcAFileSelector.show();
     this.lcBFileSelector.show();
     this.lcCFileSelector.show();
@@ -92,7 +109,12 @@ function ToolPanel (id,
 
   this.onTimeRangeChanged = function (timeRange) {
     if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
-      this.binSelector.setMinMaxValues(timeRange / CONFIG.MAX_PLOT_POINTS, timeRange / CONFIG.MIN_PLOT_POINTS);
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)){
+        var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, tab.projectConfig.minBinSize);
+        var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, tab.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
+        this.binSelector.setMinMaxValues(minValue, maxValue);
+      }
     }
   }
 
@@ -111,9 +133,8 @@ function ToolPanel (id,
       this.showEventsSelectors();
 
       if (!projectConfig.schema.hasColumn("PHA")){
-          //PHA Column doesn't exist, show we can't apply RMF or ARF files
+          //PHA Column doesn't exist, show we can't apply RMF file
           this.rmfFileSelector.disable("PHA column not found in SRC file");
-          this.arfFileSelector.disable("PHA column not found in SRC file");
       }
 
       //Caluculates max, min and step values for slider with time ranges
@@ -175,7 +196,8 @@ function ToolPanel (id,
 
         for (columnName in table) {
           var column = table[columnName];
-          if ((columnName != "HEADER") && (columnName != "HEADER_COMMENTS") && (columnName != "E") && column.min_value < column.max_value) {
+          if (!CONFIG.EXCLUDED_FILTERS.includes(columnName) && column.min_value < column.max_value) {
+
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
@@ -192,7 +214,7 @@ function ToolPanel (id,
             this.$html.find(".selectorsContainer").append(selector.$html);
 
             if ((columnName == "TIME")
-                && !CONFIG.AUTO_BINSIZE
+                && (!CONFIG.AUTO_BINSIZE || projectConfig.schema.isLightCurveFile())
                 && projectConfig.isMaxTimeRangeRatioFixed()) {
 
                   //If full events were cropped to CONFIG.MAX_PLOT_POINTS
@@ -263,6 +285,8 @@ function ToolPanel (id,
       var max_value = min_value + increment;
       if (column.id == "PHA") {
         selector.precision = 0;
+      } else {
+        selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
       }
       selector.setValues (min_value, max_value);
       selector.setEnabled (true);
@@ -285,6 +309,7 @@ function ToolPanel (id,
                                           column.min_value, column.max_value,
                                           this.onSelectorValuesChanged,
                                           this.selectors_array);
+        selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
         selector.$html.insertAfter("." + this.id + "_TIME");
 
         //Prepares Energy color filters
@@ -292,6 +317,34 @@ function ToolPanel (id,
         this.onColorFilterTypeChanged("E");
         this.setColorFilterRadios("E");
       }
+    }
+  }
+
+  this.isCountRateSliderCreated = function ( visible ) {
+    return !isNull(getTabForSelector(this.id + "_Rate"));
+  }
+
+  this.createCountRateSlider = function ( minRate, maxRate ) {
+    var rateSelector = new sliderSelector(this.id + "_Rate",
+                                      "COUNT RATE (c/s):",
+                                      { table:"EVENTS", column:"RATE" },
+                                      "From", "To",
+                                      minRate, maxRate,
+                                      this.onSelectorValuesChanged,
+                                      this.selectors_array);
+    rateSelector.$html.insertAfter("." + this.id + "_TIME");
+  }
+
+  this.updateCountRateSlider = function ( minRate, maxRate ) {
+    var rateSliderId = this.id + "_Rate";
+    var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
+    if (!isNull(rateSelector)) {
+      var newMinRate = Math.min(rateSelector.initFromValue, minRate);
+      var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
+      if ((newMinRate != rateSelector.initFromValue)
+          || (newMaxRate != rateSelector.initToValue)) {
+            rateSelector.setMinMaxValues(newMinRate, newMaxRate);
+          }
     }
   }
 
@@ -563,10 +616,6 @@ function ToolPanel (id,
   this.rmfFileSelector = new fileSelector("theRmfFileSelector_" + this.id, "Rmf File:", "RMF", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.rmfFileSelector);
   this.rmfFileSelector.hide();
-
-  this.arfFileSelector = new fileSelector("theArfFileSelector_" + this.id, "Arf File:", "ARF", service.upload_form_data, this.onDatasetChangedFn);
-  this.addFileSelector(this.arfFileSelector);
-  this.arfFileSelector.hide();
 
   //Lightcurve file selectors
   this.lcAFileSelector = new fileSelector("lcAFileSelector_" + this.id, "Lc A File:", "LCA", service.upload_form_data, this.onLcDatasetChangedFn);

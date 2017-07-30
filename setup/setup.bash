@@ -135,8 +135,12 @@ echo "Using npm $(npm --version)"
 
 
 # Install Python dependencies
-echo Creating Python environment
-conda env create -f setup/environment.yml
+if conda env list | grep -q "^dave[ ]\+"; then
+  echo "dave virtual Python environment already exists"
+else
+  echo "Creating virtual Python environment dave"
+  conda env create -f setup/environment.yml
+fi
 source activate dave
 
 
@@ -144,8 +148,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# May 4, 2017 -> https://github.com/StingraySoftware/stingray/pull/188/commits/e9d35cd44019637bfc99f997349ce50e3bdeb603
-STINGRAY_COMMIT_HASH=e9d35cd44019637bfc99f997349ce50e3bdeb603
+# Jul 26, 2017 -> https://github.com/StingraySoftware/stingray/commit/6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
+STINGRAY_COMMIT_HASH=6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
 
 if [ ! -e $STINGRAY_FOLDER ]; then
 
@@ -161,26 +165,40 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	#Install stingray libraries
 	pip install -r requirements.txt
 
-	#Build stingray
-	python setup.py install
-
-	cd $STINGRAY_FOLDER/astropy_helpers
-
-	#Build astropy_helpers
-	python setup.py install
-
-	cd $DIR/..
-
-	# Copy built libraries to python project
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
+
+		#Build stingray
+		python setup.py install
+
+		cd $STINGRAY_FOLDER/astropy_helpers
+
+		#Build astropy_helpers
+		python setup.py install
+
+		cd $DIR/..
+
+		# Copy built libraries to python project
 		\cp -r $STINGRAY_FOLDER/build/lib.linux-x86_64-3.5/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
-		\cp -r $STINGRAY_FOLDER/build/lib.macosx-10.5-x86_64-3.5/stingray src/main/python
-		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.macosx-10.5-x86_64-3.5/astropy_helpers src/main/python
+
+		#Build stingray
+		sudo python setup.py install
+
+		cd $STINGRAY_FOLDER/astropy_helpers
+
+		#Build astropy_helpers
+		sudo python setup.py install
+
+		cd $DIR/..
+
+		# Copy built libraries to python project
+		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
+		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
+		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi
 fi
 

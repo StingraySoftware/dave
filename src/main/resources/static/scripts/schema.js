@@ -135,9 +135,10 @@ function Schema(schema){
         //Else set segmSize from splitting totalDuration by 30
         return this.getTotalDuration() / 30;
       }
+    } else {
+      
+      return this.getTimeResolution();
     }
-
-    return this.getTimeResolution();
   }
 
   this.getMaxSegmentSize = function () {

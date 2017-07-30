@@ -8,7 +8,6 @@ function ProjectConfig(){
   this.gtiFilename = "";
   this.gtiFilenames = [];
   this.rmfFilename = "";
-  this.arfFilename = "";
   this.selectorFilenames = [];
 
   this.binSize = 0;
@@ -33,7 +32,7 @@ function ProjectConfig(){
 
   this.setSchema = function (schema) {
 
-    this.schema = new Schema(schema);
+    this.updateSchema(schema);
 
     // Sets the time unit
     this.timeUnit = this.schema.getTimeUnit();
@@ -54,6 +53,10 @@ function ProjectConfig(){
     this.avgSegmentSize = this.schema.getAvgSegmentSize();
   }
 
+  this.updateSchema = function (schema) {
+    this.schema = new Schema(schema);
+  }
+
   this.setFiles = function (selectorKey, filenames, filename) {
     if (selectorKey == "SRC") {
       this.filenames = filenames;
@@ -66,8 +69,6 @@ function ProjectConfig(){
       this.gtiFilename = filename;
     } else if (selectorKey == "RMF") {
       this.rmfFilename = filename;
-    } else if (selectorKey == "ARF") {
-      this.arfFilename = filename;
     }
   }
 

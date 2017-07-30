@@ -70,6 +70,16 @@ def get_dataset_schema(filename, target):
     return json.dumps(schema, cls=NPEncoder)
 
 
+def get_dataset_header(filename, target):
+    destination = get_destination(filename, target)
+    if not destination:
+        return common_error("Invalid file or cache key, filename: %s" % filename)
+
+    header = DaveEngine.get_dataset_header(destination)
+    return json.dumps(header, cls=NPEncoder)
+
+
+
 # append_file_to_dataset: Appends Fits data to a dataset
 #
 # @param: filename: filename or dataset cache key
@@ -150,36 +160,6 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
     data = DaveEngine.get_plot_data(src_destination, bck_destination, gti_destination, filters, styles, axis)
 
     logging.debug("get_plot_data: Finish!")
-
-    return json.dumps(data, cls=NPEncoder)
-
-
-def get_histogram(src_filename, bck_filename, gti_filename, target, filters, axis):
-    src_destination = get_destination(src_filename, target)
-    if not src_destination:
-        return common_error("Invalid file or cache key for source data")
-
-    bck_destination = ""
-    if bck_filename:
-        bck_destination = get_destination(bck_filename, target)
-        if not bck_destination:
-            return common_error("Invalid file or cache key for backgrund data")
-
-    gti_destination = ""
-    if gti_filename:
-        gti_destination = get_destination(gti_filename, target)
-        if not gti_destination:
-            return common_error("Invalid file or cache key for gti data")
-
-    logging.debug("get_histogram src: %s" % src_filename)
-    logging.debug("get_histogram bck: %s" % bck_filename)
-    logging.debug("get_histogram gti: %s" % gti_filename)
-    logging.debug("get_histogram: filters %s" % filters)
-    logging.debug("get_histogram: axis %s" % axis)
-
-    data = DaveEngine.get_histogram(src_destination, bck_destination, gti_destination, filters, axis)
-
-    logging.debug("get_histogram: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 
@@ -284,22 +264,6 @@ def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
     cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination)
 
     logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
-
-    return json.dumps(cache_key, cls=NPEncoder)
-
-
-def get_lightcurve_ds_from_events_ds(filename, target, axis, dt):
-    destination = get_destination(filename, target)
-    if not destination:
-        return common_error("Invalid file or cache key")
-
-    logging.debug("get_lightcurve_ds_from_events_ds filename: %s" % filename)
-    logging.debug("get_lightcurve_ds_from_events_ds: axis %s" % axis)
-    logging.debug("get_lightcurve_ds_from_events_ds: dt %f" % dt)
-
-    cache_key = DaveEngine.get_lightcurve_ds_from_events_ds(destination, axis, dt)
-
-    logging.debug("get_lightcurve_ds_from_events_ds: Finish! cache_key ->  %s" % cache_key)
 
     return json.dumps(cache_key, cls=NPEncoder)
 
@@ -439,43 +403,7 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
    return json.dumps(data, cls=NPEncoder)
 
 
-def get_unfolded_spectrum(src_filename, bck_filename, gti_filename, filters, arf_filename, target):
-    src_destination = get_destination(src_filename, target)
-    if not src_destination:
-        return common_error("Invalid file or cache key for source data")
-
-    bck_destination = ""
-    if bck_filename:
-        bck_destination = get_destination(bck_filename, target)
-        if not bck_destination:
-            return common_error("Invalid file or cache key for backgrund data")
-
-    gti_destination = ""
-    if gti_filename:
-        gti_destination = get_destination(gti_filename, target)
-        if not gti_destination:
-            return common_error("Invalid file or cache key for gti data")
-
-    arf_destination = ""
-    if arf_filename:
-        arf_destination = get_destination(arf_filename, target)
-        if not arf_destination:
-            return common_error("Invalid file or cache key for arf data")
-
-    logging.debug("get_unfolded_spectrum src: %s" % src_filename)
-    logging.debug("get_unfolded_spectrum bck: %s" % bck_filename)
-    logging.debug("get_unfolded_spectrum gti: %s" % gti_filename)
-    logging.debug("get_unfolded_spectrum: filters %s" % filters)
-    logging.debug("get_unfolded_spectrum arf: %s" % arf_filename)
-
-    data = DaveEngine.get_unfolded_spectrum(src_destination, bck_destination, gti_destination, filters, arf_destination)
-
-    logging.debug("get_unfolded_spectrum: Finish!")
-
-    return json.dumps(data, cls=NPEncoder)
-
-
-def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, n_bands, std):
+def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, energy_range, n_bands, std):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -498,13 +426,56 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
     logging.debug("get_covariance_spectrum: filters %s" % filters)
     logging.debug("get_covariance_spectrum dt: %s" % dt)
     logging.debug("get_covariance_spectrum ref_band_interest: %s" % ref_band_interest)
+    logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
     logging.debug("get_covariance_spectrum n_bands: %s" % n_bands)
     logging.debug("get_covariance_spectrum std: %s" % std)
 
     data = DaveEngine.get_covariance_spectrum(src_destination, bck_destination, gti_destination,
-                                            filters, dt, ref_band_interest, n_bands, std)
+                                            filters, dt, ref_band_interest, energy_range, n_bands, std)
 
     logging.debug("get_covariance_spectrum: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                    freq_range, energy_range, n_bands):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_phase_lag_spectrum src: %s" % src_filename)
+    logging.debug("get_phase_lag_spectrum bck: %s" % bck_filename)
+    logging.debug("get_phase_lag_spectrum gti: %s" % gti_filename)
+    logging.debug("get_phase_lag_spectrum: filters %s" % filters)
+    logging.debug("get_phase_lag_spectrum: axis %s" % axis)
+    logging.debug("get_phase_lag_spectrum: dt %f" % dt)
+    logging.debug("get_phase_lag_spectrum: nsegm %f" % nsegm)
+    logging.debug("get_phase_lag_spectrum: segm_size %f" % segm_size)
+    logging.debug("get_phase_lag_spectrum: norm %s" % norm)
+    logging.debug("get_phase_lag_spectrum: type %s" % pds_type)
+    logging.debug("get_phase_lag_spectrum: freq_range %s" % freq_range)
+    logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
+    logging.debug("get_phase_lag_spectrum: n_bands %s" % n_bands)
+
+    data = DaveEngine.get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                        freq_range, energy_range, n_bands)
+
+    logging.debug("get_phase_lag_spectrum: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 

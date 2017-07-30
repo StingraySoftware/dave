@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from flask import Flask, render_template, request, session
 
 import pkg_resources
@@ -42,7 +44,13 @@ app.secret_key = os.urandom(24)
 app.json_encoder = NPEncoder
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
-# ------ Configure Compressing -----
+# ------ Flask Server Profiler -----
+# from werkzeug.contrib.profiler import ProfilerMiddleware
+# app.config['PROFILE'] = True
+# app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[10])
+# ------ END Flask Server Profiler -----
+
+# ------ Configure HTTP Compression -----
 # Tested on DAVE but the doesn't improves performance,
 # sure is a good choice for improving DAVE if runs on a remote server
 # Change environment.yml to add to pip: "- flask-compress==1.4.0"
@@ -52,6 +60,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 # COMPRESS_LEVEL = 6
 # COMPRESS_MIN_SIZE = 500
 # Compress(app)
+# ------ END Configure HTTP Compression -----
 
 # Routes methods
 @app.route('/upload', methods=['GET', 'POST'])
@@ -62,6 +71,11 @@ def upload():
 @app.route('/get_dataset_schema', methods=['GET'])
 def get_dataset_schema():
     return DaveEndpoint.get_dataset_schema(request.args['filename'], UPLOADS_TARGET)
+
+
+@app.route('/get_dataset_header', methods=['GET'])
+def get_dataset_header():
+    return DaveEndpoint.get_dataset_header(request.args['filename'], UPLOADS_TARGET)
 
 
 @app.route('/append_file_to_dataset', methods=['GET'])
@@ -79,13 +93,6 @@ def get_plot_data():
     return DaveEndpoint.get_plot_data(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['styles'], request.json['axis'])
-
-
-@app.route('/get_histogram', methods=['POST'])
-def get_histogram():
-    return DaveEndpoint.get_histogram(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'])
 
 
 @app.route('/get_lightcurve', methods=['POST'])
@@ -113,12 +120,6 @@ def get_divided_lightcurves_from_colors():
 def get_divided_lightcurve_ds():
     return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
             request.json['lc1_filename'], UPLOADS_TARGET)
-
-
-@app.route('/get_lightcurve_ds_from_events_ds', methods=['POST'])
-def get_lightcurve_ds_from_events_ds():
-    return DaveEndpoint.get_lightcurve_ds_from_events_ds(request.json['filename'],
-            UPLOADS_TARGET, request.json['axis'], float(request.json['dt']))
 
 
 @app.route('/get_power_density_spectrum', methods=['POST'])
@@ -150,19 +151,22 @@ def get_cross_spectrum():
             request.json['norm'], request.json['type'])
 
 
-@app.route('/get_unfolded_spectrum', methods=['POST'])
-def get_unfolded_spectrum():
-    return DaveEndpoint.get_unfolded_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
-            request.json['arf_filename'], UPLOADS_TARGET)
-
-
 @app.route('/get_covariance_spectrum', methods=['POST'])
 def get_covariance_spectrum():
     return DaveEndpoint.get_covariance_spectrum(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
             UPLOADS_TARGET, float(request.json['dt']), request.json['ref_band_interest'],
-            int(request.json['n_bands']), float(request.json['std']))
+            request.json['energy_range'], int(request.json['n_bands']), float(request.json['std']))
+
+
+@app.route('/get_phase_lag_spectrum', methods=['POST'])
+def get_phase_lag_spectrum():
+    return DaveEndpoint.get_phase_lag_spectrum(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['nsegm']), float(request.json['segment_size']),
+            request.json['norm'], request.json['type'], request.json['freq_range'],
+            request.json['energy_range'], int(request.json['n_bands']))
 
 
 @app.route('/get_rms_spectrum', methods=['POST'])
@@ -234,8 +238,11 @@ def shutdown_server():
 
 # Setting error handler
 def http_error_handler(error):
-    return render_template("error.html", error=error), error
-
+    try:
+        logging.error('ERROR: http_error_handler ' + str(error))
+        return render_template("error.html", error=error), error
+    except:
+        logging.error('ERROR: http_error_handler --> EXCEPT ')
 
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
     app.error_handler_spec[None][error] = http_error_handler

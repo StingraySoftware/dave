@@ -50,7 +50,8 @@ def get_file_dataset(destination):
 
         # Opening Fits
         hdulist = fits.open(destination, memmap=True)
-
+        dataset = None
+        
         if 'EVENTS' in hdulist:
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
@@ -66,12 +67,8 @@ def get_file_dataset(destination):
             # If EBOUNDS extension found, consider the Fits as RMF Fits
             dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
 
-        elif 'SPECRESP' in hdulist:
-            # If SPECRESP extension found, consider the Fits as ARF Fits
-            dataset = get_fits_dataset(hdulist, "ARF", ["SPECRESP"])
-
-        else:
-            # If not EVENTS or RATE extension found, consider the Fits as GTI Fits
+        elif len(set(gtistring.split(",")).intersection(set(hdulist))):
+            # If not EVENTS or RATE extension found, check if is GTI Fits
             dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring)
 
         if dataset:
@@ -118,7 +115,7 @@ def get_fits_dataset(hdulist, dsId, table_ids):
 
                 for i in range(len(header_names)):
                     header_name = header_names[i]
-                    dataset.tables[table_id].columns[header_name].add_values(tbdata.field(i))
+                    dataset.tables[table_id].columns[header_name].add_values(np.nan_to_num(tbdata.field(i)))
             else:
                 logging.warn("Ignored table data: %s" % hdulist[t].name)
         else:
@@ -175,12 +172,16 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                     gtistring=gtistring,
                                     hduname=hduname, column=column)
 
+    # Adds the lag of the first event to the start time of observation
+    events_start_time += max(fits_data.ev_list[0] - events_start_time, 0)
+
     gti_start = fits_data.gti_list[:, 0] - events_start_time
     gti_end = fits_data.gti_list[:, 1] - events_start_time
 
     logging.debug("Read Events fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
 
     event_values = fits_data.ev_list - events_start_time
+    event_values[0] = 0 # This is because double substraction could return small negative values for 0
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments,
                                                 fits_data.additional_data, [],

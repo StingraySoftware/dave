@@ -35,20 +35,27 @@ class Column:
     def clone(self, with_values=True):
         column = Column(self.id)
         if with_values:
-            column.values = copy.copy(self.values)
-            column.error_values = copy.copy(self.error_values)
+            column.values = list(self.values)
+            column.error_values = list(self.error_values)
         return column
 
     def get_value(self, index):
         if index >= 0 and index < len(self.values):
-            return copy.copy(self.values[index])
+            return self.values[index]
         else:
             return None
+
+    def get_values(self, indexes):
+        values = np.array(self.values)[indexes]
+        error_values = None
+        if len(self.error_values):
+            error_values = np.array(self.error_values)[indexes]
+        return values, error_values
 
     def get_error_value(self, index):
         if self.has_error_values:
             if index >= 0 and index < len(self.error_values):
-                return copy.copy(self.error_values[index])
+                return self.error_values[index]
             else:
                 return None
         else:
@@ -61,10 +68,10 @@ class Column:
             self.add_values([value], [error])
 
     def add_values(self, values, errors=None):
-        self.values.extend(np.nan_to_num(values))
+        self.values.extend(values)
         self.has_error_values = not (errors is None)
         if self.has_error_values:
-            self.error_values.extend(np.nan_to_num(errors))
+            self.error_values.extend(errors)
 
     def clear(self):
         self.values = []

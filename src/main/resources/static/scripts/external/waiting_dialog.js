@@ -73,7 +73,7 @@ var waitingDialog = waitingDialog || (function ($) {
 
     setProgress: function (progressPercent) {
       $dialog.find(".progress").html('<div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="' + progressPercent + '" aria-valuemin="0" aria-valuemax="100" style="width:' + progressPercent + '%">' +
-                                         progressPercent + '% Complete' +
+                                         progressPercent + '%' +
                                       '</div>');
     }
 	};

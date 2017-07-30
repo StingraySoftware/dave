@@ -14,6 +14,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.isVisible = true;
   this.isReady = true;
   this.isSwitched = false;
+  this.hoverDisablerEnabled = true;
   this.hoverEnabled = false;
   this.cssClass = (cssClass != undefined) ? cssClass : "";
   this.switchable = (switchable != undefined) ? switchable : false;
@@ -208,7 +209,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.updatePlotConfig = function () {
    var tab = getTabForSelector(this.id);
-   this.plotConfig.dt = tab.projectConfig.binSize;
+   if (!isNull(tab)){
+     this.plotConfig.dt = tab.projectConfig.binSize;
+   } else {
+     log("ERROR: Plot not attached to tab, Plot" + this.id);
+   }
  }
 
  this.onPlotDataReceived = function ( data ) {
@@ -246,7 +251,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      currentObj.data = currentObj.prepareData(data);
      currentObj.updateMinMaxCoords();
 
-     var plotlyConfig = currentObj.getPlotlyConfig(data);
+     var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
      currentObj.redrawPlot(plotlyConfig);
 
      if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
@@ -380,6 +385,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }, CONFIG.INMEDIATE_TIMEOUT);
  }
 
+ this.mustPropagateAxisFilter = function (axis) {
+   return this.plotConfig.styles.labels[axis].startsWith(this.plotConfig.axis[axis].column);
+ }
+
+ this.getAxisForPropagation = function (axis) {
+   return this.plotConfig.axis[axis];
+ }
+
  this.registerPlotEvents = function () {
 
    if ((this.plotConfig.styles.type == "2d")
@@ -395,15 +408,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
          //If plot data for label[0] is the same as axis[0] data,
          // else label data is calculated/derived with some process
-         if (this.plotConfig.styles.labels[0].startsWith(this.plotConfig.axis[0].column)){
+         if (this.mustPropagateAxisFilter(0)){
           filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
-                                  this.plotConfig.axis[0]));
+                                  this.getAxisForPropagation(0)));
          }
 
          //Same here but for other axis
-         if (this.plotConfig.styles.labels[1].startsWith(this.plotConfig.axis[1].column)){
+         if (this.mustPropagateAxisFilter(1)){
             filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
-                                  this.plotConfig.axis[1]));
+                                  this.getAxisForPropagation(1)));
          }
 
          if (filters.length > 0){
@@ -417,17 +430,22 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
         if (currentObj.hoverEnabled){
           currentObj.clearTimeouts();
-          currentObj.hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
+          var hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
 
-          currentObj.onHoverTimeout = setTimeout(function(){
-            if (!isNull(currentObj.hoverCoords)){
-              currentObj.onHover(currentObj.hoverCoords);
+          if (!isNull(hoverCoords)){
 
-              var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
-              evt_data.labels = currentObj.plotConfig.styles.labels;
-              currentObj.sendPlotEvent('on_hover', evt_data);
-            }
-          }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
+            currentObj.hoverCoords = hoverCoords;
+
+            currentObj.onHoverTimeout = setTimeout(function(){
+              if (!isNull(currentObj.hoverCoords)){
+                currentObj.onHover(currentObj.hoverCoords);
+
+                var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
+                evt_data.labels = currentObj.plotConfig.styles.labels;
+                currentObj.sendPlotEvent('on_hover', evt_data);
+              }
+            }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
+          }
         }
 
       }).on('plotly_unhover', function(data){
@@ -479,12 +497,24 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.setHoverEventsEnabled = function (enabled) {
-    this.hoverEnabled = enabled;
-    if (this.hoverEnabled){
+    if (this.hoverDisablerEnabled){
+      this.hoverEnabled = enabled;
+      if (this.hoverEnabled){
+        this.$html.find(".hoverDisabler").hide();
+      } else {
+        this.$html.find(".hoverDisabler").show();
+        currentObj.onUnHoverEvent();
+      }
+    }
+  }
+
+  this.setHoverDisablerEnabled = function (enabled) {
+    this.hoverDisablerEnabled = enabled;
+    if (!this.hoverDisablerEnabled){
+      this.setHoverEventsEnabled(false);
       this.$html.find(".hoverDisabler").hide();
     } else {
-      this.$html.find(".hoverDisabler").show();
-      currentObj.onUnHoverEvent();
+      this.setHoverEventsEnabled(true);
     }
   }
 
@@ -513,7 +543,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getCoordsFromPlotlyHoverEvent = function (data){
    if (data.points.length == 1) {
      var pt = data.points[0];
-     if (this.tracesCount == this.getPlotDefaultTracesCount() || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
+     if ((pt.curveNumber < this.getPlotDefaultTracesCount()
+          && this.tracesCount == this.getPlotDefaultTracesCount())
+        || !isNull(pt.data.name)){ //Avoid to resend onHover over added cross traces
        var error_x = null;
        if (!isNull(pt.data.error_x)
           && !isNull(pt.data.error_x.array)

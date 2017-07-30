@@ -56,7 +56,9 @@ cd -
 
 # LAUNCH PYTHON SERVER
 echo Launching Python Server
-python $DIR/src/main/python/server.py . . &
+python $DIR/src/main/python/server.py . . & >> /tmp/flaskserver.log 2>&1
 python_pid=$!
 
-wait
+wait $python_pid
+
+exit $?

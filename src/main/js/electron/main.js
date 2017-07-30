@@ -19,6 +19,7 @@ var connected = false;
 var subpy = null;
 var processRunning = true; //If false could cause fail of first connectToServer call
 var logDebugMode = false;
+var LOGS_PATH = "";
 
 var PYTHON_URL = "";
 
@@ -42,6 +43,7 @@ app.on('ready', function() {
     }
 
     PYTHON_URL = config.pythonUrl;
+    LOGS_PATH = config.logsPath.replace("$HOME", require('os').homedir());
     console.log('Connecting to server... URL: ' + PYTHON_URL);
     connectToServer ();
 
@@ -65,6 +67,8 @@ function loadConfig(){
 
       configObj.logDebugMode = config.get('logDebugMode') == "true";
       configObj.splash_path = config.get('splash_path');
+
+      configObj.logsPath = config.get('logsPath');
 
       return configObj;
 
@@ -96,12 +100,15 @@ function launchProcess(process, argument, processName) {
       if (code == 0) {
         log(processName + ' server stopped!');
       } else {
+
+        getTailFromLogFile(LOGS_PATH);
+        sendErrorToWindow("Error launching Python Server|");
         log(processName + ' server stopped with code: ' + code);
       }
     });
 
   } catch (ex) {
-
+    sendErrorToWindow("Error creating environment|");
     log('Error on launchProcess </br> ERROR: ' + ex +  '</br> CWD: ' + __dirname);
     return false;
   }
@@ -155,9 +162,39 @@ function log (msg){
 
 function logToWindow (msg){
   if (mainWindow != null) {
-    mainWindow.webContents.executeJavaScript("log('" + msg + "');");
+    mainWindow.webContents.executeJavaScript("logError('" + escapeSpecialChars(msg) + "');");
   }
 }
+
+function sendErrorToWindow (msg){
+  if (mainWindow != null) {
+    mainWindow.webContents.executeJavaScript("showError('" + escapeSpecialChars(msg) + "');");
+  }
+}
+
+function getTailFromLogFile (logFilePath) {
+  log('Getting log info from: ' + logFilePath);
+  var tailProc = cp.spawn("tail", [ "-10", logFilePath ]);
+  var stdout = "";
+  tailProc.stdout.on('data', (data) => {
+    stdout += data;
+  });
+  tailProc.on('close', (code) => {
+    sendErrorToWindow("Error connecting to Pyhon Server|" + stdout);
+  });
+}
+
+ function escapeSpecialChars (text) {
+    return text.replace(/\r?\n/g, "#")
+                 .replace(/\\n/g, "#")
+                 .replace(/\\'/g, "")
+                 .replace(/\\"/g, "")
+                 .replace(/\\&/g, "")
+                 .replace(/\\r/g, "")
+                 .replace(/\\t/g, "")
+                 .replace(/\\b/g, "")
+                 .replace(/\\f/g, "");
+};
 
 app.on('window-all-closed', function() {
     stop();
