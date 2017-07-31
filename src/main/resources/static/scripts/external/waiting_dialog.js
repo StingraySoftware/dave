@@ -65,6 +65,7 @@ var waitingDialog = waitingDialog || (function ($) {
 		 */
 		hide: function () {
 			$dialog.modal('hide');
+      $(".modal-backdrop").remove();
 		},
 
     hideProgress: function () {

@@ -16,8 +16,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.isSwitched = false;
   this.hoverDisablerEnabled = true;
   this.hoverEnabled = false;
-  this.cssClass = (cssClass != undefined) ? cssClass : "";
-  this.switchable = (switchable != undefined) ? switchable : false;
+  this.cssClass = (!isNull(cssClass)) ? cssClass : "";
+  this.switchable = (!isNull(switchable)) ? switchable : false;
   this.data = null;
   this.tracesCount = 0;
   this.addedTraces = 0;
@@ -194,7 +194,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        }
      }
 
-     log("Avoid request data, no service function setted, Plot" + this.id);
+     log("Avoid request data, no service function setted, Plot: " + this.id);
      return;
    } else {
      this.updatePlotConfig();
@@ -212,7 +212,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (!isNull(tab)){
      this.plotConfig.dt = tab.projectConfig.binSize;
    } else {
-     log("ERROR: Plot not attached to tab, Plot" + this.id);
+     log("ERROR on updatePlotConfig: Plot not attached to tab, Plot: " + this.id);
    }
  }
 
@@ -788,6 +788,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      }
 
      this.plotConfig.filters = validFilters;
+
+   } else {
+     log("ERROR on applyValidFilters: Plot not attached to tab, Plot: " + this.id);
    }
   }
 
