@@ -125,7 +125,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.maxY = Math.max.apply(null, this.data[coords.y].values);
 
       var tab = getTabForSelector(this.id);
-      if (!isNull(tab)){
+      if (!isNull(tab) && (0 <= this.minY < this.maxY)){
         tab.updateMinMaxCountRate(this.minY, this.maxY);
       }
     }

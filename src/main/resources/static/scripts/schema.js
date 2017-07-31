@@ -59,8 +59,8 @@ function Schema(schema){
     if (this.hasHeader()){
       var tableHeader = this.getHeader();
 
-      if (!isNull(tableHeader["TUNIT1"])) {
-        return tableHeader["TUNIT1"];
+      if (!isNull(tableHeader["TIMEUNIT"])) {
+        return tableHeader["TIMEUNIT"];
       }
     }
 
@@ -136,7 +136,7 @@ function Schema(schema){
         return this.getTotalDuration() / 30;
       }
     } else {
-      
+
       return this.getTimeResolution();
     }
   }
