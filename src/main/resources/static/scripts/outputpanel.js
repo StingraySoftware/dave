@@ -522,10 +522,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       currentObj.service.request_divided_lightcurve_ds(data, function (result) {
         var cache_key = JSON.parse(result);
         log("request_divided_lightcurve_ds Result: " + newKey + " --> " + cache_key);
-        if (cache_key != "") {
+        if (!isNull(cache_key) && cache_key != "") {
 
           projectConfig.setFile(newKey, cache_key);
-          currentObj.addLightcurveAndPdsPlots (newKeySufix, cache_key, "", "", "RATE", "PHA", projectConfig);
+          currentObj.addLightcurveAndPdsPlots (newKeySufix, cache_key, "", "", "RATE", "PHA", projectConfig, "", true);
 
           //After getting A/B or C/D we can calculate the Hardness and Softnes Intensity lcs
           if ((newKeySufix == "B/A") || (newKeySufix == "D/C")) {
@@ -557,6 +557,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
             }
           }
         } else {
+          showError("Can't get divided lightcurves data");
           log("request_divided_lightcurve_ds WRONG CACHE KEY!!");
         }
       });
@@ -758,11 +759,16 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.appendPlot = function (plot, refreshData) {
+    if (isNull(this.getPlotById(plot.id))) {
+      this.plots.push(plot);
+    }
+
     if (this.$body.find(".infoPanel").length > 0) {
       plot.$html.insertBefore(this.$body.find(".infoPanel"));
     } else {
       this.$body.append(plot.$html);
     }
+
     if (isNull(refreshData) || refreshData) {
       plot.onDatasetValuesChanged(this.getFilters());
     }

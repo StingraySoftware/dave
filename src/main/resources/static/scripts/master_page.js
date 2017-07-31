@@ -173,6 +173,15 @@ function showError(errorMsg, exception) {
   log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
 }
 
+function logError(errorMsg) {
+  var logMsgs = errorMsg.split("#");
+  for (i in logMsgs) {
+    if (logMsgs[i] != "") {
+      log(logMsgs[i]);
+    }
+  }
+}
+
 function getCheckedState(value) {
   return value ? 'checked="checked"' : "";
 }

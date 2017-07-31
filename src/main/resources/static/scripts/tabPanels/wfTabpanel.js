@@ -92,49 +92,65 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onLcDatasetChanged = function ( filenames, selectorKey ) {
 
-    if (selectorKey == "SRC") {
-      //If SRC file was load just create a new project config
-      currentObj.projectConfig = new ProjectConfig();
+    if (!currentObj.projectConfig.hasSchema()) {
+      log("onLcDatasetChanged " + selectorKey + " , SRC schema not loaded yet!");
+      showError("Upload a Source File first!");
+      return;
     }
 
     if (filenames.length == 1) {
 
       log("onLcDatasetChanged " + selectorKey + ": " + filenames[0]);
-      currentObj.projectConfig.setFile(selectorKey, filenames[0]);
-      if (currentObj.projectConfig.hasSchema()) {
 
-        //Cleans previous plots for this selectorKey
-        currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
-        currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
-        if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
-          currentObj.projectConfig.setFile("LC_B/A", "");
-        } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
-          currentObj.projectConfig.setFile("LC_D/C", "");
+      //If file were upladed then check if is valid schema
+      currentObj.service.get_dataset_header(filenames[0], function( jsonHeader ){
+
+        if (!isNull(jsonHeader.abort)){
+          //Comes from error returned request.
+          showError("Wrong lightcurve file!");
+          return;
         }
 
-        if (selectorKey.startsWith("LC") && !selectorKey.startsWith("LC_")){
-          //If uploaded file is a color filtered lightcurve,
-          //tries to get filter info from file header info
-          currentObj.service.get_dataset_header(filenames[0], function( jsonHeader, params ){
+        var header = JSON.parse(jsonHeader);
+        if (!isNull(header)) {
 
-            var rangeText = currentObj.extractEnergyRangeTextFromHeader(JSON.parse(jsonHeader));
-            currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
-          });
+          log("onLcDatasetChanged - get_dataset_header: " + selectorKey + ": " + filenames[0]);
 
+          currentObj.projectConfig.setFile(selectorKey, filenames[0]);
+
+          //Cleans previous plots for this selectorKey
+          currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
+          currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
+          if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
+            currentObj.projectConfig.setFile("LC_B/A", "");
+          } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
+            currentObj.projectConfig.setFile("LC_D/C", "");
+          }
+
+          //Tries to get filter info from file header info
+          var rangeText = currentObj.extractEnergyRangeTextFromHeader(header);
+          currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
+
+          //Add the new plots for this selectorKey
+          currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig, "", true);
+          currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+          currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
+
+          waitingDialog.hide();
+
+        } else {
+
+          showError("Wrong lightcurve file!");
         }
 
-        //Add the new plots for this selectorKey
-        currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
-        currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
-        currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
-      }
-
-      waitingDialog.hide();
+      });
 
     } else if (filenames.length > 1){
+      showError("Multifile selection not supported with lightcurves!");
       log("onLcDatasetChanged " + selectorKey + ": Multifile selection not supported yet..");
       waitingDialog.hide();
     } else {
+      showError("No selected files!");
       log("onLcDatasetChanged " + selectorKey + ": No selected files..");
       waitingDialog.hide();
     }
@@ -146,7 +162,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("SRC", schema, params);
     } else {
-      showError("Wrong SRC file!");
+      showError("Wrong Source file!");
     }
   }
 
@@ -155,7 +171,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("BCK", schema, params);
     } else {
-      showError("Wrong BCK file!");
+      showError("Wrong Background file!");
     }
   }
 
@@ -339,6 +355,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onSchemaError = function ( error ) {
       log("onSchemaError error:" + JSON.stringify(error));
       waitingDialog.hide();
+      showError();
   }
 
   this.extractEnergyRangeTextFromHeader = function (header) {
