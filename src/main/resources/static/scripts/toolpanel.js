@@ -602,18 +602,18 @@ function ToolPanel (id,
   }
 
   //Normal file selectors, SRC is valid on both events files and lightcurves
-  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Src File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
+  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Source File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.srcFileSelector);
 
-  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Bck File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
+  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Background File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.bckFileSelector);
   this.bckFileSelector.hide();
 
-  this.gtiFileSelector = new fileSelector("theGtiFileSelector_" + this.id, "Gti File:", "GTI", service.upload_form_data, this.onDatasetChangedFn);
+  this.gtiFileSelector = new fileSelector("theGtiFileSelector_" + this.id, "GTI File:", "GTI", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.gtiFileSelector);
   this.gtiFileSelector.hide();
 
-  this.rmfFileSelector = new fileSelector("theRmfFileSelector_" + this.id, "Rmf File:", "RMF", service.upload_form_data, this.onDatasetChangedFn);
+  this.rmfFileSelector = new fileSelector("theRmfFileSelector_" + this.id, "RMF File:", "RMF", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.rmfFileSelector);
   this.rmfFileSelector.hide();
 

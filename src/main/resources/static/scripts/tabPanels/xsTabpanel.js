@@ -132,7 +132,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                               {
                                 styles: { type: "ligthcurve",
                                           labels: ["Frequency (Hz)", "Time(s)"],
-                                          title: "TimeLag" }
+                                          title: "Frequency Lag" }
                               },
                               null,
                               this.outputPanel.onFiltersChangedFromPlot,

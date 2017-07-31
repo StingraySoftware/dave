@@ -232,7 +232,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                           currentObj.showCrossSpectraSelection,
                                                           timingPlotsButtons);
 
-        timingPlotsButtons = currentObj.addButtonToArray("Frequency lag",
+        timingPlotsButtons = currentObj.addButtonToArray("Frequency Lag",
                                                           "freqLagBtn",
                                                           currentObj.showCrossSpectraSelection,
                                                           timingPlotsButtons);
@@ -254,7 +254,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                             function () { currentObj.showUploadRMFDialog("rms") },
                                                             timingPlotsButtons);
 
-          timingPlotsButtons = currentObj.addButtonToArray("Phase lag spectrum",
+          timingPlotsButtons = currentObj.addButtonToArray("Phase Lag spectrum",
                                                             "phaseLagBtn",
                                                             function () { currentObj.showUploadRMFDialog("phaseLag") },
                                                             timingPlotsButtons);
