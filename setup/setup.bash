@@ -164,6 +164,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 
 	#Install stingray libraries
 	pip install -r requirements.txt
+	pip install statsmodels
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
