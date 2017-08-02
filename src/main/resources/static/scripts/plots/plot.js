@@ -34,17 +34,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '</div>' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
-                    '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnFullScreen">' +
+                    '<button class="btn btn-default btnHidePlot" data-toggle="tooltip" title="Hide plot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnFullScreen" data-toggle="tooltip" title="Maximize/Minimize">' +
                       '<i class="fa ' + ((this.cssClass.indexOf("full") > -1) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
-                    '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnSave" data-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="hoverinfo"></div>' +
                 '</div>');
 
  if (!isNull(toolbar)) {
-   this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
@@ -141,7 +141,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (switchable) {
    //If switchable adds Switch button to plot
-   this.btnSwitch = $('<button class="btn btn-default btnSwitch"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
+   this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
    this.$html.find(".plotTools").append(this.btnSwitch);
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
@@ -151,7 +151,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (!isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable) {
    //If plot is lightcurve adds Select button to plot
-   this.btnSelect = $('<button class="btn btn-default btnSelect"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
+   this.btnSelect = $('<button class="btn btn-default btnSelect" data-toggle="tooltip" title="Select plot"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
    this.$html.find(".plotTools").append(this.btnSelect);
    this.btnSelect.click(function(event){
      currentObj.$html.toggleClass("plotSelected");
@@ -219,6 +219,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.onPlotDataReceived = function ( data ) {
 
    if (!isNull(data.abort)){
+     log("Current request aborted, Plot: " + currentObj.id);
      return; //Comes from request abort call.
    }
 
@@ -815,6 +816,54 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    }
 
    return wti_ranges;
+  }
+
+  this.getConfig = function () {
+    var plotConfig = $.extend( {}, this.plotConfig );
+
+    //Add atributes not included in plotConfig for export
+    plotConfig.id = this.id;
+    plotConfig.isVisible = this.isVisible;
+    plotConfig.fullWidth = this.$html.hasClass("fullWidth");
+
+    return plotConfig;
+  }
+
+  this.setConfig = function (plotConfig, tab) {
+    this.plotConfig = $.extend( this.plotConfig, plotConfig );
+
+    //Remove atributes not included in plotConfig for export
+    delete this.plotConfig.id;
+    delete this.plotConfig.isVisible;
+    delete this.plotConfig.fullWidth;
+
+    if (plotConfig.isVisible) {
+      this.show();
+
+      var section = this.getSection();
+      if (section != ""){
+        tab.setSectionVisibility(section, true);
+      }
+
+      if (this.$html.hasClass("fullWidth") != plotConfig.fullWidth){
+        this.btnFullScreen.click();
+      }
+
+    } else {
+      this.hide();
+    }
+  }
+
+  this.getSection = function () {
+    if (this.$html.hasClass("LcPlot")){
+      return "LcPlot";
+    } else if (this.$html.hasClass("PDSPlot")){
+      return "PDSPlot";
+    } else if (this.$html.hasClass("TimingPlot")){
+      return "TimingPlot";
+    } else {
+      return "";
+    }
   }
 
   log ("new plot id: " + this.id);

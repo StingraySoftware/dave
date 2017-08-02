@@ -73,10 +73,8 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       currentObj.settingsPanel.find(".inputLam").val(bsOpts.lam);
       currentObj.settingsPanel.find(".inputP").val(bsOpts.p);
       currentObj.settingsPanel.find(".inputNiter").val(bsOpts.niter);
-      currentObj.settingsPanel.find(".baselineContainer").show();
-    } else {
-      currentObj.settingsPanel.find(".baselineContainer").hide();
     }
+    setVisibility(currentObj.settingsPanel.find(".baselineContainer"), bsOpts.niter > 0);
   }
 
   this.disableBaseline = function () {

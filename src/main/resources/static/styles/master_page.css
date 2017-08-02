@@ -41,6 +41,13 @@ h3
   background-color: #000;
 }
 
+ul#right-navbar {
+    margin-right: 0px;
+}
+ul#right-navbar li {
+    width: 28px;
+}
+
 .closeTabPanel {
   margin-left: 8px;
   margin-right: -8px;

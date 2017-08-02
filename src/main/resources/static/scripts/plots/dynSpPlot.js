@@ -25,18 +25,17 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
   });
 
   //If plot is pds adds Fits button to plot
-  this.btnStyle = $('<button class="btn btn-default btnStyle">2D</button>');
+  this.btnStyle = $('<button class="btn btn-default btnStyle"  data-toggle="tooltip" title="Change plot dimensions">2D</button>');
   this.$html.find(".plotTools").prepend(this.btnStyle);
   this.btnStyle.click(function(event){
     if (currentObj.plotConfig.plotStyle == "3d") {
       currentObj.plotConfig.plotStyle = "2d";
       currentObj.btnStyle.html("3D");
-      currentObj.settingsPanel.find(".AxisType").hide();
     } else {
       currentObj.plotConfig.plotStyle = "3d";
       currentObj.btnStyle.html("2D");
-      currentObj.settingsPanel.find(".AxisType").show();
     }
+    setVisibility(currentObj.settingsPanel.find(".AxisType"), currentObj.plotConfig.plotStyle == "3d");
     currentObj.refreshData();
   });
 

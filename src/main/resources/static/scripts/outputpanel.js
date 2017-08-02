@@ -65,11 +65,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       $.each( plots, function(i, $plot) {
         var plot = currentObj.getPlotById($plot.id);
         if (!isNull(plot) && plot.isVisible){
+          setVisibility(plot.$html, enabled);
           if (enabled) {
-            plot.$html.show();
             plot.refreshData();
-          } else {
-            plot.$html.hide();
           }
         }
       });
@@ -715,8 +713,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
                                   labels: ["Energy(keV)", "Phase lag"],
-                                  title: title,
-                                  showFitBtn: true },
+                                  title: title },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
@@ -742,8 +739,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
                                   labels: ["Energy(keV)", "RMS"],
-                                  title: title,
-                                  showFitBtn: true },
+                                  title: title },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
@@ -787,6 +783,26 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
                       });
       }
     }
+  }
+
+  this.getConfig = function () {
+    var plotConfigs = [];
+    for (i in this.plots) {
+       plotConfigs.push(this.plots[i].getConfig());
+     };
+     return plotConfigs;
+  }
+
+  this.setConfig = function (plotConfigs) {
+    var tab = getTabForSelector(this.id);
+
+    if (plotConfigs.length == this.plots.length){
+        for (i in this.plots) {
+          this.plots[i].setConfig(plotConfigs[i], tab);
+         };
+     } else {
+       log ("Output.setConfig ERROR: Number of plots mismatch");
+     }
   }
 
   log ("Output panel ready!!");

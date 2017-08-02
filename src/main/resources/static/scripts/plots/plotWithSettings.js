@@ -21,13 +21,13 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.settingsPanel.hide();
   this.$html.prepend(this.settingsPanel);
 
-  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '"><i class="fa fa-cog" aria-hidden="true"></i></button>');
+  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '" data-toggle="tooltip" title="Open plot settings"><i class="fa fa-cog" aria-hidden="true"></i></button>');
   this.$html.find(".plotTools").append(this.btnSettings);
   this.btnSettings.click(function(event){
     currentObj.showSettings();
   });
 
-  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
+  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '" data-toggle="tooltip" title="Close plot settings"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
   this.btnBack.hide();
   this.$html.find(".plotTools").append(this.btnBack);
   this.btnBack.click(function(event){
