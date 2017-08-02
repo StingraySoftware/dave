@@ -1,10 +1,17 @@
 
 //Adds new Fit Tab Panel
-function addFitTabPanel(navBarList, panelContainer, plot, projectConfig){
-  tab = new FitTabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer, plot, projectConfig);
+function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+  return new FitTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
+                        "TabPanelTemplate",
+                        !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
+                        theService,
+                        navBarList,
+                        panelContainer,
+                        plotConfig,
+                        projectConfig);
 }
 
-function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plot, projectConfig) {
+function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -19,7 +26,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   };
 
   this.onModelsChanged = function (){
-    currentObj.plot.refreshModelsData(false);
+    if (!isNull(currentObj.plot)){
+      currentObj.plot.refreshModelsData(false);
+    } else {
+      log("Plot not created yet, FitTabPanel: " + currentObj.id);
+    }
   };
 
   this.onFitClicked = function (){
@@ -134,6 +145,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.addInfoPanel = function ( statsData ) {
+    this.infoPanelData = statsData;
     this.outputPanel.$body.find(".infoPanel").remove();
     this.infoPanel = new InfoPanel("infoPanel", "Fitting statistics", statsData, [], null);
     this.infoPanel.redraw = function() {
@@ -163,39 +175,77 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.outputPanel.$body.append(this.infoPanel.$html);
   }
 
-  //Set the selected plot configs
-  this.projectConfig.updateFromProjectConfigs([ projectConfig ]);
+  this.getConfig = function () {
+    return { type: "FitTabPanel",
+             id: this.id,
+             navItemClass: this.navItemClass,
+             plotConfig: this.plot.getConfig(),
+             projectConfig: this.projectConfig.getConfig(),
+             modelsConfig: this.modelSelector.getConfig(),
+             infoPanelData: this.infoPanelData
+           };
+  }
+
+  this.setConfig = function (tabConfig, callback) {
+    log("setConfig for tab " + this.id);
+
+    this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
+    this.modelSelector.setConfig( tabConfig.modelsConfig );
+    this.createFitPlot();
+    this.outputPanel.setConfig( [tabConfig.plotConfig] );
+    this.plot.onDatasetValuesChanged(this.outputPanel.getFilters());
+
+    if (!isNull(tabConfig.infoPanelData)){
+      this.addInfoPanel(tabConfig.infoPanelData);
+    }
+
+    callback();
+  }
+
+  this.createFitPlot = function () {
+
+    //Set the selected plot configs
+    this.plot = new FitPlot(this.outputPanel.generatePlotId("FitPlot_" + plotConfig.filename),
+                             $.extend(true, {}, plotConfig),
+                             this.modelSelector.getModels,
+                             service.request_power_density_spectrum,
+                             service.request_plot_data_from_models,
+                             this.outputPanel.onFiltersChangedFromPlot,
+                             this.outputPanel.onPlotReady,
+                             null,
+                             "fullWidth",
+                             false,
+                             this.projectConfig);
+
+    this.setTitle("Fit " + this.plot.plotConfig.styles.title);
+
+    var label = isNull(this.plot.plotConfig.styles.title) ? "File: " + this.plot.plotConfig.filename : this.plot.plotConfig.styles.title;
+    this.toolPanel.addSelectedFile(label, this.plot.plotConfig.filename);
+    this.toolPanel.$html.find(".fileSelectorsContainer").append(this.modelSelector.$html);
+
+    this.addPlot(this.plot);
+  }
+
+  //FitTabPanel Initialzation:
+  this.infoPanelData = null;
+  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Models');
+
+  this.toolPanel.clearFileSelectors();
 
   this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(),
                                         this.onModelsChanged,
                                         this.onFitClicked,
                                         this.applyBootstrap,
-                                        isNull(plot.plotConfig.styles.title) ? plot.plotConfig.filename : plot.plotConfig.styles.title);
-
-  this.plot = new FitPlot(plot.id + "_" + (new Date()).getTime(),
-                           $.extend(true, {}, plot.plotConfig),
-                           this.modelSelector.getModels,
-                           plot.getDataFromServerFn,
-                           service.request_plot_data_from_models,
-                           this.outputPanel.onFiltersChangedFromPlot,
-                           this.outputPanel.onPlotReady,
-                           null,
-                           "fullWidth",
-                           false,
-                           this.projectConfig);
-
-  this.setTitle("Fit " + this.plot.plotConfig.styles.title);
-  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Models');
-
-  this.toolPanel.clearFileSelectors();
-  var label = isNull(this.plot.plotConfig.styles.title) ? "File: " + this.plot.plotConfig.filename : this.plot.plotConfig.styles.title;
-  this.toolPanel.addSelectedFile(label, this.plot.plotConfig.filename);
-  this.toolPanel.$html.find(".fileSelectorsContainer").append(this.modelSelector.$html);
+                                        isNull(plotConfig.styles.title) ? plotConfig.filename : plotConfig.styles.title);
 
   this.outputPanel.getFilters = function () {
     return currentObj.plot.plotConfig.filters;
   }
-  this.addPlot(this.plot);
+
+  if (!isNull(projectConfig)){
+    this.projectConfig.updateFromProjectConfigs([ projectConfig ]);
+    this.createFitPlot();
+  }
 
   log("FitTabPanel ready! id: " + this.id);
 }

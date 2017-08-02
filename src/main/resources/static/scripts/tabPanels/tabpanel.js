@@ -23,11 +23,12 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     this.$navItem.addClass("active");
     $(".TabPanel").hide();
     this.$html.show();
+    $(window).trigger("resize"); //Forces plots to fit window size
     log("TabPanel shown id: " + this.id);
   }
 
   this.addCloseButton = function () {
-    var closeTabBtn = $('<i class="fa fa-times closeIcon closeTabPanel" aria-hidden="true"></i>')
+    var closeTabBtn = $('<i class="fa fa-times closeIcon closeTabPanel" aria-hidden="true" data-toggle="tooltip" title="Close tab"></i>')
     this.$navItem.find("." + this.navItemClass).append(closeTabBtn);
     closeTabBtn.click(function () {
       currentObj.close();
@@ -41,6 +42,10 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
 
   this.containsId = function (id) {
     return this.id == id;
+  }
+
+  this.getConfig = function () {
+    return null;
   }
 
   this.destroy = function () {
@@ -106,4 +111,109 @@ function removeTab (id) {
       $("#navbar").find(".addTabPanel").click();
     }
   }
+}
+
+function clearTabs () {
+  while (tabPanels.length > 0) {
+    tabPanels[0].destroy();
+    tabPanels.splice(0,1);
+  }
+}
+
+function getTabsConfigs () {
+  var tabsConfigs = [];
+
+  var generalConfig = $.extend ({ type: "CONFIG" }, CONFIG );
+  tabsConfigs.push(generalConfig);
+
+  for (t in tabPanels) {
+    var tabConfig = tabPanels[t].getConfig();
+    if (!isNull(tabConfig)) {
+        tabsConfigs.push(tabConfig);
+    }
+  }
+  return tabsConfigs;
+}
+
+function setTabConfigs (tabsConfigs) {
+
+  //Clears current environment
+  clearTabs();
+
+  //Fill the tabLoadList functions array with each tab callback function
+  var tabLoadFnList = [];
+  for (tc in tabsConfigs) {
+    var tabConfig = tabsConfigs[tc];
+    if (!isNull(tabConfig.type)) {
+      tabLoadFnList.push(makeTabCallbackFunc(tabConfig));
+    }
+  }
+
+  //Runs waterfall tabs loading, avoid parallel load beacuse can break the OS sockets
+  async.waterfall(tabLoadFnList, function (err, result) {
+      if (!isNull(err)){
+        log("onLoadWorkSpaceClicked error: " + err);
+      } else {
+        log("onLoadWorkSpaceClicked success!!");
+      }
+
+      waitingDialog.hide({ ignoreCalls: true });
+  });
+}
+
+function makeTabCallbackFunc (tabConfig) {
+    //Returns a function used by Async for creating new tab from tabConfig
+    return function (callback) {
+        try {
+              var tab = null;
+
+              if (tabConfig.type == "WfTabPanel") {
+
+                //Creates new Workflow Tab Panel
+                tab = addWfTabPanel($("#navbar").find("ul").first(),
+                                    $(".daveContainer"),
+                                    tabConfig.id,
+                                    tabConfig.navItemClass);
+
+              } else if (tabConfig.type == "XSTabPanel") {
+
+                //Creates new CrossSpectra Tab Panel
+                tab = addXdTabPanel($("#navbar").find("ul").first(),
+                                    $(".daveContainer"),
+                                    tabConfig.plotConfigs,
+                                    [],
+                                    tabConfig.id,
+                                    tabConfig.navItemClass);
+
+              } else if (tabConfig.type == "FitTabPanel") {
+
+                //Creates new Fit Tab Panel
+                tab = addFitTabPanel($("#navbar").find("ul").first(),
+                                     $(".daveContainer"),
+                                     tabConfig.plotConfig,
+                                     null,
+                                     tabConfig.id,
+                                     tabConfig.navItemClass);
+
+              } else if (tabConfig.type == "CONFIG") {
+
+                //Sets general configuration
+                delete tabConfig.type;
+                $.extend (CONFIG, tabConfig);
+                callback();
+                return;
+
+              }
+
+              if (!isNull(tab)) {
+                tab.setConfig(tabConfig, callback);
+              } else {
+                showError("Error loading tab: " + tabConfig.id, null, { ignoreCalls: true });
+              }
+
+            } catch (e) {
+              showError("Error loading tab ...", e, { ignoreCalls: true });
+              callback (e);
+            }
+          };
 }

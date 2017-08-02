@@ -82,7 +82,7 @@ function ToolPanel (id,
     return null;
   }
 
-  this.showEventsSelectors = function ( panel ) {
+  this.showEventsSelectors = function () {
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
     this.rmfFileSelector.show();
@@ -92,7 +92,7 @@ function ToolPanel (id,
     this.lcDFileSelector.hide();
   }
 
-  this.showLcSelectors = function ( panel ) {
+  this.showLcSelectors = function () {
     this.bckFileSelector.hide();
     this.gtiFileSelector.hide();
     this.rmfFileSelector.hide();
@@ -368,16 +368,14 @@ function ToolPanel (id,
         //Sets Energy or Channels filters visible
         var tab = getTabForSelector(currentObj.id);
         var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
-        if ((tab.projectConfig.rmfFilename == "")
-            || filters[f].replaceColumn == "PHA") {
-          selectorsContainer.find(".colorSelectors_E").hide();
-          selectorsContainer.find(".colorSelectors_PHA").show();
+        var showPHA = (tab.projectConfig.rmfFilename == "") || (filters[f].replaceColumn == "PHA");
+        setVisibility(selectorsContainer.find(".colorSelectors_PHA"), showPHA);
+        setVisibility(selectorsContainer.find(".colorSelectors_E"), !showPHA);
+        if (showPHA) {
           sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
           currentObj.setColorFilterRadios("PHA");
           currentObj.replaceColumn = "PHA";
         } else {
-          selectorsContainer.find(".colorSelectors_PHA").hide();
-          selectorsContainer.find(".colorSelectors_E").show();
           sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
           currentObj.setColorFilterRadios("E");
           currentObj.replaceColumn = "E";
@@ -507,42 +505,92 @@ function ToolPanel (id,
     return false;
   }
 
+  this.getFiltersAsAction = function (projectConfig) {
+    return { type: "filters",
+             actionData: $.extend(true, [], currentObj.filters),
+             binSize: projectConfig.binSize,
+             maxSegmentSize: projectConfig.maxSegmentSize };
+  }
+
   this.saveFilters = function () {
     var projectConfig = getTabForSelector(currentObj.id).projectConfig;
     var filename = projectConfig.filename.replace(/\./g,'');
-    var action = { type: "filters",
-                   actionData: $.extend(true, [], currentObj.filters),
-                   binSize: projectConfig.binSize,
-                   maxSegmentSize: projectConfig.maxSegmentSize };
-    var a = document.createElement("a");
-    var file = new Blob([JSON.stringify(action)], {type: 'text/plain'});
-    a.href = URL.createObjectURL(file);
-    a.download = filename + "_filters.json";
-    a.click();
+    saveToFile (filename + "_filters.flt", JSON.stringify(this.getFiltersAsAction(projectConfig)));
   }
 
   this.loadFilters = function () {
-    var input = $('<input type="file" id="load-input" />');
-    input.on('change', function (e) {
-      if (e.target.files.length == 1) {
-        var file = e.target.files[0];
-        var reader = new FileReader();
-          reader.onload = function(e) {
-            try {
-              var action = JSON.parse(e.target.result);
-              if (!isNull(action.type) && !isNull(action.actionData)){
-                getTabForSelector(currentObj.id).applyAction(action);
-              } else {
-                showError("File is not supported as filters");
-              }
-            } catch (e) {
-              showError("File is not supported as filters", e);
-            }
-          };
-          reader.readAsText(file);
+    showLoadFile (function(e) {
+      try {
+        var action = JSON.parse(e.target.result);
+        if (!isNull(action.type) && !isNull(action.actionData)){
+          getTabForSelector(currentObj.id).applyAction(action);
+        } else {
+          showError("File is not supported as filters");
+        }
+      } catch (e) {
+        showError("File is not supported as filters", e);
       }
-     });
-     input.click();
+    });
+  }
+
+  this.getConfig = function (projectConfig) {
+    return this.getFiltersAsAction(projectConfig);
+  }
+
+  this.setConfig = function (projectConfig, callback) {
+
+    log("setConfig for toolPanel " + this.id);
+
+    var fileLoadList = [
+        function(callback) {
+            currentObj.setFilesOnFileSelector("SRC", projectConfig.filename, projectConfig.filenames, currentObj.onDatasetChangedFn, callback);
+        },
+        function(callback) {
+            currentObj.setFilesOnFileSelector("BCK", projectConfig.bckFilename, projectConfig.bckFilenames, currentObj.onDatasetChangedFn, callback);
+        },
+        function(callback) {
+            currentObj.setFilesOnFileSelector("GTI", projectConfig.gtiFilename, projectConfig.gtiFilenames, currentObj.onDatasetChangedFn, callback);
+        },
+        function(callback) {
+            currentObj.setFilesOnFileSelector("RMF", projectConfig.rmfFilename, [], currentObj.onDatasetChangedFn, callback);
+        }
+    ];
+
+    var lcSelectorKeys = ["LCA", "LCB", "LCC", "LCD"];
+    var makeLcCallbackFunc = function(lcKey, filename) {
+        return function(callback) {
+          currentObj.setFilesOnFileSelector(lcKey, filename, [], currentObj.onLcDatasetChangedFn, callback);
+        }
+    };
+
+    for (i in lcSelectorKeys) {
+      var lcKey = lcSelectorKeys[i];
+      var filename = projectConfig.selectorFilenames[lcKey];
+      if (!isNull(filename) && filename != "") {
+        fileLoadList.push(makeLcCallbackFunc(lcKey, filename));
+      }
+    };
+
+    async.waterfall(fileLoadList, function (err, result) {
+        if (!isNull(err)){
+          log("setConfig on toolPanel " + currentObj.id + " error: " + err);
+        } else {
+          log("setConfig success for toolPanel " + currentObj.id);
+        }
+
+        callback(err);
+    });
+  }
+
+  this.setFilesOnFileSelector = function (selectorKey, filename, filenames, changedFn, callback) {
+    var fileSelector = this.getFileSelector(selectorKey);
+    if (!isNull(fileSelector) && (filename != "")) {
+      fileSelector.onUploadSuccess([filename]);
+      filenames.splice(0, 0, filename);
+      changedFn(filenames, selectorKey, callback);
+    } else {
+      callback();
+    }
   }
 
   this.setAnalisysSections = function (sections) {
@@ -585,17 +633,20 @@ function ToolPanel (id,
   }
 
   this.toggleEnabledSection = function (sectionClass) {
+    this.setEnabledSection(sectionClass, !this.isSectionEnabled(sectionClass));
+  }
+
+  this.setEnabledSection = function (sectionClass, enabled) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
     var $switchBtn = $section.find(".switch-btn");
 
-    if ($switchBtn.hasClass("fa-square-o")) {
+    setVisibility($section.find(".sectionContainer"), enabled);
+    if (enabled) {
       $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
-      $section.find(".sectionContainer").show();
       $section.removeClass("Disabled");
       getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
     } else {
       $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
-      $section.find(".sectionContainer").hide();
       $section.addClass("Disabled");
       getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
     }

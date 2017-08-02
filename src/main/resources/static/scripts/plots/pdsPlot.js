@@ -32,7 +32,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   //If plot is pds adds Fits button to plot
   if (!isNull(plotConfig.styles.showFitBtn) && plotConfig.styles.showFitBtn){
-    this.btnFit = $('<button class="btn btn-default btnFit"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
+    this.btnFit = $('<button class="btn btn-default btnFit" data-toggle="tooltip" title="Fit plot"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
     this.$html.find(".plotTools").append(this.btnFit);
     this.btnFit.click(function(event){
       onFitPlotClicked(currentObj);
@@ -62,11 +62,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         this.typeRadios.find("fieldset").controlgroup();
         $typeRadios.change(function() {
           currentObj.plotConfig.type = this.value;
-          if (currentObj.plotConfig.type == "Sng"){
-            currentObj.segmSelector.$html.hide();
-          } else {
-            currentObj.segmSelector.$html.show();
-          }
+          setVisibility(currentObj.segmSelector.$html, currentObj.plotConfig.type != "Sng");
         });
       }
 

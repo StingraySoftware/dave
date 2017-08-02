@@ -1,7 +1,6 @@
 function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
 
   var currentObj = this;
-  plotConfig.styles.showFitBtn = false;
   plotConfig.n_bands = 10;
   plotConfig.freq_range = [-1, -1];
   plotConfig.default_freq_range = [-1, -1];

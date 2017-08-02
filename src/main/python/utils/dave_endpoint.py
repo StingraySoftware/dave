@@ -47,8 +47,12 @@ def get_destination(filename, target):
 
     if not SessionHelper.is_file_uploaded(filename):
         if not DsCache.contains(filename):
-            logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
-            return None
+            if not FileUtils.file_exist(target, filename):
+                logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
+                return None
+            else:
+                logging.info("Filename readed from upload in previous session, filename %s" % filename)
+
 
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
@@ -117,9 +121,6 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
 
     if not rmf_filename:
         return common_error(error="No rmf_filename setted")
-
-    if not SessionHelper.is_file_uploaded(rmf_filename):
-        return common_error("Rmf file not uploaded")
 
     rmf_destination = FileUtils.get_destination(target, rmf_filename)
     if not FileUtils.is_valid_file(rmf_destination):

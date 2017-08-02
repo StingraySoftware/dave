@@ -13,7 +13,16 @@ $(document).ready(function () {
     addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
   });
 
-  $("#right-navbar").find(".showSettingsTab").click(function () {
+  var rightNavbar = $("#right-navbar");
+  rightNavbar.find(".loadWorkSpace").click(function () {
+    onLoadWorkSpaceClicked();
+  });
+
+  rightNavbar.find(".saveWorkSpace").click(function () {
+    onSaveWorkSpaceClicked();
+  });
+
+  rightNavbar.find(".showSettingsTab").click(function () {
     onSettingsClicked();
   });
 
@@ -23,6 +32,40 @@ $(document).ready(function () {
 
   waitingDialog.hide();
 });
+
+function onLoadWorkSpaceClicked() {
+  showLoadFile(function(e) {
+    try {
+      var tabsConfigs = JSON.parse(e.target.result);
+      if (!isNull(tabsConfigs) && tabsConfigs.length > 0){
+
+        log("Loading workspace... nTabs: " + tabsConfigs.length);
+        waitingDialog.show('Loading workspace...', { ignoreCalls: true });
+
+        setTabConfigs (tabsConfigs);
+
+      } else {
+        showError("File is not supported as workspace", null, { ignoreCalls: true });
+      }
+    } catch (e) {
+      showError("File is not supported as workspace", e);
+      waitingDialog.hide({ ignoreCalls: true });
+    }
+  });
+}
+
+function onSaveWorkSpaceClicked() {
+  var tabsConfigs = getTabsConfigs();
+  if (tabsConfigs.length > 0){
+    saveToFile ("workspace.wsp", JSON.stringify(tabsConfigs));
+  } else {
+    showMsg("Save workspace:", "No tabs for save");
+  }
+}
+
+function onSettingsClicked() {
+  showSettingsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+}
 
 function cloneHtmlElement(id, classSelector) {
   return $("." + classSelector).clone().removeClass(classSelector).addClass(id);
@@ -111,12 +154,15 @@ function onMultiplePlotsSelected(selectedPlots) {
   waitingDialog.show('Preparing new tab ...');
 
   var projectConfigs = [];
+  var plotConfigs = [];
   for (i in selectedPlots) {
-    var tab = getTabForSelector(selectedPlots[i].id);
+    var plot = selectedPlots[i];
+    var tab = getTabForSelector(plot.id);
     projectConfigs.push(tab.projectConfig);
+    plotConfigs.push(plot.plotConfig);
   }
 
-  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), selectedPlots, projectConfigs);
+  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plotConfigs, projectConfigs);
 
   setTimeout( function () {
     ClearSelectedPlots();
@@ -131,7 +177,7 @@ function onFitPlotClicked(plot) {
 
   var tab = getTabForSelector(plot.id);
   if (!isNull(tab)) {
-    addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot, tab.projectConfig);
+    addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
 
     setTimeout( function () {
       waitingDialog.hide();
@@ -139,10 +185,6 @@ function onFitPlotClicked(plot) {
   } else {
     showError(null, "Can't find tab for plot: " + plot.id);
   }
-}
-
-function onSettingsClicked() {
-  showSettingsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
 }
 
 function showMsg(title, msg) {
@@ -162,12 +204,12 @@ function showMsg(title, msg) {
    $msgDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 }
 
-function showError(errorMsg, exception) {
+function showError(errorMsg, exception, options) {
   if (isNull(errorMsg)) { errorMsg = "Something went wrong!"; }
 
-  waitingDialog.show(errorMsg, { progressType: "warning" });
+  waitingDialog.show(errorMsg, $.extend({ progressType: "warning" }, options ));
   setTimeout( function () {
-    waitingDialog.hide();
+    waitingDialog.hide(options);
   }, 2500);
 
   log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
@@ -186,8 +228,33 @@ function getCheckedState(value) {
   return value ? 'checked="checked"' : "";
 }
 
+function setVisibility(element, visible) {
+  if (visible) { element.show(); } else { element.hide(); }
+}
+
 function copyToClipboard(text) {
   const {clipboard} = require('electron');
   clipboard.writeText(text);
   alert("Copied to clipboard:\n" + text);
+}
+
+function saveToFile (filename, contents) {
+  var a = document.createElement("a");
+  var file = new Blob([contents], {type: 'text/plain'});
+  a.href = URL.createObjectURL(file);
+  a.download = filename;
+  a.click();
+}
+
+function showLoadFile(onLoadFn) {
+  var input = $('<input type="file" id="load-input" />');
+  input.on('change', function (e) {
+    if (e.target.files.length == 1) {
+      var file = e.target.files[0];
+      var reader = new FileReader();
+        reader.onload = onLoadFn;
+        reader.readAsText(file);
+    }
+   });
+   input.click();
 }

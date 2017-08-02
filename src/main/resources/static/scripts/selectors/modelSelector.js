@@ -12,9 +12,9 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
                   '<div class="floatingContainer">' +
-                    '<button class="btn button btnLoad"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnCopy"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnLoad" data-toggle="tooltip" title="Load models"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnSave" data-toggle="tooltip" title="Save models"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnCopy" data-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="buttonsContainer">' +
                     '<button class="btn btn-info btnGaussian"><i class="fa fa-plus" aria-hidden="true"></i> Gaussian</button>' +
@@ -125,16 +125,29 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     }
 
     if (!estimated) {
-      if (models.length > 0) {
-        currentObj.$html.find(".actionsContainer").show();
-      } else {
-        currentObj.$html.find(".actionsContainer").hide();
-      }
+      setVisibility(currentObj.$html.find(".actionsContainer"), models.length > 0);
       currentObj.$html.find(".btnSave").prop('disabled', models.length == 0);
     }
 
     return models;
   };
+
+  this.setModels = function (models) {
+    this.clearModels();
+    for (i in models){
+      var model = null;
+      if (!isNull(models[i].type) && !isNull(models[i].color)){
+        model = this.getModelFromDaveModel(models[i]);
+      }
+      if (!isNull(model)){
+        this.addModel(model, false);
+      } else {
+       showError("Can't import models");
+       return;
+      }
+    }
+    this.onModelsChangedFn();
+  }
 
   this.setEstimation = function (params, showApplyBtn) {
     var idx = 0;
@@ -146,11 +159,10 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
       }
     }
 
-    if (idx > 0 && showApplyBtn) {
-      this.$html.find(".applyBtn").show();
+    var applyBtnVisible = idx > 0 && showApplyBtn;
+    setVisibility(this.$html.find(".applyBtn"), applyBtnVisible);
+    if (applyBtnVisible) {
       this.onModelsChangedFn();
-    } else {
-      this.$html.find(".applyBtn").hide();
     }
   }
 
@@ -171,44 +183,17 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   };
 
   this.saveModels = function () {
-    var a = document.createElement("a");
-    var file = new Blob([JSON.stringify(currentObj.getModels())], {type: 'text/plain'});
-    a.href = URL.createObjectURL(file);
-    a.download = currentObj.filename + "_models.json";
-    a.click();
+    saveToFile (currentObj.filename + "_models.mdl", JSON.stringify(currentObj.getModels()));
   }
 
   this.loadModels = function () {
-    var input = $('<input type="file" id="load-input" />');
-    input.on('change', function (e) {
-      if (e.target.files.length == 1) {
-        var file = e.target.files[0];
-        var reader = new FileReader();
-          reader.onload = function(e) {
-            try {
-              var models = JSON.parse(e.target.result);
-              currentObj.clearModels();
-              for (i in models){
-                var model = null;
-                if (!isNull(models[i].type) && !isNull(models[i].color)){
-                  model = currentObj.getModelFromDaveModel(models[i]);
-                }
-                if (!isNull(model)){
-                  currentObj.addModel(model, false);
-                } else {
-                 showError("File is not supported as models");
-                 return;
-                }
-              }
-              currentObj.onModelsChangedFn();
-           } catch (e) {
-             showError("File is not supported as models", e);
-           }
-          };
-          reader.readAsText(file);
-      }
-     });
-     input.click();
+    showLoadFile (function(e) {
+      try {
+        currentObj.setModels(JSON.parse(e.target.result));
+     } catch (e) {
+       showError("File is not supported as models", e);
+     }
+    });
   }
 
   this.modelsToLaTeX = function() {
@@ -226,6 +211,18 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     this.models = [];
     this.$html.find(".modelsContainer").html("");
     this.$html.find(".actionsContainer").hide();
+  }
+
+  this.getConfig = function () {
+    return { models: this.getModels(),
+             applyBtnVisible: this.$html.find(".applyBtn").is(":visible"),
+             bootstrapBtnVisible: this.$html.find(".bootstrapBtn").is(":visible") };
+  }
+
+  this.setConfig = function (config) {
+    this.setModels(config.models);
+    setVisibility(this.$html.find(".applyBtn"), config.applyBtnVisible);
+    setVisibility(this.$html.find(".bootstrapBtn"), config.bootstrapBtnVisible);
   }
 
   log ("new ModelSelector id: " + this.id);

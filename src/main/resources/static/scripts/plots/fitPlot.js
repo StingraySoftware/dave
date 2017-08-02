@@ -21,6 +21,12 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   this.btnSettings.hide();
 
   this.onPlotDataReceived = function ( data ) {
+
+    if (!isNull(data.abort)){
+      log("Current request aborted, Plot: " + currentObj.id);
+      return; //Comes from request abort call.
+    }
+
     log("onPlotDataReceived passed data!, plot" + currentObj.id);
     data = JSON.parse(data);
 

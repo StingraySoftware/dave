@@ -80,10 +80,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
    }
 
    this.setDisableable = function (disableable) {
-     if (disableable){
-       this.switchBox.parent().show();
-     } else {
-       this.switchBox.parent().hide();
+     setVisibility(this.switchBox.parent(), disableable);
+     if (!disableable){
        this.setEnabled(true);
      }
    }
