@@ -1,7 +1,9 @@
 from test.fixture import *
 from hypothesis import given
 import hypothesis.strategies as st
-from model.dataset import DataSet, get_lightcurve_dataset_from_stingray_Lightcurve
+from model.dataset import DataSet
+from model.dataset import get_eventlist_dataset_from_stingray_Eventlist, \
+    get_lightcurve_dataset_from_stingray_Lightcurve
 import pytest
 import numpy as np
 
@@ -31,6 +33,30 @@ def test_get_lightcurve_dataset_from_stingray_Lightcurve(capsys):
 
     assert np.allclose(ds.tables["RATE"].columns["TIME"].values, lc.time)
     assert np.allclose(ds.tables["RATE"].columns["RATE"].values, lc.counts)
+
+
+def test_get_eventlist_dataset_from_stingray_Eventlist(capsys):
+    from stingray.events import EventList
+    from astropy.io.fits import Header
+    ev = EventList(time=[0, 1], pi=[2, 2], energy=[3., 4.],
+                   gti=np.array([[-0.5, 1.5]]))
+
+    ds = get_eventlist_dataset_from_stingray_Eventlist(ev)
+    out, err = capsys.readouterr()
+
+    print("Out:", out)
+    print("Err:", err)
+    assert "Event list has no header" in err
+
+    header = Header()
+    header["Bu"] = "Bu"
+    ev.header = header.tostring()
+
+    ds = get_eventlist_dataset_from_stingray_Eventlist(ev)
+
+    assert np.allclose(ds.tables["EVENTS"].columns["TIME"].values, ev.time)
+    assert np.allclose(ds.tables["EVENTS"].columns["ENERGY"].values, ev.energy)
+    assert np.allclose(ds.tables["EVENTS"].columns["PI"].values, ev.pi)
 
 
 @given(st.text(min_size=1), st.text(min_size=1), st.text(min_size=1))

@@ -210,3 +210,43 @@ def get_lightcurve_dataset_from_stingray_Lightcurve(lcurve, header=None,
         DsHelper.get_gti_table_from_stingray_gti(lcurve.gti)
 
     return dataset
+
+
+def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
+                                                  header_comments=None,
+                                                  hduname='EVENTS',
+                                                  column='TIME'):
+    from astropy.io.fits import Header
+    lc_columns = [column, "PI", "ENERGY"]
+
+    dataset = get_hdu_type_dataset("EVENTS", lc_columns, hduname)
+
+    hdu_table = dataset.tables[hduname]
+    if header is None:
+        if not hasattr(evlist, 'header'):
+            logging.warn("Event list has no header")
+            evlist.header = Header()
+
+        header = Header.fromstring(evlist.header)
+        header = dict()
+        for header_column in header:
+            header[header_column] = str(header[header_column])
+            header_comments[header_column] = \
+                str(header.comments[header_column])
+
+    hdu_table.set_header_info(header, header_comments)
+    hdu_table.columns[lc_columns[0]].add_values(evlist.time)
+    if hasattr(evlist, 'energy'):
+        hdu_table.columns['ENERGY'].add_values(evlist.energy)
+    else:
+        hdu_table.columns['ENERGY'].add_values(np.zeros_like(evlist.time))
+
+    if hasattr(evlist, 'pi'):
+        hdu_table.columns['PI'].add_values(evlist.pi)
+    else:
+        hdu_table.columns['ENERGY'].add_values(np.zeros_like(evlist.time))
+
+    dataset.tables["GTI"] = \
+        DsHelper.get_gti_table_from_stingray_gti(evlist.gti)
+
+    return dataset
