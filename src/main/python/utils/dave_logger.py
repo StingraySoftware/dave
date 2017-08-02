@@ -16,7 +16,7 @@ def info(obj):
 
 
 def warn(obj):
-    logging.warn(obj)
+    logging.warning(obj)
     log_to_server("WARN: " + str(obj))
 
 
