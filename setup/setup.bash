@@ -143,14 +143,13 @@ else
 fi
 source activate dave
 
-
-#Installing Stingray
+#Installing Stingray and Astropy Helpers
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
 # Jul 26, 2017 -> https://github.com/StingraySoftware/stingray/commit/6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
 STINGRAY_COMMIT_HASH=6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
-
+DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 if [ ! -e $STINGRAY_FOLDER ]; then
 
 	echo Installing Stingray
@@ -197,7 +196,6 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi
@@ -230,16 +228,8 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 		#Build MALTPYNT
 		python setup.py install
 
-		cd $MALTPYNT_FOLDER/astropy_helpers
-
-		#Build astropy_helpers
-		python setup.py install
-
-		cd $DIR/..
-
 		# Copy built libraries to python project
 		\cp -r $MALTPYNT_FOLDER/build/lib.linux-x86_64-3.5/maltpynt src/main/python
-		\cp -r $MALTPYNT_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
@@ -247,19 +237,11 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 		#Build MALTPYNT
 		sudo python setup.py install
 
-		cd $MALTPYNT_FOLDER/astropy_helpers
-
-		#Build astropy_helpers
-		sudo python setup.py install
-
-		cd $DIR/..
-
 		# Copy built libraries to python project
-		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 		\cp -r $MALTPYNT_FOLDER/build/$DARWIN_COMPILATION/maltpynt src/main/python
-		\cp -r $MALTPYNT_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi
 fi
+
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac OSX
@@ -273,6 +255,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 	/usr/local/bin/brew install libmagic
 fi
+
 
 # Installing node modules
 echo Installing node modules
