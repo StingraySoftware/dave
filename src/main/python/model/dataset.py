@@ -171,8 +171,10 @@ def get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments,
     hdu_table = dataset.tables[hduname]
     hdu_table.set_header_info(header, header_comments)
     hdu_table.columns[lc_columns[0]].add_values(lcurve["time"])
-    hdu_table.columns[lc_columns[1]].add_values(lcurve["lc"], lcurve["elc"])
+    hdu_table.columns[lc_columns[1]].add_values(lcurve["counts"],
+                                                lcurve["counts_err"])
 
-    dataset.tables["GTI"] = DsHelper.get_gti_table_from_stingray_gti(lcurve["GTI"])
+    dataset.tables["GTI"] = \
+        DsHelper.get_gti_table_from_stingray_gti(lcurve["gti"])
 
     return dataset
