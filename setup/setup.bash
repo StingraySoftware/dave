@@ -164,6 +164,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 
 	#Install stingray libraries
 	pip install -r requirements.txt
+	pip install statsmodels
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
@@ -199,6 +200,64 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
+	fi
+fi
+
+#Installing Maltpynt
+MALTPYNT_FOLDER=$DIR/maltpynt
+MALTPYNT_URL=https://github.com/StingraySoftware/MaLTPyNT_reboot.git
+# Sets the specific commit to checkout:
+# Aug 1st, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/d53d36492061dbffa4ad9db478dd5bbcfd7e2f62
+MALTPYNT_COMMIT_HASH=d53d36492061dbffa4ad9db478dd5bbcfd7e2f62
+
+if [ ! -e $MALTPYNT_FOLDER ]; then
+
+	echo Installing MALTPYNT
+	git clone --recursive $MALTPYNT_URL $MALTPYNT_FOLDER
+
+	cd $MALTPYNT_FOLDER
+
+	# Gets specific commit version
+	echo Getting specific version of MALTPYNT
+	git checkout $MALTPYNT_COMMIT_HASH
+
+	#Install MALTPYNT libraries
+	pip install -r requirements.txt
+
+	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+		#Linux
+
+		#Build MALTPYNT
+		python setup.py install
+
+		cd $MALTPYNT_FOLDER/astropy_helpers
+
+		#Build astropy_helpers
+		python setup.py install
+
+		cd $DIR/..
+
+		# Copy built libraries to python project
+		\cp -r $MALTPYNT_FOLDER/build/lib.linux-x86_64-3.5/maltpynt src/main/python
+		\cp -r $MALTPYNT_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
+
+	elif [[ "$OSTYPE" == "darwin"* ]]; then
+		# Mac OSX
+
+		#Build MALTPYNT
+		sudo python setup.py install
+
+		cd $MALTPYNT_FOLDER/astropy_helpers
+
+		#Build astropy_helpers
+		sudo python setup.py install
+
+		cd $DIR/..
+
+		# Copy built libraries to python project
+		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
+		\cp -r $MALTPYNT_FOLDER/build/$DARWIN_COMPILATION/maltpynt src/main/python
+		\cp -r $MALTPYNT_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi
 fi
 
