@@ -204,15 +204,23 @@ fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac OSX
-	#This is for MagicFile not for styngray, but only applies to macosx
+	#This is for MagicFile but only applies to macosx
 	if [ ! -f /usr/local/bin/brew ]; then
-		echo "Please install HomeBrew before continue."
-		echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-		echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-		exit 1
+		if hash port 2>/dev/null; then
+				echo "Installing LibMagic with MacPorts"
+        sudo port install file
+    else
+				echo "Please install HomeBrew or MacPorts before continue."
+				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
+				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+				echo "Or install MacPorts with this guide:"
+				echo 'https://www.macports.org/install.php'
+				exit 1
+    fi
+	else
+		echo "Installing LibMagic with HomeBrew"
+		/usr/local/bin/brew install libmagic
 	fi
-
-	/usr/local/bin/brew install libmagic
 fi
 
 # Installing node modules
