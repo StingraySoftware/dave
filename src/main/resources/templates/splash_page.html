@@ -26,6 +26,14 @@
         bottom: 50px;
       }
 
+      .build_version {
+        position: fixed;
+        top: 1%;
+        left: 1%;
+        color: #666666;
+        font-size: 0.65em;
+      }
+
     </style>
 
     <!-- Insert this line above script imports for solve Electron import issues -->
@@ -36,6 +44,7 @@
     <script type="text/javascript" src="../static/scripts/external/bootstrap-3.3.7.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/logger-1.15.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/waiting_dialog.js"></script>
+    <script type="text/javascript" src="../static/scripts/version.js"></script>
 
     <!-- Insert this line after script imports for solve Electron import issues -->
     <script>
@@ -44,7 +53,11 @@
       $(document).ready(function () {
 
         Logger.show();
-        log("App started!!");
+
+        var version = !isNull(BUILD_VERSION) ? BUILD_VERSION : "Unknown";
+        $(".build_version").text("Version: " + version);
+
+        log("App started!! Version: " + version);
 
       });
 
@@ -83,6 +96,8 @@
           <div class="mainProgress progress progress-striped active">
             <div class="progress-bar" style="width: 100%"></div>
           </div>
+
+          <div class="build_version"></div>
 
         </div>
       </div>
