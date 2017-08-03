@@ -245,3 +245,28 @@ def get_header(hdulist, hduname):
         header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
 
     return header, header_comments
+
+
+def save_to_intermediate_file(stingray_object, fname):
+    """Save Stingray object to intermediate file."""
+    from stingray.lightcurve import Lightcurve
+    from stingray.events import EventList
+    from stingray.crossspectrum import Crossspectrum
+    from maltpynt.io import save_lcurve, save_events, save_pds
+    if isinstance(stingray_object, Lightcurve):
+        save_lcurve(stingray_object, fname)
+    elif isinstance(stingray_object, EventList):
+        save_events(stingray_object, fname)
+    elif isinstance(stingray_object, Crossspectrum):
+        save_pds(stingray_object, fname)
+
+
+def load_from_intermediate_file(fname):
+    """Save Stingray object to intermediate file."""
+    from stingray.lightcurve import Lightcurve
+    from stingray.events import EventList
+    from stingray.crossspectrum import Crossspectrum
+    from maltpynt.io import get_file_type
+
+    ftype, contents = get_file_type(fname)
+    return contents
