@@ -6,6 +6,12 @@ BUILD_FOLDER=build/$BUILD_NAME
 #Gets the date from git of latest commit on local branch
 COMMIT_HASH=$(git log -n 1 --pretty=format:"%H")
 BUILD_DATE=$(git show -s --format=%ci $COMMIT_HASH)
+if [[ -z "${BUILD_NUMBER}" ]]; then
+  BUILD_VERSION=$BUILD_DATE
+else
+  BUILD_VERSION=$BUILD_NUMBER
+fi
+
 
 rm -rf $BUILD_FOLDER
 rm -f build/$BUILD_NAME.zip
@@ -23,9 +29,10 @@ rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/*.log
 rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/uploadeddataset/*
 \cp -r setup/environment.yml $BUILD_FOLDER/DAVEApp.app/dave/
 echo "$BUILD_DATE" > $BUILD_FOLDER/DAVEApp.app/dave/resources/version.txt
+echo "BUILD_VERSION='$BUILD_VERSION';" > $BUILD_FOLDER/DAVEApp.app/dave/resources/static/scripts/version.js
 
 cd build
 zip -r $BUILD_NAME.zip $BUILD_NAME
 cd -
 
-echo "MacOS Build Success! Version: $BUILD_DATE"
+echo "MacOS Build Success! Version: $BUILD_VERSION , Date: $BUILD_DATE"

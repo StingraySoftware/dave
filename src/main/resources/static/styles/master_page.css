@@ -595,3 +595,8 @@ input.wrongValue {
 {
   color: #d0d0d0;
 }
+
+.aboutDaveDiv {
+  float: right;
+  font-size: 0.85em;
+}
