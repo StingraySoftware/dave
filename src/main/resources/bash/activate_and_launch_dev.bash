@@ -25,29 +25,8 @@ cd -
 ENVDIR=${DIR}/work
 
 if [ ! -e $ENVDIR ]; then
-	echo "Please run ( source src/main/resources/bash/setup_dev_env.bash ) first to setup and install DAVE environment before continue."
+	echo "Please run ( source src/main/resources/bash/create_env.bash ) first to setup and install DAVE environment before continue."
 	exit 1
-fi
-
-if [[ "$OSTYPE" == "darwin"* ]]; then
-	# Mac OSX
-	#This is for MagicFile but only applies to macosx
-	if [ ! -f /usr/local/bin/brew ]; then
-		if hash port 2>/dev/null; then
-				echo "Installing LibMagic with MacPorts"
-        sudo port install file
-    else
-				echo "Please install HomeBrew or MacPorts before continue."
-				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-				echo "Or install MacPorts with this guide:"
-				echo 'https://www.macports.org/install.php'
-				exit 1
-    fi
-	else
-		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
-	fi
 fi
 
 echo Activating Python environment
