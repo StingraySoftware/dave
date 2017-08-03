@@ -19,7 +19,8 @@ You will see that there's plenty left to do!
 
 NOTE: Mac OSX dependencies
 * At least Homebrew installed (http://brew.sh/) or MacPorts installed (https://www.macports.org)
-* Administrator rights
+* Administrator rights are required for using MacPorts, please run Dave using: sudo DAVEApp.app/Contents/MacOS/DAVEApp 
+
 
 ## Contribute
 

@@ -102,7 +102,11 @@ function launchProcess(process, argument, processName) {
       } else {
 
         getTailFromLogFile(LOGS_PATH);
-        sendErrorToWindow("Error launching Python Server|");
+        if (parseInt(code) == 10){
+          sendErrorToWindow("Error creating Python Environment|");
+        } else {
+          sendErrorToWindow("Error launching Python Server|");
+        }
         log(processName + ' server stopped with code: ' + code);
       }
     });
@@ -180,7 +184,7 @@ function getTailFromLogFile (logFilePath) {
     stdout += data;
   });
   tailProc.on('close', (code) => {
-    sendErrorToWindow("Error connecting to Pyhon Server|" + stdout);
+    logToWindow("LOGFILE: " + stdout);
   });
 }
 

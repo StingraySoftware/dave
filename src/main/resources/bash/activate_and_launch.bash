@@ -12,7 +12,7 @@ if [[ -n $BASH_VERSION ]]; then
 		_SCRIPT_FOLDER=$(dirname "${BASH_SOURCE[0]}")
 else
     echo "Only bash supported."
-    exit 1
+    exit 10
 fi
 
 RES_DIR=$_SCRIPT_FOLDER/../..
@@ -22,32 +22,28 @@ RES_DIR=$(pwd)
 cd -
 
 ENVDIR=$HOME/Dave_work
+echo "Python Environment folder: $ENVDIR"
 
-if [ ! -e $ENVDIR ]; then
-	echo "Installing Python environmen"
-	SETUP_CMD="$RES_DIR/resources/bash/create_env.bash"
-	. $SETUP_CMD
+#Check DAVE environment version
+VERSION_FILE=$ENVDIR/version.txt
+if [ -e $VERSION_FILE ]; then
+	if [[ $(cat $VERSION_FILE) != $(cat $RES_DIR/resources/version.txt) ]]; then
+		echo "Wrong DAVE Version found, updating Python Environment"
+		rm -rf $ENVDIR
+	else
+		echo "DAVE Version matches the Python Environment Version"
+	fi
+else
+	#If no version file found, sure is a wrong DAVE version
+	echo "Wrong DAVE Version, updating Python Environment"
+	rm -rf $ENVDIR
 fi
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-	# Mac OSX
-	#This is for MagicFile but only applies to macosx
-	if [ ! -f /usr/local/bin/brew ]; then
-		if hash port 2>/dev/null; then
-				echo "Installing LibMagic with MacPorts"
-        sudo port install file
-    else
-				echo "Please install HomeBrew or MacPorts before continue."
-				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-				echo "Or install MacPorts with this guide:"
-				echo 'https://www.macports.org/install.php'
-				exit 1
-    fi
-	else
-		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
-	fi
+#Creates environment if not found
+if [ ! -e $ENVDIR ]; then
+	echo "Installing Python Environment"
+	SETUP_CMD="$RES_DIR/resources/bash/create_env.bash"
+	. $SETUP_CMD
 fi
 
 echo "Activating Python environment"
