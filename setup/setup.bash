@@ -231,6 +231,8 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 		#Build MALTPYNT
 		python setup.py install
 
+		cd $DIR/..
+
 		# Copy built libraries to python project
 		\cp -r $MALTPYNT_FOLDER/build/$LINUX_COMPILATION/maltpynt src/main/python
 
@@ -239,6 +241,8 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 
 		#Build MALTPYNT
 		sudo python setup.py install
+
+		cd $DIR/..
 
 		# Copy built libraries to python project
 		\cp -r $MALTPYNT_FOLDER/build/$DARWIN_COMPILATION/maltpynt src/main/python
