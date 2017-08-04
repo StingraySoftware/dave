@@ -1,5 +1,6 @@
 from maltpynt.lcurve import lcurve_from_fits as mp_lcurve_from_fits
 from maltpynt.io import load_data
+from maltpynt.io import high_precision_keyword_read
 
 
 def lcurve_from_fits(fits_file, **kwargs):
