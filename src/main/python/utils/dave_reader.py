@@ -8,7 +8,8 @@ import numpy as np
 from astropy.io import fits
 from maltpynt.io import load_events_and_gtis
 from stingray.gti import _get_gti_from_extension
-from utils.stingray_addons import lcurve_from_fits
+from maltpynt.lcurve import lcurve_from_fits
+from maltpynt.io import load_data
 import utils.dataset_cache as DsCache
 
 gtistring='GTI,STDGTI,STDGTI04'
@@ -213,17 +214,20 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
 
     header, header_comments = get_header(hdulist, hduname)
 
-    lcurve = lcurve_from_fits(destination, gtistring=gtistring,
+    # Reads the lightcurve with maltpynt
+    outfile = lcurve_from_fits(destination, gtistring=gtistring,
                              timecolumn=column, ratecolumn=None, ratehdu=1,
-                             fracexp_limit=0.9)
+                             fracexp_limit=0.9)[0]
+
+    lcurve = load_data(outfile)
 
     # Gets start time of observation and substract it from all time data,
     # sure this can be done on lcurve_from_fits, but I consider this is cleaner
-    if "Tstart" in lcurve:
-        events_start_time = lcurve["Tstart"]
+    if "tstart" in lcurve:
+        events_start_time = lcurve["tstart"]
         lcurve["time"] = lcurve["time"] - events_start_time
         lcurve["time"][0] = 0  # This is because double substraction could return small negative values for 0
-        lcurve["GTI"] = lcurve["GTI"] - events_start_time
+        lcurve["gti"] = lcurve["gti"] - events_start_time
     else:
         logging.warn("TSTART not readed from lightcurve Fits")
 

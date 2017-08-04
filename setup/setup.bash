@@ -208,8 +208,8 @@ fi
 MALTPYNT_FOLDER=$DIR/maltpynt
 MALTPYNT_URL=https://github.com/StingraySoftware/MaLTPyNT_reboot.git
 # Sets the specific commit to checkout:
-# Aug 4th, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/9eb77dd619965ee065f08e4ed6f98b78bcdad507
-MALTPYNT_COMMIT_HASH=9eb77dd619965ee065f08e4ed6f98b78bcdad507
+# Aug 4th, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/09eb7d19bfba09a4c867ff2b2862c16502aacf0b
+MALTPYNT_COMMIT_HASH=09eb7d19bfba09a4c867ff2b2862c16502aacf0b
 
 if [ ! -e $MALTPYNT_FOLDER ]; then
 
