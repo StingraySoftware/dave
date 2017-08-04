@@ -51,7 +51,7 @@ def get_file_dataset(destination):
         # Opening Fits
         hdulist = fits.open(destination, memmap=True)
         dataset = None
-        
+
         if 'EVENTS' in hdulist:
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
@@ -168,7 +168,6 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                      gtistring=gtistring,
                                      hduname=hduname, column=column)
 
-    logging.warn(repr(fits_data.additional_data))
     # Adds the lag of the first event to the start time of observation
     events_start_time = fits_data.t_start
     event_list = fits_data.ev_list
