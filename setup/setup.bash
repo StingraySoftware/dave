@@ -148,7 +148,7 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Aug 4, 2017 -> https://github.com/StingraySoftware/stingray/commit/ecee4be21ef6234a95d9c5715f455439777849bd
+# Aug 4th, 2017 -> https://github.com/StingraySoftware/stingray/commit/ecee4be21ef6234a95d9c5715f455439777849bd
 STINGRAY_COMMIT_HASH=ecee4be21ef6234a95d9c5715f455439777849bd
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
@@ -208,7 +208,7 @@ fi
 MALTPYNT_FOLDER=$DIR/maltpynt
 MALTPYNT_URL=https://github.com/StingraySoftware/MaLTPyNT_reboot.git
 # Sets the specific commit to checkout:
-# Aug 4, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/9eb77dd619965ee065f08e4ed6f98b78bcdad507
+# Aug 4th, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/9eb77dd619965ee065f08e4ed6f98b78bcdad507
 MALTPYNT_COMMIT_HASH=9eb77dd619965ee065f08e4ed6f98b78bcdad507
 
 if [ ! -e $MALTPYNT_FOLDER ]; then
