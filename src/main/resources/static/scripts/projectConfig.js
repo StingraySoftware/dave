@@ -8,6 +8,8 @@ function ProjectConfig(){
   this.gtiFilenames = [];
   this.rmfFilename = "";
   this.selectorFilenames = [];
+  this.bulkFilename = "";
+  this.bulkFilenames = [];
 
   this.binSize = 0;
   this.minBinSize = 0;
@@ -68,6 +70,9 @@ function ProjectConfig(){
       this.gtiFilename = filename;
     } else if (selectorKey == "RMF") {
       this.rmfFilename = filename;
+    } else if (selectorKey == "BULK") {
+      this.bulkFilenames = filenames;
+      this.bulkFilename = filename;
     }
   }
 
@@ -164,7 +169,7 @@ function ProjectConfig(){
     delete config.plots;
     delete config.plotsIdsByKey;
     delete config.rmfData;
-    
+
     //Removes all functions from config
     for(var k in config) if(config[k].constructor.toString().match(/^function Function\(/)) delete config[k];
 

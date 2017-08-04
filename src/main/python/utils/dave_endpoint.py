@@ -39,6 +39,21 @@ def upload(files, target):
 
     return json.dumps(filenames)
 
+
+# Copies the file from local path and stores it on target folder
+def copy_files(filepaths, target):
+    filenames = []
+
+    for filepath in filepaths:
+        if not FileUtils.is_valid_file(filepath):
+            logging.error("Filepath not found or invalid: %s" % filepath)
+        else:
+            filename = FileUtils.copy_file(target, filepath)
+            filenames.append(filename)
+
+    return json.dumps(filenames, cls=NPEncoder)
+
+
 #Returns filename destination or a valid cache key, None if invalid
 def get_destination(filename, target):
     if not filename:

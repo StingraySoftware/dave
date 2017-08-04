@@ -252,8 +252,8 @@ function showLoadFile(onLoadFn) {
     if (e.target.files.length == 1) {
       var file = e.target.files[0];
       var reader = new FileReader();
-        reader.onload = onLoadFn;
-        reader.readAsText(file);
+      reader.onload = function (e) { onLoadFn (e, file) };
+      reader.readAsText(file);
     }
    });
    input.click();
