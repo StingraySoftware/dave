@@ -148,8 +148,10 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Jul 26, 2017 -> https://github.com/StingraySoftware/stingray/commit/6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
-STINGRAY_COMMIT_HASH=6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
+# Aug 4, 2017 -> https://github.com/StingraySoftware/stingray/commit/ecee4be21ef6234a95d9c5715f455439777849bd
+STINGRAY_COMMIT_HASH=ecee4be21ef6234a95d9c5715f455439777849bd
+LINUX_COMPILATION=lib.linux-x86_64-3.5
+DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
 if [ ! -e $STINGRAY_FOLDER ]; then
 
@@ -180,8 +182,8 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $STINGRAY_FOLDER/build/lib.linux-x86_64-3.5/stingray src/main/python
-		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
+		\cp -r $STINGRAY_FOLDER/build/$LINUX_COMPILATION/stingray src/main/python
+		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$LINUX_COMPILATION/astropy_helpers src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
@@ -197,7 +199,6 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
 		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi
@@ -207,8 +208,8 @@ fi
 MALTPYNT_FOLDER=$DIR/maltpynt
 MALTPYNT_URL=https://github.com/StingraySoftware/MaLTPyNT_reboot.git
 # Sets the specific commit to checkout:
-# Aug 1st, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/821c5490d2a728de31cc1b3776b146d40eeaa07f
-MALTPYNT_COMMIT_HASH=821c5490d2a728de31cc1b3776b146d40eeaa07f
+# Aug 4, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/9eb77dd619965ee065f08e4ed6f98b78bcdad507
+MALTPYNT_COMMIT_HASH=9eb77dd619965ee065f08e4ed6f98b78bcdad507
 
 if [ ! -e $MALTPYNT_FOLDER ]; then
 
@@ -230,16 +231,8 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 		#Build MALTPYNT
 		python setup.py install
 
-		cd $MALTPYNT_FOLDER/astropy_helpers
-
-		#Build astropy_helpers
-		python setup.py install
-
-		cd $DIR/..
-
 		# Copy built libraries to python project
-		\cp -r $MALTPYNT_FOLDER/build/lib.linux-x86_64-3.5/maltpynt src/main/python
-		\cp -r $MALTPYNT_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
+		\cp -r $MALTPYNT_FOLDER/build/$LINUX_COMPILATION/maltpynt src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
@@ -247,17 +240,8 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 		#Build MALTPYNT
 		sudo python setup.py install
 
-		cd $MALTPYNT_FOLDER/astropy_helpers
-
-		#Build astropy_helpers
-		sudo python setup.py install
-
-		cd $DIR/..
-
 		# Copy built libraries to python project
-		DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 		\cp -r $MALTPYNT_FOLDER/build/$DARWIN_COMPILATION/maltpynt src/main/python
-		\cp -r $MALTPYNT_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
 	fi
 fi
 
