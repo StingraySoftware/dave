@@ -6,7 +6,7 @@ import magic
 import model.dataset as DataSet
 import numpy as np
 from astropy.io import fits
-from stingray.io import load_events_and_gtis
+from maltpynt.io import load_events_and_gtis
 from stingray.gti import _get_gti_from_extension
 from utils.stingray_addons import lcurve_from_fits
 import utils.dataset_cache as DsCache
@@ -51,7 +51,7 @@ def get_file_dataset(destination):
         # Opening Fits
         hdulist = fits.open(destination, memmap=True)
         dataset = None
-        
+
         if 'EVENTS' in hdulist:
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
@@ -151,11 +151,6 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
 
     header, header_comments = get_header(hdulist, hduname)
 
-    # Gets start time of observation
-    events_start_time = 0
-    if "TSTART" in header:
-        events_start_time = hdulist[hduname].header["TSTART"]  # Avoid use header directly, has wrong data type
-
     # Closes the FITS file, further file data reads will be done via Stingray
     hdulist.close()
 
@@ -168,20 +163,21 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
 
     # Reads fits data
     logging.debug("Reading Events Fits columns's data")
-    fits_data = load_events_and_gtis(destination, additional_columns=additional_columns,
-                                    gtistring=gtistring,
-                                    hduname=hduname, column=column)
+    fits_data = load_events_and_gtis(destination,
+                                     additional_columns=additional_columns,
+                                     gtistring=gtistring,
+                                     hduname=hduname, column=column)
 
     # Adds the lag of the first event to the start time of observation
-    events_start_time += max(fits_data.ev_list[0] - events_start_time, 0)
+    events_start_time = fits_data.t_start
+    event_list = fits_data.ev_list
 
-    gti_start = fits_data.gti_list[:, 0] - events_start_time
-    gti_end = fits_data.gti_list[:, 1] - events_start_time
+    gti_start = event_list.gti[:, 0] - events_start_time
+    gti_end = event_list.gti[:, 1] - events_start_time
 
     logging.debug("Read Events fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
 
-    event_values = fits_data.ev_list - events_start_time
-    event_values[0] = 0 # This is because double substraction could return small negative values for 0
+    event_values = event_list.time - events_start_time
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments,
                                                 fits_data.additional_data, [],
