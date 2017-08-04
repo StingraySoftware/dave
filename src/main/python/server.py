@@ -67,6 +67,9 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 def upload():
     return DaveEndpoint.upload(request.files.getlist("file"), UPLOADS_TARGET)
 
+@app.route('/copy_files', methods=['POST'])
+def copy_files():
+    return DaveEndpoint.copy_files(request.json['filepaths'], UPLOADS_TARGET)
 
 @app.route('/get_dataset_schema', methods=['GET'])
 def get_dataset_schema():

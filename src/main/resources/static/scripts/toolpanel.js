@@ -626,6 +626,19 @@ function ToolPanel (id,
     this.$html.find(".analyzeContainer").append($section);
   }
 
+  this.addBulkAnalisysButton = function () {
+    var $section = $('<div class="BulkAnalisysSection">' +
+                      '<h3>Bulk Analisys <i class="fa fa-list" aria-hidden="true"></i></h3>' +
+                    '</div>');
+    $section.click( function ( event ) {
+      var tab = getTabForSelector(currentObj.id);
+      if (!isNull(tab)){
+        showBulkAnalisysDialog(tab);
+      }
+    });
+    this.$html.find(".analyzeContainer").append($section);
+  }
+
   this.isSectionEnabled = function (sectionClass) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
     var $switchBtn = $section.find(".switch-btn");

@@ -396,7 +396,7 @@ ul#right-navbar li {
     font-size: 0.92em;
 }
 
-.toolPanelContainer .Section h3 {
+.toolPanelContainer .Section h3, .BulkAnalisysSection {
   color: #ff7d1b;
 }
 
@@ -419,7 +419,7 @@ ul#right-navbar li {
   background: #3a3a3a !important;
 }
 
-.sectionContainer .btn:hover, .outputPanelToolBar .btn:hover, .xsDialogContainer .btn:hover {
+.sectionContainer .btn:hover, .outputPanelToolBar .btn:hover, .xsDialogContainer .btn:hover, .BulkAnalisysSection:hover {
   color: #ffcf78 !important;
 }
 
@@ -599,4 +599,15 @@ input.wrongValue {
 .aboutDaveDiv {
   float: right;
   font-size: 0.85em;
+}
+
+.BulkAnalisysSection {
+  cursor: pointer;
+}
+
+.BulkAnalisysSection i {
+  float: right;
+  width: 11px;
+  margin-top: 6px;
+  font-size: 0.7em;
 }

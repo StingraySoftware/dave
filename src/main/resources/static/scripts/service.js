@@ -31,6 +31,10 @@ function Service (base_url) {
      });
    };
 
+   this.request_copy_files = function (filepaths, fn) {
+     return thisService.make_ajax_call("copy_files", { filepaths: filepaths }, fn);
+   };
+
   this.get_dataset_schema  = function ( filename, fn, errorFn, params ) {
     $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } )
       .done(function(res){fn(res, params);})
@@ -57,9 +61,9 @@ function Service (base_url) {
 
   this.make_ajax_call = function (callName, data, fn) {
     if (isNull(data.x_values)){
-      log(callName + " plot " + JSON.stringify(data));
+      log(callName + " ,data: " + JSON.stringify(data));
     } else {
-      log(callName + " plot " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
+      log(callName + " ,data: " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
     }
     try {
       return $.ajax({
