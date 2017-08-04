@@ -178,7 +178,6 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
 
     logging.debug("Read Events fits... gti_start: " + str(len(gti_start)) + ", gti_end: " + str(len(gti_end)))
 
-
     event_values = event_list.time - events_start_time
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments,

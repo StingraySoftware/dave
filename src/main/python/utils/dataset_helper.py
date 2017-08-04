@@ -15,6 +15,8 @@ def get_eventlist_from_evt_dataset(dataset):
         logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
+    # TODO: Probably all this check can be moved to dave_reader for doing it only once
+    # instead with every call to get_eventlist_from_evt_dataset
     if not "PHA" in dataset.tables["EVENTS"].columns:
         logging.warn("get_eventlist_from_evt_dataset: PHA column not found in dataset")
         dataset.tables["EVENTS"].add_columns(["PHA"])

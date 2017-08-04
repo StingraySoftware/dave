@@ -143,8 +143,7 @@ else
 fi
 source activate dave
 
-
-#Installing Stingray
+#Installing Stingray and Astropy Helpers
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
@@ -249,6 +248,7 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 	fi
 fi
 
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac OSX
 	#This is for MagicFile not for styngray, but only applies to macosx
@@ -261,6 +261,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 	/usr/local/bin/brew install libmagic
 fi
+
 
 # Installing node modules
 echo Installing node modules
