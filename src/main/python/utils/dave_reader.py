@@ -260,16 +260,16 @@ def save_to_intermediate_file(stingray_object, fname):
         save_lcurve(stingray_object, fname)
     elif isinstance(stingray_object, EventList):
         save_events(stingray_object, fname)
+    # This also work for Powerspectrum and AveragedCrosspowerspectrum, clearly
     elif isinstance(stingray_object, Crossspectrum):
         save_pds(stingray_object, fname)
 
 
 def load_from_intermediate_file(fname):
     """Save Stingray object to intermediate file."""
-    from stingray.lightcurve import Lightcurve
-    from stingray.events import EventList
-    from stingray.crossspectrum import Crossspectrum
     from maltpynt.io import get_file_type
 
     ftype, contents = get_file_type(fname)
+    # This will return an EventList, a light curve, a Powerspectrum, ...
+    # depending on the contents of the file
     return contents
