@@ -2,6 +2,10 @@ from test.fixture import *
 from hypothesis import given
 import hypothesis.strategies as st
 from model.dataset import DataSet
+from model.dataset import get_eventlist_dataset_from_stingray_Eventlist, \
+    get_lightcurve_dataset_from_stingray_Lightcurve
+import pytest
+import numpy as np
 
 
 @given(st.text(min_size=1))
@@ -9,6 +13,50 @@ def test_init(s):
     dataset = DataSet(s)
     assert dataset
     assert dataset.id == s
+
+
+def test_get_lightcurve_dataset_from_stingray_Lightcurve(capsys):
+    from stingray.lightcurve import Lightcurve
+    from astropy.io.fits import Header
+    lc = Lightcurve([0, 1], [2, 2])
+
+    ds = get_lightcurve_dataset_from_stingray_Lightcurve(lc)
+    out, err = capsys.readouterr()
+
+    assert err.strip().endswith("Light curve has no header")
+
+    header = Header()
+    header["Bu"] = "Bu"
+    lc.header = header.tostring()
+
+    ds = get_lightcurve_dataset_from_stingray_Lightcurve(lc)
+
+    assert np.allclose(ds.tables["RATE"].columns["TIME"].values, lc.time)
+    assert np.allclose(ds.tables["RATE"].columns["RATE"].values, lc.counts)
+
+
+def test_get_eventlist_dataset_from_stingray_Eventlist(capsys):
+    from stingray.events import EventList
+    from astropy.io.fits import Header
+    ev = EventList(time=[0, 1], pi=[2, 2], energy=[3., 4.],
+                   gti=np.array([[-0.5, 1.5]]))
+
+    ds = get_eventlist_dataset_from_stingray_Eventlist(ev)
+    out, err = capsys.readouterr()
+
+    print("Out:", out)
+    print("Err:", err)
+    assert "Event list has no header" in err
+
+    header = Header()
+    header["Bu"] = "Bu"
+    ev.header = header.tostring()
+
+    ds = get_eventlist_dataset_from_stingray_Eventlist(ev)
+
+    assert np.allclose(ds.tables["EVENTS"].columns["TIME"].values, ev.time)
+    assert np.allclose(ds.tables["EVENTS"].columns["ENERGY"].values, ev.energy)
+    assert np.allclose(ds.tables["EVENTS"].columns["PI"].values, ev.pi)
 
 
 @given(st.text(min_size=1), st.text(min_size=1), st.text(min_size=1))
@@ -25,7 +73,7 @@ def test_add_table(s, t, c):
     st.integers(),
     st.floats(allow_nan=False, allow_infinity=False)
 )
-def test_get_shema(s, t, c, v, e):
+def test_get_schema(s, t, c, v, e):
     dataset = DataSet(s)
     dataset.add_table(t, [c])
     dataset.tables[t].columns[c].add_value(v, e)

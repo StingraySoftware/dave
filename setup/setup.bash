@@ -147,9 +147,11 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Jul 26, 2017 -> https://github.com/StingraySoftware/stingray/commit/6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
-STINGRAY_COMMIT_HASH=6f21046cc6daf7b5db6813525eb1f7c54fc1b2a1
+# Aug 4th, 2017 -> https://github.com/StingraySoftware/stingray/commit/ecee4be21ef6234a95d9c5715f455439777849bd
+STINGRAY_COMMIT_HASH=ecee4be21ef6234a95d9c5715f455439777849bd
+LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
+
 if [ ! -e $STINGRAY_FOLDER ]; then
 
 	echo Installing Stingray
@@ -179,8 +181,8 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $STINGRAY_FOLDER/build/lib.linux-x86_64-3.5/stingray src/main/python
-		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/lib.linux-x86_64-3.5/astropy_helpers src/main/python
+		\cp -r $STINGRAY_FOLDER/build/$LINUX_COMPILATION/stingray src/main/python
+		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$LINUX_COMPILATION/astropy_helpers src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
@@ -205,8 +207,8 @@ fi
 MALTPYNT_FOLDER=$DIR/maltpynt
 MALTPYNT_URL=https://github.com/StingraySoftware/MaLTPyNT_reboot.git
 # Sets the specific commit to checkout:
-# Aug 1st, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/d53d36492061dbffa4ad9db478dd5bbcfd7e2f62
-MALTPYNT_COMMIT_HASH=d53d36492061dbffa4ad9db478dd5bbcfd7e2f62
+# Aug 4th, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/09eb7d19bfba09a4c867ff2b2862c16502aacf0b
+MALTPYNT_COMMIT_HASH=09eb7d19bfba09a4c867ff2b2862c16502aacf0b
 
 if [ ! -e $MALTPYNT_FOLDER ]; then
 
@@ -228,14 +230,18 @@ if [ ! -e $MALTPYNT_FOLDER ]; then
 		#Build MALTPYNT
 		python setup.py install
 
+		cd $DIR/..
+
 		# Copy built libraries to python project
-		\cp -r $MALTPYNT_FOLDER/build/lib.linux-x86_64-3.5/maltpynt src/main/python
+		\cp -r $MALTPYNT_FOLDER/build/$LINUX_COMPILATION/maltpynt src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
 
 		#Build MALTPYNT
 		sudo python setup.py install
+
+		cd $DIR/..
 
 		# Copy built libraries to python project
 		\cp -r $MALTPYNT_FOLDER/build/$DARWIN_COMPILATION/maltpynt src/main/python
