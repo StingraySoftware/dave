@@ -33,6 +33,7 @@ def get_dataset_schema(destination):
     if dataset:
         return dataset.get_schema()
     else:
+        logging.error("get_dataset_schema -> Null dataset for file: " + destination)
         return None
 
 
@@ -45,6 +46,7 @@ def get_dataset_header(destination):
     if dataset:
         return dataset.get_header()
     else:
+        logging.error("get_dataset_header -> Null dataset for file: " + destination)
         return None
 
 
@@ -1581,15 +1583,15 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
-        return None
+        return None, None, None
 
     if norm not in ['frac', 'abs', 'leahy', 'none']:
         logging.warn("Wrong normalization")
-        return None
+        return None, None, None
 
     if pds_type not in ['Sng', 'Avg']:
         logging.warn("Wrong power density spectrum type")
-        return None
+        return None, None, None
 
     if segm_size == 0:
         segm_size = None
@@ -1598,7 +1600,7 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
     if not lc:
         logging.warn("Can't create lightcurve")
-        return None
+        return None, None, None
 
     # Prepares GTI if passed
     gti = load_gti_from_destination (gti_destination)

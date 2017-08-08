@@ -5,6 +5,7 @@ import urllib
 import utils.session_helper as SessionHelper
 import utils.file_utils as FileUtils
 import utils.dave_engine as DaveEngine
+import utils.dave_bulk as DaveBulk
 from utils.np_encoder import NPEncoder
 import utils.dataset_cache as DsCache
 
@@ -630,3 +631,31 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_bootstrap_results: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+# Creates MaLTPyNT intermediate files from local absolute paths and stores them on target folder
+def get_intermediate_files(filepaths, target):
+    filenames = []
+
+    for filepath in filepaths:
+        if not FileUtils.is_valid_file(filepath):
+            logging.error("Filepath not found or invalid: %s" % filepath)
+        else:
+            filename = DaveBulk.get_intermediate_file(filepath, target)
+            logging.debug("get_intermediate_files filename: %s" % filename)
+            if filename:
+                filenames.append(filename)
+
+    return json.dumps(filenames, cls=NPEncoder)
+
+
+def bulk_analisys(filenames, plot_configs, outdir, target):
+
+    logging.debug("bulk_analisys filenames: %s" % filenames)
+    logging.debug("bulk_analisys plot_configs: %s" % plot_configs)
+    logging.debug("bulk_analisys outdir: %s" % outdir)
+
+    absolute_outdir = "/".join([target, outdir])
+    bulk_data = DaveBulk.bulk_analisys(filenames, plot_configs, absolute_outdir)
+    logging.debug("bulk_analisys: Finish!")
+    return json.dumps(bulk_data, cls=NPEncoder)

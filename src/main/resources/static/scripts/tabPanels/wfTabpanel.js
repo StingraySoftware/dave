@@ -295,7 +295,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         ];
 
         currentObj.toolPanel.setAnalisysSections(sections);
-        currentObj.toolPanel.addBulkAnalisysButton();
+        if (CONFIG.BULK_ANALYSIS_ENABLED) {
+          currentObj.toolPanel.addBulkAnalisysButton();
+        }
         currentObj.outputPanel.setAnalisysSections(sections);
 
         //Prepare toolPanel filters, workflow config and load outputPanel plots

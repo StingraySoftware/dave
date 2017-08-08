@@ -67,9 +67,11 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 def upload():
     return DaveEndpoint.upload(request.files.getlist("file"), UPLOADS_TARGET)
 
+
 @app.route('/copy_files', methods=['POST'])
 def copy_files():
     return DaveEndpoint.copy_files(request.json['filepaths'], UPLOADS_TARGET)
+
 
 @app.route('/get_dataset_schema', methods=['GET'])
 def get_dataset_schema():
@@ -205,6 +207,17 @@ def get_bootstrap_results():
             request.json['norm'], request.json['type'], request.json['models'],
             int(request.json['n_iter']), float(request.json['mean']),
             int(request.json['red_noise']), int(request.json['seed']))
+
+
+@app.route('/get_intermediate_files', methods=['POST'])
+def get_intermediate_files():
+    return DaveEndpoint.get_intermediate_files(request.json['filepaths'], UPLOADS_TARGET)
+
+
+@app.route('/bulk_analisys', methods=['POST'])
+def bulk_analisys():
+    return DaveEndpoint.bulk_analisys(request.json['filenames'], request.json['plotConfigs'],
+            request.json['outdir'], UPLOADS_TARGET)
 
 
 # Receives a message from client and send it to all subscribers

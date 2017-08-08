@@ -31,9 +31,9 @@ function Service (base_url) {
      });
    };
 
-   this.request_copy_files = function (filepaths, fn) {
+  this.request_copy_files = function (filepaths, fn) {
      return thisService.make_ajax_call("copy_files", { filepaths: filepaths }, fn);
-   };
+  };
 
   this.get_dataset_schema  = function ( filename, fn, errorFn, params ) {
     $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } )
@@ -136,10 +136,22 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_bootstrap_results", data, fn);
   };
 
+  this.request_intermediate_files = function (filepaths, fn) {
+     return thisService.make_ajax_call("get_intermediate_files", { filepaths: filepaths }, fn);
+  };
+
+  this.request_bulk_analisys  = function ( data, fn ) {
+    return thisService.make_ajax_call("bulk_analisys", data, fn);
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {
-        fn(e.data);
+        try {
+          fn(e.data);
+        } catch (ex){
+          log("SERVER MSG ERROR: " + e + ", error: " + ex);
+        }
     };
   };
 

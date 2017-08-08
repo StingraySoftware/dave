@@ -76,9 +76,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.isVisible = true;
    currentObj.$html.show();
    var tab = getTabForSelector(currentObj.id);
-   var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
-   btnShow.removeClass("plotHidden");
-   btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+   if (!isNull(tab)){
+     var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
+     btnShow.removeClass("plotHidden");
+     btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+   } else {
+     log("ERROR on show: Plot not attached to tab, Plot: " + this.id);
+   }
    currentObj.refreshData();
  }
 
@@ -86,9 +90,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.isVisible = false;
    currentObj.$html.hide();
    var tab = getTabForSelector(currentObj.id);
-   var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
-   btnShow.addClass("plotHidden");
-   btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+   if (!isNull(tab)){
+     var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
+     btnShow.addClass("plotHidden");
+     btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+   } else {
+     log("ERROR on show: Plot not attached to tab, Plot: " + this.id);
+   }
  }
 
  this.showLoading = function (){
@@ -163,6 +171,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return !isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable;
  }
 
+ this.isBulkPlot = function(){
+   return !isNull(this.plotConfig.styles.bulkPlot) && this.plotConfig.styles.bulkPlot;
+ }
+
  this.onDatasetValuesChanged = function ( filters ) {
 
    if (!isNull(this.parentPlotId)) {
@@ -228,14 +240,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.currentRequest = null;
    data = JSON.parse(data);
 
-   if (data != null) {
-     currentObj.setData(data);
+   if (!isNull(data)) {
+     if (isNull(data.error)) {
+       currentObj.setData(data);
+       return;
+     } else {
+       currentObj.showWarn(data.error);
+       log("onPlotDataReceived data error: " + data.error + ", plot" + currentObj.id);
+     }
    } else {
      currentObj.showWarn("Wrong data received");
      log("onPlotDataReceived wrong data!, plot" + currentObj.id);
-     currentObj.setReadyState(true);
-     currentObj.onPlotReady();
    }
+
+   currentObj.setReadyState(true);
+   currentObj.onPlotReady();
  }
 
  this.setData = function ( data ) {
@@ -400,32 +419,34 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         || (this.plotConfig.styles.type == "ligthcurve")
         || (this.plotConfig.styles.type == "colors_ligthcurve")) {
 
-     this.plotElem.on('plotly_selected', (eventData) => {
+     if (!isNull(currentObj.onFiltersChanged)) {
+       this.plotElem.on('plotly_selected', (eventData) => {
 
-       if (eventData){
-         var xRange = eventData.range.x;
-         var yRange = eventData.range.y;
-         var filters = [];
+           if (eventData){
+             var xRange = eventData.range.x;
+             var yRange = eventData.range.y;
+             var filters = [];
 
-         //If plot data for label[0] is the same as axis[0] data,
-         // else label data is calculated/derived with some process
-         if (this.mustPropagateAxisFilter(0)){
-          filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
-                                  this.getAxisForPropagation(0)));
-         }
+             //If plot data for label[0] is the same as axis[0] data,
+             // else label data is calculated/derived with some process
+             if (this.mustPropagateAxisFilter(0)){
+              filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
+                                      this.getAxisForPropagation(0)));
+             }
 
-         //Same here but for other axis
-         if (this.mustPropagateAxisFilter(1)){
-            filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
-                                  this.getAxisForPropagation(1)));
-         }
+             //Same here but for other axis
+             if (this.mustPropagateAxisFilter(1)){
+                filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
+                                      this.getAxisForPropagation(1)));
+             }
 
-         if (filters.length > 0){
-           currentObj.onFiltersChanged (filters);
-         }
+             if (filters.length > 0){
+               currentObj.onFiltersChanged (filters);
+             }
+          }
+
+        })
       }
-
-      })
 
       this.plotElem.on('plotly_hover', function(data){
 
@@ -819,10 +840,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.getConfig = function () {
-    var plotConfig = $.extend( {}, this.plotConfig );
+    var plotConfig = $.extend(true, {}, this.plotConfig );
 
     //Add atributes not included in plotConfig for export
     plotConfig.id = this.id;
+    plotConfig.class = this.constructor.name;
     plotConfig.isVisible = this.isVisible;
     plotConfig.fullWidth = this.$html.hasClass("fullWidth");
 
@@ -830,18 +852,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.setConfig = function (plotConfig, tab) {
-    this.plotConfig = $.extend( this.plotConfig, plotConfig );
-
-    //Remove atributes not included in plotConfig for export
-    delete this.plotConfig.id;
-    delete this.plotConfig.isVisible;
-    delete this.plotConfig.fullWidth;
+    this.plotConfig = cleanPlotConfig ( $.extend(true, this.plotConfig, plotConfig) );
 
     if (plotConfig.isVisible) {
       this.show();
 
       var section = this.getSection();
-      if (section != ""){
+      if ((section != "") && !isNull(tab)){
         tab.setSectionVisibility(section, true);
       }
 
@@ -872,6 +889,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 }
 
 //Static plot METHODS
+function cleanPlotConfig (plotConfig) {
+  //Remove atributes not included in plotConfig for export
+  delete plotConfig.id;
+  delete plotConfig.class;
+  delete plotConfig.isVisible;
+  delete plotConfig.fullWidth;
+  return plotConfig;
+}
+
 function OnPlotSelected () {
 
   var $selectedPlots = $(".plotSelected");

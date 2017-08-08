@@ -627,16 +627,59 @@ function ToolPanel (id,
   }
 
   this.addBulkAnalisysButton = function () {
-    var $section = $('<div class="BulkAnalisysSection">' +
+    var $section = $('<div class="Section BulkAnalisysSection">' +
                       '<h3>Bulk Analisys <i class="fa fa-list" aria-hidden="true"></i></h3>' +
+                      '<div class="sectionContainer"></div>' +
                     '</div>');
-    $section.click( function ( event ) {
+    $section.find("h3").click( function ( event ) {
       var tab = getTabForSelector(currentObj.id);
       if (!isNull(tab)){
         showBulkAnalisysDialog(tab);
       }
     });
     this.$html.find(".analyzeContainer").append($section);
+  }
+
+  this.clearBulkAnalisysPlotResults = function () {
+    this.$html.find(".BulkAnalisysSection").find(".sectionContainer").html("");
+  }
+
+  this.addBulkAnalisysPlotResults = function (plot_id, plot_title) {
+
+    //Adds a plotBulkResults section for this plot bulk data
+    var $sectionContainer = this.$html.find(".BulkAnalisysSection").find(".sectionContainer");
+    var $plotBulkResults = $('<div class="plotBulkResults ' + plot_id + ' ">' +
+                              '<div class="switch-wrapper">' +
+                              '  <div id="switch_' + plot_id + '" plot_id="' + plot_id + '" class="switch-btn fa fa-check-square-o" aria-hidden="true"></div>' +
+                              '</div>' +
+                              '<h4>' + plot_title + '</h4>' +
+                              '<div class="plotFilenames"></div>' +
+                            '</div>');
+    $sectionContainer.append($plotBulkResults);
+
+    var $plotFilenames = $plotBulkResults.find(".plotFilenames");
+    //$plotFilenames.hide();
+
+    //Show and hide plot filenames
+    $plotBulkResults.find(".switch-btn").click(function ( event ) {
+      var plotId = $(this).attr("plot_id");
+      var $plotsection = currentObj.$html.find(".BulkAnalisysSection").find("." + plotId);
+      var $switchBtn = $plotsection.find(".switch-btn");
+      var enabled = !$switchBtn.hasClass("fa-check-square-o");
+
+      setVisibility($plotsection.find(".plotFilenames"), enabled);
+      if (enabled) {
+        $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
+        $plotsection.removeClass("Disabled");
+        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
+      } else {
+        $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
+        $plotsection.addClass("Disabled");
+        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
+      }
+    });
+
+    return $plotFilenames;
   }
 
   this.isSectionEnabled = function (sectionClass) {
