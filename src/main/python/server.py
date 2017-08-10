@@ -14,6 +14,7 @@ import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
 import utils.dave_logger as Logger
 from utils.np_encoder import NPEncoder
+from config import CONFIG
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -68,9 +69,9 @@ def upload():
     return DaveEndpoint.upload(request.files.getlist("file"), UPLOADS_TARGET)
 
 
-@app.route('/copy_files', methods=['POST'])
-def copy_files():
-    return DaveEndpoint.copy_files(request.json['filepaths'], UPLOADS_TARGET)
+@app.route('/set_config', methods=['POST'])
+def set_config():
+    return CONFIG.set_config(request.json['CONFIG'])
 
 
 @app.route('/get_dataset_schema', methods=['GET'])
@@ -83,9 +84,9 @@ def get_dataset_header():
     return DaveEndpoint.get_dataset_header(request.args['filename'], UPLOADS_TARGET)
 
 
-@app.route('/append_file_to_dataset', methods=['GET'])
+@app.route('/append_file_to_dataset', methods=['POST'])
 def append_file_to_dataset():
-    return DaveEndpoint.append_file_to_dataset(request.args['filename'], request.args['nextfile'], UPLOADS_TARGET)
+    return DaveEndpoint.append_file_to_dataset(request.json['filename'], request.json['nextfile'], UPLOADS_TARGET)
 
 
 @app.route('/apply_rmf_file_to_dataset', methods=['GET'])
@@ -256,7 +257,8 @@ def shutdown_server():
 def http_error_handler(error):
     try:
         logging.error('ERROR: http_error_handler ' + str(error))
-        return render_template("error.html", error=error), error
+        #return render_template("error.html", error=error), error
+        return json.dumps(dict(error=str(error)))
     except:
         logging.error('ERROR: http_error_handler --> EXCEPT ')
 

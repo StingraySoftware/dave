@@ -3,10 +3,20 @@ import os
 import utils.dave_logger as logging
 import magic
 from shutil import copyfile
+from werkzeug import secure_filename
+from config import CONFIG
 
 
 def get_destination(target, filename):
-    return "/".join([target, filename])
+    if CONFIG.IS_LOCAL_SERVER:
+        if filename.startswith('/') and os.path.isfile(filename):
+            # This is supposed to be an absolute path
+            return filename
+        else:
+            # Relative path
+            return "/".join([target, filename])
+    else:
+        return "/".join([target, secure_filename(filename)])
 
 def file_exist(target, filename):
     return os.path.isfile(get_destination(target, filename))
@@ -26,7 +36,7 @@ def is_valid_file(destination):
 
 
 # save_file: Upload a data file to the Flask server path
-#
+#            Only called if not IS_LOCAL_SERVER
 # @param: file: file to upload
 # @param: target: folder name for upload destination
 #
@@ -41,29 +51,6 @@ def save_file(target, file):
     file.save(destination)
 
     return destination
-
-# copy_file: Upload a data file to the Flask server path
-#
-# @param: filepath: file to upload
-# @param: target: folder name for upload destination
-#
-def copy_file(target, filepath):
-
-    base = os.path.basename(filepath)
-
-    logging.debug("copy_file: %s" % filepath)
-
-    if not os.path.isdir(target):
-        os.mkdir(target)
-
-    destination = get_destination(target, base)
-
-    if os.path.isfile(destination):
-        os.remove(destination)
-
-    copyfile(filepath, destination)
-
-    return base
 
 
 # get_intermediate_filename: Upload a data file to the Flask server path

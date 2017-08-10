@@ -59,7 +59,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (filenames.length == 1) {
 
       currentObj.projectConfig.setFiles(selectorKey, [], filenames[0]);
-      waitingDialog.show('Getting file schema: ' + filenames[0]);
+      waitingDialog.show('Getting file schema: ' + getFilename(filenames[0]));
       log("onDatasetChanged " + selectorKey + ": " + filenames[0]);
       if (selectorKey == "SRC") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSrcSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
@@ -68,7 +68,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       } else if (selectorKey == "GTI") {
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Applying RMF: ' + filenames[0]);
+        waitingDialog.show('Applying RMF: ' + getFilename(filenames[0]));
         currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, function (res) { currentObj.onRmfApplied(res, callback); } );
       }
@@ -250,7 +250,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(jsonSchema);
-        currentObj.setTitle(currentObj.projectConfig.filename);
+        currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
         currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
 
         //Prepare sections
@@ -363,13 +363,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (params.currentFile < params.filenames.length){
 
       var nextfile = params.filenames[params.currentFile];
-      waitingDialog.show('Appending to dataset: ' + nextfile);
+      waitingDialog.show('Appending to dataset: ' + getFilename(nextfile));
       currentObj.service.append_file_to_dataset(params.filename, nextfile, currentObj.onSchemaChangedMultipleFiles, currentObj.onSchemaError, params);
       params.currentFile++;
 
     } else {
 
-      waitingDialog.show('Getting file schema: ' + params.filename);
+      waitingDialog.show('Getting file schema: ' + getFilename(params.filename));
       currentObj.service.get_dataset_schema(params.filename, params.onSchemaChanged, currentObj.onSchemaError, params);
     }
 

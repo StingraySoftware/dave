@@ -35,7 +35,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
          //Normal file upload!
          var fullfilename= this.value;
-         var newFilename = fullfilename.replace(/^.*[\\\/]/, '');
+         var newFilename = getFilename(fullfilename);
          waitingDialog.show('Uploading file: ' + newFilename);
 
        } else if (this.files.length > 1) {
@@ -43,19 +43,37 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
          waitingDialog.show('Uploading files...');
        }
 
-       var formData = new FormData(currentObj.$html.find('form')[0]);
-       currentObj.uploadFn(function (response) {
-                                       var jsonRes = JSON.parse(response);
-                                       if (jsonRes.error != undefined) {
-                                         currentObj.onUploadError(jsonRes.error);
-                                       } else {
-                                         currentObj.onUploadSuccess(jsonRes);
-                                         currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
-                                       };
-                                   },
-                           currentObj.onUploadProgress,
-                           currentObj.onUploadError,
-                           formData);
+       if (isNull(this.files[0].path) || !CONFIG.IS_LOCAL_SERVER) {
+
+         // If path is null is beacause we are running on a NON electron browser,
+         // or if server is on remote configuration, then we have to use the upload
+         // to server method for storing the file on server uploadsdataset folder.
+
+         var formData = new FormData(currentObj.$html.find('form')[0]);
+         currentObj.uploadFn(function (response) {
+                                         var jsonRes = JSON.parse(response);
+                                         if (jsonRes.error != undefined) {
+                                           currentObj.onUploadError(jsonRes.error);
+                                         } else {
+                                           currentObj.onUploadSuccess(jsonRes);
+                                           currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
+                                         };
+                                     },
+                             currentObj.onUploadProgress,
+                             currentObj.onUploadError,
+                             formData);
+       } else {
+
+         //Server is local, and path is defined by electron runtime environment
+
+         filenames = jQuery.map( this.files, function( file, i ) {
+          return file.path;
+          });
+         currentObj.onUploadSuccess(filenames);
+         currentObj.onFileChangedFn(filenames, currentObj.selectorKey);
+
+       }
+
      } else {
        currentObj.onUploadSuccess();
      }
@@ -74,7 +92,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      var text = "";
      if (!isNull(filenames)) {
       if (filenames.length == 1) {
-        text = filenames[0];
+        text = getFilename(filenames[0]);
       }
      }
      this.$html.find(".fileName").html(text);
@@ -127,4 +145,8 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
    log ("new fileSelector id: " + id + ", label: " + label + ", inputId: " + this.uploadInputId);
 
    return this;
+}
+
+function getFilename (filePath) {
+  return filePath.replace(/^.*[\\\/]/, '');
 }

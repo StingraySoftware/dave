@@ -18,10 +18,8 @@ from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
 from stingray.modeling import fit_powerspectrum
 from stingray.simulator import simulator
+from config import CONFIG
 import sys
-
-BIG_NUMBER = 9999999999999
-PRECISSION = 4
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
@@ -725,15 +723,15 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
             # Replace posible out of range values
             time_lag = np.nan_to_num(time_lag)
-            time_lag[time_lag > BIG_NUMBER]=0
+            time_lag[time_lag > CONFIG.BIG_NUMBER]=0
             time_lag_err = np.nan_to_num(time_lag_err)
-            time_lag_err[time_lag_err > BIG_NUMBER]=0
+            time_lag_err[time_lag_err > CONFIG.BIG_NUMBER]=0
             time_lag_array = [ time_lag, time_lag_err ]
 
             coherence = np.nan_to_num(coherence)
-            coherence[coherence > BIG_NUMBER]=0
+            coherence[coherence > CONFIG.BIG_NUMBER]=0
             coherence_err = np.nan_to_num(coherence_err)
-            coherence_err[coherence_err > BIG_NUMBER]=0
+            coherence_err[coherence_err > CONFIG.BIG_NUMBER]=0
             coherence_array = [ coherence, coherence_err ]
 
             # Set duration and warnmsg
@@ -1442,7 +1440,7 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 def push_to_results_array (result, values):
     column = dict()
     try:
-        column["values"] = np.around(values, decimals=PRECISSION)
+        column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
     except:
         column["values"] = values
     result.append(column)
@@ -1451,8 +1449,8 @@ def push_to_results_array (result, values):
 
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
-    column["values"] = np.around(values, decimals=PRECISSION)
-    column["error_values"] = np.around(errors, decimals=PRECISSION)
+    column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
+    column["error_values"] = np.around(errors, decimals=CONFIG.PRECISSION)
     result.append(column)
     return result
 
@@ -1641,6 +1639,6 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
         divided_values = np.nan_to_num(values_0 / values_1)
         if error_0.shape == error_1.shape == values_0.shape:
             divided_error = np.nan_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
-    divided_values[divided_values > BIG_NUMBER]=0
-    divided_error[divided_error > BIG_NUMBER]=0
+    divided_values[divided_values > CONFIG.BIG_NUMBER]=0
+    divided_error[divided_error > CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error

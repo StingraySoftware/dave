@@ -220,7 +220,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.setTitle("Fit " + this.plot.plotConfig.styles.title);
 
     var label = isNull(this.plot.plotConfig.styles.title) ? "File: " + this.plot.plotConfig.filename : this.plot.plotConfig.styles.title;
-    this.toolPanel.addSelectedFile(label, this.plot.plotConfig.filename);
+    this.toolPanel.addSelectedFile(label, getFilename(this.plot.plotConfig.filename));
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.modelSelector.$html);
 
     this.addPlot(this.plot);

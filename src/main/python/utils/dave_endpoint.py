@@ -8,9 +8,11 @@ import utils.dave_engine as DaveEngine
 import utils.dave_bulk as DaveBulk
 from utils.np_encoder import NPEncoder
 import utils.dataset_cache as DsCache
+from config import CONFIG
 
 
-# UPLOADS THE FILE AND STORES IT ON SESSION
+# UPLOADS THE FILE AND STORES IT ON SESSION,
+# only called if IS_LOCAL_SERVER=False configuration setted
 def upload(files, target):
 
     if len(files) == 0:
@@ -39,20 +41,6 @@ def upload(files, target):
         filenames.append(file.filename)
 
     return json.dumps(filenames)
-
-
-# Copies the file from local path and stores it on target folder
-def copy_files(filepaths, target):
-    filenames = []
-
-    for filepath in filepaths:
-        if not FileUtils.is_valid_file(filepath):
-            logging.error("Filepath not found or invalid: %s" % filepath)
-        else:
-            filename = FileUtils.copy_file(target, filepath)
-            filenames.append(filename)
-
-    return json.dumps(filenames, cls=NPEncoder)
 
 
 #Returns filename destination or a valid cache key, None if invalid
@@ -114,7 +102,9 @@ def append_file_to_dataset(filename, nextfile, target):
         return common_error(error="No nextfile setted")
 
     if not SessionHelper.is_file_uploaded(nextfile):
-        return common_error("Nextfile not uploaded")
+        if not FileUtils.file_exist(target, filename):
+            logging.error("Filename not uploaded for nextfile %s" % nextfile)
+            return common_error("Nextfile not uploaded")
 
     next_destination = FileUtils.get_destination(target, nextfile)
     if not FileUtils.is_valid_file(next_destination):

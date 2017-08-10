@@ -31,10 +31,6 @@ function Service (base_url) {
      });
    };
 
-  this.request_copy_files = function (filepaths, fn) {
-     return thisService.make_ajax_call("copy_files", { filepaths: filepaths }, fn);
-  };
-
   this.get_dataset_schema  = function ( filename, fn, errorFn, params ) {
     $.get( thisService.base_url + "/get_dataset_schema", { filename: filename } )
       .done(function(res){fn(res, params);})
@@ -48,9 +44,10 @@ function Service (base_url) {
   };
 
   this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn, params ) {
-    $.get( thisService.base_url + "/append_file_to_dataset", { filename: filename, nextfile: nextfile } )
-      .done(function(res){fn(res, params);})
-      .fail(errorFn);
+    return thisService.make_ajax_call("append_file_to_dataset",
+                                      { filename: filename, nextfile: nextfile },
+                                      function(res){fn(res, params);},
+                                      errorFn);
   };
 
   this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
@@ -59,7 +56,7 @@ function Service (base_url) {
       .fail(fn);
   };
 
-  this.make_ajax_call = function (callName, data, fn) {
+  this.make_ajax_call = function (callName, data, fn, errorFn) {
     if (isNull(data.x_values)){
       log(callName + " ,data: " + JSON.stringify(data));
     } else {
@@ -71,11 +68,15 @@ function Service (base_url) {
          url : thisService.base_url + "/" + callName,
          data: JSON.stringify(data, null, '\t'),
          contentType: 'application/json;charset=UTF-8',
-         success: fn,
+         success: isNull(errorFn) ? fn : errorFn,
          error: fn
       });
     } catch (e) {
-      fn({ "error" : e });
+      if (isNull(errorFn)) {
+        fn({ "error" : e });
+      } else {
+        errorFn({ "error" : e });
+      }
       return null;
     }
   };
@@ -142,6 +143,10 @@ function Service (base_url) {
 
   this.request_bulk_analisys  = function ( data, fn ) {
     return thisService.make_ajax_call("bulk_analisys", data, fn);
+  };
+
+  this.set_config = function (config, fn) {
+     return thisService.make_ajax_call("set_config", config, fn);
   };
 
   this.subscribe_to_server_messages = function (fn) {

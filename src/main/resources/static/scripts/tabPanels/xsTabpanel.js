@@ -195,7 +195,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   for (i in this.plotConfigs){
     var plotConfig = this.plotConfigs[i];
     var label = isNull(plotConfig.styles.title) ? "File " + i + ":" : plotConfig.styles.title;
-    this.toolPanel.addSelectedFile(label, plotConfig.filename);
+    this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
   }
 
   if (projectConfigs.length > 0){
