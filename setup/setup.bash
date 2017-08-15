@@ -155,7 +155,8 @@ DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 if [ ! -e $STINGRAY_FOLDER ]; then
 
 	echo Installing Stingray
-	git clone --recursive $STINGRAY_URL $STINGRAY_FOLDER
+	# depth 1 means only the latest commit, not the full history
+	git clone --recursive --depth 1 $STINGRAY_URL $STINGRAY_FOLDER
 
 	cd $STINGRAY_FOLDER
 
@@ -213,7 +214,8 @@ MALTPYNT_COMMIT_HASH=09eb7d19bfba09a4c867ff2b2862c16502aacf0b
 if [ ! -e $MALTPYNT_FOLDER ]; then
 
 	echo Installing MALTPYNT
-	git clone --recursive $MALTPYNT_URL $MALTPYNT_FOLDER
+	# depth 1 means only the latest commit, not the full history
+	git clone --recursive --depth 1 $MALTPYNT_URL $MALTPYNT_FOLDER
 
 	cd $MALTPYNT_FOLDER
 
