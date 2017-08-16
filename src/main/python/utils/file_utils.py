@@ -22,18 +22,20 @@ def file_exist(target, filename):
     return os.path.isfile(get_destination(target, filename))
 
 def is_valid_file(destination):
-    if not destination or not os.path.isfile(destination):
+    try:
+        if not destination or not os.path.isfile(destination):
+            return False
+
+        ext = magic.from_file(destination)
+
+        base=os.path.basename(destination)
+        file_extension = os.path.splitext(base)[1]
+
+        return (ext.find("ASCII") == 0) \
+                or (ext.find("FITS") == 0) \
+                or ((ext == "data") and (file_extension in [".p", ".nc"]))
+    except:
         return False
-
-    ext = magic.from_file(destination)
-
-    base=os.path.basename(destination)
-    file_extension = os.path.splitext(base)[1]
-
-    return (ext.find("ASCII") == 0) \
-            or (ext.find("FITS") == 0) \
-            or ((ext == "data") and (file_extension in [".p", ".nc"]))
-
 
 # save_file: Upload a data file to the Flask server path
 #            Only called if not IS_LOCAL_SERVER

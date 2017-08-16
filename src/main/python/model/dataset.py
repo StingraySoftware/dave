@@ -218,7 +218,7 @@ def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
     from astropy.io.fits import Header
 
     evt_columns = [column, "PI"]
-    if evlist.energy:
+    if hasattr(evlist, 'energy'):
         evt_columns = [column, "PI", "E"]
 
     dataset = get_hdu_type_dataset("EVENTS", evt_columns, hduname)
@@ -239,10 +239,11 @@ def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
     hdu_table.set_header_info(header, header_comments)
     hdu_table.columns[column].add_values(evlist.time)
 
-    if evlist.energy:
-        if hasattr(evlist, 'energy') and len(evlist.energy) == len(evlist.time):
+    if hasattr(evlist, 'energy'):
+        if len(evlist.energy) == len(evlist.time):
             hdu_table.columns['E'].add_values(evlist.energy)
         else:
+            logging.warn("Event list energies differs from event counts, setted all energies as 0")
             hdu_table.columns['E'].add_values(np.zeros_like(evlist.time))
 
     if hasattr(evlist, 'pi') and len(evlist.pi) == len(evlist.time):

@@ -4,9 +4,6 @@ from hypothesis import given
 from hypothesis import example
 from hypothesis.strategies import text
 
-import matplotlib
-matplotlib.use('TkAgg')  # Changes the matplotlib framework
-
 import utils.dave_engine as DaveEngine
 import utils.file_utils as FileUtils
 import utils.dave_reader as DaveReader
@@ -21,8 +18,7 @@ def test_get_dataset_schema(s):
 
     if FileUtils.is_valid_file(destination):
         schema = DaveEngine.get_dataset_schema(destination)
-
-    assert not os.path.isfile(destination) or schema is not None
+        assert schema is not None
 
 
 @given(text(min_size=1))
@@ -45,8 +41,7 @@ def test_get_lightcurve(s):
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts)
-
-    assert not os.path.isfile(destination) or result is not None
+        assert result is not None
 
 
 @given(text(min_size=1))
@@ -56,8 +51,7 @@ def test_get_divided_lightcurve_ds(s):
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_divided_lightcurve_ds(destination, destination)
-
-    assert not os.path.isfile(destination) or len(result) > 0
+        assert len(result) > 0
 
 
 @given(text(min_size=1))
@@ -75,8 +69,7 @@ def test_get_power_density_spectrum(s):
 
     if FileUtils.is_valid_file(destination):
         result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16., 1, 0, 'leahy', 'Sng')
-
-    assert not os.path.isfile(destination) or result is not None
+        assert result is not None
 
 
 @given(text(min_size=1))
@@ -95,5 +88,4 @@ def test_get_cross_spectrum(s):
         result = DaveEngine.get_cross_spectrum(destination, "", "", [], axis, 16.,
                                                destination, "", "", [], axis, 16.,
                                                1, 0, 'leahy', 'Avg')
-
-    assert not os.path.isfile(destination) or result is not None
+        assert result is not None

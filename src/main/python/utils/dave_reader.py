@@ -1,6 +1,7 @@
 
 import os
 import utils.dave_logger as logging
+import utils.exception_helper as ExHelper
 import magic
 
 import model.dataset as DataSet
@@ -27,72 +28,78 @@ def get_cache_key_for_destination (destination, time_offset):
 
 def get_file_dataset(destination, time_offset=0):
 
-    if not destination:
-        return None
-
-    cache_key = get_cache_key_for_destination(destination, time_offset)
-    if DsCache.contains(cache_key):
-        logging.debug("get_file_dataset: returned cached dataset, cache_key: " + str(cache_key))
-        return DsCache.get(cache_key)
-
-    logging.debug("get_file_dataset: reading destination: " + str(destination))
-    filename = os.path.splitext(destination)[0]
-    file_extension_from_file = os.path.splitext(destination)[1]
-    file_extension = magic.from_file(destination)
-    logging.debug("File extension: %s" % file_extension)
-
     dataset = None
 
-    if file_extension.find("ASCII") == 0:
+    try:
 
-        table_id = "EVENTS"
-        header_names = ["TIME", "PHA", "Color1", "Color2"]
-        dataset = get_txt_dataset(destination, table_id, header_names)
+        if destination:
 
-        table = dataset.tables[table_id]
-        table.add_columns(["AMPLITUDE"])
-        numValues = len(table.columns["TIME"].values)
-        random_values = np.random.uniform(-1, 1, size=numValues)
-        table.columns["AMPLITUDE"].values = random_values
+            cache_key = get_cache_key_for_destination(destination, time_offset)
+            if DsCache.contains(cache_key):
+                logging.debug("get_file_dataset: returned cached dataset, cache_key: " + str(cache_key))
+                return DsCache.get(cache_key)
 
-    elif file_extension.find("FITS") == 0:
+            logging.debug("get_file_dataset: reading destination: " + str(destination))
+            filename = os.path.splitext(destination)[0]
+            file_extension_from_file = os.path.splitext(destination)[1]
+            file_extension = magic.from_file(destination)
+            logging.debug("File extension: %s" % file_extension)
 
-        # Opening Fits
-        hdulist = fits.open(destination, memmap=True)
-        dataset = None
+            if file_extension.find("ASCII") == 0:
 
-        if 'EVENTS' in hdulist:
-            # If EVENTS extension found, consider the Fits as EVENTS Fits
-            dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
-                                               hduname='EVENTS', column=timecolumn,
-                                               gtistring=gtistring, extra_colums=['PI', "PHA"], time_offset=time_offset)
+                table_id = "EVENTS"
+                header_names = ["TIME", "PHA", "Color1", "Color2"]
+                dataset = get_txt_dataset(destination, table_id, header_names)
 
-        elif 'RATE' in hdulist:
-            # If RATE extension found, consider the Fits as LIGHTCURVE Fits
-            dataset = get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
-                                                        column=timecolumn, gtistring=gtistring, time_offset=time_offset)
+                table = dataset.tables[table_id]
+                table.add_columns(["AMPLITUDE"])
+                numValues = len(table.columns["TIME"].values)
+                random_values = np.random.uniform(-1, 1, size=numValues)
+                table.columns["AMPLITUDE"].values = random_values
 
-        elif 'EBOUNDS' in hdulist:
-            # If EBOUNDS extension found, consider the Fits as RMF Fits
-            dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
+            elif file_extension.find("FITS") == 0:
 
-        elif len(set(gtistring.split(",")).intersection(set(hdulist))):
-            # If not EVENTS or RATE extension found, check if is GTI Fits
-            dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring, time_offset=time_offset)
+                # Opening Fits
+                hdulist = fits.open(destination, memmap=True)
+
+                if 'EVENTS' in hdulist:
+                    # If EVENTS extension found, consider the Fits as EVENTS Fits
+                    dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
+                                                       hduname='EVENTS', column=timecolumn,
+                                                       gtistring=gtistring, extra_colums=['PI', "PHA"], time_offset=time_offset)
+
+                elif 'RATE' in hdulist:
+                    # If RATE extension found, consider the Fits as LIGHTCURVE Fits
+                    dataset = get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
+                                                                column=timecolumn, gtistring=gtistring, time_offset=time_offset)
+
+                elif 'EBOUNDS' in hdulist:
+                    # If EBOUNDS extension found, consider the Fits as RMF Fits
+                    dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
+
+                elif len(set(gtistring.split(",")).intersection(set(hdulist))):
+                    # If not EVENTS or RATE extension found, check if is GTI Fits
+                    dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring, time_offset=time_offset)
+
+                else:
+                    logging.error("Unsupported FITS type!")
+
+            elif file_extension == "data" and (file_extension_from_file in [".p", ".nc"]):
+
+                # If file is pickle object, tries to parse it as dataset
+                dataset = load_dataset_from_intermediate_file(destination)
+
+            else:
+                logging.error("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
+
+            if dataset:
+                DsCache.add(cache_key, dataset)
 
         else:
-            logging.error("Unsupported FITS type!")
+            logging.error("get_file_dataset: Destination is empty")
 
-    elif file_extension == "data" and (file_extension_from_file in [".p", ".nc"]):
-
-        # If file is pickle object, tries to parse it as dataset
-        dataset = load_dataset_from_intermediate_file(destination)
-
-    else:
-        logging.error("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
-
-    if dataset:
-        DsCache.add(cache_key, dataset)
+    except:
+        logging.error(ExHelper.getException('get_file_dataset'))
 
     return dataset
 
@@ -317,7 +324,7 @@ def get_stingray_object(destination, time_offset=0):
 
         elif 'RATE' in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
-            # Reads the lightcurve with maltpynt
+            # Reads the lightcurve with hendrics
             outfile = lcurve_from_fits(destination, gtistring=gtistring,
                                      timecolumn=timecolumn, ratecolumn=None, ratehdu=1,
                                      fracexp_limit=0.9)[0]

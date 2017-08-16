@@ -3,9 +3,9 @@ import utils.file_utils as FileUtils
 import utils.dave_reader as DaveReader
 import utils.filters_helper as FltHelper
 import utils.exception_helper as ExHelper
-from maltpynt.lcurve import main as MPlcurve
-from maltpynt.fspec import main as MPfspec
-from maltpynt.io import MP_FILE_EXTENSION
+from hendrics.lcurve import main as MPlcurve
+from hendrics.fspec import main as MPfspec
+from hendrics.io import HEN_FILE_EXTENSION
 
 
 # get_intermediate_file: Returns the filename of the intermediate file
@@ -16,7 +16,7 @@ def get_intermediate_file(filepath, target):
     try:
         stingray_object = DaveReader.get_stingray_object(filepath)
         if stingray_object:
-            filename = FileUtils.get_intermediate_filename(target, filepath, MP_FILE_EXTENSION)
+            filename = FileUtils.get_intermediate_filename(target, filepath, HEN_FILE_EXTENSION)
             if DaveReader.save_to_intermediate_file(stingray_object, filename):
                 return filename
     except:
