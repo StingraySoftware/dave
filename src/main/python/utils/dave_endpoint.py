@@ -102,7 +102,7 @@ def append_file_to_dataset(filename, nextfile, target):
         return common_error(error="No nextfile setted")
 
     if not SessionHelper.is_file_uploaded(nextfile):
-        if not FileUtils.file_exist(target, filename):
+        if not FileUtils.file_exist(target, nextfile):
             logging.error("Filename not uploaded for nextfile %s" % nextfile)
             return common_error("Nextfile not uploaded")
 
@@ -110,7 +110,12 @@ def append_file_to_dataset(filename, nextfile, target):
     if not FileUtils.is_valid_file(next_destination):
         return common_error("Invalid next file")
 
+    logging.debug("append_file_to_dataset, destination: %s" % destination)
+    logging.debug("append_file_to_dataset, next_destination: %s" % next_destination)
+
     new_filename = DaveEngine.append_file_to_dataset(destination, next_destination)
+
+    logging.debug("append_file_to_dataset, cache_key: %s" % new_filename)
 
     return json.dumps(new_filename)
 

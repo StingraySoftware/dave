@@ -55,27 +55,54 @@ def get_dataset_header(destination):
 #
 def append_file_to_dataset(destination, next_destination):
     dataset = DaveReader.get_file_dataset(destination)
-    if DsHelper.is_events_dataset(dataset):
-        next_dataset = DaveReader.get_file_dataset(next_destination)
-        if DsHelper.is_events_dataset(next_dataset):
-            # Looks what dataset is earliest
-            ds_start_time = DsHelper.get_events_dataset_start(dataset)
-            next_ds_start_time = DsHelper.get_events_dataset_start(next_dataset)
+    if dataset:
 
-            if next_ds_start_time < ds_start_time:
-                #Swap datasets
-                tmp_ds = dataset
-                dataset = next_dataset
-                next_dataset = tmp_ds
+        # Tries to get TSTART from dataset to set the ofset to next_dataset
+        ds_start_time = DsHelper.get_dataset_start_time(dataset)
 
-            #Join and cache joined dataset
-            dataset.tables["EVENTS"] = dataset.tables["EVENTS"].join(next_dataset.tables["EVENTS"])
-            dataset.tables["GTI"] = DsHelper.join_gti_tables(dataset.tables["GTI"], next_dataset.tables["GTI"])
+        next_dataset = DaveReader.get_file_dataset(next_destination, ds_start_time)
+        if next_dataset:
 
-            DsCache.remove(destination)  # Removes previous cached dataset for prev key
-            new_cache_key = DsCache.get_key(destination + "|" + next_destination)
-            DsCache.add(new_cache_key, dataset)  # Adds new cached dataset for new key
-            return new_cache_key
+            if DsHelper.are_datasets_of_same_type(dataset, next_dataset):
+
+                if DsHelper.is_lightcurve_dataset(dataset):
+                    if DsHelper.get_binsize_from_lightcurve_ds(dataset) == 0 \
+                       or DsHelper.get_binsize_from_lightcurve_ds(dataset) != DsHelper.get_binsize_from_lightcurve_ds(next_dataset):
+                       logging.error('append_file_to_dataset: Bin Sizes are not readables or not equal!')
+                       return ""
+
+                # Looks what dataset is earliest
+                next_ds_start_time = DsHelper.get_dataset_start_time(next_dataset)
+
+                if next_ds_start_time < ds_start_time:
+                    #Change event times and swap datasets
+                    time_offset = ds_start_time - next_ds_start_time
+                    DsHelper.add_time_offset_to_dataset(dataset, time_offset)
+                    DsHelper.add_time_offset_to_dataset(next_dataset, time_offset)
+                    tmp_ds = dataset
+                    dataset = next_dataset
+                    next_dataset = tmp_ds
+
+                #Join and cache joined dataset
+                new_dataset = dataset.clone()
+                new_hdutable = DsHelper.get_hdutable_from_dataset(new_dataset)
+                next_hdutable = DsHelper.get_hdutable_from_dataset(next_dataset)
+                new_hdutable = new_hdutable.join(next_hdutable)
+                new_dataset.tables["GTI"] = DsHelper.join_gti_tables(new_dataset.tables["GTI"], next_dataset.tables["GTI"])
+
+                # DsCache.remove(destination)  # Removes previous cached dataset for prev key
+                new_cache_key = DsCache.get_key(destination + "|" + next_destination)
+                DsCache.add(new_cache_key, new_dataset)  # Adds new cached dataset for new key
+                return new_cache_key
+
+            else:
+                logging.error('append_file_to_dataset: Datasets are not of same type!')
+
+        else:
+            logging.error('append_file_to_dataset: Cant read next dataset from: ' + str(next_destination))
+
+    else:
+        logging.error('append_file_to_dataset: Cant read dataset from: ' + str(destination))
 
     return ""
 
@@ -1490,10 +1517,6 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
     filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
     filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-    if not DsHelper.is_events_dataset(filtered_ds) \
-        and not DsHelper.is_lightcurve_dataset(filtered_ds):
-        logging.warn("Wrong dataset type")
-        return None
 
     if DsHelper.is_events_dataset(filtered_ds):
         # Creates lightcurves by gti and joins in one
@@ -1506,7 +1529,9 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
         gti = load_gti_from_destination (gti_destination)
         return DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, gti=gti)
 
-    return None
+    else:
+        logging.warn("Wrong dataset type")
+        return None
 
 
 def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt):

@@ -15,15 +15,25 @@ import utils.dataset_cache as DsCache
 timecolumn='TIME'
 gtistring='GTI,STDGTI,STDGTI04'
 
-def get_file_dataset(destination):
+def get_cache_key_for_destination (destination, time_offset):
+    if os.path.isfile(destination):
+        # If destination is a valid file, so is not a cache key
+        return DsCache.get_key(destination + "|" + str(time_offset))
+    else:
+        return destination # If destination is a cache key
+
+
+def get_file_dataset(destination, time_offset=0):
 
     if not destination:
         return None
 
-    if DsCache.contains(destination):
-        logging.debug("Returned cached dataset")
-        return DsCache.get(destination)
+    cache_key = get_cache_key_for_destination(destination, time_offset)
+    if DsCache.contains(cache_key):
+        logging.debug("get_file_dataset: returned cached dataset, cache_key: " + str(cache_key))
+        return DsCache.get(cache_key)
 
+    logging.debug("get_file_dataset: reading destination: " + str(destination))
     filename = os.path.splitext(destination)[0]
     file_extension_from_file = os.path.splitext(destination)[1]
     file_extension = magic.from_file(destination)
@@ -53,12 +63,12 @@ def get_file_dataset(destination):
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                                hduname='EVENTS', column=timecolumn,
-                                               gtistring=gtistring, extra_colums=['PI', "PHA"])
+                                               gtistring=gtistring, extra_colums=['PI', "PHA"], time_offset=time_offset)
 
         elif 'RATE' in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
             dataset = get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
-                                                        column=timecolumn, gtistring=gtistring)
+                                                        column=timecolumn, gtistring=gtistring, time_offset=time_offset)
 
         elif 'EBOUNDS' in hdulist:
             # If EBOUNDS extension found, consider the Fits as RMF Fits
@@ -66,7 +76,7 @@ def get_file_dataset(destination):
 
         elif len(set(gtistring.split(",")).intersection(set(hdulist))):
             # If not EVENTS or RATE extension found, check if is GTI Fits
-            dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring)
+            dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring, time_offset=time_offset)
 
         else:
             logging.error("Unsupported FITS type!")
@@ -80,7 +90,7 @@ def get_file_dataset(destination):
         logging.error("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
 
     if dataset:
-        DsCache.add(destination, dataset)
+        DsCache.add(cache_key, dataset)
 
     return dataset
 
@@ -148,7 +158,7 @@ def get_fits_table_column_names(hdulist, table_id):
 # with the Fits data using Stingray library
 def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                    hduname='EVENTS', column=timecolumn,
-                                   gtistring='GTI,STDGTI', extra_colums=[]):
+                                   gtistring='GTI,STDGTI', extra_colums=[], time_offset=0):
 
     # Gets columns from fits hdu table
     logging.debug("Reading Events Fits columns")
@@ -173,7 +183,7 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                      gtistring=gtistring,
                                      hduname=hduname, column=column)
 
-    event_list = substract_tstart_from_events(fits_data)
+    event_list, events_start_time = substract_tstart_from_events(fits_data, time_offset)
 
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments,
                                                 fits_data.additional_data, [],
@@ -181,21 +191,27 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                                 event_list.gti[:, 0], event_list.gti[:, 1],
                                                  None, None, hduname, column)
 
-    logging.debug("Read Events fits with stingray file successfully: %s" % destination)
+    # Stores the events_start_time in time column extra
+    dataset.tables[hduname].columns[column].set_extra("TSTART", events_start_time)
+
+    logging.debug("Read Events fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time))
 
     return dataset
 
 
 # Returns a dataset containing GTI table using Stingray library
-def get_gti_fits_dataset_with_stingray(hdulist, gtistring='GTI,STDGTI'):
+def get_gti_fits_dataset_with_stingray(hdulist, gtistring='GTI,STDGTI', time_offset=0):
     st_gtis = _get_gti_from_extension(hdulist, gtistring)
+    if time_offset != 0:
+        st_gtis[:, 0] = st_gtis[:, 0] - time_offset
+        st_gtis[:, 1] = st_gtis[:, 1] - time_offset
     return DataSet.get_gti_dataset_from_stingray_gti(st_gtis)
 
 
 # Returns a dataset containin LIGHTCURVE table and GTI table
 # with the Fits data using Stingray library
 def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
-                                            column=timecolumn, gtistring='GTI,STDGTI'):
+                                            column=timecolumn, gtistring='GTI,STDGTI', time_offset=0):
 
     #Check if HDUCLAS1 = LIGHTCURVE column exists
     logging.debug("Reading Lightcurve Fits columns")
@@ -203,7 +219,7 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
         logging.warn("HDUCLAS1 not found in header: " + hduname)
         return None
 
-    if hdulist[hduname].header["HDUCLAS1"] != "LIGHTCURVE":
+    elif hdulist[hduname].header["HDUCLAS1"] != "LIGHTCURVE":
         logging.warn("HDUCLAS1 is not LIGHTCURVE")
         return None
 
@@ -214,40 +230,54 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
                              timecolumn=column, ratecolumn=None, ratehdu=1,
                              fracexp_limit=0.9)[0]
 
-    lcurve = substract_tstart_from_lcurve(load_data(outfile))
+    lcurve, events_start_time = substract_tstart_from_lcurve(load_data(outfile), time_offset)
 
     dataset = DataSet.get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments,
                                                                     hduname, column)
 
-    logging.debug("Read Lightcurve fits with stingray file successfully: %s" % destination)
+    # Stores the events_start_time in time column extra
+    dataset.tables[hduname].columns[column].set_extra("TSTART", events_start_time)
+
+    logging.debug("Read Lightcurve fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time))
 
     return dataset
 
 
-def substract_tstart_from_events(fits_data):
+def substract_tstart_from_events(fits_data, time_offset=0):
     # Adds the lag of the first event to the start time of observation
-    events_start_time = fits_data.t_start
-    event_list = fits_data.ev_list
+    if time_offset == 0:
+        events_start_time = fits_data.t_start
+    else:
+        events_start_time = fits_data.t_start - (fits_data.t_start - time_offset)
 
+    event_list = fits_data.ev_list
     event_list.gti[:, 0] = event_list.gti[:, 0] - events_start_time
     event_list.gti[:, 1] = event_list.gti[:, 1] - events_start_time
     event_list.time = event_list.time - events_start_time
 
-    return event_list
+    return event_list, fits_data.t_start
 
 
-def substract_tstart_from_lcurve(lcurve):
+def substract_tstart_from_lcurve(lcurve, time_offset=0):
     # Gets start time of observation and substract it from all time data,
     # sure this can be done on lcurve_from_fits, but I consider this is cleaner
+    events_start_time = 0
+    real_start_time = 0
     if "tstart" in lcurve:
-        events_start_time = lcurve["tstart"]
+        real_start_time = lcurve["tstart"]
+
+        if time_offset == 0:
+            events_start_time = real_start_time
+        else:
+            events_start_time = real_start_time - (real_start_time - time_offset)
+
         lcurve["time"] = lcurve["time"] - events_start_time
-        lcurve["time"][0] = 0  # This is because double substraction could return small negative values for 0
-        lcurve["gti"] = lcurve["gti"] - events_start_time
+        lcurve["gti"][:, 0] = lcurve["gti"][:, 0] - events_start_time
+        lcurve["gti"][:, 1] = lcurve["gti"][:, 1] - events_start_time
     else:
         logging.warn("TSTART not readed from lightcurve Fits")
 
-    return lcurve
+    return lcurve, real_start_time
 
 
 # Gets FITS header properties
@@ -261,7 +291,7 @@ def get_header(hdulist, hduname):
     return header, header_comments
 
 
-def get_stingray_object(destination):
+def get_stingray_object(destination, time_offset=0):
 
     if not destination:
         return None
@@ -281,7 +311,7 @@ def get_stingray_object(destination):
                                              additional_columns=['PI', "PHA"],
                                              gtistring=gtistring,
                                              hduname='EVENTS', column=timecolumn)
-            return substract_tstart_from_events(fits_data)
+            return substract_tstart_from_events(fits_data, time_offset)
 
         elif 'RATE' in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
@@ -289,7 +319,7 @@ def get_stingray_object(destination):
             outfile = lcurve_from_fits(destination, gtistring=gtistring,
                                      timecolumn=timecolumn, ratecolumn=None, ratehdu=1,
                                      fracexp_limit=0.9)[0]
-            return substract_tstart_from_lcurve(load_lcurve(outfile))
+            return substract_tstart_from_lcurve(load_lcurve(outfile), time_offset)
 
         else:
             logging.error("Unsupported FITS type!")

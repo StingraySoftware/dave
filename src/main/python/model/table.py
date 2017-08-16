@@ -81,9 +81,8 @@ class Table:
             self.columns[column_name].add_value(value, error)
 
     def join(self, table):
-        res_table = self.clone()
-        any_column = table.columns[list(table.columns.keys())[0]]
-        for i in range(len(any_column.values)):
-            res_table.add_row(table.get_row(i))
-
+        res_table = self.clone(True)
+        for column_name in table.columns:
+            col_values, col_error_values = table.columns[column_name].get_values()
+            res_table.columns[column_name].add_values(col_values, col_error_values)
         return res_table

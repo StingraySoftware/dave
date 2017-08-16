@@ -1,31 +1,36 @@
 import logging
 import utils.gevent_helper as GeHelper
 from datetime import datetime
-
-LOG_TO_SERVER_ENABLED = True
+from config import CONFIG
 
 # LOGGING WRAPPED METHODS
+# ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
+
 def debug(obj):
-    logging.debug(obj)
-    log_to_server("DEBUG: " + str(obj))
+    if CONFIG.LOG_LEVEL <= 0:
+        logging.debug(obj)
+        log_to_server("DEBUG: " + str(obj))
 
 
 def info(obj):
-    logging.info(obj)
-    log_to_server("INFO: " + str(obj))
+    if CONFIG.LOG_LEVEL <= 1:
+        logging.info(obj)
+        log_to_server("INFO: " + str(obj))
 
 
 def warn(obj):
-    logging.warning(obj)
-    log_to_server("WARN: " + str(obj))
+    if CONFIG.LOG_LEVEL <= 2:
+        logging.warning(obj)
+        log_to_server("WARN: " + str(obj))
 
 
 def error(obj):
-    logging.error(obj)
-    log_to_server("ERROR: " + str(obj))
+    if CONFIG.LOG_LEVEL <= 3:
+        logging.error(obj)
+        log_to_server("ERROR: " + str(obj))
 
 
 # User GeHelper to send msg to client
 def log_to_server(msg):
-    if LOG_TO_SERVER_ENABLED:
+    if CONFIG.LOG_TO_SERVER_ENABLED:
         GeHelper.publish(msg)

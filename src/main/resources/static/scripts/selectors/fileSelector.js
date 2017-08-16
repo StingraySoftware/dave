@@ -10,17 +10,19 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
   this.uploadFn = uploadFn;
   this.onFileChangedFn = onFileChangedFn;
   this.uploadInputId = 'upload_input' + fileSelectorCounter;
+  this.btnText = '<i class="fa fa-folder-open" aria-hidden="true"></i> Choose file';
+  this.multiFileEnabled = false;
   fileSelectorCounter ++;
 
   this.$html = $('<div class="fileSelector ' + id + '">' +
                     '<h3>' + label + '</h3>' +
                     '<label class="fileName">' +
                     '</label>' +
-                    '<button class="btn btn-primary btnChoose"><i class="fa fa-folder-open" aria-hidden="true"></i> Choose files</button>' +
+                    '<button class="btn btn-primary btnChoose">' + this.btnText + '</button>' +
                     '<button class="btn btn-warning btnChange">Change</button>' +
                     '<form action="" method="POST" enctype="multipart/form-data">' +
                       '<input id="' + this.uploadInputId + '" name="file" type="file" style="width:100%" multiple/>' +
-                      '</form>' +
+                    '</form>' +
                   '</div>');
 
   this.$input = this.$html.find("#" + this.uploadInputId);
@@ -39,6 +41,11 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
          waitingDialog.show('Uploading file: ' + newFilename);
 
        } else if (this.files.length > 1) {
+
+         if (!currentObj.multiFileEnabled) {
+            showError("Multi file not supported");
+            return;
+         }
 
          waitingDialog.show('Uploading files...');
        }
@@ -90,10 +97,10 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
    this.onUploadSuccess = function ( filenames ) {
      waitingDialog.hideProgress();
      var text = "";
-     if (!isNull(filenames)) {
-      if (filenames.length == 1) {
-        text = getFilename(filenames[0]);
-      }
+     if (!isNull(filenames) && (filenames.length > 0)) {
+      $.each(filenames, function(i, filepath) {
+        text += ((text != "") ? ",</br>" : "") + getFilename(filepath);
+      });
      }
      this.$html.find(".fileName").html(text);
 
@@ -138,6 +145,19 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
    this.showInfoText = function (text) {
      this.$html.find("label").append('<p class="InfoText">' + text + '</a>');
+   }
+
+   this.setMultiFileEnabled = function (enabled) {
+     this.multiFileEnabled = enabled;
+     if (this.multiFileEnabled) {
+       this.$html.find("h3").text(this.label.replace("File", "Files"));
+       this.btnChoose.html(this.btnText.replace("file", "files"));
+       this.$input.attr("multiple", "");
+     } else {
+       this.$html.find("h3").text(this.label);
+       this.btnChoose.html(this.btnText);
+       this.$input.removeAttr("multiple");
+     }
    }
 
    this.onUploadSuccess();

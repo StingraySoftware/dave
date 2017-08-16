@@ -75,17 +75,31 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     } else if (filenames.length > 1){
 
-      currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
-      var params = {};
-      if (selectorKey == "SRC") {
-        params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
-      } else if (selectorKey == "BCK") {
-        params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
-      } else if (selectorKey == "GTI") {
-        params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
-      } else if (selectorKey == "RMF") {
-        log("onDatasetChanged: RMF files doesn't support multiple selection!");
-        return;
+      if (currentObj.toolPanel.loadFileType == "Independent") {
+
+        //Load an independent tab for each file
+        for (idx in filenames){
+            var file = filenames[idx];
+            openIndependentFileTab(file);
+        }
+        //Removes this tab
+        removeTab(currentObj.id);
+
+      } else {
+
+        //Concatenate all files
+        currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
+        var params = {};
+        if (selectorKey == "SRC") {
+          params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
+        } else if (selectorKey == "BCK") {
+          params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
+        } else if (selectorKey == "GTI") {
+          params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
+        } else if (selectorKey == "RMF") {
+          log("onDatasetChanged: RMF files doesn't support multiple selection!");
+          return;
+        }
       }
 
       if (!isNull(callback)){
@@ -703,4 +717,10 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.wfSelector.find(".wfSelectorDisableable").hide();
 
   log("WfTabPanel ready! id: " + this.id);
+}
+
+function openIndependentFileTab (filename) {
+    var tab = addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+    tab.toolPanel.srcFileSelector.onUploadSuccess([filename]);
+    tab.onDatasetChanged([filename], "SRC");
 }

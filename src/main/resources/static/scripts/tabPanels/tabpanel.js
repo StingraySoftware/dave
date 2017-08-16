@@ -24,7 +24,6 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     $(".TabPanel").hide();
     this.$html.show();
     $(window).trigger("resize"); //Forces plots to fit window size
-    log("TabPanel shown id: " + this.id);
   }
 
   this.addCloseButton = function () {

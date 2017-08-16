@@ -46,8 +46,8 @@ function Service (base_url) {
   this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn, params ) {
     return thisService.make_ajax_call("append_file_to_dataset",
                                       { filename: filename, nextfile: nextfile },
-                                      function(res){fn(res, params);},
-                                      errorFn);
+                                        function(res){fn(res, params);},
+                                        errorFn);
   };
 
   this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
@@ -68,8 +68,8 @@ function Service (base_url) {
          url : thisService.base_url + "/" + callName,
          data: JSON.stringify(data, null, '\t'),
          contentType: 'application/json;charset=UTF-8',
-         success: isNull(errorFn) ? fn : errorFn,
-         error: fn
+         success: fn,
+         error: isNull(errorFn) ? fn : errorFn
       });
     } catch (e) {
       if (isNull(errorFn)) {

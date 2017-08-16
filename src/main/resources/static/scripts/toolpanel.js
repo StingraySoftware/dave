@@ -19,6 +19,7 @@ function ToolPanel (id,
   container.html(this.$html);
   this.$html.show();
   this.filters = [];
+  this.loadFileType = "Single"; // Supported: Single, Concatenated, Independent
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.analyzeContainer = this.$html.find(".analyzeContainer");
@@ -107,6 +108,70 @@ function ToolPanel (id,
     this.$html.find("." + panel).show();
   }
 
+  this.createSngOrMultiFileSelector = function () {
+    // Creates Single file or Multifile selection radio buttons
+    this.sngOrMultiFileSelector = $('<div class="SngOrMultiFileSelector">' +
+                                    '<h3>Choose single or multiple files load:</h3>' +
+                                    '<fieldset>' +
+                                      '<label for="' + this.id + '_SngFile">Single file</label>' +
+                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_SngFile" value="Single" ' + getCheckedState(this.loadFileType == "Single") + '>' +
+                                      '<label for="' + this.id + '_MulFile">Multiple files</label>' +
+                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_MulFile" value="Multi" ' + getCheckedState(this.loadFileType != "Single") + '>' +
+                                    '</fieldset>' +
+                                  '</div>');
+
+    this.$html.find(".fileSelectorsContainer").append(this.sngOrMultiFileSelector);
+    var $loadTypeRadios = this.sngOrMultiFileSelector.find("input[type=radio][name=" + this.id + "_SngOrMultiFile]")
+    $loadTypeRadios.checkboxradio();
+    this.sngOrMultiFileSelector.find("fieldset").controlgroup();
+    $loadTypeRadios.change(function() {
+      currentObj.updateLoadFileType();
+      var multiFileEnabled = currentObj.loadFileType != "Single";
+      setVisibility(currentObj.conOrIndFileSelector, multiFileEnabled);
+      for (idx in currentObj.file_selectors_array) {
+        var fileSelector = currentObj.file_selectors_array[idx];
+        fileSelector.setMultiFileEnabled(multiFileEnabled
+                                         && (fileSelector.selectorKey != "RMF")
+                                         && (!fileSelector.selectorKey.startsWith("LC")));
+      }
+    });
+
+    // Creates Concatenated files or Independent selection radio buttons
+    this.conOrIndFileSelector = $('<div class="ConOrIndFileSelector">' +
+                                    '<h3>Choose concatenated or independent files load:</h3>' +
+                                    '<fieldset>' +
+                                      '<label for="' + this.id + '_ConFile">Concatenated</label>' +
+                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_ConFile" value="Concatenated" ' + getCheckedState((this.loadFileType == "Single") || (this.loadFileType == "Concatenated")) + '>' +
+                                      '<label for="' + this.id + '_IndFile">Independent</label>' +
+                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_IndFile" value="Independent" ' + getCheckedState(this.loadFileType == "Concatenated") + '>' +
+                                    '</fieldset>' +
+                                  '</div>');
+
+    setVisibility(this.conOrIndFileSelector, this.loadFileType == "Multi");
+    this.$html.find(".fileSelectorsContainer").append(this.conOrIndFileSelector);
+    var $loadType2Radios = this.conOrIndFileSelector.find("input[type=radio][name=" + this.id + "_ConOrIndFile]")
+    $loadType2Radios.checkboxradio();
+    this.conOrIndFileSelector.find("fieldset").controlgroup();
+    $loadType2Radios.change(function() {
+      currentObj.updateLoadFileType();
+    });
+  }
+
+  this.updateLoadFileType = function () {
+    if (this.sngOrMultiFileSelector.find("input").filter('[value=Single]').prop('checked')) {
+      this.loadFileType = "Single";
+    } else if (this.conOrIndFileSelector.find("input").filter('[value=Concatenated]').prop('checked')) {
+      this.loadFileType = "Concatenated";
+    } else {
+      this.loadFileType = "Independent";
+    }
+  }
+
+  this.removeSngOrMultiFileSelector = function () {
+    this.sngOrMultiFileSelector.remove();
+    this.conOrIndFileSelector.remove();
+  }
+
   this.onTimeRangeChanged = function (timeRange) {
     if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
       var tab = getTabForSelector(this.id);
@@ -130,6 +195,7 @@ function ToolPanel (id,
 
     if (projectConfig.schema.isEventsFile()){
 
+      this.removeSngOrMultiFileSelector();
       this.showEventsSelectors();
 
       if (!projectConfig.schema.hasColumn("PHA")){
@@ -179,6 +245,7 @@ function ToolPanel (id,
 
     } else if (projectConfig.schema.isLightCurveFile()){
 
+      this.removeSngOrMultiFileSelector();
       this.showLcSelectors();
 
       var binDiv = $('<div class="sliderSelector binLabel">' +
@@ -708,7 +775,11 @@ function ToolPanel (id,
     }
   }
 
+
   //Normal file selectors, SRC is valid on both events files and lightcurves
+
+  this.createSngOrMultiFileSelector();
+
   this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Source File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.srcFileSelector);
 

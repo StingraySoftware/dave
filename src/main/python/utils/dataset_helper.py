@@ -137,11 +137,49 @@ def is_gti_dataset(dataset):
     return False
 
 
-def get_events_dataset_start(dataset):
-    if len(dataset.tables["EVENTS"].columns["TIME"].values) > 0:
-        return dataset.tables["EVENTS"].columns["TIME"].values[0]
+def are_datasets_of_same_type(dataset1, dataset2):
+    return get_hdutable_from_dataset(dataset1).id == get_hdutable_from_dataset(dataset2).id
+
+
+def get_hdutable_from_dataset(dataset):
+    if is_events_dataset(dataset):
+        return dataset.tables["EVENTS"]
+    elif is_lightcurve_dataset(dataset):
+        return dataset.tables["RATE"]
+    else:
+        logging.warn("get_hdutable_from_dataset: dataset is no Events or Lightcurve type")
+        return None
+
+
+def get_dataset_start_time(dataset):
+    hdutable = get_hdutable_from_dataset(dataset)
+    if hdutable:
+        return get_column_start_time(hdutable.columns["TIME"])
+    else:
+        logging.warn("get_dataset_start_time: hdutable is None")
+        return 0
+
+
+def get_column_start_time(column):
+    if column.has_extra("TSTART"):
+        return column.get_extra("TSTART")
+    else:
+        logging.warn("get_column_start_time: Couldn't read TSTART from extras, using column[0]")
+        if len(column.values) > 0:
+            return column.values[0]
     return 0
 
+
+def get_binsize_from_lightcurve_ds(dataset):
+    if is_lightcurve_dataset(dataset):
+        table = dataset.tables["RATE"]
+        if "TIMEDEL" in table.header:
+            return float(table.header["TIMEDEL"])
+        elif "FRMTIME" in table.header:
+            return float(table.header["FRMTIME"]) / 1000
+    else:
+        logging.warn("get_binsize_from_lightcurve_ds: Couldn't read TIMEDEL or FRMTIME from RATE HEADER!")
+        return 0
 
 def get_stingray_gti_from_gti_table (gti_table):
     return np.column_stack((gti_table.columns["START"].values,
@@ -364,3 +402,20 @@ def get_histogram (array, precision=1.0):
         histogram[match_val] += 1
 
     return histogram, np.sort(values)
+
+
+def add_time_offset_to_dataset(dataset, time_offset):
+    if time_offset != 0:
+
+        logging.debug("add_time_offset_to_dataset: dataset: " + str(dataset.id) + ", time_offset: " + str(time_offset))
+
+        ds_gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
+        ds_gti[:, 0] = ds_gti[:, 0] + time_offset
+        ds_gti[:, 1] = ds_gti[:, 1] + time_offset
+        dataset.tables["GTI"] = get_gti_table_from_stingray_gti(ds_gti)
+
+        hdutable = get_hdutable_from_dataset(dataset)
+        if hdutable:
+            hdutable.columns["TIME"].values = hdutable.columns["TIME"].values + time_offset
+
+    return dataset

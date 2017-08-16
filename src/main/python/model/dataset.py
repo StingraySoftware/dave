@@ -2,7 +2,7 @@ from model.table import Table
 import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
 import utils.dave_logger as logging
-import time
+from random import randint
 
 
 class DataSet:
@@ -10,7 +10,7 @@ class DataSet:
     tables = dict()
 
     def __init__(self, id):
-        self.id = id
+        self.id = id + str(randint(0,99999))
         self.tables = dict()
 
     def add_table(self, table_id, column_names):
