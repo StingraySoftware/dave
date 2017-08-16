@@ -203,48 +203,48 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	fi
 fi
 
-#Installing Maltpynt
-MALTPYNT_FOLDER=$DIR/maltpynt
-MALTPYNT_URL=https://github.com/StingraySoftware/MaLTPyNT_reboot.git
+#Installing hendrics
+HENDRICS_FOLDER=$DIR/hendrics
+HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Aug 4th, 2017 -> https://github.com/StingraySoftware/MaLTPyNT_reboot/commit/09eb7d19bfba09a4c867ff2b2862c16502aacf0b
-MALTPYNT_COMMIT_HASH=09eb7d19bfba09a4c867ff2b2862c16502aacf0b
+# Aug 4th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/e0191779adaccb0a51ce80d9207aa3f09a0f1d21
+HENDRICS_COMMIT_HASH=e0191779adaccb0a51ce80d9207aa3f09a0f1d21
 
-if [ ! -e $MALTPYNT_FOLDER ]; then
+if [ ! -e $HENDRICS_FOLDER ]; then
 
-	echo Installing MALTPYNT
-	git clone --recursive $MALTPYNT_URL $MALTPYNT_FOLDER
+	echo Installing HENDRICS
+	git clone --recursive $HENDRICS_URL $HENDRICS_FOLDER
 
-	cd $MALTPYNT_FOLDER
+	cd $HENDRICS_FOLDER
 
 	# Gets specific commit version
-	echo Getting specific version of MALTPYNT
-	git checkout $MALTPYNT_COMMIT_HASH
+	echo Getting specific version of HENDRICS
+	git checkout $HENDRICS_COMMIT_HASH
 
-	#Install MALTPYNT libraries
+	#Install HENDRICS libraries
 	pip install -r requirements.txt
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
 
-		#Build MALTPYNT
+		#Build HENDRICS
 		python setup.py install
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $MALTPYNT_FOLDER/build/$LINUX_COMPILATION/maltpynt src/main/python
+		\cp -r $HENDRICS_FOLDER/build/$LINUX_COMPILATION/hendrics src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
 
-		#Build MALTPYNT
+		#Build HENDRICS
 		sudo python setup.py install
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $MALTPYNT_FOLDER/build/$DARWIN_COMPILATION/maltpynt src/main/python
+		\cp -r $HENDRICS_FOLDER/build/$DARWIN_COMPILATION/hendrics src/main/python
 	fi
 fi
 

@@ -10,7 +10,7 @@ from utils.dave_reader import save_to_intermediate_file, \
 import utils.file_utils as FileUtils
 from stingray.events import EventList
 from stingray import Lightcurve, Powerspectrum, AveragedCrossspectrum
-from maltpynt.io import MP_FILE_EXTENSION
+from hendrics.io import MP_FILE_EXTENSION
 import numpy as np
 
 
