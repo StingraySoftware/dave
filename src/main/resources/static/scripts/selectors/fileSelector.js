@@ -31,7 +31,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
   this.btnChoose = this.$html.find(".btnChoose");
   this.btnChange = this.$html.find(".btnChange");
 
-  this.$input.on('change', function () {
+  this.$input.on('change', function (event) {
       if (this.files.length > 0) {
        if (this.files.length == 1) {
 
@@ -71,14 +71,64 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                              formData);
        } else {
 
-         //Server is local, and path is defined by electron runtime environment
+         var hasBulkFile = false;
 
-         filenames = jQuery.map( this.files, function( file, i ) {
-          return file.path;
-          });
-         currentObj.onUploadSuccess(filenames);
-         currentObj.onFileChangedFn(filenames, currentObj.selectorKey);
+         for (idx in this.files) {
+           if (this.files[idx].type == "text/plain") {
+             //If is text/plain consider it as bulk file, soo load it later, only one bulk file supported
+             hasBulkFile = true;
+             if (!currentObj.multiFileEnabled) {
+                showError("Bulk file not supported from 'Single File'");
+                return;
+             } else if (this.files.length > 1) {
+                showError("Bulk file must be selected alone, not with other files");
+                return;
+             }
+           }
+         }
 
+        if (!hasBulkFile) {
+
+          //Server is local, and path is defined by electron runtime environment
+          filenames = jQuery.map( this.files, function( file, i ) {
+            //If normal file, just returns the absolute path
+            return file.path;
+           });
+
+           currentObj.onUploadSuccess(filenames);
+           currentObj.onFileChangedFn(filenames, currentObj.selectorKey);
+
+         } else {
+
+           //Text/plain file tries to read all paths from file
+           var reader = new FileReader();
+           reader.onload = function(){
+             var contents = reader.result;
+             if (contents.length > 0) {
+
+               var lines = contents.split("\n");
+               var filesToRead = [];
+               for (i in lines){
+                 var path = lines[i];
+                 if ((path.length > 0) && !path.startsWith("#")){
+                   filesToRead.push(path);
+                 }
+               }
+
+               if (filesToRead.length > 0) {
+                 currentObj.onUploadSuccess(filesToRead);
+                 currentObj.onFileChangedFn(filesToRead, currentObj.selectorKey);
+               } else {
+                 showError("Bulk file has no valid paths");
+               }
+
+             } else {
+               showError("Bulk file can't be read");
+             }
+           };
+           reader.readAsText(this.files[0]);
+
+         }
        }
 
      } else {

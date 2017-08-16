@@ -100,14 +100,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           log("onDatasetChanged: RMF files doesn't support multiple selection!");
           return;
         }
+
+        if (!isNull(callback)){
+          params.callback = callback;
+        }
+
+        currentObj.onSchemaChangedMultipleFiles(null, params);
       }
-
-      if (!isNull(callback)){
-        params.callback = callback;
-      }
-
-      currentObj.onSchemaChangedMultipleFiles(null, params);
-
+      
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
       if (!isNull(callback)) { callback(); }
