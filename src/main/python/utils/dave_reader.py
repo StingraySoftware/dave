@@ -6,10 +6,12 @@ import magic
 import model.dataset as DataSet
 import numpy as np
 from astropy.io import fits
-from maltpynt.io import load_events_and_gtis
-from maltpynt.lcurve import lcurve_from_fits
-from maltpynt.io import load_data, load_lcurve
+
+from hendrics.io import load_events_and_gtis
 from stingray.gti import _get_gti_from_extension
+from hendrics.lcurve import lcurve_from_fits
+from hendrics.io import load_data
+
 import utils.dataset_cache as DsCache
 
 timecolumn='TIME'
@@ -209,7 +211,7 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
 
     header, header_comments = get_header(hdulist, hduname)
 
-    # Reads the lightcurve with maltpynt
+    # Reads the lightcurve with HENDRICS
     outfile = lcurve_from_fits(destination, gtistring=gtistring,
                              timecolumn=column, ratecolumn=None, ratehdu=1,
                              fracexp_limit=0.9)[0]
@@ -304,7 +306,7 @@ def save_to_intermediate_file(stingray_object, fname):
     from stingray.lightcurve import Lightcurve
     from stingray.events import EventList
     from stingray.crossspectrum import Crossspectrum
-    from maltpynt.io import save_lcurve, save_events, save_pds
+    from hendrics.io import save_lcurve, save_events, save_pds
     if isinstance(stingray_object, Lightcurve):
         save_lcurve(stingray_object, fname)
     elif isinstance(stingray_object, EventList):
@@ -321,10 +323,11 @@ def save_to_intermediate_file(stingray_object, fname):
 
 def load_dataset_from_intermediate_file(fname):
     """Save Stingray object to intermediate file."""
+
     from stingray.lightcurve import Lightcurve
     from stingray.events import EventList
     from stingray.crossspectrum import Crossspectrum
-    from maltpynt.io import get_file_type
+    from hendrics.io import get_file_type
 
     ftype, contents = get_file_type(fname)
     # This will return an EventList, a light curve, a Powerspectrum, ...
