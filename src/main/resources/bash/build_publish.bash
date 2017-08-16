@@ -24,6 +24,12 @@ echo "========================="
 echo
 python -m pytest src/test/python
 
+test_result=$?
+
+echo "Result of tests: $test_result"
+
+if [ ! $test_result -eq "0" ]; then exit $test_result; fi
+
 function publish_file {
   FILE=$1
   echo "DIST_DIRS=$DIST_DIRS"
