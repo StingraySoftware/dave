@@ -5,5 +5,7 @@ __pycache__
 flaskserver.log
 *.log
 *.pyc
+*.p
+*.nc
 .cache
 .hypothesis
