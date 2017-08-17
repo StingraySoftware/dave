@@ -17,6 +17,8 @@
 #
 
 rm -rf work
+rm -rf ~/.cache/pip/*  # Cleans pip cache folder
+
 source setup/setup.bash
 
 echo "Running Python unit tests"
