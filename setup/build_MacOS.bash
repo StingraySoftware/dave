@@ -29,7 +29,7 @@ rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/uploadeddataset/*
 \cp -r setup/environment.yml $BUILD_FOLDER/DAVEApp.app/dave/
 echo "$BUILD_DATE" > $BUILD_FOLDER/DAVEApp.app/dave/resources/version.txt
 echo "BUILD_VERSION='$BUILD_VERSION';" > $BUILD_FOLDER/DAVEApp.app/dave/resources/static/scripts/version.js
-echo "COMMIT_HASH='$COMMIT_HASH';" > $BUILD_FOLDER/DAVEApp.app/dave/resources/static/scripts/version.js
+echo "COMMIT_HASH='$COMMIT_HASH';" >> $BUILD_FOLDER/DAVEApp.app/dave/resources/static/scripts/version.js
 
 cd build
 zip -r $BUILD_NAME.zip $BUILD_NAME
