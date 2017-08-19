@@ -38,33 +38,44 @@ var waitingDialog = waitingDialog || (function ($) {
 			var settings = $.extend({
 				dialogSize: 'm',
 				progressType: '',
-				onHide: null // This callback runs after the dialog was hidden
+				onHide: null, // This callback runs after the dialog was hidden
+        ignoreCalls: false
 			}, options);
 
-			// Configuring dialog
-			$dialog.find('.modal-dialog').attr('class', 'modal-dialog').addClass('modal-' + settings.dialogSize);
-			$dialog.find('.progress-bar').attr('class', 'progress-bar');
-			if (settings.progressType) {
-				$dialog.find('.progress-bar').addClass('progress-bar-' + settings.progressType);
-			}
-			$dialog.find('h3').text(message);
-			// Adding callbacks
-			if (typeof settings.onHide === 'function') {
-				$dialog.off('hidden.bs.modal').on('hidden.bs.modal', function (e) {
-					settings.onHide.call($dialog);
-				});
-			}
-      $dialog.find('.ui-dialog-titlebar-close').html('<i class="fa fa-times" aria-hidden="true"></i>').click(function(event){
-         $dialog.modal('hide');
-      });
-			// Opening dialog
-			$dialog.modal();
+      if (!$dialog.hasClass('ignoreCalls') || settings.ignoreCalls) {
+        // Configuring dialog
+  			$dialog.find('.modal-dialog').attr('class', 'modal-dialog').addClass('modal-' + settings.dialogSize);
+  			$dialog.find('.progress-bar').attr('class', 'progress-bar');
+  			if (settings.progressType) {
+  				$dialog.find('.progress-bar').addClass('progress-bar-' + settings.progressType);
+  			}
+  			$dialog.find('h3').text(message);
+  			// Adding callbacks
+  			if (typeof settings.onHide === 'function') {
+  				$dialog.off('hidden.bs.modal').on('hidden.bs.modal', function (e) {
+  					settings.onHide.call($dialog);
+  				});
+  			}
+        $dialog.find('.ui-dialog-titlebar-close').html('<i class="fa fa-times" aria-hidden="true"></i>').click(function(event){
+           $dialog.modal('hide');
+        });
+  			// Opening dialog
+  			$dialog.modal();
+      }
+
+      if (settings.ignoreCalls) {
+        $dialog.addClass('ignoreCalls');
+      }
 		},
 		/**
 		 * Closes dialog
 		 */
-		hide: function () {
-			$dialog.modal('hide');
+		hide: function (ignoreCalls) {
+      if (!$dialog.hasClass('ignoreCalls') || (!isNull(ignoreCalls) && ignoreCalls)) {
+  			$dialog.modal('hide');
+        $dialog.removeClass('ignoreCalls');
+        $(".modal-backdrop").remove();
+      }
 		},
 
     hideProgress: function () {

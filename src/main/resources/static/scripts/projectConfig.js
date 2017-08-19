@@ -2,13 +2,14 @@
 function ProjectConfig(){
   this.filename = "";
   this.filenames = [];
-  this.schema = null;
   this.bckFilename = "";
   this.bckFilenames = [];
   this.gtiFilename = "";
   this.gtiFilenames = [];
   this.rmfFilename = "";
   this.selectorFilenames = [];
+  this.bulkFilename = "";
+  this.bulkFilenames = [];
 
   this.binSize = 0;
   this.minBinSize = 0;
@@ -21,9 +22,9 @@ function ProjectConfig(){
   this.totalDuration = 0;
   this.eventCountRatio = 1.0;
 
+  this.schema = null;
   this.plots = [];
   this.plotsIdsByKey = {};
-
   this.rmfData = [];
 
   this.hasSchema = function (schema) {
@@ -69,6 +70,9 @@ function ProjectConfig(){
       this.gtiFilename = filename;
     } else if (selectorKey == "RMF") {
       this.rmfFilename = filename;
+    } else if (selectorKey == "BULK") {
+      this.bulkFilenames = filenames;
+      this.bulkFilename = filename;
     }
   }
 
@@ -154,5 +158,21 @@ function ProjectConfig(){
     if (!isNull(this.plotsIdsByKey[key])) {
       this.plotsIdsByKey[key] = [];
     }
+  }
+
+  this.getConfig = function () {
+    var config = $.extend( {}, this );
+    config.selectorFilenames = Object.assign({}, this.selectorFilenames);
+
+    //Remove cache properties
+    delete config.schema;
+    delete config.plots;
+    delete config.plotsIdsByKey;
+    delete config.rmfData;
+
+    //Removes all functions from config
+    for(var k in config) if(config[k].constructor.toString().match(/^function Function\(/)) delete config[k];
+
+    return config;
   }
 }

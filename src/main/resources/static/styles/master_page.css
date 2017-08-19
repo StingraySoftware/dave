@@ -41,6 +41,13 @@ h3
   background-color: #000;
 }
 
+ul#right-navbar {
+    margin-right: 0px;
+}
+ul#right-navbar li {
+    width: 28px;
+}
+
 .closeTabPanel {
   margin-left: 8px;
   margin-right: -8px;
@@ -269,6 +276,7 @@ h3
   position: relative;
   float: right;
   top: 3px;
+  cursor: pointer;
 }
 
 .sliderSelector .switch-btn {
@@ -391,9 +399,10 @@ h3
 
 .toolPanelContainer .Section h3 {
   color: #ff7d1b;
+  cursor: pointer;
 }
 
-.Section .sectionContainer {
+.Section .sectionContainer, .plotFilenames {
   padding-left: 10px;
 }
 
@@ -412,11 +421,11 @@ h3
   background: #3a3a3a !important;
 }
 
-.sectionContainer .btn:hover, .outputPanelToolBar .btn:hover, .xsDialogContainer .btn:hover {
+.sectionContainer .btn:hover, .outputPanelToolBar .btn:hover, .xsDialogContainer .btn:hover, .BulkAnalisysSection:hover {
   color: #ffcf78 !important;
 }
 
-.sectionContainer .btn.plotHidden, .outputPanelToolBar .btn.plotHidden, .toolPanelContainer .Section.Disabled h3 {
+.sectionContainer .btn.plotHidden, .outputPanelToolBar .btn.plotHidden, .toolPanelContainer .Section.Disabled h3, .plotFilenames .btn.plotHidden {
   color: gray;
 }
 
@@ -587,4 +596,22 @@ input.wrongValue {
 .TabPanel.Settings h3
 {
   color: #d0d0d0;
+}
+
+.aboutDaveDiv {
+  float: right;
+  font-size: 0.85em;
+}
+
+.BulkAnalisysSection h3 i {
+  float: right;
+  width: 11px;
+  margin-top: 6px;
+  font-size: 0.7em;
+}
+
+.BulkAnalisysSection .plotBulkResults h4 {
+    font-size: 0.9em;
+    color: #af805d;
+    cursor: pointer;
 }

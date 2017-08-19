@@ -5,11 +5,14 @@ import urllib
 import utils.session_helper as SessionHelper
 import utils.file_utils as FileUtils
 import utils.dave_engine as DaveEngine
+import utils.dave_bulk as DaveBulk
 from utils.np_encoder import NPEncoder
 import utils.dataset_cache as DsCache
+from config import CONFIG
 
 
-# UPLOADS THE FILE AND STORES IT ON SESSION
+# UPLOADS THE FILE AND STORES IT ON SESSION,
+# only called if IS_LOCAL_SERVER=False configuration setted
 def upload(files, target):
 
     if len(files) == 0:
@@ -39,6 +42,7 @@ def upload(files, target):
 
     return json.dumps(filenames)
 
+
 #Returns filename destination or a valid cache key, None if invalid
 def get_destination(filename, target):
     if not filename:
@@ -47,8 +51,12 @@ def get_destination(filename, target):
 
     if not SessionHelper.is_file_uploaded(filename):
         if not DsCache.contains(filename):
-            logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
-            return None
+            if not FileUtils.file_exist(target, filename):
+                logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
+                return None
+            else:
+                logging.info("Filename readed from upload in previous session, filename %s" % filename)
+
 
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
@@ -94,13 +102,20 @@ def append_file_to_dataset(filename, nextfile, target):
         return common_error(error="No nextfile setted")
 
     if not SessionHelper.is_file_uploaded(nextfile):
-        return common_error("Nextfile not uploaded")
+        if not FileUtils.file_exist(target, nextfile):
+            logging.error("Filename not uploaded for nextfile %s" % nextfile)
+            return common_error("Nextfile not uploaded")
 
     next_destination = FileUtils.get_destination(target, nextfile)
     if not FileUtils.is_valid_file(next_destination):
         return common_error("Invalid next file")
 
+    logging.debug("append_file_to_dataset, destination: %s" % destination)
+    logging.debug("append_file_to_dataset, next_destination: %s" % next_destination)
+
     new_filename = DaveEngine.append_file_to_dataset(destination, next_destination)
+
+    logging.debug("append_file_to_dataset, cache_key: %s" % new_filename)
 
     return json.dumps(new_filename)
 
@@ -117,9 +132,6 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
 
     if not rmf_filename:
         return common_error(error="No rmf_filename setted")
-
-    if not SessionHelper.is_file_uploaded(rmf_filename):
-        return common_error("Rmf file not uploaded")
 
     rmf_destination = FileUtils.get_destination(target, rmf_filename)
     if not FileUtils.is_valid_file(rmf_destination):
@@ -614,3 +626,31 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_bootstrap_results: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
+
+
+# Creates HENDRICS intermediate files from local absolute paths and stores them on target folder
+def get_intermediate_files(filepaths, target):
+    filenames = []
+
+    for filepath in filepaths:
+        if not FileUtils.is_valid_file(filepath):
+            logging.error("Filepath not found or invalid: %s" % filepath)
+        else:
+            filename = DaveBulk.get_intermediate_file(filepath, target)
+            logging.debug("get_intermediate_files filename: %s" % filename)
+            if filename:
+                filenames.append(filename)
+
+    return json.dumps(filenames, cls=NPEncoder)
+
+
+def bulk_analisys(filenames, plot_configs, outdir, target):
+
+    logging.debug("bulk_analisys filenames: %s" % filenames)
+    logging.debug("bulk_analisys plot_configs: %s" % plot_configs)
+    logging.debug("bulk_analisys outdir: %s" % outdir)
+
+    absolute_outdir = "/".join([target, outdir])
+    bulk_data = DaveBulk.bulk_analisys(filenames, plot_configs, absolute_outdir)
+    logging.debug("bulk_analisys: Finish!")
+    return json.dumps(bulk_data, cls=NPEncoder)

@@ -2,7 +2,7 @@ from model.table import Table
 import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
 import utils.dave_logger as logging
-import time
+from random import randint
 
 
 class DataSet:
@@ -10,7 +10,7 @@ class DataSet:
     tables = dict()
 
     def __init__(self, id):
-        self.id = id
+        self.id = id + str(randint(0,99999))
         self.tables = dict()
 
     def add_table(self, table_id, column_names):
@@ -185,9 +185,8 @@ def get_lightcurve_dataset_from_stingray_Lightcurve(lcurve, header=None,
                                                     hduname='RATE',
                                                     column='TIME'):
     from astropy.io.fits import Header
-    lc_columns = [column, hduname]
 
-    dataset = get_hdu_type_dataset("LIGHTCURVE", lc_columns, hduname)
+    dataset = get_hdu_type_dataset("LIGHTCURVE", [column, hduname], hduname)
 
     hdu_table = dataset.tables[hduname]
     if header is None:
@@ -202,8 +201,8 @@ def get_lightcurve_dataset_from_stingray_Lightcurve(lcurve, header=None,
             header_comments[header_column] = \
                 str(header.comments[header_column])
     hdu_table.set_header_info(header, header_comments)
-    hdu_table.columns[lc_columns[0]].add_values(lcurve.time)
-    hdu_table.columns[lc_columns[1]].add_values(lcurve.counts,
+    hdu_table.columns[column].add_values(lcurve.time)
+    hdu_table.columns[hduname].add_values(lcurve.counts,
                                                 lcurve.counts_err)
 
     dataset.tables["GTI"] = \
@@ -217,9 +216,12 @@ def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
                                                   hduname='EVENTS',
                                                   column='TIME'):
     from astropy.io.fits import Header
-    lc_columns = [column, "PI", "ENERGY"]
 
-    dataset = get_hdu_type_dataset("EVENTS", lc_columns, hduname)
+    evt_columns = [column, "PI"]
+    if hasattr(evlist, 'energy'):
+        evt_columns = [column, "PI", "E"]
+
+    dataset = get_hdu_type_dataset("EVENTS", evt_columns, hduname)
 
     hdu_table = dataset.tables[hduname]
     if header is None:
@@ -235,16 +237,19 @@ def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
                 str(header.comments[header_column])
 
     hdu_table.set_header_info(header, header_comments)
-    hdu_table.columns[lc_columns[0]].add_values(evlist.time)
-    if hasattr(evlist, 'energy'):
-        hdu_table.columns['ENERGY'].add_values(evlist.energy)
-    else:
-        hdu_table.columns['ENERGY'].add_values(np.zeros_like(evlist.time))
+    hdu_table.columns[column].add_values(evlist.time)
 
-    if hasattr(evlist, 'pi'):
+    if hasattr(evlist, 'energy'):
+        if len(evlist.energy) == len(evlist.time):
+            hdu_table.columns['E'].add_values(evlist.energy)
+        else:
+            logging.warn("Event list energies differs from event counts, setted all energies as 0")
+            hdu_table.columns['E'].add_values(np.zeros_like(evlist.time))
+
+    if hasattr(evlist, 'pi') and len(evlist.pi) == len(evlist.time):
         hdu_table.columns['PI'].add_values(evlist.pi)
     else:
-        hdu_table.columns['ENERGY'].add_values(np.zeros_like(evlist.time))
+        hdu_table.columns['PI'].add_values(np.zeros_like(evlist.time))
 
     dataset.tables["GTI"] = \
         DsHelper.get_gti_table_from_stingray_gti(evlist.gti)

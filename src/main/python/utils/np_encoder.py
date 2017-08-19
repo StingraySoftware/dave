@@ -2,8 +2,8 @@ import json
 import numpy
 import utils.exception_helper as ExHelper
 import utils.dave_logger as logging
+from config import CONFIG
 
-BIG_NUMBER = 9999999999999
 
 class NPEncoder(json.JSONEncoder):
 
@@ -14,28 +14,28 @@ class NPEncoder(json.JSONEncoder):
     def default(self, obj):
         try:
             if isinstance(obj, int):
-                if obj > BIG_NUMBER:
-                    return BIG_NUMBER
-                if obj < -BIG_NUMBER:
-                    return BIG_NUMBER
+                if obj > CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
+                if obj < -CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
                 return int(obj)
             elif isinstance(obj, float):
-                if obj > BIG_NUMBER:
-                    return BIG_NUMBER
-                if obj < -BIG_NUMBER:
-                    return BIG_NUMBER
+                if obj > CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
+                if obj < -CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
                 return float(obj)
             if isinstance(obj, numpy.integer):
-                if obj > BIG_NUMBER:
-                    return BIG_NUMBER
-                if obj < -BIG_NUMBER:
-                    return BIG_NUMBER
+                if obj > CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
+                if obj < -CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
                 return int(obj)
             elif isinstance(obj, numpy.floating):
-                if obj > BIG_NUMBER:
-                    return BIG_NUMBER
-                if obj < -BIG_NUMBER:
-                    return BIG_NUMBER
+                if obj > CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
+                if obj < -CONFIG.BIG_NUMBER:
+                    return CONFIG.BIG_NUMBER
                 return float(obj)
             elif isinstance(obj, complex):
                 return self.default(numpy.real(obj))

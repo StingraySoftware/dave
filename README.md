@@ -18,8 +18,9 @@ users can insert their own algorithms to compare the effects of such changes.
 You will see that there's plenty left to do!
 
 NOTE: Mac OSX dependencies
-* Homebrew installed (http://brew.sh/)
-* Administrator rights
+* At least Homebrew installed (http://brew.sh/) or MacPorts installed (https://www.macports.org)
+* Administrator rights are required for using MacPorts, please run Dave using: sudo DAVEApp.app/Contents/MacOS/DAVEApp 
+
 
 ## Contribute
 

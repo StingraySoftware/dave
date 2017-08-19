@@ -73,10 +73,8 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       currentObj.settingsPanel.find(".inputLam").val(bsOpts.lam);
       currentObj.settingsPanel.find(".inputP").val(bsOpts.p);
       currentObj.settingsPanel.find(".inputNiter").val(bsOpts.niter);
-      currentObj.settingsPanel.find(".baselineContainer").show();
-    } else {
-      currentObj.settingsPanel.find(".baselineContainer").hide();
     }
+    setVisibility(currentObj.settingsPanel.find(".baselineContainer"), bsOpts.niter > 0);
   }
 
   this.disableBaseline = function () {
@@ -85,8 +83,11 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   this.getPlotlyConfig = function (data) {
     var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
-    var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
-                                        [], data[2].values,
+
+    var dataWithGaps = this.addGapsToData(data[0].values, data[1].values, data[2].values, currentObj.plotConfig.dt * 5);
+
+    var plotlyConfig = get_plotdiv_lightcurve(dataWithGaps[0], dataWithGaps[1],
+                                        [], dataWithGaps[2],
                                         (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.plotConfig.styles.labels[coords.y],
@@ -125,7 +126,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.maxY = Math.max.apply(null, this.data[coords.y].values);
 
       var tab = getTabForSelector(this.id);
-      if (!isNull(tab)){
+      if (!isNull(tab) && (0 <= this.minY < this.maxY)){
         tab.updateMinMaxCountRate(this.minY, this.maxY);
       }
     }
@@ -147,6 +148,35 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     } else {
       return this.plotConfig.axis[axis];
     }
+  }
+
+  this.addGapsToData = function (times, values, errorValues, minGapTime) {
+    if (!isNull(times)
+        && !isNull(values)
+        && times.length > 1
+        && times.length == values.length){
+
+      var gapDelay = currentObj.plotConfig.dt * 0.5;
+      for (i = 1; i < times.length; i++) {
+
+        var prevTime = times[i - 1];
+        var nextTime = times[i];
+
+        if ((nextTime - prevTime) > minGapTime) {
+          times.splice(i, 0, prevTime + gapDelay);
+          values.splice(i, 0, null);
+          errorValues.splice(i, 0, null);
+          times.splice(i + 1, 0, nextTime - gapDelay);
+          values.splice(i + 1, 0, null);
+          errorValues.splice(i + 1, 0, null);
+        }
+      }
+
+    } else {
+      log("ERROR on addGapsToData for LcPlot id: " + this.id)
+    }
+
+    return [times, values, errorValues];
   }
 
   //LC BaseLine parameters:

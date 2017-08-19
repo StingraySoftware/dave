@@ -37,16 +37,17 @@ function Service (base_url) {
       .fail(errorFn);
   };
 
-  this.get_dataset_header  = function ( filename, fn, errorFn, params ) {
+  this.get_dataset_header  = function ( filename, fn ) {
     $.get( thisService.base_url + "/get_dataset_header", { filename: filename } )
-      .done(function(res){fn(res, params);})
-      .fail(errorFn);
+      .done(fn)
+      .fail(fn);
   };
 
   this.append_file_to_dataset  = function ( filename, nextfile, fn, errorFn, params ) {
-    $.get( thisService.base_url + "/append_file_to_dataset", { filename: filename, nextfile: nextfile } )
-      .done(function(res){fn(res, params);})
-      .fail(errorFn);
+    return thisService.make_ajax_call("append_file_to_dataset",
+                                      { filename: filename, nextfile: nextfile },
+                                        function(res){fn(res, params);},
+                                        errorFn);
   };
 
   this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
@@ -55,11 +56,11 @@ function Service (base_url) {
       .fail(fn);
   };
 
-  this.make_ajax_call = function (callName, data, fn) {
+  this.make_ajax_call = function (callName, data, fn, errorFn) {
     if (isNull(data.x_values)){
-      log(callName + " plot " + JSON.stringify(data));
+      log(callName + " ,data: " + JSON.stringify(data));
     } else {
-      log(callName + " plot " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
+      log(callName + " ,data: " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
     }
     try {
       return $.ajax({
@@ -68,10 +69,14 @@ function Service (base_url) {
          data: JSON.stringify(data, null, '\t'),
          contentType: 'application/json;charset=UTF-8',
          success: fn,
-         error: fn
+         error: isNull(errorFn) ? fn : errorFn
       });
     } catch (e) {
-      fn({ "error" : e });
+      if (isNull(errorFn)) {
+        fn({ "error" : e });
+      } else {
+        errorFn({ "error" : e });
+      }
       return null;
     }
   };
@@ -132,10 +137,26 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_bootstrap_results", data, fn);
   };
 
+  this.request_intermediate_files = function (filepaths, fn) {
+     return thisService.make_ajax_call("get_intermediate_files", { filepaths: filepaths }, fn);
+  };
+
+  this.request_bulk_analisys  = function ( data, fn ) {
+    return thisService.make_ajax_call("bulk_analisys", data, fn);
+  };
+
+  this.set_config = function (config, fn) {
+     return thisService.make_ajax_call("set_config", config, fn);
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {
-        fn(e.data);
+        try {
+          fn(e.data);
+        } catch (ex){
+          log("SERVER MSG ERROR: " + e + ", error: " + ex);
+        }
     };
   };
 

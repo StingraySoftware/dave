@@ -16,8 +16,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.isSwitched = false;
   this.hoverDisablerEnabled = true;
   this.hoverEnabled = false;
-  this.cssClass = (cssClass != undefined) ? cssClass : "";
-  this.switchable = (switchable != undefined) ? switchable : false;
+  this.cssClass = (!isNull(cssClass)) ? cssClass : "";
+  this.switchable = (!isNull(switchable)) ? switchable : false;
   this.data = null;
   this.tracesCount = 0;
   this.addedTraces = 0;
@@ -34,17 +34,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '</div>' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
-                    '<button class="btn btn-default btnHidePlot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnFullScreen">' +
+                    '<button class="btn btn-default btnHidePlot" data-toggle="tooltip" title="Hide plot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnFullScreen" data-toggle="tooltip" title="Maximize/Minimize">' +
                       '<i class="fa ' + ((this.cssClass.indexOf("full") > -1) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
-                    '<button class="btn btn-default btnSave"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnSave" data-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="hoverinfo"></div>' +
                 '</div>');
 
  if (!isNull(toolbar)) {
-   this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
@@ -76,9 +76,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.isVisible = true;
    currentObj.$html.show();
    var tab = getTabForSelector(currentObj.id);
-   var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
-   btnShow.removeClass("plotHidden");
-   btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+   if (!isNull(tab)){
+     var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
+     btnShow.removeClass("plotHidden");
+     btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+   } else {
+     log("ERROR on show: Plot not attached to tab, Plot: " + this.id);
+   }
    currentObj.refreshData();
  }
 
@@ -86,9 +90,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.isVisible = false;
    currentObj.$html.hide();
    var tab = getTabForSelector(currentObj.id);
-   var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
-   btnShow.addClass("plotHidden");
-   btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+   if (!isNull(tab)){
+     var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
+     btnShow.addClass("plotHidden");
+     btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+   } else {
+     log("ERROR on show: Plot not attached to tab, Plot: " + this.id);
+   }
  }
 
  this.showLoading = function (){
@@ -141,7 +149,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (switchable) {
    //If switchable adds Switch button to plot
-   this.btnSwitch = $('<button class="btn btn-default btnSwitch"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
+   this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
    this.$html.find(".plotTools").append(this.btnSwitch);
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
@@ -151,7 +159,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (!isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable) {
    //If plot is lightcurve adds Select button to plot
-   this.btnSelect = $('<button class="btn btn-default btnSelect"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
+   this.btnSelect = $('<button class="btn btn-default btnSelect" data-toggle="tooltip" title="Select plot"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
    this.$html.find(".plotTools").append(this.btnSelect);
    this.btnSelect.click(function(event){
      currentObj.$html.toggleClass("plotSelected");
@@ -161,6 +169,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.isSelectable = function(){
    return !isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable;
+ }
+
+ this.isBulkPlot = function(){
+   return !isNull(this.plotConfig.styles.bulkPlot) && this.plotConfig.styles.bulkPlot;
  }
 
  this.onDatasetValuesChanged = function ( filters ) {
@@ -194,7 +206,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        }
      }
 
-     log("Avoid request data, no service function setted, Plot" + this.id);
+     log("Avoid request data, no service function setted, Plot: " + this.id);
      return;
    } else {
      this.updatePlotConfig();
@@ -212,13 +224,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (!isNull(tab)){
      this.plotConfig.dt = tab.projectConfig.binSize;
    } else {
-     log("ERROR: Plot not attached to tab, Plot" + this.id);
+     log("ERROR on updatePlotConfig: Plot not attached to tab, Plot: " + this.id);
    }
  }
 
  this.onPlotDataReceived = function ( data ) {
 
    if (!isNull(data.abort)){
+     log("Current request aborted, Plot: " + currentObj.id);
      return; //Comes from request abort call.
    }
 
@@ -227,14 +240,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    currentObj.currentRequest = null;
    data = JSON.parse(data);
 
-   if (data != null) {
-     currentObj.setData(data);
+   if (!isNull(data)) {
+     if (isNull(data.error)) {
+       currentObj.setData(data);
+       return;
+     } else {
+       currentObj.showWarn(data.error);
+       log("onPlotDataReceived data error: " + data.error + ", plot" + currentObj.id);
+     }
    } else {
      currentObj.showWarn("Wrong data received");
      log("onPlotDataReceived wrong data!, plot" + currentObj.id);
-     currentObj.setReadyState(true);
-     currentObj.onPlotReady();
    }
+
+   currentObj.setReadyState(true);
+   currentObj.onPlotReady();
  }
 
  this.setData = function ( data ) {
@@ -399,32 +419,34 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         || (this.plotConfig.styles.type == "ligthcurve")
         || (this.plotConfig.styles.type == "colors_ligthcurve")) {
 
-     this.plotElem.on('plotly_selected', (eventData) => {
+     if (!isNull(currentObj.onFiltersChanged)) {
+       this.plotElem.on('plotly_selected', (eventData) => {
 
-       if (eventData){
-         var xRange = eventData.range.x;
-         var yRange = eventData.range.y;
-         var filters = [];
+           if (eventData){
+             var xRange = eventData.range.x;
+             var yRange = eventData.range.y;
+             var filters = [];
 
-         //If plot data for label[0] is the same as axis[0] data,
-         // else label data is calculated/derived with some process
-         if (this.mustPropagateAxisFilter(0)){
-          filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
-                                  this.getAxisForPropagation(0)));
-         }
+             //If plot data for label[0] is the same as axis[0] data,
+             // else label data is calculated/derived with some process
+             if (this.mustPropagateAxisFilter(0)){
+              filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
+                                      this.getAxisForPropagation(0)));
+             }
 
-         //Same here but for other axis
-         if (this.mustPropagateAxisFilter(1)){
-            filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
-                                  this.getAxisForPropagation(1)));
-         }
+             //Same here but for other axis
+             if (this.mustPropagateAxisFilter(1)){
+                filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
+                                      this.getAxisForPropagation(1)));
+             }
 
-         if (filters.length > 0){
-           currentObj.onFiltersChanged (filters);
-         }
+             if (filters.length > 0){
+               currentObj.onFiltersChanged (filters);
+             }
+          }
+
+        })
       }
-
-      })
 
       this.plotElem.on('plotly_hover', function(data){
 
@@ -788,6 +810,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      }
 
      this.plotConfig.filters = validFilters;
+
+   } else {
+     log("ERROR on applyValidFilters: Plot not attached to tab, Plot: " + this.id);
    }
   }
 
@@ -814,12 +839,65 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return wti_ranges;
   }
 
+  this.getConfig = function () {
+    var plotConfig = $.extend(true, {}, this.plotConfig );
+
+    //Add atributes not included in plotConfig for export
+    plotConfig.id = this.id;
+    plotConfig.class = this.constructor.name;
+    plotConfig.isVisible = this.isVisible;
+    plotConfig.fullWidth = this.$html.hasClass("fullWidth");
+
+    return plotConfig;
+  }
+
+  this.setConfig = function (plotConfig, tab) {
+    this.plotConfig = cleanPlotConfig ( $.extend(true, this.plotConfig, plotConfig) );
+
+    if (plotConfig.isVisible) {
+      this.show();
+
+      var section = this.getSection();
+      if ((section != "") && !isNull(tab)){
+        tab.setSectionVisibility(section, true);
+      }
+
+      if (this.$html.hasClass("fullWidth") != plotConfig.fullWidth){
+        this.btnFullScreen.click();
+      }
+
+    } else {
+      this.hide();
+    }
+  }
+
+  this.getSection = function () {
+    if (this.$html.hasClass("LcPlot")){
+      return "LcPlot";
+    } else if (this.$html.hasClass("PDSPlot")){
+      return "PDSPlot";
+    } else if (this.$html.hasClass("TimingPlot")){
+      return "TimingPlot";
+    } else {
+      return "";
+    }
+  }
+
   log ("new plot id: " + this.id);
 
   return this;
 }
 
 //Static plot METHODS
+function cleanPlotConfig (plotConfig) {
+  //Remove atributes not included in plotConfig for export
+  delete plotConfig.id;
+  delete plotConfig.class;
+  delete plotConfig.isVisible;
+  delete plotConfig.fullWidth;
+  return plotConfig;
+}
+
 function OnPlotSelected () {
 
   var $selectedPlots = $(".plotSelected");

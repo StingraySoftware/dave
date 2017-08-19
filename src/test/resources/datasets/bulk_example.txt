@@ -1,0 +1,4 @@
+# Rename /Users/ricardo/TimeLab/dave with your absolute path to dave folder
+/Users/ricardo/TimeLab/dave/src/test/resources/datasets/std1_ao9_01_01.lc
+/Users/ricardo/TimeLab/dave/src/test/resources/datasets/std2_ao9_01_00.lc
+/Users/ricardo/TimeLab/dave/src/test/resources/datasets/PN_source_lightcurve_raw.lc

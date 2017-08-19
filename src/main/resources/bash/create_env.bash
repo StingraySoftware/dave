@@ -5,17 +5,50 @@ if [[ -n $BASH_VERSION ]]; then
 		_SCRIPT_FOLDER=$(dirname "${BASH_SOURCE[0]}")
 else
     echo "Only bash supported."
-    exit 1
+    exit 10
 fi
 
+#Check for LibMagic on Mac first for avoid user to wait all downloads if this crash
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# Mac OSX
+
+	#This is for MagicFile but only applies to macosx
+	if [ ! -f /usr/local/bin/brew ]; then
+		if hash /opt/local/bin/port 2>/dev/null; then
+
+				# Make sure only root can run our script
+				if [ "$(id -u)" != "0" ]; then
+				 echo "You need Administrator privileges to continue with the installation."
+				 echo "LibMagic will be installed with MacPorts, try relanching the application as root"
+				 echo "or run this HomeBrew installation command on a terminal and relanch DAVE:"
+ 				 echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+				 exit 10
+				fi
+
+				echo "Installing LibMagic with MacPorts"
+        su /opt/local/bin/port install file
+    else
+				echo "Please install HomeBrew or MacPorts before continue."
+				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
+				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+				echo "Or install MacPorts with this guide:"
+				echo 'https://www.macports.org/install.php'
+				exit 10
+    fi
+	else
+		echo "Installing LibMagic with HomeBrew"
+		/usr/local/bin/brew install libmagic
+	fi
+fi
 
 # install in directory work in the top-level dir in the project
 DIR=$_SCRIPT_FOLDER/../..
 WORKDIR=$HOME/Dave_work
 
 if [ ! -e $WORKDIR ]; then
-	echo "Creating work directory: $WORKDIR"
+	echo "Creating Python Environment folder: $WORKDIR"
 	mkdir $WORKDIR
+	\cp -r $DIR/resources/version.txt $WORKDIR
 fi
 
 # normalize dir

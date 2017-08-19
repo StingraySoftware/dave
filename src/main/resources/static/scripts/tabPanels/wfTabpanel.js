@@ -1,6 +1,12 @@
-function addWfTabPanel(navBarList, panelContainer){
-  tab = new WfTabPanel("Tab_" + tabPanels.length, "TabPanelTemplate", "NavItem_" + tabPanels.length, theService, navBarList, panelContainer);
+function addWfTabPanel(navBarList, panelContainer, id, navItemClass){
+  tab = new WfTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
+                       "TabPanelTemplate",
+                       !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
+                       theService,
+                       navBarList,
+                       panelContainer);
   tabPanels.push(tab);
+  return tab;
 }
 
 //WorkFlow tab panel
@@ -43,7 +49,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.toolPanel.showPanel(panel);
   }
 
-  this.onDatasetChanged = function ( filenames, selectorKey ) {
+  this.onDatasetChanged = function ( filenames, selectorKey, callback) {
 
     if (selectorKey == "SRC") {
       //If SRC file was load just create a new project config
@@ -53,90 +59,128 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (filenames.length == 1) {
 
       currentObj.projectConfig.setFiles(selectorKey, [], filenames[0]);
-      waitingDialog.show('Getting file schema: ' + filenames[0]);
+      waitingDialog.show('Getting file schema: ' + getFilename(filenames[0]));
       log("onDatasetChanged " + selectorKey + ": " + filenames[0]);
       if (selectorKey == "SRC") {
-        currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSrcSchemaChanged, currentObj.onSchemaError, null);
+        currentObj.service.get_dataset_schema(currentObj.projectConfig.filename, currentObj.onSrcSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if (selectorKey == "BCK") {
-        currentObj.service.get_dataset_schema(currentObj.projectConfig.bckFilename, currentObj.onBckSchemaChanged);
+        currentObj.service.get_dataset_schema(currentObj.projectConfig.bckFilename, currentObj.onBckSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if (selectorKey == "GTI") {
-        currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged);
+        currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
-        waitingDialog.show('Applying RMF: ' + filenames[0]);
+        waitingDialog.show('Applying RMF: ' + getFilename(filenames[0]));
         currentObj.projectConfig.setFile("RMF", filenames[0]);
-        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.onRmfApplied);
+        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, function (res) { currentObj.onRmfApplied(res, callback); } );
       }
 
     } else if (filenames.length > 1){
 
-      currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
-      var params = {};
-      if (selectorKey == "SRC") {
-        params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
-      } else if (selectorKey == "BCK") {
-        params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
-      } else if (selectorKey == "GTI") {
-        params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
-      } else if (selectorKey == "RMF") {
-        log("onDatasetChanged: RMF files doesn't support multiple selection!");
-        return;
+      if (currentObj.toolPanel.loadFileType == "Independent") {
+
+        //Load an independent tab for each file
+        for (idx in filenames){
+            var file = filenames[idx];
+            openIndependentFileTab(file);
+        }
+        //Removes this tab
+        removeTab(currentObj.id);
+
+      } else {
+
+        //Concatenate all files
+        currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
+        var params = {};
+        if (selectorKey == "SRC") {
+          params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
+        } else if (selectorKey == "BCK") {
+          params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
+        } else if (selectorKey == "GTI") {
+          params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
+        } else if (selectorKey == "RMF") {
+          log("onDatasetChanged: RMF files doesn't support multiple selection!");
+          return;
+        }
+
+        if (!isNull(callback)){
+          params.callback = callback;
+        }
+
+        currentObj.onSchemaChangedMultipleFiles(null, params);
       }
-
-      currentObj.onSchemaChangedMultipleFiles(null, params);
-
+      
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
+      if (!isNull(callback)) { callback(); }
     }
 
   }
 
-  this.onLcDatasetChanged = function ( filenames, selectorKey ) {
+  this.onLcDatasetChanged = function ( filenames, selectorKey, callback ) {
 
-    if (selectorKey == "SRC") {
-      //If SRC file was load just create a new project config
-      currentObj.projectConfig = new ProjectConfig();
+    if (!currentObj.projectConfig.hasSchema()) {
+      log("onLcDatasetChanged " + selectorKey + " , SRC schema not loaded yet!");
+      showError("Upload a Source File first!");
+      return;
     }
 
     if (filenames.length == 1) {
 
       log("onLcDatasetChanged " + selectorKey + ": " + filenames[0]);
-      currentObj.projectConfig.setFile(selectorKey, filenames[0]);
-      if (currentObj.projectConfig.hasSchema()) {
 
-        //Cleans previous plots for this selectorKey
-        currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
-        currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
-        if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
-          currentObj.projectConfig.setFile("LC_B/A", "");
-        } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
-          currentObj.projectConfig.setFile("LC_D/C", "");
+      //If file were upladed then check if is valid schema
+      currentObj.service.get_dataset_header(filenames[0], function( jsonHeader ){
+
+        if (!isNull(jsonHeader.abort)){
+          //Comes from error returned request.
+          showError("Wrong lightcurve file!");
+          return;
         }
 
-        if (selectorKey.startsWith("LC") && !selectorKey.startsWith("LC_")){
-          //If uploaded file is a color filtered lightcurve,
-          //tries to get filter info from file header info
-          currentObj.service.get_dataset_header(filenames[0], function( jsonHeader, params ){
+        var header = JSON.parse(jsonHeader);
+        if (!isNull(header)) {
 
-            var rangeText = currentObj.extractEnergyRangeTextFromHeader(JSON.parse(jsonHeader));
-            currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
-          });
+          log("onLcDatasetChanged - get_dataset_header: " + selectorKey + ": " + filenames[0]);
 
+          currentObj.projectConfig.setFile(selectorKey, filenames[0]);
+
+          //Cleans previous plots for this selectorKey
+          currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
+          currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
+          if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
+            currentObj.projectConfig.setFile("LC_B/A", "");
+          } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
+            currentObj.projectConfig.setFile("LC_D/C", "");
+          }
+
+          //Tries to get filter info from file header info
+          var rangeText = currentObj.extractEnergyRangeTextFromHeader(header);
+          currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
+
+          //Add the new plots for this selectorKey
+          currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig, "", true);
+          currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+          currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
+
+          waitingDialog.hide();
+
+        } else {
+
+          showError("Wrong lightcurve file!");
         }
 
-        //Add the new plots for this selectorKey
-        currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig);
-        currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
-        currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
-      }
-
-      waitingDialog.hide();
+        if (!isNull(callback)) { callback(); }
+      });
 
     } else if (filenames.length > 1){
+      showError("Multifile selection not supported with lightcurves!");
       log("onLcDatasetChanged " + selectorKey + ": Multifile selection not supported yet..");
       waitingDialog.hide();
+      if (!isNull(callback)) { callback(); }
     } else {
+      showError("No selected files!");
       log("onLcDatasetChanged " + selectorKey + ": No selected files..");
       waitingDialog.hide();
+      if (!isNull(callback)) { callback(); }
     }
 
   }
@@ -146,7 +190,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("SRC", schema, params);
     } else {
-      showError("Wrong SRC file!");
+      showError("Wrong Source file!");
+      if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
     }
   }
 
@@ -155,7 +200,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("BCK", schema, params);
     } else {
-      showError("Wrong BCK file!");
+      showError("Wrong Background file!");
+      if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
     }
   }
 
@@ -165,10 +211,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.onSchemaChangedWithKey("GTI", schema, params);
     } else {
       showError("Wrong GTI file!");
+      if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
     }
   }
 
-  this.onRmfApplied = function ( result ) {
+  this.onRmfApplied = function ( result, callback ) {
     result = JSON.parse(result);
     if (!isNull(result) && result.length > 0){
       log("onRmfApplied: Getting new shema..");
@@ -189,29 +236,24 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Add RMF plots
         currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
-        /*//Enable Spectral Timing Section
-        if (!currentObj.toolPanel.isSectionEnabled("TimingPlot")){
-          currentObj.toolPanel.toggleEnabledSection("TimingPlot");
-        } else {
-          currentObj.outputPanel.setToolbarSectionVisible("TimingPlot", true);
-        }*/
-
         //Hides upload RMF buttons from Analyze tab
         currentObj.toolPanel.$html.find(".rmsBtn").remove();
         currentObj.toolPanel.$html.find(".covarianceBtn").remove();
         currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
         waitingDialog.hide();
+        if (!isNull(callback)) { callback(); }
 
       }, currentObj.onSchemaError, null);
     } else {
       log("onRmfApplied error:" + JSON.stringify(result));
       showError("Wrong RMF file!");
+      if (!isNull(callback)) { callback(); }
     }
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
-    if (params !== undefined && params != null){
+    if (!isNull(params) && !isNull(params.filename)){
       currentObj.projectConfig.setFiles(selectorKey, params.filenames, params.filename);
     }
 
@@ -222,7 +264,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(jsonSchema);
-        currentObj.setTitle(currentObj.projectConfig.filename);
+        currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
         currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
 
         //Prepare sections
@@ -267,6 +309,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         ];
 
         currentObj.toolPanel.setAnalisysSections(sections);
+        if (CONFIG.BULK_ANALYSIS_ENABLED) {
+          currentObj.toolPanel.addBulkAnalisysButton();
+        }
         currentObj.outputPanel.setAnalisysSections(sections);
 
         //Prepare toolPanel filters, workflow config and load outputPanel plots
@@ -297,6 +342,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("onSchemaChangedWithKey error:" + schema);
       showError();
     }
+
+    if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
   }
 
   this.addButtonToArray = function (buttonText, buttonClass, buttonFn, array) {
@@ -306,6 +353,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     btn.click(buttonFn);
     array.push(btn);
     return array;
+  }
+
+  this.setSectionVisibility = function (section, visible) {
+    if (this.toolPanel.isSectionEnabled(section) != visible){
+      this.toolPanel.setEnabledSection(section, visible);
+    }
   }
 
   this.onSchemaChangedMultipleFiles = function ( result, params ) {
@@ -324,13 +377,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     if (params.currentFile < params.filenames.length){
 
       var nextfile = params.filenames[params.currentFile];
-      waitingDialog.show('Appending to dataset: ' + nextfile);
+      waitingDialog.show('Appending to dataset: ' + getFilename(nextfile));
       currentObj.service.append_file_to_dataset(params.filename, nextfile, currentObj.onSchemaChangedMultipleFiles, currentObj.onSchemaError, params);
       params.currentFile++;
 
     } else {
 
-      waitingDialog.show('Getting file schema: ' + params.filename);
+      waitingDialog.show('Getting file schema: ' + getFilename(params.filename));
       currentObj.service.get_dataset_schema(params.filename, params.onSchemaChanged, currentObj.onSchemaError, params);
     }
 
@@ -339,6 +392,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onSchemaError = function ( error ) {
       log("onSchemaError error:" + JSON.stringify(error));
       waitingDialog.hide();
+      showError();
   }
 
   this.extractEnergyRangeTextFromHeader = function (header) {
@@ -575,6 +629,41 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
      $uploadRMFDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
+  this.getConfig = function () {
+    return { type: "WfTabPanel",
+             id: this.id,
+             navItemClass: this.navItemClass,
+             projectConfig: this.projectConfig.getConfig(),
+             toolPanelConfig: this.toolPanel.getConfig(this.projectConfig),
+             outputPanelConfig: this.outputPanel.getConfig()
+           };
+  }
+
+  this.setConfig = function (tabConfig, callback) {
+    log("setConfig for tab " + this.id);
+
+    async.waterfall([
+        function(callback) {
+            currentObj.toolPanel.setConfig(tabConfig.projectConfig, callback);
+        },
+        function(callback) {
+            currentObj.outputPanel.setConfig(tabConfig.outputPanelConfig);
+            callback();
+        },
+        function(callback) {
+            currentObj.applyAction(tabConfig.toolPanelConfig);
+            callback();
+        }
+    ], function (err, result) {
+        if (!isNull(err)){
+          log("setConfig on tab " + currentObj.id + " error: " + err);
+        } else {
+          log("setConfig success for tab " + currentObj.id);
+        }
+        callback(err);
+    });
+  }
+
   this.destroy = function () {
     try {
       delete this.classSelector;
@@ -628,4 +717,10 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.wfSelector.find(".wfSelectorDisableable").hide();
 
   log("WfTabPanel ready! id: " + this.id);
+}
+
+function openIndependentFileTab (filename) {
+    var tab = addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+    tab.toolPanel.srcFileSelector.onUploadSuccess([filename]);
+    tab.onDatasetChanged([filename], "SRC");
 }

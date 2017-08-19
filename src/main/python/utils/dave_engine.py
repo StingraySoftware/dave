@@ -18,10 +18,8 @@ from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als
 from stingray.modeling import fit_powerspectrum
 from stingray.simulator import simulator
+from config import CONFIG
 import sys
-
-BIG_NUMBER = 9999999999999
-PRECISSION = 4
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
@@ -33,6 +31,7 @@ def get_dataset_schema(destination):
     if dataset:
         return dataset.get_schema()
     else:
+        logging.error("get_dataset_schema -> Null dataset for file: " + destination)
         return None
 
 
@@ -45,6 +44,7 @@ def get_dataset_header(destination):
     if dataset:
         return dataset.get_header()
     else:
+        logging.error("get_dataset_header -> Null dataset for file: " + destination)
         return None
 
 
@@ -55,27 +55,54 @@ def get_dataset_header(destination):
 #
 def append_file_to_dataset(destination, next_destination):
     dataset = DaveReader.get_file_dataset(destination)
-    if DsHelper.is_events_dataset(dataset):
-        next_dataset = DaveReader.get_file_dataset(next_destination)
-        if DsHelper.is_events_dataset(next_dataset):
-            # Looks what dataset is earliest
-            ds_start_time = DsHelper.get_events_dataset_start(dataset)
-            next_ds_start_time = DsHelper.get_events_dataset_start(next_dataset)
+    if dataset:
 
-            if next_ds_start_time < ds_start_time:
-                #Swap datasets
-                tmp_ds = dataset
-                dataset = next_dataset
-                next_dataset = tmp_ds
+        # Tries to get TSTART from dataset to set the ofset to next_dataset
+        ds_start_time = DsHelper.get_dataset_start_time(dataset)
 
-            #Join and cache joined dataset
-            dataset.tables["EVENTS"] = dataset.tables["EVENTS"].join(next_dataset.tables["EVENTS"])
-            dataset.tables["GTI"] = DsHelper.join_gti_tables(dataset.tables["GTI"], next_dataset.tables["GTI"])
+        next_dataset = DaveReader.get_file_dataset(next_destination, ds_start_time)
+        if next_dataset:
 
-            DsCache.remove(destination)  # Removes previous cached dataset for prev key
-            new_cache_key = DsCache.get_key(destination + "|" + next_destination)
-            DsCache.add(new_cache_key, dataset)  # Adds new cached dataset for new key
-            return new_cache_key
+            if DsHelper.are_datasets_of_same_type(dataset, next_dataset):
+
+                if DsHelper.is_lightcurve_dataset(dataset):
+                    if DsHelper.get_binsize_from_lightcurve_ds(dataset) == 0 \
+                       or DsHelper.get_binsize_from_lightcurve_ds(dataset) != DsHelper.get_binsize_from_lightcurve_ds(next_dataset):
+                       logging.error('append_file_to_dataset: Bin Sizes are not readables or not equal!')
+                       return ""
+
+                # Looks what dataset is earliest
+                next_ds_start_time = DsHelper.get_dataset_start_time(next_dataset)
+
+                if next_ds_start_time < ds_start_time:
+                    #Change event times and swap datasets
+                    time_offset = ds_start_time - next_ds_start_time
+                    DsHelper.add_time_offset_to_dataset(dataset, time_offset)
+                    DsHelper.add_time_offset_to_dataset(next_dataset, time_offset)
+                    tmp_ds = dataset
+                    dataset = next_dataset
+                    next_dataset = tmp_ds
+
+                #Join and cache joined dataset
+                new_dataset = dataset.clone()
+                new_hdutable = DsHelper.get_hdutable_from_dataset(new_dataset)
+                next_hdutable = DsHelper.get_hdutable_from_dataset(next_dataset)
+                new_hdutable = new_hdutable.join(next_hdutable)
+                new_dataset.tables["GTI"] = DsHelper.join_gti_tables(new_dataset.tables["GTI"], next_dataset.tables["GTI"])
+
+                # DsCache.remove(destination)  # Removes previous cached dataset for prev key
+                new_cache_key = DsCache.get_key(destination + "|" + next_destination)
+                DsCache.add(new_cache_key, new_dataset)  # Adds new cached dataset for new key
+                return new_cache_key
+
+            else:
+                logging.error('append_file_to_dataset: Datasets are not of same type!')
+
+        else:
+            logging.error('append_file_to_dataset: Cant read next dataset from: ' + str(next_destination))
+
+    else:
+        logging.error('append_file_to_dataset: Cant read dataset from: ' + str(destination))
 
     return ""
 
@@ -723,15 +750,15 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
             # Replace posible out of range values
             time_lag = np.nan_to_num(time_lag)
-            time_lag[time_lag > BIG_NUMBER]=0
+            time_lag[time_lag > CONFIG.BIG_NUMBER]=0
             time_lag_err = np.nan_to_num(time_lag_err)
-            time_lag_err[time_lag_err > BIG_NUMBER]=0
+            time_lag_err[time_lag_err > CONFIG.BIG_NUMBER]=0
             time_lag_array = [ time_lag, time_lag_err ]
 
             coherence = np.nan_to_num(coherence)
-            coherence[coherence > BIG_NUMBER]=0
+            coherence[coherence > CONFIG.BIG_NUMBER]=0
             coherence_err = np.nan_to_num(coherence_err)
-            coherence_err[coherence_err > BIG_NUMBER]=0
+            coherence_err[coherence_err > CONFIG.BIG_NUMBER]=0
             coherence_array = [ coherence, coherence_err ]
 
             # Set duration and warnmsg
@@ -1440,7 +1467,7 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 def push_to_results_array (result, values):
     column = dict()
     try:
-        column["values"] = np.around(values, decimals=PRECISSION)
+        column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
     except:
         column["values"] = values
     result.append(column)
@@ -1449,8 +1476,8 @@ def push_to_results_array (result, values):
 
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
-    column["values"] = np.around(values, decimals=PRECISSION)
-    column["error_values"] = np.around(errors, decimals=PRECISSION)
+    column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
+    column["error_values"] = np.around(errors, decimals=CONFIG.PRECISSION)
     result.append(column)
     return result
 
@@ -1490,10 +1517,6 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
     filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
     filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-    if not DsHelper.is_events_dataset(filtered_ds) \
-        and not DsHelper.is_lightcurve_dataset(filtered_ds):
-        logging.warn("Wrong dataset type")
-        return None
 
     if DsHelper.is_events_dataset(filtered_ds):
         # Creates lightcurves by gti and joins in one
@@ -1506,7 +1529,9 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
         gti = load_gti_from_destination (gti_destination)
         return DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, gti=gti)
 
-    return None
+    else:
+        logging.warn("Wrong dataset type")
+        return None
 
 
 def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt):
@@ -1581,15 +1606,15 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
-        return None
+        return None, None, None
 
     if norm not in ['frac', 'abs', 'leahy', 'none']:
         logging.warn("Wrong normalization")
-        return None
+        return None, None, None
 
     if pds_type not in ['Sng', 'Avg']:
         logging.warn("Wrong power density spectrum type")
-        return None
+        return None, None, None
 
     if segm_size == 0:
         segm_size = None
@@ -1598,7 +1623,7 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
     if not lc:
         logging.warn("Can't create lightcurve")
-        return None
+        return None, None, None
 
     # Prepares GTI if passed
     gti = load_gti_from_destination (gti_destination)
@@ -1639,6 +1664,6 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
         divided_values = np.nan_to_num(values_0 / values_1)
         if error_0.shape == error_1.shape == values_0.shape:
             divided_error = np.nan_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
-    divided_values[divided_values > BIG_NUMBER]=0
-    divided_error[divided_error > BIG_NUMBER]=0
+    divided_values[divided_values > CONFIG.BIG_NUMBER]=0
+    divided_error[divided_error > CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error

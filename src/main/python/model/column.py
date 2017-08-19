@@ -7,6 +7,7 @@ class Column:
     values = []
     error_values = []
     has_error_values = False
+    extra = None
 
     def __init__(self, id):
         self.id = id
@@ -37,6 +38,8 @@ class Column:
         if with_values:
             column.values = list(self.values)
             column.error_values = list(self.error_values)
+        if self.extra:
+            column.extra = dict(self.extra)
         return column
 
     def get_value(self, index):
@@ -45,12 +48,15 @@ class Column:
         else:
             return None
 
-    def get_values(self, indexes):
-        values = np.array(self.values)[indexes]
-        error_values = None
-        if len(self.error_values):
-            error_values = np.array(self.error_values)[indexes]
-        return values, error_values
+    def get_values(self, indexes=None):
+        if indexes is None:
+            return self.values, self.error_values
+        else:
+            values = np.array(self.values)[indexes]
+            error_values = None
+            if len(self.error_values):
+                error_values = np.array(self.error_values)[indexes]
+            return values, error_values
 
     def get_error_value(self, index):
         if self.has_error_values:
@@ -73,7 +79,22 @@ class Column:
         if self.has_error_values:
             self.error_values.extend(errors)
 
+    def set_extra(self, key, value):
+        if self.extra is None:
+            self.extra = dict()
+        self.extra[key] = value
+
+    def get_extra(self, key):
+        if not (self.extra is None) and key in self.extra:
+            return self.extra[key]
+        else:
+            return None
+
+    def has_extra(self, key):
+        return not (self.extra is None) and key in self.extra
+
     def clear(self):
         self.values = []
         self.error_values = []
         self.has_error_values = False;
+        self.extra = None

@@ -19,17 +19,17 @@ def createTimeFilter(from_val, to_val):
 
 # Returns the filter refered to TIME from a list of filters
 def get_time_filter(filters):
-    for filter in filters:
-        if filter["column"] == "TIME":
-            return filter
-
-    return None
+    return get_named_filter(filters, "TIME")
 
 
 # Returns the filter refered to RATE from a list of filters
 def get_rate_filter(filters):
+    return get_named_filter(filters, "RATE")
+
+
+def get_named_filter(filters, column):
     for filter in filters:
-        if filter["column"] == "RATE":
+        if filter["column"] == column:
             return filter
 
     return None

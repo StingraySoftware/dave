@@ -19,6 +19,7 @@ function ToolPanel (id,
   container.html(this.$html);
   this.$html.show();
   this.filters = [];
+  this.loadFileType = "Single"; // Supported: Single, Concatenated, Independent
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.analyzeContainer = this.$html.find(".analyzeContainer");
@@ -82,7 +83,7 @@ function ToolPanel (id,
     return null;
   }
 
-  this.showEventsSelectors = function ( panel ) {
+  this.showEventsSelectors = function () {
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
     this.rmfFileSelector.show();
@@ -92,7 +93,7 @@ function ToolPanel (id,
     this.lcDFileSelector.hide();
   }
 
-  this.showLcSelectors = function ( panel ) {
+  this.showLcSelectors = function () {
     this.bckFileSelector.hide();
     this.gtiFileSelector.hide();
     this.rmfFileSelector.hide();
@@ -105,6 +106,70 @@ function ToolPanel (id,
   this.showPanel = function ( panel ) {
     this.$html.find(".panelContainer").hide();
     this.$html.find("." + panel).show();
+  }
+
+  this.createSngOrMultiFileSelector = function () {
+    // Creates Single file or Multifile selection radio buttons
+    this.sngOrMultiFileSelector = $('<div class="SngOrMultiFileSelector">' +
+                                    '<h3>Choose single or multiple files load:</h3>' +
+                                    '<fieldset>' +
+                                      '<label for="' + this.id + '_SngFile">Single file</label>' +
+                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_SngFile" value="Single" ' + getCheckedState(this.loadFileType == "Single") + '>' +
+                                      '<label for="' + this.id + '_MulFile">Multiple files</label>' +
+                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_MulFile" value="Multi" ' + getCheckedState(this.loadFileType != "Single") + '>' +
+                                    '</fieldset>' +
+                                  '</div>');
+
+    this.$html.find(".fileSelectorsContainer").append(this.sngOrMultiFileSelector);
+    var $loadTypeRadios = this.sngOrMultiFileSelector.find("input[type=radio][name=" + this.id + "_SngOrMultiFile]")
+    $loadTypeRadios.checkboxradio();
+    this.sngOrMultiFileSelector.find("fieldset").controlgroup();
+    $loadTypeRadios.change(function() {
+      currentObj.updateLoadFileType();
+      var multiFileEnabled = currentObj.loadFileType != "Single";
+      setVisibility(currentObj.conOrIndFileSelector, multiFileEnabled);
+      for (idx in currentObj.file_selectors_array) {
+        var fileSelector = currentObj.file_selectors_array[idx];
+        fileSelector.setMultiFileEnabled(multiFileEnabled
+                                         && (fileSelector.selectorKey != "RMF")
+                                         && (!fileSelector.selectorKey.startsWith("LC")));
+      }
+    });
+
+    // Creates Concatenated files or Independent selection radio buttons
+    this.conOrIndFileSelector = $('<div class="ConOrIndFileSelector">' +
+                                    '<h3>Choose concatenated or independent files load:</h3>' +
+                                    '<fieldset>' +
+                                      '<label for="' + this.id + '_ConFile">Concatenated</label>' +
+                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_ConFile" value="Concatenated" ' + getCheckedState((this.loadFileType == "Single") || (this.loadFileType == "Concatenated")) + '>' +
+                                      '<label for="' + this.id + '_IndFile">Independent</label>' +
+                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_IndFile" value="Independent" ' + getCheckedState(this.loadFileType == "Concatenated") + '>' +
+                                    '</fieldset>' +
+                                  '</div>');
+
+    setVisibility(this.conOrIndFileSelector, this.loadFileType == "Multi");
+    this.$html.find(".fileSelectorsContainer").append(this.conOrIndFileSelector);
+    var $loadType2Radios = this.conOrIndFileSelector.find("input[type=radio][name=" + this.id + "_ConOrIndFile]")
+    $loadType2Radios.checkboxradio();
+    this.conOrIndFileSelector.find("fieldset").controlgroup();
+    $loadType2Radios.change(function() {
+      currentObj.updateLoadFileType();
+    });
+  }
+
+  this.updateLoadFileType = function () {
+    if (this.sngOrMultiFileSelector.find("input").filter('[value=Single]').prop('checked')) {
+      this.loadFileType = "Single";
+    } else if (this.conOrIndFileSelector.find("input").filter('[value=Concatenated]').prop('checked')) {
+      this.loadFileType = "Concatenated";
+    } else {
+      this.loadFileType = "Independent";
+    }
+  }
+
+  this.removeSngOrMultiFileSelector = function () {
+    this.sngOrMultiFileSelector.remove();
+    this.conOrIndFileSelector.remove();
   }
 
   this.onTimeRangeChanged = function (timeRange) {
@@ -130,6 +195,7 @@ function ToolPanel (id,
 
     if (projectConfig.schema.isEventsFile()){
 
+      this.removeSngOrMultiFileSelector();
       this.showEventsSelectors();
 
       if (!projectConfig.schema.hasColumn("PHA")){
@@ -179,6 +245,7 @@ function ToolPanel (id,
 
     } else if (projectConfig.schema.isLightCurveFile()){
 
+      this.removeSngOrMultiFileSelector();
       this.showLcSelectors();
 
       var binDiv = $('<div class="sliderSelector binLabel">' +
@@ -368,16 +435,14 @@ function ToolPanel (id,
         //Sets Energy or Channels filters visible
         var tab = getTabForSelector(currentObj.id);
         var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
-        if ((tab.projectConfig.rmfFilename == "")
-            || filters[f].replaceColumn == "PHA") {
-          selectorsContainer.find(".colorSelectors_E").hide();
-          selectorsContainer.find(".colorSelectors_PHA").show();
+        var showPHA = (tab.projectConfig.rmfFilename == "") || (filters[f].replaceColumn == "PHA");
+        setVisibility(selectorsContainer.find(".colorSelectors_PHA"), showPHA);
+        setVisibility(selectorsContainer.find(".colorSelectors_E"), !showPHA);
+        if (showPHA) {
           sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
           currentObj.setColorFilterRadios("PHA");
           currentObj.replaceColumn = "PHA";
         } else {
-          selectorsContainer.find(".colorSelectors_PHA").hide();
-          selectorsContainer.find(".colorSelectors_E").show();
           sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
           currentObj.setColorFilterRadios("E");
           currentObj.replaceColumn = "E";
@@ -507,42 +572,92 @@ function ToolPanel (id,
     return false;
   }
 
+  this.getFiltersAsAction = function (projectConfig) {
+    return { type: "filters",
+             actionData: $.extend(true, [], currentObj.filters),
+             binSize: projectConfig.binSize,
+             maxSegmentSize: projectConfig.maxSegmentSize };
+  }
+
   this.saveFilters = function () {
     var projectConfig = getTabForSelector(currentObj.id).projectConfig;
     var filename = projectConfig.filename.replace(/\./g,'');
-    var action = { type: "filters",
-                   actionData: $.extend(true, [], currentObj.filters),
-                   binSize: projectConfig.binSize,
-                   maxSegmentSize: projectConfig.maxSegmentSize };
-    var a = document.createElement("a");
-    var file = new Blob([JSON.stringify(action)], {type: 'text/plain'});
-    a.href = URL.createObjectURL(file);
-    a.download = filename + "_filters.json";
-    a.click();
+    saveToFile (filename + "_filters.flt", JSON.stringify(this.getFiltersAsAction(projectConfig)));
   }
 
   this.loadFilters = function () {
-    var input = $('<input type="file" id="load-input" />');
-    input.on('change', function (e) {
-      if (e.target.files.length == 1) {
-        var file = e.target.files[0];
-        var reader = new FileReader();
-          reader.onload = function(e) {
-            try {
-              var action = JSON.parse(e.target.result);
-              if (!isNull(action.type) && !isNull(action.actionData)){
-                getTabForSelector(currentObj.id).applyAction(action);
-              } else {
-                showError("File is not supported as filters");
-              }
-            } catch (e) {
-              showError("File is not supported as filters", e);
-            }
-          };
-          reader.readAsText(file);
+    showLoadFile (function(e) {
+      try {
+        var action = JSON.parse(e.target.result);
+        if (!isNull(action.type) && !isNull(action.actionData)){
+          getTabForSelector(currentObj.id).applyAction(action);
+        } else {
+          showError("File is not supported as filters");
+        }
+      } catch (e) {
+        showError("File is not supported as filters", e);
       }
-     });
-     input.click();
+    });
+  }
+
+  this.getConfig = function (projectConfig) {
+    return this.getFiltersAsAction(projectConfig);
+  }
+
+  this.setConfig = function (projectConfig, callback) {
+
+    log("setConfig for toolPanel " + this.id);
+
+    var fileLoadList = [
+        function(callback) {
+            currentObj.setFilesOnFileSelector("SRC", projectConfig.filename, projectConfig.filenames, currentObj.onDatasetChangedFn, callback);
+        },
+        function(callback) {
+            currentObj.setFilesOnFileSelector("BCK", projectConfig.bckFilename, projectConfig.bckFilenames, currentObj.onDatasetChangedFn, callback);
+        },
+        function(callback) {
+            currentObj.setFilesOnFileSelector("GTI", projectConfig.gtiFilename, projectConfig.gtiFilenames, currentObj.onDatasetChangedFn, callback);
+        },
+        function(callback) {
+            currentObj.setFilesOnFileSelector("RMF", projectConfig.rmfFilename, [], currentObj.onDatasetChangedFn, callback);
+        }
+    ];
+
+    var lcSelectorKeys = ["LCA", "LCB", "LCC", "LCD"];
+    var makeLcCallbackFunc = function(lcKey, filename) {
+        return function(callback) {
+          currentObj.setFilesOnFileSelector(lcKey, filename, [], currentObj.onLcDatasetChangedFn, callback);
+        }
+    };
+
+    for (i in lcSelectorKeys) {
+      var lcKey = lcSelectorKeys[i];
+      var filename = projectConfig.selectorFilenames[lcKey];
+      if (!isNull(filename) && filename != "") {
+        fileLoadList.push(makeLcCallbackFunc(lcKey, filename));
+      }
+    };
+
+    async.waterfall(fileLoadList, function (err, result) {
+        if (!isNull(err)){
+          log("setConfig on toolPanel " + currentObj.id + " error: " + err);
+        } else {
+          log("setConfig success for toolPanel " + currentObj.id);
+        }
+
+        callback(err);
+    });
+  }
+
+  this.setFilesOnFileSelector = function (selectorKey, filename, filenames, changedFn, callback) {
+    var fileSelector = this.getFileSelector(selectorKey);
+    if (!isNull(fileSelector) && (filename != "")) {
+      fileSelector.onUploadSuccess([filename]);
+      filenames.splice(0, 0, filename);
+      changedFn(filenames, selectorKey, callback);
+    } else {
+      callback();
+    }
   }
 
   this.setAnalisysSections = function (sections) {
@@ -578,6 +693,62 @@ function ToolPanel (id,
     this.$html.find(".analyzeContainer").append($section);
   }
 
+  this.addBulkAnalisysButton = function () {
+    var $section = $('<div class="Section BulkAnalisysSection">' +
+                      '<h3>Bulk Analisys <i class="fa fa-list" aria-hidden="true"></i></h3>' +
+                      '<div class="sectionContainer"></div>' +
+                    '</div>');
+    $section.find("h3").click( function ( event ) {
+      var tab = getTabForSelector(currentObj.id);
+      if (!isNull(tab)){
+        showBulkAnalisysDialog(tab);
+      }
+    });
+    this.$html.find(".analyzeContainer").append($section);
+  }
+
+  this.clearBulkAnalisysPlotResults = function () {
+    this.$html.find(".BulkAnalisysSection").find(".sectionContainer").html("");
+  }
+
+  this.addBulkAnalisysPlotResults = function (plot_id, plot_title) {
+
+    //Adds a plotBulkResults section for this plot bulk data
+    var $sectionContainer = this.$html.find(".BulkAnalisysSection").find(".sectionContainer");
+    var $plotBulkResults = $('<div class="plotBulkResults ' + plot_id + ' ">' +
+                              '<div class="switch-wrapper">' +
+                              '  <div id="switch_' + plot_id + '" plot_id="' + plot_id + '" class="switch-btn fa fa-check-square-o" aria-hidden="true"></div>' +
+                              '</div>' +
+                              '<h4>' + plot_title + '</h4>' +
+                              '<div class="plotFilenames"></div>' +
+                            '</div>');
+    $sectionContainer.append($plotBulkResults);
+
+    var $plotFilenames = $plotBulkResults.find(".plotFilenames");
+    //$plotFilenames.hide();
+
+    //Show and hide plot filenames
+    $plotBulkResults.find(".switch-btn").click(function ( event ) {
+      var plotId = $(this).attr("plot_id");
+      var $plotsection = currentObj.$html.find(".BulkAnalisysSection").find("." + plotId);
+      var $switchBtn = $plotsection.find(".switch-btn");
+      var enabled = !$switchBtn.hasClass("fa-check-square-o");
+
+      setVisibility($plotsection.find(".plotFilenames"), enabled);
+      if (enabled) {
+        $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
+        $plotsection.removeClass("Disabled");
+        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
+      } else {
+        $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
+        $plotsection.addClass("Disabled");
+        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
+      }
+    });
+
+    return $plotFilenames;
+  }
+
   this.isSectionEnabled = function (sectionClass) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
     var $switchBtn = $section.find(".switch-btn");
@@ -585,23 +756,30 @@ function ToolPanel (id,
   }
 
   this.toggleEnabledSection = function (sectionClass) {
+    this.setEnabledSection(sectionClass, !this.isSectionEnabled(sectionClass));
+  }
+
+  this.setEnabledSection = function (sectionClass, enabled) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
     var $switchBtn = $section.find(".switch-btn");
 
-    if ($switchBtn.hasClass("fa-square-o")) {
+    setVisibility($section.find(".sectionContainer"), enabled);
+    if (enabled) {
       $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
-      $section.find(".sectionContainer").show();
       $section.removeClass("Disabled");
       getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
     } else {
       $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
-      $section.find(".sectionContainer").hide();
       $section.addClass("Disabled");
       getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
     }
   }
 
+
   //Normal file selectors, SRC is valid on both events files and lightcurves
+
+  this.createSngOrMultiFileSelector();
+
   this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Source File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.srcFileSelector);
 

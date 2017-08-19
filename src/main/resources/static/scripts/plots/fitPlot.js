@@ -21,23 +21,36 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   this.btnSettings.hide();
 
   this.onPlotDataReceived = function ( data ) {
+
+    if (!isNull(data.abort)){
+      log("Current request aborted, Plot: " + currentObj.id);
+      return; //Comes from request abort call.
+    }
+
     log("onPlotDataReceived passed data!, plot" + currentObj.id);
     data = JSON.parse(data);
 
-    if (data != null) {
+    if (!isNull(data)) {
+      if (isNull(data.error)) {
 
-      //Prepares PDS Data
-      currentObj.data = currentObj.prepareData(data);
-      currentObj.updateMinMaxCoords();
+        //Prepares PDS Data
+        currentObj.data = currentObj.prepareData(data);
+        currentObj.updateMinMaxCoords();
 
-      currentObj.refreshModelsData(false);
+        currentObj.refreshModelsData(false);
+        return;
 
+      } else {
+        currentObj.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", plot" + currentObj.id);
+      }
     } else {
       currentObj.showWarn("Wrong data received");
       log("onPlotDataReceived wrong data!, plot" + currentObj.id);
-      currentObj.setReadyState(true);
-      currentObj.onPlotReady();
     }
+
+    currentObj.setReadyState(true);
+    currentObj.onPlotReady();
   }
 
   this.refreshModelsData = function (estimated) {
