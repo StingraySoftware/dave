@@ -9,7 +9,7 @@ BUILD_DATE=$(git show -s --format=%ci $COMMIT_HASH)
 if [[ -z "${BUILD_NUMBER}" ]]; then
   BUILD_VERSION="$BUILD_DATE-$COMMIT_HASH"
 else
-  BUILD_VERSION="$JOB_NAME-$BUILD_NUMBER"
+  BUILD_VERSION="$JOB_NAME-build$BUILD_NUMBER"
 fi
 
 rm -rf $BUILD_FOLDER
