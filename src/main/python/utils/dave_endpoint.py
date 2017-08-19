@@ -628,7 +628,7 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     return json.dumps(data, cls=NPEncoder)
 
 
-# Creates MaLTPyNT intermediate files from local absolute paths and stores them on target folder
+# Creates HENDRICS intermediate files from local absolute paths and stores them on target folder
 def get_intermediate_files(filepaths, target):
     filenames = []
 
