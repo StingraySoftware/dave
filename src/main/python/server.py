@@ -249,7 +249,7 @@ def shutdown():
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
-        logging.warn('Not running with the Werkzeug Server')
+        logging.warn('shutdown_server: Not running with the Werkzeug Server')
         exit()
     func()
 
@@ -268,4 +268,4 @@ for error in (400, 401, 403, 404, 500):  # or with other http code you consider 
 
 if __name__ == '__main__':
     GeHelper.start(server_port, app)
-    app.run(debug=True, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces
+    app.run(debug=CONFIG.DEBUG_MODE, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces

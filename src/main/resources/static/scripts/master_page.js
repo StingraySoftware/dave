@@ -227,6 +227,36 @@ function logError(errorMsg) {
   }
 }
 
+function connectionLost() {
+  log("Connection lost with Python Server!");
+  waitingDialog.hide({ignoreCalls: true});
+  setTimeout( function () {
+
+    waitingDialog.show("Connection lost with Python Server! Reconnecting ...", { progressType: "warning", ignoreCalls: true });
+    sendEventToElectron("relaunchServer");
+    reconnectToServer();
+
+  }, 2500);
+}
+
+function sendEventToElectron (event) {
+  const { ipcRenderer } = require('electron');
+  ipcRenderer.send(event);
+}
+
+function reconnectToServer (){
+  log("Connection lost with Python Server. Reconnecting ...");
+  UrlExists(CONFIG.DOMAIN_URL, function(status){
+      if(status === 200){
+         waitingDialog.hide({ignoreCalls: true});
+         sendEventToElectron("connectedToServer");
+         log("Connected to Python Server!");
+      } else {
+         setTimeout( function () { reconnectToServer (); }, 1000);
+      }
+  });
+}
+
 function getCheckedState(value) {
   return value ? 'checked="checked"' : "";
 }
@@ -260,4 +290,16 @@ function showLoadFile(onLoadFn) {
     }
    });
    input.click();
+}
+
+function UrlExists(url, cb){
+    jQuery.ajax({
+        url:      url,
+        dataType: 'text',
+        type:     'GET',
+        complete:  function(xhr){
+            if(typeof cb === 'function')
+               cb.apply(this, [xhr.status]);
+        }
+    });
 }
