@@ -15,7 +15,7 @@ from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
-from stingray.utils import baseline_als
+from stingray.utils import baseline_als, excess_variance
 from stingray.modeling import fit_powerspectrum
 from stingray.simulator import simulator
 from config import CONFIG
@@ -227,8 +227,10 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 # @param: baseline_opts: Object with the baseline parameters.
+# @param: variance_opts: Object with the excess variance parameters.
 #
-def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt, baseline_opts):
+def get_lightcurve(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, baseline_opts, variance_opts):
 
     time_vals = []
     count_rate = []
@@ -236,6 +238,11 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     gti_start_values = []
     gti_stop_values = []
     baseline = []
+    excess_var_times = []
+    rate = []
+    rate_err = []
+    fvar = []
+    fvar_err = []
 
     try:
         if len(axis) != 2:
@@ -265,6 +272,16 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             niter = baseline_opts["niter"]  # 10
             baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
 
+        # Gets the excess variance values
+        if variance_opts["min_counts"] > 0:
+            logging.debug("Preparing lightcurve excess variance");
+            chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
+            excess_var_times = np.arange(min(time_vals), max(time_vals), chunk_length)
+            start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_rate)
+            rate, rate_err = res
+            start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_excvar)
+            fvar, fvar_err = res
+
         lc = None  # Dispose memory
 
     except:
@@ -278,6 +295,11 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     result = push_to_results_array(result, gti_start_values)
     result = push_to_results_array(result, gti_stop_values)
     result = push_to_results_array(result, baseline)
+    result = push_to_results_array(result, excess_var_times)
+    result = push_to_results_array(result, np.nan_to_num(rate))
+    result = push_to_results_array(result, np.nan_to_num(rate_err))
+    result = push_to_results_array(result, np.nan_to_num(fvar))
+    result = push_to_results_array(result, np.nan_to_num(fvar_err))
     return result
 
 
@@ -1667,3 +1689,9 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
     divided_values[divided_values > CONFIG.BIG_NUMBER]=0
     divided_error[divided_error > CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error
+
+def lightcurve_excvar(lc):
+    return excess_variance(lc, normalization='fvar')
+
+def lightcurve_rate(lc):
+    return lc.meancounts, np.std(lc.counts)

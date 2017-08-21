@@ -19,18 +19,8 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_
                   hoverinfo : 'none',
                   x : x_values,
                   y : y_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          }
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y_error_values)
                 }
               ],
         layout : {
@@ -62,18 +52,8 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                   connectgaps : false,
                   x : x_values,
                   y : y_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y_error_values),
                   line : {
                           shape	:	'hvh',
                           color : '#1f77b4'
@@ -107,24 +87,9 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                   x : x_values,
                   y : y_values,
                   z : z_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_z : {
-                             type : 'data',
-                             array : z_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y_error_values),
+                  error_z : getErrorConfig(z_error_values),
                   marker : {
                             size : 5,
                             color : color_array,  // set color to an array/list of desired values
@@ -175,6 +140,14 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
                  margin: DEFAULT_MARGINS
               }
       }
+}
+
+function get_plotdiv_scatter_with_errors(x_values, y_values, x_error_values, y_error_values, x_label, y_label, title) {
+
+  var plotdiv = get_plotdiv_scatter(x_values, y_values, x_label, y_label, title);
+  plotdiv.data[0].error_x = getErrorConfig(x_error_values);
+  plotdiv.data[0].error_y = getErrorConfig(y_error_values);
+  return plotdiv;
 }
 
 function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label, title) {
@@ -262,18 +235,8 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y0_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y0_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y0_error_values),
                   name: y0_label
                 },
                 {
@@ -348,4 +311,13 @@ function getCrossLine (xrange, yrange){
                   color: '#dd4814'
                 },
            hoverinfo: "none" };
+}
+
+function getErrorConfig(error_data) {
+  return {
+           type : 'data',
+           array : error_data,
+           visible : true,
+           opacity: ERROR_BAR_OPACITY
+        };
 }
