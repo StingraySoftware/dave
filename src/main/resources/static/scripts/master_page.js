@@ -190,6 +190,24 @@ function onFitPlotClicked(plot) {
   }
 }
 
+function onAGNPlotSelected(plot) {
+  log("onAGNPlotSelected, PlotId: " + plot.id);
+
+  waitingDialog.show('Preparing new tab ...');
+
+  var tab = getTabForSelector(plot.id);
+  if (!isNull(tab)) {
+    addAGNTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
+
+    setTimeout( function () {
+      ClearSelectedPlots();
+      waitingDialog.hide();
+    }, 850);
+  } else {
+    showError(null, "Can't find tab for plot: " + plot.id);
+  }
+}
+
 function showMsg(title, msg) {
   var $msgDialog = $('<div id="msgdialog" title="' + title + '">' +
                       '<p>' + msg + '</p>' +

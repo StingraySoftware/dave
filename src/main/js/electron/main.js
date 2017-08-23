@@ -77,7 +77,7 @@ function launchPythonServer(config) {
   if (!config.pythonEnabled && !config.envEnabled) {
     log('All server modes are disabled on configuration. Connecting anyways...');
   } else if (config.pythonEnabled) {
-    launchProcess ("python", [config.pythonPath, '/tmp', '..'], "Python");
+    launchProcess ("python", [config.pythonPath, '/tmp', '..', config.pythonUrl.split(":")[2], 'PY_ENV'], "Python");
   } else if (config.envEnabled) {
     launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
   }

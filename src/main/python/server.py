@@ -12,7 +12,7 @@ matplotlib.use('TkAgg')  # Changes the matplotlib framework
 
 import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
-import utils.dave_logger as Logger
+import random
 from utils.np_encoder import NPEncoder
 from config import CONFIG
 
@@ -28,8 +28,11 @@ server_port = 5000
 if len(sys.argv) > 3 and sys.argv[3] != "":
     server_port = int(sys.argv[3])
 
-logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
+build_version = "0"
+if len(sys.argv) > 4 and sys.argv[4] != "":
+    build_version = sys.argv[4]
 
+logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
 logging.info("Logs file is " + logsdir + "/flaskserver.log")
 logging.info("Templates dir is " + scriptdir + "/../resources/templates")
 
@@ -103,10 +106,14 @@ def get_plot_data():
 
 @app.route('/get_lightcurve', methods=['POST'])
 def get_lightcurve():
+    variance_opts = None
+    if "variance_opts" in request.json:
+        variance_opts = request.json['variance_opts']
+
     return DaveEndpoint.get_lightcurve(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['baseline_opts'], request.json['variance_opts'])
+            request.json['baseline_opts'], variance_opts)
 
 
 @app.route('/get_joined_lightcurves', methods=['POST'])
@@ -235,7 +242,7 @@ def subscribe():
 
 @app.route('/')
 def root():
-    return render_template("master_page.html")
+    return render_template("master_page.html", get_version=get_version)
 
 
 @app.route('/shutdown')
@@ -243,6 +250,13 @@ def shutdown():
     logging.info('Server shutting down...')
     shutdown_server()
     return 'Server shutting down...'
+
+
+def get_version():
+    if CONFIG.USE_JAVASCRIPT_CACHE:
+        return build_version
+    else:
+        return str(random.randint(0, CONFIG.BIG_NUMBER))
 
 
 # Shutdown flask server
@@ -258,7 +272,6 @@ def shutdown_server():
 def http_error_handler(error):
     try:
         logging.error('ERROR: http_error_handler ' + str(error))
-        #return render_template("error.html", error=error), error
         return json.dumps(dict(error=str(error)))
     except:
         logging.error('ERROR: http_error_handler --> EXCEPT ')

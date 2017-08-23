@@ -107,7 +107,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         currentObj.onSchemaChangedMultipleFiles(null, params);
       }
-      
+
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
       if (!isNull(callback)) { callback(); }
@@ -302,10 +302,17 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                             timingPlotsButtons);
         }
 
+        var agnPlotsButtons = [];
+        agnPlotsButtons = currentObj.addButtonToArray("Longterm variability of AGN",
+                                                      "agnBtn",
+                                                      currentObj.showAGNSelection,
+                                                      agnPlotsButtons);
+
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
             { cssClass: "PDSPlot", title:"Power Density Spectra" },
-            { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons }
+            { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
+            { cssClass: "AGNPlot", title:"Intrinsic Variance Estimator", extraButtons: agnPlotsButtons }
         ];
 
         currentObj.toolPanel.setAnalisysSections(sections);
@@ -426,7 +433,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.updateMinMaxCountRate = function (minRate, maxRate) {
-    if (this.projectConfig.schema.isEventsFile()) {
+    if (this.projectConfig.hasSchema()
+        && this.projectConfig.schema.isEventsFile()) {
 
       minRate = Math.floor (minRate);
       maxRate = Math.ceil (maxRate);
@@ -548,21 +556,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.showCrossSpectraSelection = function () {
-    var selectablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
-    if (selectablePlots.length > 1) {
+    var lcPlotButtons = currentObj.getLcButtonsHtml();
+    if (lcPlotButtons.Count > 1) {
 
       //Else show dialog for choose the desired plots
-      var lcPlotButtons = "";
-      for (i in selectablePlots) {
-         var plot = selectablePlots[i];
-         lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + (plot.$html.hasClass("plotSelected")?" plotSelected":"") + '" plotId="' + plot.id + '">' +
-                             '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
-                           '</button>';
-       };
-
       var $xSpectraDialog = $('<div id="xSpectraDialog_' + currentObj.id +  '" title="Select two light curves:">' +
                                   '<div class="xsDialogContainer">' +
-                                    lcPlotButtons +
+                                    lcPlotButtons.Html +
                                   '</div>' +
                               '</div>');
 
@@ -579,17 +579,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       });
 
       currentObj.$html.append($xSpectraDialog);
-      $xSpectraDialog.dialog({
-         width: 450,
-         modal: true,
-         buttons: {
-           'Cancel': function() {
-              $(this).dialog('close');
-              $xSpectraDialog.remove();
-           }
-         }
-       });
-       $xSpectraDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+      currentObj.createCustomDialog($xSpectraDialog);
 
     } else {
       var lcPlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() });
@@ -627,6 +617,60 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
        }
      });
      $uploadRMFDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+  }
+
+  this.showAGNSelection = function () {
+    var lcPlotButtons = currentObj.getLcButtonsHtml(false);
+    if (lcPlotButtons.Count > 0) {
+
+      //Else show dialog for choose the desired plots
+      var $agnDialog = $('<div id="agnDialog_' + currentObj.id +  '" title="Select a light curve:">' +
+                                  '<div class="xsDialogContainer">' +
+                                    lcPlotButtons.Html +
+                                  '</div>' +
+                              '</div>');
+
+      $agnDialog.find("button").click(function(event){
+         var plotId = $(this).attr("plotId");
+         var plot = currentObj.outputPanel.getPlotById(plotId);
+         onAGNPlotSelected(plot);
+         $agnDialog.dialog('close');
+         $agnDialog.remove();
+      });
+
+      currentObj.$html.append($agnDialog);
+      currentObj.createCustomDialog($agnDialog);
+
+    } else {
+      showMsg("Longterm variability of AGN:", "At least one plot of type Light Curve must be visible/enabled to continue. " +
+                                              "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots.");
+    }
+  }
+
+  this.getLcButtonsHtml = function (showAsSelected) {
+    var lcPlotButtons = "";
+    var selectablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
+    for (i in selectablePlots) {
+       var plot = selectablePlots[i];
+       lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + ((plot.$html.hasClass("plotSelected") && (isNull(showAsSelected) || showAsSelected))?" plotSelected":"") + '" plotId="' + plot.id + '">' +
+                           '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
+                         '</button>';
+     };
+     return { Html: lcPlotButtons, Count: selectablePlots.length };
+  }
+
+  this.createCustomDialog = function ($dialogElement) {
+    $dialogElement.dialog({
+       width: 450,
+       modal: true,
+       buttons: {
+         'Cancel': function() {
+            $(this).dialog('close');
+            $dialogElement.remove();
+         }
+       }
+     });
+     $dialogElement.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
   this.getConfig = function () {

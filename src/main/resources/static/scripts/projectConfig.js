@@ -28,7 +28,7 @@ function ProjectConfig(){
   this.rmfData = [];
 
   this.hasSchema = function (schema) {
-    return this.schema != null;
+    return !isNull(this.schema);
   }
 
   this.setSchema = function (schema) {

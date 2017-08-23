@@ -321,3 +321,27 @@ function getErrorConfig(error_data) {
            opacity: ERROR_BAR_OPACITY
         };
 }
+
+function getAgnPlotTrace(yaxis, xData, yData, yErrorData) {
+  var plotTrace = {
+          type : 'scatter',
+          mode : "markers",
+          showlegend : false,
+          hoverinfo : 'x+y',
+          x : xData,
+          y : yData,
+          error_y : getErrorConfig(yErrorData)
+        };
+
+  if (!isNull(yaxis)) {
+    plotTrace.yaxis = yaxis;
+  }
+
+  return plotTrace;
+}
+
+function getAgnPlotTraceWithXErrorData(yaxis, xData, yData, xErrorData, yErrorData) {
+  var plotTrace = getAgnPlotTrace(yaxis, xData, yData, yErrorData);
+  plotTrace.error_x = getErrorConfig(xErrorData);
+  return plotTrace;
+}

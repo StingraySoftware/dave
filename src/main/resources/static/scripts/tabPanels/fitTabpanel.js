@@ -19,12 +19,6 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //FitTabPanel METHODS:
-  this.addPlot = function (plot){
-    this.outputPanel.plots.push(plot);
-    this.projectConfig.plots.push(plot);
-    this.outputPanel.appendPlot(plot);
-  };
-
   this.onModelsChanged = function (){
     if (!isNull(currentObj.plot)){
       currentObj.plot.refreshModelsData(false);

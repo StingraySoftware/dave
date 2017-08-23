@@ -42,7 +42,7 @@ cd -
 
 # LAUNCH PYTHON SERVER
 echo Launching Python Server
-python $DIR/src/main/python/server.py . . & >> /tmp/flaskserver.log 2>&1
+python $DIR/src/main/python/server.py . . 5000 "DEV_ENV_BASH" & >> /tmp/flaskserver.log 2>&1
 python_pid=$!
 
 wait $python_pid

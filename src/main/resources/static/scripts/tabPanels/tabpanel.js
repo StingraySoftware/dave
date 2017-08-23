@@ -39,6 +39,12 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     removeTab(this.id);
   }
 
+  this.addPlot = function (plot, refreshData){
+    this.outputPanel.plots.push(plot);
+    this.projectConfig.plots.push(plot);
+    this.outputPanel.appendPlot(plot, refreshData);
+  };
+
   this.containsId = function (id) {
     return this.id == id;
   }
@@ -193,6 +199,16 @@ function makeTabCallbackFunc (tabConfig) {
                                      null,
                                      tabConfig.id,
                                      tabConfig.navItemClass);
+
+              } else if (tabConfig.type == "AGNTabPanel") {
+
+                //Creates new Long term variability of AGN Tab Panel
+                tab = addAGNTabPanel($("#navbar").find("ul").first(),
+                                    $(".daveContainer"),
+                                    tabConfig.plotConfig,
+                                    null,
+                                    tabConfig.id,
+                                    tabConfig.navItemClass);
 
               } else if (tabConfig.type == "CONFIG") {
 

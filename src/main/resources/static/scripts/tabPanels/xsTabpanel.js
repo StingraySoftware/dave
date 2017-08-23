@@ -77,12 +77,6 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   };
 
-  this.addPlot = function (plot){
-    this.outputPanel.plots.push(plot);
-    this.projectConfig.plots.push(plot);
-    this.outputPanel.appendPlot(plot, false);
-  };
-
   this.getConfig = function () {
     return { type: "XSTabPanel",
              id: this.id,
@@ -137,7 +131,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 this.projectConfig
                               );
       this.xsPlotIdx = this.outputPanel.plots.length;
-      this.addPlot(xsPlot);
+      this.addPlot(xsPlot, false);
 
 
       //Adds TimeLag Plot to outputPanel
@@ -156,7 +150,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 false
                               );
       this.timeLagPlotIdx = this.outputPanel.plots.length;
-      this.addPlot(timeLagPlot);
+      this.addPlot(timeLagPlot, false);
 
 
       //Adds Coherence Plot to outputPanel
@@ -175,7 +169,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 false
                               );
       this.coherencePlotIdx = this.outputPanel.plots.length;
-      this.addPlot(coherencePlot);
+      this.addPlot(coherencePlot, false);
 
       //Request plot data after all plots were added
       xsPlot.onDatasetValuesChanged(this.outputPanel.getFilters());
