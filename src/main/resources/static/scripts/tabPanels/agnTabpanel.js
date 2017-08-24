@@ -15,6 +15,89 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //AGNTabPanel METHODS:
+  this.getAGNDataFromServer = function (paramsData, fn) {
+
+    log("AGNTabPanel getAGNDataFromServer...");
+
+    if (!isNull(currentObj.currentRequest) && !isNull(currentObj.currentRequest.abort)) {
+      currentObj.currentRequest.abort();
+    }
+
+    currentObj.setPlotsReadyState(false);
+
+    currentObj.currentRequest = currentObj.service.request_lightcurve(paramsData, function( jsdata ) {
+
+      if (!isNull(jsdata.abort)){
+        log("Current request aborted, AGNTabPanel: " + currentObj.id);
+        return; //Comes from request abort call.
+      }
+
+      log("AGNData received!, AGNTabPanel: " + currentObj.id);
+      data = JSON.parse(jsdata);
+
+      if (data == null) {
+        log("onPlotReceived wrong data!, AGNTabPanel: " + currentObj.id);
+        currentObj.setPlotsReadyState(true);
+        return;
+
+      } else {
+
+        //Sends data to agnPlot
+        if (currentObj.agnPlot.isVisible) {
+          currentObj.agnPlot.setData(data);
+        }
+
+        //Prepares Excess Variance Confidence interval Plot data and sends it to plot
+        if (currentObj.exVarConfPlot.isVisible) {
+          currentObj.exVarConfPlot.setData([ data[6],
+                                             data[10],
+                                            { values: [ data[20].values[0], data[20].values[1], data[20].values[2] ] },
+                                            { values: [ data[20].values[3], data[20].values[4], data[20].values[5] ] } ]);
+        }
+
+        //Prepares Fvar Confidence interval Plot data and sends it to plot
+        if (currentObj.fvarConfPlot.isVisible) {
+          currentObj.fvarConfPlot.setData([ data[6],
+                                            data[14],
+                                            { values: [ data[20].values[6], data[20].values[7], data[20].values[8] ] },
+                                            { values: [ data[20].values[9], data[20].values[10], data[20].values[11] ] } ]);
+        }
+
+        //Prepares Absolute RMS Plot data and sends it to plot
+        if (currentObj.absRMSPlot.isVisible) {
+          currentObj.absRMSPlot.setData([ { values: data[8].values, error_values: data[9].values },
+                                          { values: data[10].values, error_values: data[11].values } ]);
+        }
+
+        //Prepares Fractional RMS Plot data and sends it to plot
+        if (currentObj.fracRMSPlot.isVisible) {
+          currentObj.fracRMSPlot.setData([ { values: data[8].values, error_values: data[9].values },
+                                          { values: data[14].values, error_values: data[15].values } ]);
+        }
+
+      }
+    });
+
+  };
+
+  this.setPlotsReadyState = function(ready) {
+    if (currentObj.exVarConfPlot.isVisible) {
+      currentObj.exVarConfPlot.setReadyState(ready);
+    }
+
+    if (currentObj.fvarConfPlot.isVisible) {
+      currentObj.fvarConfPlot.setReadyState(ready);
+    }
+
+    if (currentObj.absRMSPlot.isVisible) {
+      currentObj.absRMSPlot.setReadyState(ready);
+    }
+
+    if (currentObj.fracRMSPlot.isVisible) {
+      currentObj.fracRMSPlot.setReadyState(ready);
+    }
+  }
+
   this.getConfig = function () {
     return { type: "AGNTabPanel",
              id: this.id,
@@ -36,11 +119,11 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.createPlots = function () {
-    //Adds Cross Spectrum Plot to outputPanel
+    //Adds Long-term variability of AGN Plot to outputPanel
     this.agnPlot = new AgnPlot(
-                              this.id + "_xs_" + (new Date()).getTime(),
+                              this.id + "_agn_" + (new Date()).getTime(),
                               $.extend(true, {}, plotConfig),
-                              this.service.request_lightcurve,
+                              this.getAGNDataFromServer,
                               this.outputPanel.onFiltersChangedFromPlot,
                               this.outputPanel.onPlotReady,
                               null,
@@ -49,6 +132,78 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.projectConfig
                             );
     this.addPlot(this.agnPlot, false);
+
+    //Adds Excess Variance Confidence Intervals Plot to outputPanel
+    this.exVarConfPlot = new ConfidencePlot(
+                              this.id + "_exVarConf_" + (new Date()).getTime(),
+                              $.extend(true, $.extend(true, {}, plotConfig), {
+                                styles: { type: "scatter",
+                                          labels: ["TIME (" + this.projectConfig.timeUnit  + ")", "S2"],
+                                          title: "S2 Confidence Intervals",
+                                          selectable: false }
+                              }),
+                              null,
+                              this.outputPanel.onFiltersChangedFromPlot,
+                              this.outputPanel.onPlotReady,
+                              null,
+                              "",
+                              false
+                            );
+    this.addPlot(this.exVarConfPlot, false);
+
+    //Adds Fvar Confidence Intervals Plot to outputPanel
+    this.fvarConfPlot = new ConfidencePlot(
+                              this.id + "_FvarConf_" + (new Date()).getTime(),
+                              $.extend(true, $.extend(true, {}, plotConfig), {
+                                styles: { type: "scatter",
+                                          labels: ["TIME (" + this.projectConfig.timeUnit  + ")", "Fvar"],
+                                          title: "Fvar Confidence Intervals",
+                                          selectable: false }
+                              }),
+                              null,
+                              this.outputPanel.onFiltersChangedFromPlot,
+                              this.outputPanel.onPlotReady,
+                              null,
+                              "",
+                              false
+                            );
+    this.addPlot(this.fvarConfPlot, false);
+
+    //Adds Avg. Absolute RMS: S2 Vs Count Rate plot to outputPanel
+    this.absRMSPlot = new Plot(
+                              this.id + "_absRms_" + (new Date()).getTime(),
+                              $.extend(true, $.extend(true, {}, plotConfig), {
+                                styles: { type: "scatter_with_errors",
+                                          labels: ["<x>", "S2"],
+                                          title: "Avg. Absolute RMS",
+                                          selectable: false }
+                              }),
+                              null,
+                              this.outputPanel.onFiltersChangedFromPlot,
+                              this.outputPanel.onPlotReady,
+                              null,
+                              "",
+                              false
+                            );
+    this.addPlot(this.absRMSPlot, false);
+
+    //Adds Avg. Fractional RMS: Fvar Vs Count Rate plot to outputPanel
+    this.fracRMSPlot = new Plot(
+                              this.id + "_fracRms_" + (new Date()).getTime(),
+                              $.extend(true, $.extend(true, {}, plotConfig), {
+                                styles: { type: "scatter_with_errors",
+                                          labels: ["<x>", "Fvar"],
+                                          title: "Avg. Fractional RMS",
+                                          selectable: false }
+                              }),
+                              null,
+                              this.outputPanel.onFiltersChangedFromPlot,
+                              this.outputPanel.onPlotReady,
+                              null,
+                              "",
+                              false
+                            );
+    this.addPlot(this.fracRMSPlot, false);
 
     //Request plot data after all plots were added
     this.onVarianceValuesChanged();

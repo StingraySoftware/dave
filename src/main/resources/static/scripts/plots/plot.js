@@ -312,7 +312,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
                                         currentObj.plotConfig.styles.title);
-
+   } else if (currentObj.plotConfig.styles.type == "scatter_with_errors") {
+      plotlyConfig = get_plotdiv_scatter_with_errors(data[coords.x].values, data[coords.y].values,
+                                                     data[coords.x].error_values, data[coords.y].error_values,
+                                                     currentObj.getLabel(coords.x),
+                                                     currentObj.getLabel(coords.y),
+                                                     currentObj.plotConfig.styles.title);
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.getLabel(coords.x),

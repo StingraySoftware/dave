@@ -6,6 +6,7 @@ import utils.exception_helper as ExHelper
 import utils.plotter as Plotter
 import math
 import numpy as np
+import scipy as sp
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
@@ -27,7 +28,7 @@ import sys
 # @param: destination: file destination
 #
 def get_dataset_schema(destination):
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_schema()
     else:
@@ -40,7 +41,7 @@ def get_dataset_schema(destination):
 # @param: destination: file destination
 #
 def get_dataset_header(destination):
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_header()
     else:
@@ -54,13 +55,13 @@ def get_dataset_header(destination):
 # @param: next_destination: file destination of file to append
 #
 def append_file_to_dataset(destination, next_destination):
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
 
         # Tries to get TSTART from dataset to set the ofset to next_dataset
         ds_start_time = DsHelper.get_dataset_start_time(dataset)
 
-        next_dataset = DaveReader.get_file_dataset(next_destination, ds_start_time)
+        next_dataset, next_cache_key = DaveReader.get_file_dataset(next_destination, ds_start_time)
         if next_dataset:
 
             if DsHelper.are_datasets_of_same_type(dataset, next_dataset):
@@ -114,9 +115,9 @@ def append_file_to_dataset(destination, next_destination):
 #
 def apply_rmf_file_to_dataset(destination, rmf_destination):
     try:
-        dataset = DaveReader.get_file_dataset(destination)
+        dataset, cache_key = DaveReader.get_file_dataset(destination)
         if DsHelper.is_events_dataset(dataset):
-            rmf_dataset = DaveReader.get_file_dataset(rmf_destination)
+            rmf_dataset, rmf_cache_key = DaveReader.get_file_dataset(rmf_destination)
             if DsHelper.is_rmf_dataset(rmf_dataset):
                 # Applies rmf data to dataset
                 events_table = dataset.tables["EVENTS"]
@@ -138,11 +139,16 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                     else:
                         e_values.append(0)
 
-                events_table.add_columns(["E"])
+                if "E" not in events_table.columns:
+                    events_table.add_columns(["E"])
+                else:
+                    events_table.columns["E"].clear()
+
                 events_table.columns["E"].add_values(e_values)
 
                 DsCache.remove_with_prefix("FILTERED") # Removes all filtered datasets from cache
-                DsCache.add(destination, dataset) # Stores dataset on cache
+                DsCache.remove_with_prefix("LC")
+                DsCache.add(cache_key, dataset) # Stores dataset on cache
                 if len(events_table.columns["E"].values) == len(pha_data):
                     return list(e_avg_data.values())
     except:
@@ -252,6 +258,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     fvarmean_err = []
     chunk_mean_times = []
     chunk_mean_lengths = []
+    confidences = []
 
     try:
         if len(axis) != 2:
@@ -287,25 +294,34 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_meancount)
-            mean, mean_err = res
+            mean = np.nan_to_num(res[0])
+            mean_err = np.nan_to_num(res[1])
 
             chunk_times = np.array([(s + e)/2 for s, e in zip(start, stop)])
             chunk_lengths = np.array([(e - s)/2 for s, e in zip(start, stop)]) # This will be plotted as an error bar on xAxis, soo only need the half of the values
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_excvar)
-            excessvar, excessvar_err = res
+            excessvar = np.nan_to_num(res[0])
+            excessvar_err = np.nan_to_num(res[1])
 
             excessvarmean = get_means_from_array(excessvar, variance_opts["mean_count"])
             excessvarmean_err = get_means_from_array(excessvar_err, variance_opts["mean_count"])
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_fractional_rms)
-            fvar, fvar_err = res
+            fvar = np.nan_to_num(res[0])
+            fvar_err = np.nan_to_num(res[1])
 
             fvarmean = get_means_from_array(fvar, variance_opts["mean_count"])
             fvarmean_err = get_means_from_array(fvar_err, variance_opts["mean_count"])
 
             chunk_mean_times = get_means_from_array(chunk_times, variance_opts["mean_count"])
             chunk_mean_lengths = np.array([l * variance_opts["mean_count"] for l in chunk_lengths])
+
+            confidences += (mean_confidence_interval(excessvar, confidence=0.90))
+            confidences += (mean_confidence_interval(excessvar, confidence=0.99))
+
+            confidences += (mean_confidence_interval(fvar, confidence=0.90))
+            confidences += (mean_confidence_interval(fvar, confidence=0.99))
 
         lc = None  # Dispose memory
 
@@ -322,18 +338,20 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     result = push_to_results_array(result, baseline) #5
     result = push_to_results_array(result, chunk_times) #6
     result = push_to_results_array(result, chunk_lengths) #7
-    result = push_to_results_array(result, np.nan_to_num(mean)) #8
-    result = push_to_results_array(result, np.nan_to_num(mean_err)) #9
-    result = push_to_results_array(result, np.nan_to_num(excessvar)) #10
-    result = push_to_results_array(result, np.nan_to_num(excessvar_err)) #11
-    result = push_to_results_array(result, np.nan_to_num(excessvarmean)) #12
-    result = push_to_results_array(result, np.nan_to_num(excessvarmean_err)) #13
-    result = push_to_results_array(result, np.nan_to_num(fvar)) #14
-    result = push_to_results_array(result, np.nan_to_num(fvar_err)) #15
-    result = push_to_results_array(result, np.nan_to_num(fvarmean)) #16
-    result = push_to_results_array(result, np.nan_to_num(fvarmean_err)) #17
+    result = push_to_results_array(result, mean) #8
+    result = push_to_results_array(result, mean_err) #9
+    result = push_to_results_array(result, excessvar) #10
+    result = push_to_results_array(result, excessvar_err) #11
+    result = push_to_results_array(result, excessvarmean) #12
+    result = push_to_results_array(result, excessvarmean_err) #13
+    result = push_to_results_array(result, fvar) #14
+    result = push_to_results_array(result, fvar_err) #15
+    result = push_to_results_array(result, fvarmean) #16
+    result = push_to_results_array(result, fvarmean_err) #17
     result = push_to_results_array(result, chunk_mean_times) #18
     result = push_to_results_array(result, chunk_mean_lengths) #19
+    result = push_to_results_array(result, confidences) #20
+
     return result
 
 
@@ -486,7 +504,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
 
     try:
 
-        lc0_ds = DaveReader.get_file_dataset(lc0_destination)
+        lc0_ds, lc0_cache_key = DaveReader.get_file_dataset(lc0_destination)
         if not DsHelper.is_lightcurve_dataset(lc0_ds):
             logging.warn("Wrong dataset type for lc0")
             return ""
@@ -494,7 +512,7 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
         count_rate_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].values)
         count_rate_error_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].error_values)
 
-        lc1_ds = DaveReader.get_file_dataset(lc1_destination)
+        lc1_ds, lc1_cache_key = DaveReader.get_file_dataset(lc1_destination)
         if not DsHelper.is_lightcurve_dataset(lc1_ds):
             logging.warn("Wrong dataset type for lc1")
             return ""
@@ -1212,169 +1230,6 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
     return result
 
 
-# get_rms_vs_countrate:
-# Returns the countrates values and its correlated rms and rms errors
-#
-# @param: src_destination: source file destination
-# @param: bck_destination: background file destination, is optional
-# @param: gti_destination: gti file destination, is optional
-# @param: filters: array with the filters to apply
-#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
-# @param: axis: array with the column names to use in ploting
-#           [{ table = "EVENTS", column = "TIME" },
-#            { table = "EVENTS", column = "PHA" } ]
-# @param: dt: The time resolution of the events.
-# @param: nsegm: The number of segments for splitting the lightcurve
-# @param: segm_size: The segment length for split the lightcurve
-# @param: norm: The normalization of the (real part of the) power spectrum.
-# @param: pds_type: Type of PDS to use, single or averaged.
-# @param: freq_range: A tuple with minimum and maximum values of the
-#         range of frequency, send [-1, -1] for use all frequencies
-# @param: energy_range: A tuple with minimum and maximum values of the
-#         range of energy, send [-1, -1] for use all energies
-# @param: n_bands: The number of bands to split the refence band
-#
-def get_rms_spectrum(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, energy_range, n_bands):
-    energy_arr = []
-    rms_arr =[]
-    rms_err_arr = []
-    duration = []
-    warnmsg = []
-    freq_min_max = [-1, -1]
-
-    try:
-
-        if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
-
-        if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
-
-        if pds_type not in ['Sng', 'Avg']:
-            logging.warn("Wrong power density spectrum type")
-            return None
-
-        if segm_size == 0:
-            segm_size = None
-
-        # Prepares GTI if passed
-        base_gti = load_gti_from_destination (gti_destination)
-
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-
-        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
-
-        if DsHelper.is_events_dataset(filtered_ds):
-            events_table = filtered_ds.tables["EVENTS"]
-            min_time = events_table.columns["TIME"].values[0]
-            max_time = events_table.columns["TIME"].values[len(events_table.columns["TIME"].values) - 1]
-            duration = [(max_time - min_time)]
-
-            if "E" in events_table.columns:
-
-                event_list = np.column_stack((events_table.columns["TIME"].values,
-                                             events_table.columns["E"].values))
-
-                if energy_range[0] < 0:
-                    min_energy = min(event_list[:,1])
-                else:
-                    min_energy = energy_range[0]
-
-                if energy_range[1] >= min_energy:
-                    energy_range = energy_range[1] - min_energy
-                else:
-                    energy_range = max(event_list[:,1]) - min_energy
-
-                energy_step = energy_range / n_bands
-
-                for i in range(n_bands):
-
-                    energy_low = min_energy + (i * energy_step)
-                    energy_high = energy_low + energy_step
-                    energy_arr.extend([(energy_low + energy_high) / 2])
-                    rms, rms_err = 0, 0
-
-                    try:
-                        filtered_event_list = event_list[ (energy_high>event_list[:,1]) & (event_list[:,1]>energy_low) ]
-                        if (len(filtered_event_list) > 0):
-
-                            evt_list = EventList(filtered_event_list[:,0], pi=filtered_event_list[:,1])
-                            if evt_list and evt_list.ncounts > 0:
-
-                                lc = evt_list.to_lc(dt)
-                                if lc:
-
-                                    gti = base_gti
-                                    if not gti:
-                                        gti = lc.gti
-
-                                    if segm_size > lc.tseg:
-                                        segm_size = lc.tseg
-                                        logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + ", segmsize bigger than lc.duration, lc.duration applied instead.")
-
-                                    pds = None
-                                    if pds_type == 'Sng':
-                                        pds = Powerspectrum(lc, norm=norm, gti=gti)
-                                    else:
-                                        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
-
-                                    if pds:
-
-                                        if freq_range[0] < 0:
-                                            freq_low = min(pds.freq)
-                                        else:
-                                            freq_low = freq_range[0]
-
-                                        if freq_min_max[0] >= 0:
-                                            freq_min_max[0] = min([freq_min_max[0], freq_low])
-                                        else:
-                                            freq_min_max[0] = freq_low
-
-                                        if freq_range[1] < 0:
-                                            freq_high = max(pds.freq)
-                                        else:
-                                            freq_high = freq_range[1]
-                                        freq_min_max[1] = max([freq_min_max[1], freq_high])
-
-                                        rms, rms_err = pds.compute_rms(freq_low, freq_high)
-
-                                    else:
-                                        logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
-                                else:
-                                    logging.warn("get_rms_spectrum: can't create lightcurve. Energy range: " + str(energy_low) + " to " + str(energy_high))
-                            else:
-                                logging.warn("get_rms_spectrum: can't create eventlist or counts are 0. Energy range: " + str(energy_low) + " to " + str(energy_high) + ", counts: " + str(len(filtered_event_list)))
-                        else:
-                            logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + " has no events")
-                    except:
-                        logging.warn(ExHelper.getException('get_rms_spectrum: Energy range: ' + str(energy_low) + ' to ' + str(energy_high)))
-
-                    rms_arr.extend([rms])
-                    rms_err_arr.extend([rms_err])
-
-            else:
-                logging.warn('get_rms_spectrum: E column not found!')
-                warnmsg = ['E column not found']
-        else:
-            logging.warn('get_rms_spectrum: Wrong dataset type!')
-            warnmsg = ['Wrong dataset type']
-
-    except:
-        logging.error(ExHelper.getException('get_rms_spectrum'))
-        warnmsg = [ExHelper.getWarnMsg()]
-
-    # Preapares the result
-    result = push_to_results_array([], energy_arr)
-    result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
-    result = push_to_results_array(result, duration)
-    result = push_to_results_array(result, warnmsg)
-    result = push_to_results_array(result, freq_min_max)
-    return result
-
-
 # get_plot_data_from_models:
 # Returns the plot Y data for each model of an array of models with a given X_axis values
 # and the sum of all Y data of models from the given x range
@@ -1643,13 +1498,13 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         logging.debug("Returned cached filtered dataset, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
         return DsCache.get(cache_key)
 
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, ds_cache_key = DaveReader.get_file_dataset(destination)
     if not dataset:
         logging.warn("get_filtered_dataset: destination specified but not loadable.")
         return None
 
     if gti_destination:
-        gti_dataset = DaveReader.get_file_dataset(gti_destination)
+        gti_dataset, gti_cache_key = DaveReader.get_file_dataset(gti_destination)
         if gti_dataset:
             dataset = DsHelper.get_dataset_applying_gti_dataset(dataset, gti_dataset)
             if not dataset:
@@ -1869,7 +1724,7 @@ def load_gti_from_destination (gti_destination):
 
     gti = None
     if gti_destination:
-        gti_dataset = DaveReader.get_file_dataset(gti_destination)
+        gti_dataset, gti_cache_key = DaveReader.get_file_dataset(gti_destination)
         if gti_dataset:
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
             DsCache.add(cache_key, gti)
@@ -1902,3 +1757,10 @@ def lightcurve_fractional_rms(lc):
 def get_means_from_array(array, elements_per_mean):
     splited = np.array_split(array, math.floor(len(array) / elements_per_mean))
     return np.array([np.mean(arr) for arr in splited])
+
+def mean_confidence_interval(data, confidence=0.95):
+    a = 1.0*np.array(data)
+    n = len(a)
+    m, se = np.mean(a), sp.stats.sem(a)
+    h = se * sp.stats.t._ppf((1+confidence)/2., n-1)
+    return m, m-h, m+h

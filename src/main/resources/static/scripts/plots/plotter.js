@@ -300,15 +300,16 @@ function getShapesFromWti (wti_x_ranges) {
   return wti_shapes;
 }
 
-function getCrossLine (xrange, yrange){
-  return { visible: false,
+function getCrossLine (xrange, yrange, color, width, style){
+  return { visible: !isNull(color),
            x: xrange,
            y: yrange,
            mode:"lines",
            showlegend: false,
            line: {
-                  width: 1,
-                  color: '#dd4814'
+                  dash: isNull(style) ? 'solid' : style,
+                  width: isNull(width) ? 1 : width,
+                  color: isNull(color) ? '#dd4814' : color
                 },
            hoverinfo: "none" };
 }

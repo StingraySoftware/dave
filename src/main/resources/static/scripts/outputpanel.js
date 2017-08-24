@@ -356,25 +356,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
           ];
   }
 
-  this.getPlot = function (id, filename, bck_filename, gti_filename, styles, axis, fn, cssClass) {
-    return new Plot(
-              id,
-              {
-                filename: filename,
-                bck_filename: bck_filename,
-                gti_filename: gti_filename,
-                styles: styles,
-                axis: axis
-              },
-              (isNull(fn)) ? this.service.request_plot_data : fn,
-              this.onFiltersChangedFromPlot,
-              this.onPlotReady,
-              this.$toolBar,
-              (isNull(cssClass)) ? "fullWidth" : cssClass,
-              false
-            );
-  }
-
   this.getLightCurvePlot = function ( filename, bck_filename, gti_filename, tableName, labels, title, mandatoryFilters, cssClass, switchable, selectable ) {
 
     log("getLightCurvePlot: filename: " + filename );

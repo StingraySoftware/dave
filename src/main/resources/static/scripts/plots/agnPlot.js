@@ -31,7 +31,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         "x",
                                         currentObj.plotConfig.styles.title);
-    if (data.length == 20) {
+    if (data.length == 21) {
 
       lcPlotlyConfig.data[0].yaxis = 'y6';
 
@@ -88,25 +88,25 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         plotlyConfig.layout.yaxis6 = $.extend({}, plotlyConfig.layout.yaxis);
         plotlyConfig.layout.yaxis6.domain = [0.833, 1];
         plotlyConfig.layout.yaxis6.title = "x";
+
+        /*
+        //Shows plot Avg. Absolute RMS: <S2> Vs Count Rate
+        var avgAbsRmsPlotlyConfig = get_plotdiv_scatter_with_errors(data[7].values, data[9].values,
+                                                      data[8].values, data[10].values,
+                                                      "Count rate", "<S2>",
+                                                      "Avg. Absolute RMS");
+        plotlyConfig.data[0].hoverinfo = 'x+y';
+        plotlyConfig.layout.xaxis.type = 'log';
+        plotlyConfig.layout.xaxis.autorange = true;
+        plotlyConfig.layout.yaxis.type = 'log';
+        plotlyConfig.layout.yaxis.autorange = true;
+        */
+
       }
+
     } else {
       currentObj.btnSettings.hide();
     }
-
-    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
-
-    /*
-    //Shows plot Fvar Vs Count Rate
-    plotlyConfig = get_plotdiv_scatter_with_errors(data[7].values, data[9].values,
-                                                  data[8].values, data[10].values,
-                                                  "Count rate", "Fvar",
-                                                  currentObj.plotConfig.styles.title + " Excess Variance");
-    plotlyConfig.data[0].hoverinfo = 'x+y';
-    plotlyConfig.layout.xaxis.type = 'log';
-    plotlyConfig.layout.xaxis.autorange = true;
-    plotlyConfig.layout.yaxis.type = 'log';
-    plotlyConfig.layout.yaxis.autorange = true;
-    */
 
     return plotlyConfig;
   }
