@@ -34,14 +34,13 @@ app.on('ready', function() {
   if (mainConfig.error == null) {
 
     logDebugMode = mainConfig.logDebugMode;
-
-    launchPythonServer(mainConfig);
-
     PYTHON_URL = mainConfig.pythonUrl;
     LOGS_PATH = mainConfig.logsPath.replace("$HOME", require('os').homedir());
 
-    console.log('Connecting to server... URL: ' + PYTHON_URL);
-    connectToServer ();
+    launchPythonServer(mainConfig, function() {
+      console.log('Connecting to server... URL: ' + PYTHON_URL);
+      connectToServer ();
+    });
 
   } else {
 
@@ -73,14 +72,27 @@ function loadConfig(){
     }
 }
 
-function launchPythonServer(config) {
-  if (!config.pythonEnabled && !config.envEnabled) {
-    log('All server modes are disabled on configuration. Connecting anyways...');
-  } else if (config.pythonEnabled) {
-    launchProcess ("python", [config.pythonPath, '/tmp', '..', config.pythonUrl.split(":")[2], 'PY_ENV'], "Python");
-  } else if (config.envEnabled) {
-    launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
-  }
+function launchPythonServer(config, callback) {
+
+  var port = config.pythonUrl.split(":")[2];
+  checkPortInUse(port, function (inUse) {
+    if (!inUse) {
+      if (!config.pythonEnabled && !config.envEnabled) {
+        log('All server modes are disabled on configuration. Connecting anyways...');
+      } else if (config.pythonEnabled) {
+        launchProcess ("python", [config.pythonPath, '/tmp', '..', port, 'PY_ENV'], "Python");
+      } else if (config.envEnabled) {
+        launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
+      }
+
+      if (callback != null) {
+        callback();
+      }
+    } else {
+      sendErrorToWindow("Port " + port + " already in use!|");
+    }
+  });
+
 }
 
 function launchProcess(process, argument, processName) {
@@ -215,7 +227,7 @@ function getTailFromLogFile (logFilePath) {
   });
 }
 
- function escapeSpecialChars (text) {
+function escapeSpecialChars (text) {
     return text.replace(/\r?\n/g, "#")
                  .replace(/\\n/g, "#")
                  .replace(/\\'/g, "")
@@ -235,7 +247,7 @@ ipcMain.on('relaunchServer', function(){
   if (logDebugMode) {
     log('Relaunching Python Server...');
   }
-  launchPythonServer(mainConfig)
+  launchPythonServer(mainConfig, null);
 });
 
 ipcMain.on('connectedToServer', function(){
@@ -306,4 +318,23 @@ function prepareMenu (){
     ];
 
     Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function checkPortInUse(port, callback) {
+  var net = require('net');
+  var server = net.createServer();
+  server.once('error', function(err) {
+     if (err.code === 'EADDRINUSE') {
+       // port is currently in use
+       console.log('Port ' + port + ' is in use!');
+       callback(true);
+     }
+  });
+  server.once('listening', function() {
+     // close the server if listening doesn't fail
+     server.close();
+     console.log('Port ' + port + ' available!');
+     callback(false);
+  });
+  server.listen(port);
 }
