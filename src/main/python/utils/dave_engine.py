@@ -19,6 +19,7 @@ from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als, excess_variance
 from stingray.modeling import fit_powerspectrum
 from stingray.simulator import simulator
+from astropy.stats import LombScargle
 from config import CONFIG
 import sys
 
@@ -1486,6 +1487,58 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
         logging.error(ExHelper.getException('get_bootstrap_results'))
 
     return results
+
+
+# get_lomb_scargle:
+# Returns LombScargle frequencies and powers from a given lightcurve
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: nyquist_factor: Average Nyquist frequency factor
+# @param: ls_norm: Periodogram normalization ["standard", "model", "log", "psd"]
+# @param: samples_per_peak: Points across each significant periodogram peak
+#
+def get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak):
+    frequency = []
+    power = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        # Creates the lightcurve
+        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+        if not lc:
+            logging.warn("Can't create lightcurve")
+            return None
+
+        # Calculates the LombScargle values
+        frequency, power = LombScargle(lc.time, lc.counts).autopower(minimum_frequency=freq_range[0],
+                                                                     maximum_frequency=freq_range[1],
+                                                                     nyquist_factor=nyquist_factor,
+                                                                     normalization=ls_norm,
+                                                                     samples_per_peak=samples_per_peak)
+
+    except:
+        logging.error(ExHelper.getException('get_lomb_scargle'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], frequency)
+    result = push_to_results_array(result, np.nan_to_num(power))
+    return result
 
 
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------

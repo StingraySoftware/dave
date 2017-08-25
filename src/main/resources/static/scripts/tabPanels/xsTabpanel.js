@@ -1,12 +1,24 @@
 
 //Adds new Cross Spectrum Tab Panel
-function addXdTabPanel(navBarList, panelContainer, plotConfigs, projectConfigs, id, navItemClass){
+function addXsTabPanel(navBarList, panelContainer, plotConfigs, projectConfigs, id, navItemClass){
   return new XSTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
                         theService, navBarList, panelContainer, plotConfigs, projectConfigs);
 }
 
+//Subscribes the load workspace XSTabPanel function
+tabPanelsLoadFns["XSTabPanel"] = function (tabConfig) {
+  //Creates new CrossSpectra Tab Panel
+  return addXsTabPanel($("#navbar").find("ul").first(),
+                      $(".daveContainer"),
+                      tabConfig.plotConfigs,
+                      [],
+                      tabConfig.id,
+                      tabConfig.navItemClass);
+}
+
+//Cross Spectrum Tab Panel
 function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfigs, projectConfigs) {
 
   var currentObj = this;
@@ -16,7 +28,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   //XSTabPanel METHODS:
 
-  this.getXSDataFromServer = function (paramsData, fn) {
+  this.getXSDataFromServer = function (paramsData) {
 
     log("XSTabPanel getXSDataFromServer...");
 

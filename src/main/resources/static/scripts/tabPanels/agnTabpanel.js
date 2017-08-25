@@ -7,6 +7,18 @@ function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, i
                         theService, navBarList, panelContainer, plotConfig, projectConfig);
 }
 
+//Subscribes the load workspace AGNTabPanel function
+tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
+  //Creates new Long term variability of AGN Tab Panel
+  return addAGNTabPanel($("#navbar").find("ul").first(),
+                      $(".daveContainer"),
+                      tabConfig.plotConfig,
+                      null,
+                      tabConfig.id,
+                      tabConfig.navItemClass);
+}
+
+//Long term variability of AGN Tab Panel
 function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
 
   var currentObj = this;
@@ -15,7 +27,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //AGNTabPanel METHODS:
-  this.getAGNDataFromServer = function (paramsData, fn) {
+  this.getAGNDataFromServer = function (paramsData) {
 
     log("AGNTabPanel getAGNDataFromServer...");
 
@@ -23,7 +35,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       currentObj.currentRequest.abort();
     }
 
-    currentObj.setPlotsReadyState(false);
+    currentObj.outputPanel.setPlotsReadyState(false);
 
     currentObj.currentRequest = currentObj.service.request_lightcurve(paramsData, function( jsdata ) {
 
@@ -37,7 +49,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
       if (data == null) {
         log("onPlotReceived wrong data!, AGNTabPanel: " + currentObj.id);
-        currentObj.setPlotsReadyState(true);
+        currentObj.outputPanel.setPlotsReadyState(true);
         return;
 
       } else {
@@ -79,24 +91,6 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     });
 
   };
-
-  this.setPlotsReadyState = function(ready) {
-    if (currentObj.exVarConfPlot.isVisible) {
-      currentObj.exVarConfPlot.setReadyState(ready);
-    }
-
-    if (currentObj.fvarConfPlot.isVisible) {
-      currentObj.fvarConfPlot.setReadyState(ready);
-    }
-
-    if (currentObj.absRMSPlot.isVisible) {
-      currentObj.absRMSPlot.setReadyState(ready);
-    }
-
-    if (currentObj.fracRMSPlot.isVisible) {
-      currentObj.fracRMSPlot.setReadyState(ready);
-    }
-  }
 
   this.getConfig = function () {
     return { type: "AGNTabPanel",

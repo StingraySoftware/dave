@@ -654,3 +654,43 @@ def bulk_analisys(filenames, plot_configs, outdir, target):
     bulk_data = DaveBulk.bulk_analisys(filenames, plot_configs, absolute_outdir)
     logging.debug("bulk_analisys: Finish!")
     return json.dumps(bulk_data, cls=NPEncoder)
+
+
+def get_lomb_scargle(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, freq_range, nyquist_factor,
+                    ls_norm, samples_per_peak):
+                    
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_lomb_scargle src: %s" % src_filename)
+    logging.debug("get_lomb_scargle bck: %s" % bck_filename)
+    logging.debug("get_lomb_scargle gti: %s" % gti_filename)
+    logging.debug("get_lomb_scargle: filters %s" % filters)
+    logging.debug("get_lomb_scargle: axis %s" % axis)
+    logging.debug("get_lomb_scargle: dt %f" % dt)
+    logging.debug("get_lomb_scargle: freq_range %s" % freq_range)
+    logging.debug("get_lomb_scargle: nyquist_factor %s" % nyquist_factor)
+    logging.debug("get_lomb_scargle: ls_norm %s" % ls_norm)
+    logging.debug("get_lomb_scargle: samples_per_peak %s" % samples_per_peak)
+
+    data = DaveEngine.get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, freq_range, nyquist_factor,
+                                        ls_norm, samples_per_peak)
+
+    logging.debug("get_lomb_scargle: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)

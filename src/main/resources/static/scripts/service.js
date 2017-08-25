@@ -149,6 +149,10 @@ function Service (base_url) {
      return thisService.make_ajax_call("set_config", config, fn);
   };
 
+  this.request_lomb_scargle  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_lomb_scargle", data, fn);
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {

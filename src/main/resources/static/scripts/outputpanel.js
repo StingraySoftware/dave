@@ -193,6 +193,14 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return null;
   }
 
+  this.setPlotsReadyState = function(ready) {
+    for (i in this.plots) {
+      if (this.plots[i].isVisible) {
+          this.plots[i].setReadyState(ready);
+      }
+    }
+  }
+
   this.generatePlotId = function (id) {
     return (this.id + "_" + id + "_" + (new Date()).getTime()).replace(/\./g,'').replace(/\//g,'');
   }

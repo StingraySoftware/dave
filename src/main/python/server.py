@@ -229,6 +229,15 @@ def bulk_analisys():
             request.json['outdir'], UPLOADS_TARGET)
 
 
+@app.route('/get_lomb_scargle', methods=['POST'])
+def get_lomb_scargle():
+    return DaveEndpoint.get_lomb_scargle(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
+            int(request.json['samples_per_peak']))
+            
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():

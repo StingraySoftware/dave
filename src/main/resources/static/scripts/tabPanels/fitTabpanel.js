@@ -11,6 +11,18 @@ function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, i
                         projectConfig);
 }
 
+//Subscribes the load workspace FitTabPanel function
+tabPanelsLoadFns["FitTabPanel"] = function (tabConfig) {
+  //Creates new Fit Tab Panel
+  return addFitTabPanel($("#navbar").find("ul").first(),
+                       $(".daveContainer"),
+                       tabConfig.plotConfig,
+                       null,
+                       tabConfig.id,
+                       tabConfig.navItemClass);
+}
+
+//Fit Tab Panel
 function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
 
   var currentObj = this;

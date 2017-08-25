@@ -151,6 +151,15 @@ function closest(arr, closestTo){
     return closest;
 }
 
+function getStepSizeFromRange(range, numSteps) {
+  var multiplier = 1;
+  //If range is smaller than 1.0 find the divisor
+  while (range > 0 && range * multiplier < 1) {
+    multiplier *= 10;
+  }
+  return (1.0 / multiplier) / numSteps;
+}
+
 function onMultiplePlotsSelected(selectedPlots) {
   log("onMultiplePlotsSelected: selectedPlots -> " + selectedPlots.length);
 
@@ -165,47 +174,50 @@ function onMultiplePlotsSelected(selectedPlots) {
     plotConfigs.push(plot.plotConfig);
   }
 
-  addXdTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plotConfigs, projectConfigs);
+  addXsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plotConfigs, projectConfigs);
+  hideWaitingDialogDelayed(850, true);
+}
 
-  setTimeout( function () {
-    ClearSelectedPlots();
-    waitingDialog.hide();
-  }, 850);
+function prepareNewTab(plot, addTabFn, clearSelectedPlots) {
+  log("prepareNewTab: plot -> " + plot.id);
+
+  waitingDialog.show('Preparing new tab ...');
+  var tab = getTabForSelector(plot.id);
+  if (!isNull(tab)) {
+    addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
+    hideWaitingDialogDelayed(850, clearSelectedPlots);
+  } else {
+    showError(null, "Can't find tab for plot: " + plot.id);
+  }
 }
 
 function onFitPlotClicked(plot) {
   log("onFitPlotClicked: plot -> " + plot.id);
+  prepareNewTab(plot, addFitTabPanel, false);
+}
 
-  waitingDialog.show('Preparing new tab ...');
-
-  var tab = getTabForSelector(plot.id);
-  if (!isNull(tab)) {
-    addFitTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
-
-    setTimeout( function () {
-      waitingDialog.hide();
-    }, 850);
-  } else {
-    showError(null, "Can't find tab for plot: " + plot.id);
-  }
+function onBaselinePlotSelected(plot) {
+  log("onBaselinePlotSelected, PlotId: " + plot.id);
+  plot.btnSettings.click();
+  plot.setBaselineEnabled(true);
+  plot.btnBack.click();
 }
 
 function onAGNPlotSelected(plot) {
   log("onAGNPlotSelected, PlotId: " + plot.id);
+  prepareNewTab(plot, addAGNTabPanel, true);
+}
 
-  waitingDialog.show('Preparing new tab ...');
+function onPeriodogramPlotSelected(plot) {
+  log("onPeriodogramPlotSelected, PlotId: " + plot.id);
+  prepareNewTab(plot, addPGTabPanel, true);
+}
 
-  var tab = getTabForSelector(plot.id);
-  if (!isNull(tab)) {
-    addAGNTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
-
-    setTimeout( function () {
-      ClearSelectedPlots();
-      waitingDialog.hide();
-    }, 850);
-  } else {
-    showError(null, "Can't find tab for plot: " + plot.id);
-  }
+function hideWaitingDialogDelayed (delay, clearPlots) {
+  setTimeout( function () {
+    if (clearPlots) { ClearSelectedPlots(); }
+    waitingDialog.hide();
+  }, delay);
 }
 
 function showMsg(title, msg) {

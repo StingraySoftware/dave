@@ -300,6 +300,20 @@ function getShapesFromWti (wti_x_ranges) {
   return wti_shapes;
 }
 
+function getLine (xdata, ydata, color){
+  return {
+          type : 'scatter',
+          showlegend : false,
+          hoverinfo : 'none',
+          connectgaps : false,
+          x : xdata,
+          y : ydata,
+          line : {
+                  color : color
+                }
+        };
+}
+
 function getCrossLine (xrange, yrange, color, width, style){
   return { visible: !isNull(color),
            x: xrange,

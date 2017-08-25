@@ -9,6 +9,15 @@ function addWfTabPanel(navBarList, panelContainer, id, navItemClass){
   return tab;
 }
 
+//Subscribes the load workspace WfTabPanel function
+tabPanelsLoadFns["WfTabPanel"] = function (tabConfig) {
+  //Creates new Workflow Tab Panel
+  return addWfTabPanel($("#navbar").find("ul").first(),
+                      $(".daveContainer"),
+                      tabConfig.id,
+                      tabConfig.navItemClass);
+}
+
 //WorkFlow tab panel
 function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer) {
 
@@ -285,7 +294,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                           timingPlotsButtons);
 
         if (currentObj.projectConfig.schema.isEventsFile()) {
-          //Adds
+          //Adds RMF file depending plots
           timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
                                                             "covarianceBtn",
                                                             function () { currentObj.showUploadRMFDialog("covariance") },
@@ -302,17 +311,36 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                             timingPlotsButtons);
         }
 
-        var agnPlotsButtons = [];
-        agnPlotsButtons = currentObj.addButtonToArray("Longterm variability of AGN",
-                                                      "agnBtn",
-                                                      currentObj.showAGNSelection,
-                                                      agnPlotsButtons);
+        var variancePlotsButtons = [];
+        variancePlotsButtons = currentObj.addButtonToArray("Mean flux estimator",
+                                                      "baselineBtn",
+                                                      function () {
+                                                        currentObj.showLcSelectionDialog("Mean flux estimator (baseline):",
+                                                                                         onBaselinePlotSelected);
+                                                      },
+                                                      variancePlotsButtons);
+
+        variancePlotsButtons = currentObj.addButtonToArray("Intrinsic variance estimator",
+                                                      "intVarBtn",
+                                                      function () {
+                                                        currentObj.showLcSelectionDialog("Longterm variability of AGN:",
+                                                                                         onAGNPlotSelected);
+                                                      },
+                                                      variancePlotsButtons);
+
+        variancePlotsButtons = currentObj.addButtonToArray("Periodic signals search",
+                                                      "periodogramBtn",
+                                                      function () {
+                                                        currentObj.showLcSelectionDialog("Periodic signals search:",
+                                                                                         onPeriodogramPlotSelected);
+                                                      },
+                                                      variancePlotsButtons);
 
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
             { cssClass: "PDSPlot", title:"Power Density Spectra" },
             { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-            { cssClass: "AGNPlot", title:"Intrinsic Variance Estimator", extraButtons: agnPlotsButtons }
+            { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons }
         ];
 
         currentObj.toolPanel.setAnalisysSections(sections);
@@ -619,31 +647,31 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
      $uploadRMFDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
-  this.showAGNSelection = function () {
+  this.showLcSelectionDialog = function (title, onPlotSelectedFn) {
     var lcPlotButtons = currentObj.getLcButtonsHtml(false);
     if (lcPlotButtons.Count > 0) {
 
       //Else show dialog for choose the desired plots
-      var $agnDialog = $('<div id="agnDialog_' + currentObj.id +  '" title="Select a light curve:">' +
-                                  '<div class="xsDialogContainer">' +
-                                    lcPlotButtons.Html +
-                                  '</div>' +
-                              '</div>');
+      var $lcDialog = $('<div id="lcDialog_' + currentObj.id +  '" title="Select a light curve:">' +
+                            '<div class="lcDialogContainer">' +
+                              lcPlotButtons.Html +
+                            '</div>' +
+                        '</div>');
 
-      $agnDialog.find("button").click(function(event){
+      $lcDialog.find("button").click(function(event){
          var plotId = $(this).attr("plotId");
          var plot = currentObj.outputPanel.getPlotById(plotId);
-         onAGNPlotSelected(plot);
-         $agnDialog.dialog('close');
-         $agnDialog.remove();
+         onPlotSelectedFn(plot);
+         $lcDialog.dialog('close');
+         $lcDialog.remove();
       });
 
-      currentObj.$html.append($agnDialog);
-      currentObj.createCustomDialog($agnDialog);
+      currentObj.$html.append($lcDialog);
+      currentObj.createCustomDialog($lcDialog);
 
     } else {
-      showMsg("Longterm variability of AGN:", "At least one plot of type Light Curve must be visible/enabled to continue. " +
-                                              "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots.");
+      showMsg(title, "At least one plot of type Light Curve must be visible/enabled to continue. " +
+                     "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots.");
     }
   }
 
