@@ -29,7 +29,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
         currentObj.hide();
       }
     });
-    toolbar.find(".container").append(this.btnShow);
+    toolbar.append(this.btnShow);
 
     this.btnHide = this.$html.find(".btnHide");
     this.btnHide.click(function(event){

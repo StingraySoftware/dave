@@ -10,70 +10,12 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$html = cloneHtmlElement(id, classSelector);
   container.html(this.$html);
   this.$html.show();
-  this.$btnShowToolbar = this.$html.find(".btnShowToolbar");
-  this.$btnHideToolbar = this.$html.find(".btnHideToolbar");
-  this.$toolBar = this.$html.find(".outputPanelToolBar");
   this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
   this.infoPanel = null;
   this.showBlockingLoadDialog = false;
 
   //METHODS AND EVENTS
-
-  this.$btnShowToolbar.click(function(event){
-     currentObj.$btnShowToolbar.hide();
-     currentObj.$toolBar.show();
-  });
-
-  this.$btnHideToolbar.click(function(event){
-     currentObj.$toolBar.hide();
-     currentObj.$btnShowToolbar.show();
-  });
-
-  this.$btnShowToolbar.hide();
-  this.$toolBar.hide();
-
-  this.setAnalisysSections = function (sections) {
-    this.$toolBar.find(".container").html("");
-    for (i in sections) {
-      this.addToolbarSection(sections[i]);
-    };
-  }
-
-  this.addToolbarSection = function (section) {
-    var $section = $('<div class="Section ' + section.cssClass + '">' +
-                      '<h3>' + section.title + ':</h3>' +
-                      '<div class="sectionContainer">' +
-                      '</div>' +
-                    '</div>');
-    $section.hide();
-    this.$toolBar.find(".container").append($section);
-  }
-
-  this.setToolbarSectionVisible = function (sectionClass, visible) {
-    if (visible) {
-        currentObj.$html.find(".Section." + sectionClass).show();
-    } else {
-        currentObj.$html.find(".Section." + sectionClass).hide();
-    }
-  }
-
-  this.setEnabledSection = function (sectionClass, enabled) {
-    var plots = currentObj.$html.find(".plotContainer." + sectionClass);
-    if (plots.length > 0) {
-      currentObj.setToolbarSectionVisible(sectionClass, enabled);
-      $.each( plots, function(i, $plot) {
-        var plot = currentObj.getPlotById($plot.id);
-        if (!isNull(plot) && plot.isVisible){
-          setVisibility(plot.$html, enabled);
-          if (enabled) {
-            plot.refreshData();
-          }
-        }
-      });
-    }
-  }
-
   this.initPlots = function(projectConfig) {
     //PLOTS HARDCODED BY THE MOMENT HERE
     if (projectConfig.schema.isLightCurveFile()) {
@@ -107,7 +49,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     };
     this.forceResize();
     this.enableDragDrop(false);
-    this.$btnShowToolbar.show();
 
     setTimeout( function () {
       //Forces check if all plots visible are ready.
@@ -143,7 +84,11 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
 
   this.addInfoPanel = function ( tableName, schema ) {
     if (!isNull(schema[tableName]["HEADER"])) {
-      this.infoPanel = new InfoPanel(this.generatePlotId("infoPanel"), "Header File Information", schema[tableName]["HEADER"], schema[tableName]["HEADER_COMMENTS"], this.$toolBar);
+      this.infoPanel = new InfoPanel(this.generatePlotId("infoPanel"),
+                                    "Header File Information",
+                                    schema[tableName]["HEADER"],
+                                    schema[tableName]["HEADER_COMMENTS"],
+                                    getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"));
       this.$body.append(this.infoPanel.$html);
     }
   }

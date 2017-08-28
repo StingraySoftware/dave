@@ -724,29 +724,18 @@ function ToolPanel (id,
                             '</div>');
     $sectionContainer.append($plotBulkResults);
 
-    var $plotFilenames = $plotBulkResults.find(".plotFilenames");
-    //$plotFilenames.hide();
-
     //Show and hide plot filenames
     $plotBulkResults.find(".switch-btn").click(function ( event ) {
       var plotId = $(this).attr("plot_id");
       var $plotsection = currentObj.$html.find(".BulkAnalisysSection").find("." + plotId);
       var $switchBtn = $plotsection.find(".switch-btn");
-      var enabled = !$switchBtn.hasClass("fa-check-square-o");
-
-      setVisibility($plotsection.find(".plotFilenames"), enabled);
-      if (enabled) {
-        $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
-        $plotsection.removeClass("Disabled");
-        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
-      } else {
-        $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
-        $plotsection.addClass("Disabled");
-        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
-      }
+      this.setEnabledSectionCore($plotsection,
+                                 $plotsection.find(".plotFilenames"),
+                                 $switchBtn,
+                                 !$switchBtn.hasClass("fa-check-square-o"));
     });
 
-    return $plotFilenames;
+    return $plotBulkResults.find(".plotFilenames");
   }
 
   this.isSectionEnabled = function (sectionClass) {
@@ -761,20 +750,22 @@ function ToolPanel (id,
 
   this.setEnabledSection = function (sectionClass, enabled) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
-    var $switchBtn = $section.find(".switch-btn");
+    this.setEnabledSectionCore($section,
+                               $section.find(".sectionContainer"),
+                               $section.find(".switch-btn"),
+                               enabled);
+  }
 
-    setVisibility($section.find(".sectionContainer"), enabled);
+  this.setEnabledSectionCore = function ($section, $sectionContainer, $switchBtn, enabled){
+    setVisibility($sectionContainer, enabled);
     if (enabled) {
       $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
       $section.removeClass("Disabled");
-      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
     } else {
       $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
       $section.addClass("Disabled");
-      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
     }
   }
-
 
   //Normal file selectors, SRC is valid on both events files and lightcurves
 
