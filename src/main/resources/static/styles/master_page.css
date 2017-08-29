@@ -375,16 +375,17 @@ ul#right-navbar li {
   margin-left: 10px;
 }
 
-.toolPanelContainer .Section h3 {
+.analyzeContainer>.Section h3, .fileSelectorsContainer>.Section>h3 {
   color: #ff7d1b;
   cursor: pointer;
 }
 
-.Section .sectionContainer, .plotFilenames {
+.Section>.sectionContainer, .plotFilenames {
   padding-left: 10px;
+  font-size: 0.98em;
 }
 
-.sectionContainer .btn, .xsDialogContainer .btn {
+.analyzePanel .sectionContainer .btn, .dialogContainer .btn {
   display: block;
   background: none;
   color: #d4a34a;
@@ -395,20 +396,27 @@ ul#right-navbar li {
   font-size: 0.95em;
 }
 
-.sectionContainer .btn:active, .xsDialogContainer .btn:active{
+.analyzePanel .sectionContainer .btn:active, .dialogContainer .btn:active{
   background: #3a3a3a !important;
 }
 
-.sectionContainer .btn:hover, .xsDialogContainer .btn:hover, .BulkAnalisysSection:hover {
+.analyzePanel .sectionContainer .btn:hover, .dialogContainer .btn:hover, .BulkAnalisysSection:hover {
   color: #ffcf78 !important;
 }
 
-.sectionContainer .btn.plotHidden, .toolPanelContainer .Section.Disabled h3, .plotFilenames .btn.plotHidden {
+.analyzePanel .sectionContainer .btn.plotHidden, .toolPanelContainer .Section.Disabled h3, .plotFilenames .btn.plotHidden {
   color: gray;
 }
 
-.sectionContainer .btn.ExtraButton {
+.analyzePanel .sectionContainer .btn.ExtraButton {
   color: #d47d47;
+}
+
+.Section .btn-primary {
+    width: 98%;
+    font-size: 1.1em;
+    margin-top: 10px;
+    margin-bottom: 20px;
 }
 
 .btnRmf {
@@ -486,8 +494,8 @@ ul#right-navbar li {
   text-align: right;
 }
 
-.xsDialogContainer {
-    padding: 20px;
+.dialogContainer {
+  padding: 20px;
 }
 
 input.wrongValue {

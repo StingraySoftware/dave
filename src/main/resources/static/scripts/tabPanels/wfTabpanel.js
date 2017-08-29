@@ -336,11 +336,21 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                       },
                                                       variancePlotsButtons);
 
+        var pulsarPlotsButtons = [];
+        pulsarPlotsButtons = currentObj.addButtonToArray("Phaseogram",
+                                                      "phaseogramBtn",
+                                                      function () {
+                                                        currentObj.showLcSelectionDialog("Phaseogram:",
+                                                                                         onPhaseogramPlotSelected);
+                                                      },
+                                                      pulsarPlotsButtons);
+
         var sections = [
             { cssClass: "LcPlot", title:"Light Curves and Colors" },
             { cssClass: "PDSPlot", title:"Power Density Spectra" },
             { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-            { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons }
+            { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons },
+            { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons }
         ];
 
         currentObj.toolPanel.setAnalisysSections(sections);
@@ -588,7 +598,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       //Else show dialog for choose the desired plots
       var $xSpectraDialog = $('<div id="xSpectraDialog_' + currentObj.id +  '" title="Select two light curves:">' +
-                                  '<div class="xsDialogContainer">' +
+                                  '<div class="dialogContainer xsDialogContainer">' +
                                     lcPlotButtons.Html +
                                   '</div>' +
                               '</div>');
@@ -652,7 +662,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       //Else show dialog for choose the desired plots
       var $lcDialog = $('<div id="lcDialog_' + currentObj.id +  '" title="Select a light curve:">' +
-                            '<div class="lcDialogContainer">' +
+                            '<div class="dialogContainer lcDialogContainer">' +
                               lcPlotButtons.Html +
                             '</div>' +
                         '</div>');

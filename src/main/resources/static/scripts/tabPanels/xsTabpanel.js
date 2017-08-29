@@ -36,15 +36,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.currentRequest.abort();
     }
 
-    var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
-    if (timeLagPlot.isVisible) {
-      timeLagPlot.setReadyState(false);
-    }
-
-    var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
-    if (coherencePlot.isVisible) {
-      coherencePlot.setReadyState(false);
-    }
+    currentObj.outputPanel.setPlotsReadyState(false);
 
     currentObj.currentRequest = currentObj.service.request_cross_spectrum(paramsData, function( jsdata ) {
 
@@ -56,8 +48,9 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("XSData received!, XSTabPanel: " + currentObj.id);
       data = JSON.parse(jsdata);
 
-      if (data == null) {
+      if (isNull(data)) {
         log("onPlotReceived wrong data!, XSTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
         return;
 
       } else {

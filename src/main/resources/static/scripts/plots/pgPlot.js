@@ -60,6 +60,10 @@ function PgPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     currentObj.onPlotReady(true);
   }
 
+  this.mustPropagateAxisFilter = function (axis) {
+    return axis == 0;
+  }
+
   log ("new PgPlot id: " + this.id);
 
   return this;

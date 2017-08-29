@@ -236,7 +236,24 @@ def get_lomb_scargle():
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
             int(request.json['samples_per_peak']))
-            
+
+
+@app.route('/get_pulse_search', methods=['POST'])
+def get_pulse_search():
+    return DaveEndpoint.get_pulse_search(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['freq_range'], request.json['mode'], int(request.json['oversampling']),
+            int(request.json['nharm']), int(request.json['nbin']), float(request.json['segment_size']))
+
+
+@app.route('/get_phaseogram', methods=['POST'])
+def get_phaseogram():
+    return DaveEndpoint.get_phaseogram(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['f']), int(request.json['nph']), int(request.json['nt']))
+
 
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])

@@ -1,5 +1,5 @@
 
-function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array) {
+function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array, onSlideChanged) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
@@ -62,19 +62,24 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
     this.switchBox.hide();
   }
 
+  this.onSlideChanged = !isNull(onSlideChanged) ? onSlideChanged : function( event, ui ) {
+    var sliderId = event.target.id.replace("slider-", "");
+    var tab = getTabForSelector(sliderId);
+    if (!isNull(tab)){
+      var sliderSelectors_array = tab.toolPanel.selectors_array;
+      var sliderWdg = sliderSelectors_array[sliderId];
+      sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+      sliderWdg.onSelectorValuesChanged();
+    }
+  };
+
    this.createSlider = function () {
      this.slider.slider({
             range:true,
             min: this.fromValue,
             max: this.toValue,
             values: [ fromValue, toValue ],
-            slide: function( event, ui ) {
-              var sliderId = event.target.id.replace("slider-", "");
-              var sliderSelectors_array = getTabForSelector(sliderId).toolPanel.selectors_array;
-              var sliderWdg = sliderSelectors_array[sliderId];
-              sliderWdg.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-              sliderWdg.onSelectorValuesChanged();
-            }
+            slide: this.onSlideChanged
         });
       this.setValues( this.fromValue, this.toValue );
    }

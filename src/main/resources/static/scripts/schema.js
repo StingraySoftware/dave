@@ -78,7 +78,12 @@ function Schema(schema){
       }
     }
 
-    return 1.0;
+    var eventsCount = this.getEventsCount();
+    if (eventsCount > 0) {
+      return this.getTotalDuration() / eventsCount;
+    } else {
+      return 1.0;
+    }
   }
 
   this.getTotalDuration = function () {

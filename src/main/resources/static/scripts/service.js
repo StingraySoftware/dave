@@ -153,6 +153,14 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_lomb_scargle", data, fn);
   };
 
+  this.request_pulse_search  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_pulse_search", data, fn);
+  };
+
+  this.request_phaseogram  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_phaseogram", data, fn);
+  };
+
   this.subscribe_to_server_messages = function (fn) {
     var evtSrc = new EventSource("/subscribe");
     evtSrc.onmessage = function(e) {

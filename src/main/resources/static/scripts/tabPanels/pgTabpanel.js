@@ -60,7 +60,11 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                   showFitBtn: true }
                       }),
                       this.service.request_power_density_spectrum,
-                      this.outputPanel.onFiltersChangedFromPlot,
+                      function (filters) {
+                        //onFiltersChangedFromPlot
+                        currentObj.freqRangeSelector.setValues( filters[0].from, filters[0].to );
+                        currentObj.onFreqRangeValuesChanged();
+                      },
                       function (comesFromLombScargle) {
                         if (!isNull(currentObj.pgPlot.data)
                             && currentObj.pgPlot.data[0].values.length > 0){
@@ -95,23 +99,13 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                       "From", "To",
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
-                                      null);
+                                      null,
+                                      function( event, ui ) {
+                                        currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+                                        currentObj.onFreqRangeValuesChanged();
+                                      });
     this.freqRangeSelector.step = getStepSizeFromRange(freqRange[1] - freqRange[0], 100);
-    this.freqRangeSelector.slider.slider({
-           min: this.freqRangeSelector.fromValue,
-           max: this.freqRangeSelector.toValue,
-           values: [this.freqRangeSelector.fromValue, this.freqRangeSelector.toValue],
-           step: this.freqRangeSelector.step,
-           slide: function( event, ui ) {
-             currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-             currentObj.onFreqRangeValuesChanged();
-           }
-       });
     this.freqRangeSelector.setEnabled(true);
-    if (this.pgPlot.plotConfig.freq_range[0] > -1) {
-      this.freqRangeSelector.setValues(this.pgPlot.plotConfig.freq_range[0], this.pgPlot.plotConfig.freq_range[1]);
-    }
-
     this.onFreqRangeValuesChanged();
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.freqRangeSelector.$html);
 
@@ -122,27 +116,20 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.toolPanel.$html.find(".fileSelectorsContainer").append($textboxes);
 
     //Creates Normalization radios
-    var $lsNormRadiosCont = $('<div class="ls_normalization">' +
-                                '<h3>Normalization:</h3>' +
-                                '<fieldset>' +
-                                  '<label for="' + this.id + '_Std">Standard</label>' +
-                                  '<input type="radio" name="' + this.id + 'LSNorm" id="' + this.id + '_Std" value="standard" ' + getCheckedState(this.pgPlot.plotConfig.ls_norm == "standard") + '>' +
-                                  '<label for="' + this.id + '_Mdl">Model</label>' +
-                                  '<input type="radio" name="' + this.id + 'LSNorm" id="' + this.id + '_Mdl" value="model" ' + getCheckedState(this.pgPlot.plotConfig.ls_norm == "model") + '>' +
-                                  '<label for="' + this.id + '_Log">Logarithmic</label>' +
-                                  '<input type="radio" name="' + this.id + 'LSNorm" id="' + this.id + '_Log" value="log" ' + getCheckedState(this.pgPlot.plotConfig.ls_norm == "log") + '>' +
-                                  '<label for="' + this.id + '_Psd">PSD</label>' +
-                                  '<input type="radio" name="' + this.id + 'LSNorm" id="' + this.id + '_Psd" value="psd" ' + getCheckedState(this.pgPlot.plotConfig.ls_norm == "psd") + '>' +
-                                '</fieldset>' +
-                              '</div>');
-
-    var $lsNormRadios = $lsNormRadiosCont.find("input[type=radio][name=" + this.id + "LSNorm]")
-    $lsNormRadios.checkboxradio();
-    $lsNormRadiosCont.find("fieldset").controlgroup();
-    $lsNormRadios.change(function() {
-      currentObj.pgPlot.plotConfig.ls_norm = this.value;
-      currentObj.getLombScargleFromServer();
-    });
+    var $lsNormRadiosCont = getRadioControl (this.id,
+                                            "Normalization",
+                                            "ls_normalization",
+                                            [
+                                              { id:"Std", label:"Standard", value:"standard"},
+                                              { id:"Mdl", label:"Model", value:"model"},
+                                              { id:"Log", label:"Logarithmic", value:"log"},
+                                              { id:"Psd", label:"PSD", value:"psd"}
+                                            ],
+                                            this.pgPlot.plotConfig.ls_norm,
+                                            function(value) {
+                                              currentObj.pgPlot.plotConfig.ls_norm = value;
+                                              currentObj.getLombScargleFromServer();
+                                            });
     this.toolPanel.$html.find(".fileSelectorsContainer").append($lsNormRadiosCont);
 
   }
@@ -175,10 +162,10 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         return; //Comes from request abort call.
       }
 
-      log("AGNData received!, PgTabPanel: " + currentObj.id);
+      log("PGData received!, PgTabPanel: " + currentObj.id);
       data = JSON.parse(jsdata);
 
-      if (data == null) {
+      if (isNull(data)) {
         log("onPlotReceived wrong data!, PgTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;

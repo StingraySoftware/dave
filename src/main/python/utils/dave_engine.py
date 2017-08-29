@@ -19,7 +19,9 @@ from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als, excess_variance
 from stingray.modeling import fit_powerspectrum
 from stingray.simulator import simulator
-from astropy.stats import LombScargle
+from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
+from stingray.pulse.pulsar import z2_n_detection_level
+from astropy.stats import LombScargle, poisson_conf_interval
 from config import CONFIG
 import sys
 
@@ -1538,6 +1540,147 @@ def get_lomb_scargle(src_destination, bck_destination, gti_destination,
     # Preapares the result
     result = push_to_results_array([], frequency)
     result = push_to_results_array(result, np.nan_to_num(power))
+    return result
+
+
+# get_pulse_search: Returns z_n_search result of a given events dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency
+# @param: mode: Pulse search merhod ["epoch_folding", "z_n_search"].
+# @param: oversampling: Pulse peak oversampling.
+# @param: nharm: Number of harmonics.
+# @param: nbin: Number of bins of the folded profiles.
+# @param: segment_size: Length of the segments to be averaged in the periodogram.
+#
+def get_pulse_search(src_destination, bck_destination, gti_destination, filters, axis,
+                   dt, freq_range, mode="z_n_search", oversampling=15, nharm=4, nbin=128, segment_size=5000):
+    freq = []
+    zstat = []
+    cand_freqs_z = []
+    cand_stat_z = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if mode not in ['epoch_folding', 'z_n_search']:
+            logging.warn("Wrong mode, using default: z_n_search")
+            mode = "z_n_search"
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        ds = get_filtered_dataset(src_destination, filters, gti_destination)
+        if not ds:
+            logging.warn("Cant read dataset!")
+            return None
+
+        # Gets time data
+        time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
+
+        # We will search for pulsations over a range
+        # of frequencies around the known pulsation period.
+
+        # Calculates frequencies from min frequency, and frequency step
+        df_min = 1/(max(time_data) - min(time_data))
+        df = df_min / oversampling
+        frequencies = np.arange(freq_range[0], freq_range[1], df)
+
+        if mode == "z_n_search":
+            freq, zstat = z_n_search(time_data, frequencies, nbin=nbin, nharm=nharm, segment_size=segment_size)
+        else:
+            freq, zstat = epoch_folding_search(time_data, frequencies, nbin=nbin, segment_size=segment_size)
+
+        z_detlev = z2_n_detection_level(n=1, epsilon=0.001, ntrial=len(freq))
+        cand_freqs_z, cand_stat_z = search_best_peaks(freq, zstat, z_detlev)
+
+    except:
+        logging.error(ExHelper.getException('get_pulse_search'))
+
+    # Preapares the result
+    result = push_to_results_array([], freq)
+    result = push_to_results_array(result, zstat)
+    result = push_to_results_array(result, cand_freqs_z)
+    result = push_to_results_array(result, cand_stat_z)
+    return result
+
+
+# get_phaseogram: Returns phaseogram of a given events dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: f: Pulse frequency.
+# @param: nph: Number of phase bins.
+# @param: nt: Number of time bins.
+#
+def get_phaseogram(src_destination, bck_destination, gti_destination, filters, axis,
+                   dt, f, nph, nt):
+    phaseogr = []
+    phases = []
+    times = []
+    mean_phases = []
+    profile = []
+    error_dist = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        ds = get_filtered_dataset(src_destination, filters, gti_destination)
+        if not ds:
+            logging.warn("Cant read dataset!")
+            return None
+
+        # Calculate the phaseogram plot data
+        time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
+        phaseogr, phases, times, additional_info = \
+                    phaseogram(time_data, f, nph=nph, nt=nt)
+        phaseogr = np.transpose(phaseogr)
+
+        # Calculates the profile plot data
+        mean_phases = (phases[:-1] + phases[1:]) / 2
+        profile = np.sum(phaseogr, axis=1)
+        mean_profile = np.mean(profile)
+        if np.all(mean_phases < 1.5):
+            mean_phases = np.concatenate((mean_phases, mean_phases + 1))
+            profile = np.concatenate((profile, profile))
+        err_low, err_high = poisson_conf_interval(mean_profile, interval='frequentist-confidence', sigma=1)
+        error_dist = [err_low, err_high]
+
+    except:
+        logging.error(ExHelper.getException('get_phaseogram'))
+
+    # Preapares the result
+    result = push_to_results_array([], phaseogr)
+    result = push_to_results_array(result, phases)
+    result = push_to_results_array(result, times)
+    result = push_to_results_array(result, mean_phases)
+    result = push_to_results_array(result, profile)
+    result = push_to_results_array(result, error_dist)
     return result
 
 

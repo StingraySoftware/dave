@@ -367,10 +367,14 @@ def load_dataset_from_intermediate_file(fname):
     from stingray.events import EventList
     from stingray.crossspectrum import Crossspectrum
     from hendrics.io import get_file_type
+    from stingray.io import _retrieve_pickle_object
 
-    ftype, contents = get_file_type(fname)
     # This will return an EventList, a light curve, a Powerspectrum, ...
     # depending on the contents of the file
+    try:
+        ftype, contents = get_file_type(fname)
+    except:
+        contents = _retrieve_pickle_object(fname)
 
     if isinstance(contents, Lightcurve):
         return DataSet.get_lightcurve_dataset_from_stingray_Lightcurve(contents)

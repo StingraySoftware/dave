@@ -659,7 +659,7 @@ def bulk_analisys(filenames, plot_configs, outdir, target):
 def get_lomb_scargle(src_filename, bck_filename, gti_filename, target,
                     filters, axis, dt, freq_range, nyquist_factor,
                     ls_norm, samples_per_peak):
-                    
+
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -692,5 +692,84 @@ def get_lomb_scargle(src_filename, bck_filename, gti_filename, target,
                                         ls_norm, samples_per_peak)
 
     logging.debug("get_lomb_scargle: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_pulse_search(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, freq_range, mode, oversampling,
+                    nharm, nbin, segment_size):
+
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_pulse_search src: %s" % src_filename)
+    logging.debug("get_pulse_search bck: %s" % bck_filename)
+    logging.debug("get_pulse_search gti: %s" % gti_filename)
+    logging.debug("get_pulse_search: filters %s" % filters)
+    logging.debug("get_pulse_search: axis %s" % axis)
+    logging.debug("get_pulse_search: dt %f" % dt)
+    logging.debug("get_pulse_search: freq_range %s" % freq_range)
+    logging.debug("get_pulse_search: mode %s" % mode)
+    logging.debug("get_pulse_search: oversampling %s" % oversampling)
+    logging.debug("get_pulse_search: nharm %s" % nharm)
+    logging.debug("get_pulse_search: nbin %s" % nbin)
+    logging.debug("get_pulse_search: segment_size %s" % segment_size)
+
+    data = DaveEngine.get_pulse_search(src_destination, bck_destination, gti_destination,
+                                    filters, axis, dt, freq_range, mode, oversampling,
+                                    nharm, nbin, segment_size)
+
+    logging.debug("get_pulse_search: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_phaseogram(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, f, nph, nt):
+
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_phaseogram src: %s" % src_filename)
+    logging.debug("get_phaseogram bck: %s" % bck_filename)
+    logging.debug("get_phaseogram gti: %s" % gti_filename)
+    logging.debug("get_phaseogram: filters %s" % filters)
+    logging.debug("get_phaseogram: axis %s" % axis)
+    logging.debug("get_phaseogram: dt %f" % dt)
+    logging.debug("get_phaseogram: f %s" % f)
+    logging.debug("get_phaseogram: nph %s" % nph)
+    logging.debug("get_phaseogram: nt %s" % nt)
+
+    data = DaveEngine.get_phaseogram(src_destination, bck_destination, gti_destination,
+                                    filters, axis, dt, f, nph, nt)
+
+    logging.debug("get_phaseogram: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
