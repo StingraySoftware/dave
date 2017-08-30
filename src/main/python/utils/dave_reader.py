@@ -58,7 +58,8 @@ def get_file_dataset(destination, time_offset=0):
                 random_values = np.random.uniform(-1, 1, size=numValues)
                 table.columns["AMPLITUDE"].values = random_values
 
-            elif file_extension.find("FITS") == 0:
+            elif file_extension.find("FITS") == 0 \
+                 or file_extension.find("gziped.fits") > -1:
 
                 # Opening Fits
                 hdulist = fits.open(destination, memmap=True)
