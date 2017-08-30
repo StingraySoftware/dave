@@ -201,6 +201,12 @@ function ToolPanel (id,
       if (!projectConfig.schema.hasColumn("PHA")){
           //PHA Column doesn't exist, show we can't apply RMF file
           this.rmfFileSelector.disable("PHA column not found in SRC file");
+      } else if (projectConfig.schema.getTable()["PHA"].min_value >= projectConfig.schema.getTable()["PHA"].max_value){
+          //PHA Column is empty, show we can't apply RMF file
+          this.rmfFileSelector.disable("PHA column is empty in SRC file");
+      } else {
+          //Removes possible warn msg
+          this.rmfFileSelector.disable("");
       }
 
       //Caluculates max, min and step values for slider with time ranges

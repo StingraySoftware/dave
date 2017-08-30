@@ -188,9 +188,16 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
    }
 
    this.disable = function (msg) {
-     this.$html.find("label").html('<a href="#" class="btn btn-danger btnWarn"><div>' +
-                                     '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
-                                   '</div></a>');
+     if (msg != "") {
+       this.$html.find("label").html('<a href="#" class="btn btn-danger btnWarn"><div>' +
+                                       '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
+                                     '</div></a>');
+     } else {
+       this.$html.find("label").html('');
+     }
+
+     setVisibility(this.btnChoose, msg == "");
+     this.btnChange.hide();
    }
 
    this.showInfoText = function (text) {
