@@ -9,6 +9,7 @@ class CONFIG:
     LOG_TO_SERVER_ENABLED = True
     LOG_LEVEL = -1 # ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
     USE_JAVASCRIPT_CACHE = False #If true, DAVE GUI will try to get js files from browser cache. Use False for development environments
+    PYTHON_CACHE_SIZE = 32 # The maximun number of items to store in the LRU cache
 
     def set_config(config):
 

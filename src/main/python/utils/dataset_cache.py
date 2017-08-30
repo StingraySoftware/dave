@@ -1,39 +1,29 @@
 import hashlib
 from random import randint
-import utils.dave_logger as logging
+from lru import LRU
+from config import CONFIG
 
-cached_datasets = dict()
-dataset_hits = dict()
-LOG_CACHE_HITS = False
+cached_datasets = LRU(CONFIG.PYTHON_CACHE_SIZE)
 
 # DATASET CACHE METHODS
 def add(key, dataset):
     cached_datasets[key] = dataset
-    dataset_hits[key] = 1
 
 
 def contains(key):
-    if key in cached_datasets:
-        return True
-
-    return False
+    return key in cached_datasets
 
 
 def get(key):
-
-    if key in cached_datasets:
-        dataset_hits[key] = dataset_hits[key] + 1
-        if LOG_CACHE_HITS:
-            logging.debug("DATASET CACHE: n(" + str(len(cached_datasets)) + ") HITS -> " + str(dataset_hits))
+    if contains(key):
         return cached_datasets[key]
 
     return None
 
 
 def remove(key):
-    if key in cached_datasets:
+    if contains(key):
         cached_datasets.pop(key, None)
-        dataset_hits.pop(key, None)
         return True
 
     return False
