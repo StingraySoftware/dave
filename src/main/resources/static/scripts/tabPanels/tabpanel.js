@@ -81,6 +81,7 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
   this.show();
 
   log("TabPanel ready! id: " + this.id);
+  return this;
 }
 
 

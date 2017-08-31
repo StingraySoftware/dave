@@ -6,8 +6,7 @@ function ToolPanel (id,
                     onDatasetChangedFn,
                     onLcDatasetChangedFn,
                     onFiltersChangedFn,
-                    undoHistoryFn,
-                    resetHistoryFn,
+                    historyManager,
                     onDragDropChangedFn)
 {
 
@@ -35,8 +34,7 @@ function ToolPanel (id,
   this.onDatasetChangedFn = onDatasetChangedFn;
   this.onLcDatasetChangedFn = onLcDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
-  this.undoHistory = undoHistoryFn;
-  this.resetHistory = resetHistoryFn;
+  this.historyManager = historyManager;
   this.onDragDropChanged = onDragDropChangedFn;
 
   this.lastTimeoutId = null;
@@ -596,7 +594,7 @@ function ToolPanel (id,
       try {
         var action = JSON.parse(e.target.result);
         if (!isNull(action.type) && !isNull(action.actionData)){
-          getTabForSelector(currentObj.id).applyAction(action);
+          getTabForSelector(currentObj.id).historyManager.applyAction(action);
         } else {
           showError("File is not supported as filters");
         }
@@ -810,11 +808,11 @@ function ToolPanel (id,
   this.lcDFileSelector.hide();
 
   this.clearBtn.click(function () {
-      currentObj.resetHistory();
+      currentObj.historyManager.resetHistory();
   });
 
   this.undoBtn.click(function () {
-      currentObj.undoHistory();
+      currentObj.historyManager.undoHistory();
   });
 
   this.loadBtn.click(function () {
@@ -841,4 +839,5 @@ function ToolPanel (id,
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);
+  return this;
 }

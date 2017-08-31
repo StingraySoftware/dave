@@ -202,4 +202,5 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   log("PGTabPanel ready! id: " + this.id);
+  return this;
 }

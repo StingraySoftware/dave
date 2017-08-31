@@ -27,10 +27,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   //WORKFLOW TAB_PANEL ATTRIBUTES
   this.service = service;
-
-  this.actionsHistory = [];
-  this.prevAction = null;
-
   this.projectConfig = new ProjectConfig();
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
@@ -369,7 +365,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         }
 
         //Reset History and add default filters
-        currentObj.actionsHistory = [];
+        currentObj.historyManager.actionsHistory = [];
         currentObj.addToHistory("filters", currentObj.toolPanel.getFilters());
 
       } else {
@@ -522,38 +518,15 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.addToHistory = function (actionType, actionData){
-      //Adds a action to actionsHistory, uses { obj } for cloning data (new obj reference)
-      if (currentObj.prevAction != null) {
-        currentObj.actionsHistory.push( $.extend(true, {}, currentObj.prevAction) );
-      }
-      currentObj.toolPanel.undoBtn.prop('disabled', (currentObj.prevAction == null));
-      //Stores a action on prevAction tmp var, uses $.extend for cloning data (new obj reference)
-      currentObj.prevAction = { type: actionType,
-                                actionData: $.extend(true, [], actionData),
-                                binSize: this.projectConfig.binSize,
-                                maxSegmentSize: this.projectConfig.maxSegmentSize };
-  }
+      //Prepares undo button
+      currentObj.toolPanel.undoBtn.prop('disabled', (currentObj.historyManager.prevAction == null));
 
-  this.undoHistory = function () {
-    if (currentObj.actionsHistory.length > 0) {
-      currentObj.applyAction(currentObj.actionsHistory.pop());
-    }
-  }
-
-  this.resetHistory = function () {
-    if (currentObj.actionsHistory.length > 0) {
-      var action = currentObj.actionsHistory[0];
-      currentObj.actionsHistory = []; // Clears action history keeping default state
-      currentObj.applyAction(action);
-      currentObj.prevAction = null;
-      currentObj.addToHistory(action);
-    } else {
-      currentObj.applyAction(currentObj.prevAction);
-    }
-  }
-
-  this.enableDragDrop = function (enabled) {
-    currentObj.outputPanel.enableDragDrop(enabled);
+      //Adds a action to historyManager
+      var action = { type: actionType,
+               actionData: $.extend(true, [], actionData),
+               binSize: this.projectConfig.binSize,
+               maxSegmentSize: this.projectConfig.maxSegmentSize };
+      currentObj.historyManager.addToHistory(action);
   }
 
   this.applyAction = function (action){
@@ -568,12 +541,15 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                break;
 
            default:
-               log("undoHistory: Unknown action type: " + action.type + ", Tab.id: " + currentObj.id);
+               log("applyAction: Unknown action type: " + action.type + ", Tab.id: " + currentObj.id);
        }
 
-       currentObj.prevAction = $.extend(true, [], action);
-       currentObj.toolPanel.undoBtn.prop('disabled', currentObj.actionsHistory.length == 0);
+       currentObj.toolPanel.undoBtn.prop('disabled', currentObj.historyManager.actionsHistory.length == 0);
     }
+  }
+
+  this.enableDragDrop = function (enabled) {
+    currentObj.outputPanel.enableDragDrop(enabled);
   }
 
   this.setBinSize = function (binSize) {
@@ -732,7 +708,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
             callback();
         },
         function(callback) {
-            currentObj.applyAction(tabConfig.toolPanelConfig);
+            currentObj.historyManager.applyAction(tabConfig.toolPanelConfig);
             callback();
         }
     ], function (err, result) {
@@ -758,8 +734,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       delete this.wfSelector;
       delete this.toolPanel;
       delete this.outputPanel;
-      delete this.actionsHistory;
-      delete this.prevAction;
+      delete this.historyManager;
       delete this.projectConfig;
 
       delete this.id;
@@ -769,6 +744,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   //TAB_PANEL INITIALIZATION
+  this.historyManager = new HistoryManager(this.applyAction);
+
   this.wfSelector = this.$html.find(".wfSelectorContainer");
 
   this.toolPanel = new ToolPanel (this.id + "_toolPanel",
@@ -778,8 +755,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                   this.onDatasetChanged,
                                   this.onLcDatasetChanged,
                                   this.onFiltersChanged,
-                                  this.undoHistory,
-                                  this.resetHistory,
+                                  this.historyManager,
                                   this.enableDragDrop);
 
   this.outputPanel = new OutputPanel (this.id + "_outputPanel",
@@ -798,6 +774,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.wfSelector.find(".wfSelectorDisableable").hide();
 
   log("WfTabPanel ready! id: " + this.id);
+
+  return this;
 }
 
 function openIndependentFileTab (filename) {

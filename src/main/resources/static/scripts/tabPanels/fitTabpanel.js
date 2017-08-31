@@ -254,4 +254,5 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   log("FitTabPanel ready! id: " + this.id);
+  return this;
 }

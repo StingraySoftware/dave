@@ -254,4 +254,5 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   log("AGNTabPanel ready! id: " + this.id);
+  return this;
 }

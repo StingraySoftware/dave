@@ -203,4 +203,5 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   log("XSTabPanel ready! id: " + this.id);
+  return this;
 }

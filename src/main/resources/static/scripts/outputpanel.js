@@ -740,4 +740,5 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   log ("Output panel ready!!");
+  return this;
  }

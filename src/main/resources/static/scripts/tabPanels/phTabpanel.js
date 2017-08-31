@@ -408,4 +408,5 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   log("PHTabPanel ready! id: " + this.id);
+  return this;
 }

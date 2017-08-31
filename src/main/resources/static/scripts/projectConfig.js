@@ -175,4 +175,6 @@ function ProjectConfig(){
 
     return config;
   }
+
+  return this;
 }
