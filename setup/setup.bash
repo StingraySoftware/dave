@@ -37,7 +37,7 @@ echo Installing in $DIR
 MINICONDA=$DIR/miniconda.sh
 if [ ! -e $MINICONDA ] ; then
 
-		if [[ "$OSTYPE" == "linux-gnu" ]]; then
+		if [[ "$OSTYPE" == "linux"* ]]; then
 			#Linux
 			echo "Downloading miniconda for Linux-x86_64"
 			MINICONDA_URL_LINUX=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -77,7 +77,7 @@ export PATH=${PATH}:${INSTALL_DIR}/bin
 NODE_VERSION=4.4.4
 NODE_FILENAME="node-v$NODE_VERSION"
 
-	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	if [[ "$OSTYPE" == "linux"* ]]; then
 
 		#Linux
 		NODE_TAR=$DIR/$NODE_FILENAME.tar.xz
@@ -168,7 +168,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	pip install -r requirements.txt
 	pip install statsmodels
 
-	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	if [[ "$OSTYPE" == "linux"* ]]; then
 		#Linux
 
 		#Build stingray
@@ -225,7 +225,7 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 	#Install HENDRICS libraries
 	pip install -r requirements.txt
 
-	if [[ "$OSTYPE" == "linux-gnu" ]]; then
+	if [[ "$OSTYPE" == "linux"* ]]; then
 		#Linux
 
 		#Build HENDRICS

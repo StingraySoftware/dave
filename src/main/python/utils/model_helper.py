@@ -53,12 +53,11 @@ def fix_parammeters_to_astropy_model(astropy_model, model):
 def get_starting_params_from_model(model, params):
     starting_pars = []
     for param in params:
-        #Looks like Stingray now requieres all the starting_pars not only the non fixed
-        #if "fixed" in model:
-        #    if param not in model["fixed"]:
-        #        starting_pars.extend([model[param]]);
-        #else:
-        starting_pars.extend([model[param]]);
+        if "fixed" in model:
+            if param not in model["fixed"]:
+                starting_pars.extend([model[param]]);
+        else:
+            starting_pars.extend([model[param]]);
     return starting_pars
 
 
