@@ -44,19 +44,19 @@ if [ ! -e $MINICONDA ] ; then
 			wget --quiet $MINICONDA_URL_LINUX -O $MINICONDA
 
 		elif [[ "$OSTYPE" == "darwin"* ]]; then
-      # Mac OSX
+                        # Mac OSX
 			echo "Downloading miniconda for MacOSX-x86_64"
 			MINICONDA_URL_MACOS=https://repo.continuum.io/miniconda/Miniconda2-4.2.12-MacOSX-x86_64.sh
 			curl $MINICONDA_URL_MACOS -o "$MINICONDA"
 
 		else
-      # Unknown.
-			echo "Downloading miniconda: Unsupported OS Platform"
+                        # Unknown
+			echo "Error downloading miniconda: Unsupported OS '$OSTYPE'"
 			return 1
 		fi
 fi
 
-#Check Miniconda download result
+# Check Miniconda download result
 retVal=$?
 if [[ retVal -ne 0 ]] ; then
 	rm $MINICONDA
@@ -186,7 +186,8 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	echo Getting specific version of Stingray
 	git checkout $STINGRAY_COMMIT_HASH
 
-	#Install stingray libraries
+	# Install stingray libraries
+        conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
 	echo statsmodels >> requirements.txt
 	pip install -r requirements.txt
 
@@ -195,7 +196,6 @@ if [ ! -e $STINGRAY_FOLDER ]; then
            echo "Failed to install Stingray dependencies"
            return 1
        fi
-
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
 		#Linux
@@ -233,7 +233,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	fi
 fi
 
-#Installing hendrics
+# Installing hendrics
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
@@ -248,10 +248,11 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 	cd $HENDRICS_FOLDER
 
 	# Gets specific commit version
-	echo Getting specific version of HENDRICS
+	echo "Getting specific version of HENDRICS: $HENDRICS_COMMIT_HASH"
 	git checkout $HENDRICS_COMMIT_HASH
 
-	#Install HENDRICS libraries
+	# Install HENDRICS libraries
+        conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
 	pip install -r requirements.txt
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
