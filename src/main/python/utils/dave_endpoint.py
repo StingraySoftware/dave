@@ -208,7 +208,8 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt):
+def get_joined_lightcurves(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck_filename,
+                            target, filters, axis, dt):
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -217,13 +218,29 @@ def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt
     if not lc1_destination:
         return common_error("Invalid file or cache key for lc1 data")
 
+    lc0_bck_destination = ""
+    if lc0_bck_filename:
+        lc0_bck_destination = get_destination(lc0_bck_filename, target)
+        if not lc0_bck_destination:
+            return common_error("Invalid file or cache key for lc0_bck data")
+
+    lc1_bck_destination = ""
+    if lc1_bck_filename:
+        lc1_bck_destination = get_destination(lc1_bck_filename, target)
+        if not lc1_bck_destination:
+            return common_error("Invalid file or cache key for lc1_bck data")
+
     logging.debug("get_joined_lightcurves lc0: %s" % lc0_filename)
     logging.debug("get_joined_lightcurves lc1: %s" % lc1_filename)
+    logging.debug("get_joined_lightcurves lc0_bck: %s" % lc0_bck_filename)
+    logging.debug("get_joined_lightcurves lc1_bck: %s" % lc1_bck_filename)
     logging.debug("get_joined_lightcurves: filters %s" % filters)
     logging.debug("get_joined_lightcurves: axis %s" % axis)
     logging.debug("get_joined_lightcurves: dt %f" % dt)
 
-    data = DaveEngine.get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt)
+    data = DaveEngine.get_joined_lightcurves(lc0_destination, lc1_destination,
+                                             lc0_bck_destination, lc1_bck_destination,
+                                             filters, axis, dt)
 
     logging.debug("get_joined_lightcurves: Finish!")
 
@@ -261,7 +278,7 @@ def get_divided_lightcurves_from_colors(src_filename, bck_filename, gti_filename
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
+def get_divided_lightcurve_ds(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck_filename, target):
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -270,10 +287,25 @@ def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
     if not lc1_destination:
         return common_error("Invalid file or cache key for lc1 data")
 
+    lc0_bck_destination = ""
+    if lc0_bck_filename:
+        lc0_bck_destination = get_destination(lc0_bck_filename, target)
+        if not lc0_bck_destination:
+            return common_error("Invalid file or cache key for lc0_bck data")
+
+    lc1_bck_destination = ""
+    if lc1_bck_filename:
+        lc1_bck_destination = get_destination(lc1_bck_filename, target)
+        if not lc1_bck_destination:
+            return common_error("Invalid file or cache key for lc1_bck data")
+
     logging.debug("get_divided_lightcurve_ds lc0: %s" % lc0_filename)
     logging.debug("get_divided_lightcurve_ds lc1: %s" % lc1_filename)
+    logging.debug("get_divided_lightcurve_ds lc0_bck: %s" % lc0_bck_filename)
+    logging.debug("get_divided_lightcurve_ds lc1_bck: %s" % lc1_bck_filename)
 
-    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination)
+    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination,
+                                                    lc0_bck_destination, lc1_bck_destination)
 
     logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
 

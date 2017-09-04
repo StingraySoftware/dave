@@ -151,7 +151,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.addControls = function(){
 
-    this.pulseSearchSection = getSection ("Pulse Search", "pulseSearch", true );
+    this.pulseSearchSection = getSection ("Pulse Search", "pulseSearch", true, null, "HlSection");
     var $pulseSearchContainer = getSectionContainer(this.pulseSearchSection);
 
     //Adds frequency range selector
@@ -208,7 +208,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
 
     //Adds phaseogram controls
-    var $phaseogram = getSection ("Phaseogram", "phaseogram", true);
+    var $phaseogram = getSection ("Phaseogram", "phaseogram", true, null, "HlSection");
     $phaseogram.hide();
     var $phaseogramContainer = getSectionContainer($phaseogram);
 

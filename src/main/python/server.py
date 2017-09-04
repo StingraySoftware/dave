@@ -119,8 +119,9 @@ def get_lightcurve():
 @app.route('/get_joined_lightcurves', methods=['POST'])
 def get_joined_lightcurves():
     return DaveEndpoint.get_joined_lightcurves(request.json['lc0_filename'],
-            request.json['lc1_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']))
+            request.json['lc1_filename'], request.json['lc0_bck_filename'],
+            request.json['lc1_bck_filename'], UPLOADS_TARGET, request.json['filters'],
+            request.json['axis'], float(request.json['dt']))
 
 
 @app.route('/get_divided_lightcurves_from_colors', methods=['POST'])
@@ -133,7 +134,8 @@ def get_divided_lightcurves_from_colors():
 @app.route('/get_divided_lightcurve_ds', methods=['POST'])
 def get_divided_lightcurve_ds():
     return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
-            request.json['lc1_filename'], UPLOADS_TARGET)
+            request.json['lc1_filename'], request.json['lc0_bck_filename'],
+            request.json['lc1_bck_filename'], UPLOADS_TARGET)
 
 
 @app.route('/get_power_density_spectrum', methods=['POST'])

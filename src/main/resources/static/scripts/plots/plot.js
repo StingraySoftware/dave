@@ -862,7 +862,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     if (plotConfig.isVisible) {
       this.show();
 
-      var section = this.getSection();
+      var section = this.getSectionName();
       if ((section != "") && !isNull(tab)){
         tab.setSectionVisibility(section, true);
       }
@@ -876,7 +876,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     }
   }
 
-  this.getSection = function () {
+  this.getSectionName = function () {
     if (this.$html.hasClass("LcPlot")){
       return "LcPlot";
     } else if (this.$html.hasClass("PDSPlot")){

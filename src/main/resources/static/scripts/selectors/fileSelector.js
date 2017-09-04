@@ -132,7 +132,8 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
        }
 
      } else {
-       currentObj.onUploadSuccess();
+       currentObj.reset();
+       currentObj.onFileChangedFn([], currentObj.selectorKey);
      }
    });
 
@@ -187,6 +188,11 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      this.$html.hide();
    }
 
+   this.reset = function () {
+     currentObj.$input.val("");
+     this.onUploadSuccess();
+   }
+
    this.disable = function (msg) {
      if (msg != "") {
        this.$html.find("label").html('<a href="#" class="btn btn-danger btnWarn"><div>' +
@@ -200,8 +206,17 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      this.btnChange.hide();
    }
 
-   this.showInfoText = function (text) {
-     this.$html.find("label").append('<p class="InfoText">' + text + '</a>');
+   this.showInfoText = function (text, hideButtons) {
+     if (text != "") {
+       this.$html.find("label").append('<p class="InfoText">' + text + '</a>');
+     } else {
+       this.$html.find("label").find(".InfoText").remove();
+     }
+
+     if (!isNull(hideButtons) && hideButtons){
+       setVisibility(this.btnChoose, text == "");
+       this.btnChange.hide();
+     }
    }
 
    this.setMultiFileEnabled = function (enabled) {

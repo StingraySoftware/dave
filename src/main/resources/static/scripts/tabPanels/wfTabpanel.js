@@ -56,7 +56,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onDatasetChanged = function ( filenames, selectorKey, callback) {
 
-    if (selectorKey == "SRC") {
+    if ((selectorKey == "SRC") && (filenames.length > 0)) {
       //If SRC file was load just create a new project config
       currentObj.projectConfig = new ProjectConfig();
     }
@@ -74,7 +74,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
         waitingDialog.show('Applying RMF: ' + getFilename(filenames[0]));
-        currentObj.projectConfig.setFile("RMF", filenames[0]);
         currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, function (res) { currentObj.onRmfApplied(res, callback); } );
       }
 
@@ -115,6 +114,21 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
+
+      if (currentObj.projectConfig.getFile(selectorKey) != ""){
+        //If previous file was setted
+
+        if (selectorKey == "SRC") {
+          //Reset this tab
+          removeTab(currentObj.id);
+        } else {
+          //Update projectConfig files
+          currentObj.projectConfig.setFiles(selectorKey, [], "");
+          currentObj.projectConfig.updateFile(selectorKey);
+          currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
+        }
+      }
+
       if (!isNull(callback)) { callback(); }
     }
 
@@ -132,7 +146,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       log("onLcDatasetChanged " + selectorKey + ": " + filenames[0]);
 
-      //If file were upladed then check if is valid schema
+      //If file were upladed, then check if is valid schema
       currentObj.service.get_dataset_header(filenames[0], function( jsonHeader ){
 
         if (!isNull(jsonHeader.abort)){
@@ -145,31 +159,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         if (!isNull(header)) {
 
           log("onLcDatasetChanged - get_dataset_header: " + selectorKey + ": " + filenames[0]);
-
-          currentObj.projectConfig.setFile(selectorKey, filenames[0]);
-
-          //Cleans previous plots for this selectorKey
-          currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
-          currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
-          if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
-            currentObj.projectConfig.setFile("LC_B/A", "");
-          } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
-            currentObj.projectConfig.setFile("LC_D/C", "");
-          }
-
-          //Tries to get filter info from file header info
-          var rangeText = currentObj.extractEnergyRangeTextFromHeader(header);
-          currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, rangeText);
-
-          //Add the new plots for this selectorKey
-          currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey, filenames[0], "", "", "RATE", "RATE", currentObj.projectConfig, "", true);
-          currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
-          currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
-
-          waitingDialog.hide();
+          currentObj.onLcHeaderReceived(selectorKey, filenames[0], header);
 
         } else {
-
           showError("Wrong lightcurve file!");
         }
 
@@ -182,12 +174,61 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       waitingDialog.hide();
       if (!isNull(callback)) { callback(); }
     } else {
-      showError("No selected files!");
       log("onLcDatasetChanged " + selectorKey + ": No selected files..");
+
+      if (currentObj.projectConfig.getFile(selectorKey) != ""){
+        //If previous file was setted
+        currentObj.onLcHeaderReceived(selectorKey, "", null);
+      }
+
       waitingDialog.hide();
       if (!isNull(callback)) { callback(); }
     }
 
+  }
+
+  this.onLcHeaderReceived = function (selectorKey, filename, header) {
+
+    currentObj.projectConfig.setFile(selectorKey, filename);
+
+    var isBckFile = selectorKey.endsWith("_BCK");
+    if (isBckFile) {
+      selectorKey = selectorKey.replace("_BCK", "");
+    }
+
+    //Cleans previous plots for this selectorKey
+    currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey(selectorKey));
+    currentObj.projectConfig.cleanPlotsIdsKey(selectorKey);
+    if (((selectorKey == "LCB") || (selectorKey == "LCA"))) {
+      currentObj.projectConfig.setFile("LC_B/A", "");
+    } if (((selectorKey == "LCD") || (selectorKey == "LCC"))) {
+      currentObj.projectConfig.setFile("LC_D/C", "");
+    }
+
+    //Tries to get filter info from file header info, and updates bck selector
+    if (!isBckFile){
+      if (filename != ""){
+        currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, extractEnergyRangeTextFromHeader(header));
+        currentObj.toolPanel.getFileSelector(selectorKey + "_BCK").show();
+        currentObj.toolPanel.setInfoTextToFileSelector(selectorKey + "_BCK", (getBackgroundSubstracted(header["RATE"]) ? "Background already substracted" : ""), CONFIG.DENY_BCK_IF_SUBS);
+      } else {
+        currentObj.toolPanel.setInfoTextToFileSelector(selectorKey, "");
+        currentObj.toolPanel.getFileSelector(selectorKey + "_BCK").hide();
+        currentObj.toolPanel.setInfoTextToFileSelector(selectorKey + "_BCK", "");
+      }
+    }
+
+    //Add the new plots for this selectorKey
+    if (currentObj.projectConfig.getFile(selectorKey) != ""){
+      currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey,
+                                                      currentObj.projectConfig.getFile(selectorKey),
+                                                      currentObj.projectConfig.getFile(selectorKey + "_BCK"),
+                                                      "", "RATE", "RATE", currentObj.projectConfig, "", true);
+      currentObj.outputPanel.tryAddDividedLightCurve("LCB", "LCA", "B/A", currentObj.projectConfig);
+      currentObj.outputPanel.tryAddDividedLightCurve("LCD", "LCC", "D/C", currentObj.projectConfig);
+    }
+
+    waitingDialog.hide();
   }
 
   this.onSrcSchemaChanged = function ( schema, params ) {
@@ -231,6 +272,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         log("onRmfApplied: Success!");
         var schema = JSON.parse(jsonSchema);
+        currentObj.projectConfig.updateFile("RMF");
         currentObj.projectConfig.updateSchema(schema);
         currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
@@ -265,90 +307,16 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     var jsonSchema = JSON.parse(schema);
     if (!isNull(jsonSchema) && isNull(jsonSchema.error)){
 
+      currentObj.projectConfig.updateFile(selectorKey);
+
       if (selectorKey == "SRC"){
 
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(jsonSchema);
         currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
-        currentObj.projectConfig.setFile("SRC", currentObj.projectConfig.filename);
 
         //Prepare sections
-        var timingPlotsButtons = [];
-        timingPlotsButtons = currentObj.addButtonToArray("Cross Spectrum",
-                                                          "crossSpectraBtn",
-                                                          currentObj.showCrossSpectraSelection,
-                                                          timingPlotsButtons);
-
-        timingPlotsButtons = currentObj.addButtonToArray("Frequency Lag",
-                                                          "freqLagBtn",
-                                                          currentObj.showCrossSpectraSelection,
-                                                          timingPlotsButtons);
-
-        timingPlotsButtons = currentObj.addButtonToArray("Coherence",
-                                                          "coherenceBtn",
-                                                          currentObj.showCrossSpectraSelection,
-                                                          timingPlotsButtons);
-
-        if (currentObj.projectConfig.schema.isEventsFile()) {
-          //Adds RMF file depending plots
-          timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
-                                                            "covarianceBtn",
-                                                            function () { currentObj.showUploadRMFDialog("covariance") },
-                                                            timingPlotsButtons);
-
-          timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
-                                                            "rmsBtn",
-                                                            function () { currentObj.showUploadRMFDialog("rms") },
-                                                            timingPlotsButtons);
-
-          timingPlotsButtons = currentObj.addButtonToArray("Phase Lag spectrum",
-                                                            "phaseLagBtn",
-                                                            function () { currentObj.showUploadRMFDialog("phaseLag") },
-                                                            timingPlotsButtons);
-        }
-
-        var variancePlotsButtons = [];
-        variancePlotsButtons = currentObj.addButtonToArray("Mean flux estimator",
-                                                      "baselineBtn",
-                                                      function () {
-                                                        currentObj.showLcSelectionDialog("Mean flux estimator (baseline):",
-                                                                                         onBaselinePlotSelected);
-                                                      },
-                                                      variancePlotsButtons);
-
-        variancePlotsButtons = currentObj.addButtonToArray("Intrinsic variance estimator",
-                                                      "intVarBtn",
-                                                      function () {
-                                                        currentObj.showLcSelectionDialog("Longterm variability of AGN:",
-                                                                                         onAGNPlotSelected);
-                                                      },
-                                                      variancePlotsButtons);
-
-        variancePlotsButtons = currentObj.addButtonToArray("Periodic signals search",
-                                                      "periodogramBtn",
-                                                      function () {
-                                                        currentObj.showLcSelectionDialog("Periodic signals search:",
-                                                                                         onPeriodogramPlotSelected);
-                                                      },
-                                                      variancePlotsButtons);
-
-        var pulsarPlotsButtons = [];
-        pulsarPlotsButtons = currentObj.addButtonToArray("Phaseogram",
-                                                      "phaseogramBtn",
-                                                      function () {
-                                                        currentObj.showLcSelectionDialog("Phaseogram:",
-                                                                                         onPhaseogramPlotSelected);
-                                                      },
-                                                      pulsarPlotsButtons);
-
-        var sections = [
-            { cssClass: "LcPlot", title:"Light Curves and Colors" },
-            { cssClass: "PDSPlot", title:"Power Density Spectra" },
-            { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-            { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons },
-            { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons }
-        ];
-
+        var sections = currentObj.getAnalysisSections();
         currentObj.toolPanel.setAnalisysSections(sections);
         if (CONFIG.BULK_ANALYSIS_ENABLED) {
           currentObj.toolPanel.addBulkAnalisysButton();
@@ -357,7 +325,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         //Prepare toolPanel filters, workflow config and load outputPanel plots
         currentObj.toolPanel.onDatasetSchemaChanged(currentObj.projectConfig);
         currentObj.enableWfSelector();
-        currentObj.refreshPlotsData();
+        currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
 
         //Set enabled section by default
         if (sections.length > 0) {
@@ -371,11 +339,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       } else {
 
         if (currentObj.projectConfig.hasSchema()) {
-          currentObj.refreshPlotsData();
-        } else {
-          waitingDialog.hide();
+          //We can update the filepaths of every plot
+          currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
         }
 
+        waitingDialog.hide();
       }
 
     } else {
@@ -384,6 +352,86 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
 
     if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
+  }
+
+  this.getAnalysisSections = function (){
+    //Returns the analisys tab sections and their buttons
+
+    var timingPlotsButtons = [];
+    timingPlotsButtons = currentObj.addButtonToArray("Cross Spectrum",
+                                                      "crossSpectraBtn",
+                                                      currentObj.showCrossSpectraSelection,
+                                                      timingPlotsButtons);
+
+    timingPlotsButtons = currentObj.addButtonToArray("Frequency Lag",
+                                                      "freqLagBtn",
+                                                      currentObj.showCrossSpectraSelection,
+                                                      timingPlotsButtons);
+
+    timingPlotsButtons = currentObj.addButtonToArray("Coherence",
+                                                      "coherenceBtn",
+                                                      currentObj.showCrossSpectraSelection,
+                                                      timingPlotsButtons);
+
+    if (currentObj.projectConfig.schema.isEventsFile()) {
+      //Adds RMF file depending plots
+      timingPlotsButtons = currentObj.addButtonToArray("Covariance spectrum",
+                                                        "covarianceBtn",
+                                                        function () { currentObj.showUploadRMFDialog("covariance") },
+                                                        timingPlotsButtons);
+
+      timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
+                                                        "rmsBtn",
+                                                        function () { currentObj.showUploadRMFDialog("rms") },
+                                                        timingPlotsButtons);
+
+      timingPlotsButtons = currentObj.addButtonToArray("Phase Lag spectrum",
+                                                        "phaseLagBtn",
+                                                        function () { currentObj.showUploadRMFDialog("phaseLag") },
+                                                        timingPlotsButtons);
+    }
+
+    var variancePlotsButtons = [];
+    variancePlotsButtons = currentObj.addButtonToArray("Mean flux estimator",
+                                                  "baselineBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Mean flux estimator (baseline):",
+                                                                                     onBaselinePlotSelected);
+                                                  },
+                                                  variancePlotsButtons);
+
+    variancePlotsButtons = currentObj.addButtonToArray("Intrinsic variance estimator",
+                                                  "intVarBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Longterm variability of AGN:",
+                                                                                     onAGNPlotSelected);
+                                                  },
+                                                  variancePlotsButtons);
+
+    variancePlotsButtons = currentObj.addButtonToArray("Periodic signals search",
+                                                  "periodogramBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Periodic signals search:",
+                                                                                     onPeriodogramPlotSelected);
+                                                  },
+                                                  variancePlotsButtons);
+
+    var pulsarPlotsButtons = [];
+    pulsarPlotsButtons = currentObj.addButtonToArray("Phaseogram",
+                                                  "phaseogramBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Phaseogram:",
+                                                                                     onPhaseogramPlotSelected);
+                                                  },
+                                                  pulsarPlotsButtons);
+
+    return [
+              { cssClass: "LcPlot", title:"Light Curves and Colors" },
+              { cssClass: "PDSPlot", title:"Power Density Spectra" },
+              { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
+              { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons },
+              { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons }
+          ];
   }
 
   this.addButtonToArray = function (buttonText, buttonClass, buttonFn, array) {
@@ -435,36 +483,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       showError();
   }
 
-  this.extractEnergyRangeTextFromHeader = function (header) {
-
-    var tableName = "RATE";
-    var filterColumn = "PI";
-    var searchFieldPrefix = "DSTYP";
-    var unitFieldPrefix = "DSUNI";
-    var valueFieldPrefix = "DSVAL";
-
-    if (!isNull(header) && !isNull(header[tableName])) {
-
-      var rateTable = header[tableName];
-
-      for (i=0; i<20; i++) {
-        //Looks for the searchField index
-        var searchField = searchFieldPrefix + i;
-        if (!isNull(rateTable[searchField]) && rateTable[searchField] == filterColumn){
-          var unit = rateTable[unitFieldPrefix + i];
-          var range = rateTable[valueFieldPrefix + i];
-
-          if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
-            var rangeVals = range.split(":");
-            return "From " + rangeVals[0] + " " + unit + ", to " + rangeVals[1] + " " + unit;
-          }
-        }
-      }
-    }
-
-    return "";
-  }
-
   this.updateMinMaxCountRate = function (minRate, maxRate) {
     if (this.projectConfig.hasSchema()
         && this.projectConfig.schema.isEventsFile()) {
@@ -481,11 +499,6 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }
 
     }
-  }
-
-  this.refreshPlotsData = function () {
-    currentObj.outputPanel.onDatasetChanged(currentObj.projectConfig);
-    currentObj.outputPanel.onDatasetValuesChanged();
   }
 
   this.onFiltersChanged = function (filters) {
@@ -758,7 +771,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                   this.historyManager,
                                   this.enableDragDrop);
 
-  this.outputPanel = new OutputPanel (this.id + "_outputPanel",
+  this.outputPanel = new WfOutputPanel (this.id + "_wfOutputPanel",
                                       "OutputPanelTemplate",
                                       this.$html.find(".outputPanelContainer"),
                                       this.service,

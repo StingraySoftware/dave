@@ -5,12 +5,12 @@ $(document).ready(function () {
   waitingDialog.show('Creating environment');
 
   Logger.show();
-  log("App started!! ->" + CONFIG.DOMAIN_URL);
+  logInfo("App started!! ->" + CONFIG.DOMAIN_URL);
 
   theService = new Service(CONFIG.DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
   theService.set_config({ CONFIG: CONFIG }, function (res) {
-    log("Server configuration setted -> " + res);
+    logInfo("Server configuration setted -> " + res);
   })
 
   $("#navbar").find(".addTabPanel").click(function () {
@@ -32,7 +32,7 @@ $(document).ready(function () {
 
   $("#navbar").find(".addTabPanel").click();
 
-  log("App Ready!! ->" + CONFIG.DOMAIN_URL);
+  logInfo("App Ready!! ->" + CONFIG.DOMAIN_URL);
 
   waitingDialog.hide();
 });
@@ -46,7 +46,7 @@ function onLoadWorkSpaceClicked() {
       var tabsConfigs = JSON.parse(e.target.result);
       if (!isNull(tabsConfigs) && tabsConfigs.length > 0){
 
-        log("Loading workspace... nTabs: " + tabsConfigs.length);
+        logInfo("Loading workspace... nTabs: " + tabsConfigs.length);
         waitingDialog.show('Loading workspace...', { ignoreCalls: true });
 
         setTabConfigs (tabsConfigs);
@@ -93,34 +93,34 @@ function onMultiplePlotsSelected(selectedPlots) {
 }
 
 function onFitPlotClicked(plot) {
-  log("onFitPlotClicked: plot -> " + plot.id);
+  logInfo("onFitPlotClicked: plot -> " + plot.id);
   prepareNewTab(plot, addFitTabPanel, false);
 }
 
 function onBaselinePlotSelected(plot) {
-  log("onBaselinePlotSelected, PlotId: " + plot.id);
+  logInfo("onBaselinePlotSelected, PlotId: " + plot.id);
   plot.btnSettings.click();
   plot.setBaselineEnabled(true);
   plot.btnBack.click();
 }
 
 function onAGNPlotSelected(plot) {
-  log("onAGNPlotSelected, PlotId: " + plot.id);
+  logInfo("onAGNPlotSelected, PlotId: " + plot.id);
   prepareNewTab(plot, addAGNTabPanel, true);
 }
 
 function onPeriodogramPlotSelected(plot) {
-  log("onPeriodogramPlotSelected, PlotId: " + plot.id);
+  logInfo("onPeriodogramPlotSelected, PlotId: " + plot.id);
   prepareNewTab(plot, addPGTabPanel, true);
 }
 
 function onPhaseogramPlotSelected(plot) {
-  log("onPhaseogramPlotSelected, PlotId: " + plot.id);
+  logInfo("onPhaseogramPlotSelected, PlotId: " + plot.id);
   prepareNewTab(plot, addPHTabPanel, true);
 }
 
 function prepareNewTab(plot, addTabFn, clearSelectedPlots) {
-  log("prepareNewTab: plot -> " + plot.id);
+  logDebug("prepareNewTab: plot -> " + plot.id);
 
   waitingDialog.show('Preparing new tab ...');
   var tab = getTabForSelector(plot.id);
@@ -167,7 +167,7 @@ function showError(errorMsg, exception, options) {
     waitingDialog.hide(options);
   }, 2500);
 
-  log(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
+  logError(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
 }
 
 
@@ -177,13 +177,23 @@ function logError(errorMsg) {
   var logMsgs = errorMsg.split("#");
   for (i in logMsgs) {
     if (logMsgs[i] != "") {
-      log(logMsgs[i]);
+      var msg = logMsgs[i];
+      var msgLower = msg.substring(0, 30).toLowerCase();
+      if (msgLower.indexOf("::") > -1) {
+        log(msg, "LogServerDebug");
+      } else if (msgLower.indexOf("info") > -1) {
+        log(msg, "LogServerInfo");
+      } else if (msgLower.indexOf("warn") > -1) {
+        log(msg, "LogServerWarn");
+      } else  {
+        log(msg, "LogServerError");
+      }
     }
   }
 }
 
 function connectionLost() {
-  log("Connection lost with Python Server!");
+  logErr("Connection lost with Python Server!");
   waitingDialog.hide({ignoreCalls: true});
   setTimeout( function () {
 
@@ -200,12 +210,12 @@ function sendEventToElectron (event) {
 }
 
 function reconnectToServer (){
-  log("Connection lost with Python Server. Reconnecting ...");
+  logErr("Connection lost with Python Server. Reconnecting ...");
   UrlExists(CONFIG.DOMAIN_URL, function(status){
       if(status === 200){
          waitingDialog.hide({ignoreCalls: true});
          sendEventToElectron("connectedToServer");
-         log("Connected to Python Server!");
+         logInfo("Connected to Python Server!");
       } else {
          setTimeout( function () { reconnectToServer (); }, 1000);
       }
@@ -213,5 +223,14 @@ function reconnectToServer (){
 }
 
 function onServerMessageReceived (msg) {
-  log("SERVER -> " + msg);
+  cssClass = "LogServerDebug";
+  var msgLower = msg.substring(0, 30).toLowerCase();
+  if (msgLower.startsWith("info:")){
+    cssClass = "LogServerInfo";
+  } else if (msgLower.startsWith("warn:") || msgLower.startsWith("warning:")){
+    cssClass = "LogServerWarn";
+  } else if (msgLower.startsWith("error:")){
+    cssClass = "LogServerError";
+  }
+  log("SERVER -> " + msg, cssClass);
 }

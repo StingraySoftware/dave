@@ -50,7 +50,7 @@ def test_get_divided_lightcurve_ds(s):
     result = ""
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_divided_lightcurve_ds(destination, destination)
+        result = DaveEngine.get_divided_lightcurve_ds(destination, destination, "", "")
         assert len(result) > 0
 
 

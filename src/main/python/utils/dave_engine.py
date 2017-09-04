@@ -11,6 +11,7 @@ import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray.events import EventList
+from stingray.lightcurve import Lightcurve
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
@@ -362,6 +363,8 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 #
 # @param: lc0_destination: lightcurve 0 file destination
 # @param: lc1_destination: lightcurve 1 file destination
+# @param: bck0_destination: lightcurve 0 backgrund file destination
+# @param: bck1_destination: lightcurve 1 backgrund file destination
 # @param: filters: array with the filters to apply
 #         [{ table = "RATE", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
@@ -369,7 +372,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 #            { table = "RATE", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
+def get_joined_lightcurves(lc0_destination, lc1_destination, bck0_destination, bck1_destination, filters, axis, dt):
 
     try:
 
@@ -377,26 +380,22 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
             logging.warn("Wrong number of axis")
             return None
 
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-        lc0_ds = get_filtered_dataset(lc0_destination, filters)
-        if not DsHelper.is_lightcurve_dataset(lc0_ds):
+        lc0 = get_lightcurve_any_dataset(lc0_destination, bck0_destination, "", filters, dt)
+        if not lc0:
             logging.warn("Wrong dataset type for lc0")
             return None
 
-        lc1_ds = get_filtered_dataset(lc1_destination, filters)
-        if not DsHelper.is_lightcurve_dataset(lc1_ds):
+        lc1 = get_lightcurve_any_dataset(lc1_destination, bck1_destination, "", filters, dt)
+        if not lc1:
             logging.warn("Wrong dataset type for lc1")
             return None
 
-        #  Problaby here we can use a stronger checking
-        if len(lc0_ds.tables["RATE"].columns["TIME"].values) == len(lc1_ds.tables["RATE"].columns["TIME"].values):
+        if lc0.countrate.shape == lc1.countrate.shape:
 
             # Preapares the result
             logging.debug("Result joined lightcurves ....")
-            result = push_to_results_array([], lc0_ds.tables["RATE"].columns["RATE"].values)
-            result = push_to_results_array(result, lc1_ds.tables["RATE"].columns["RATE"].values)
+            result = push_to_results_array([], lc0.countrate)
+            result = push_to_results_array(result, lc1.countrate)
             return result
 
         else:
@@ -502,30 +501,25 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
 #
 # @param: lc0_destination: lightcurve 0 file destination
 # @param: lc1_destination: lightcurve 1 file destination
+# @param: lc0_bck_destination: lightcurve 0 background file destination
+# @param: lc1_bck_destination: lightcurve 1 background file destination
 #
-def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
+def get_divided_lightcurve_ds(lc0_destination, lc1_destination, lc0_bck_destination, lc1_bck_destination):
 
     try:
 
-        lc0_ds, lc0_cache_key = DaveReader.get_file_dataset(lc0_destination)
-        if not DsHelper.is_lightcurve_dataset(lc0_ds):
-            logging.warn("Wrong dataset type for lc0")
+        count_rate_0, count_rate_error_0 = get_countrate_from_lc_ds (lc0_destination, lc0_bck_destination, "lc0_ds", "lc0_bck")
+        if count_rate_0 is None:
             return ""
 
-        count_rate_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].values)
-        count_rate_error_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].error_values)
-
-        lc1_ds, lc1_cache_key = DaveReader.get_file_dataset(lc1_destination)
-        if not DsHelper.is_lightcurve_dataset(lc1_ds):
-            logging.warn("Wrong dataset type for lc1")
+        count_rate_1, count_rate_error_1 = get_countrate_from_lc_ds (lc1_destination, lc1_bck_destination, "lc1_ds", "lc1_bck")
+        if count_rate_1 is None:
             return ""
-
-        count_rate_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].values)
-        count_rate_error_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].error_values)
 
         if count_rate_0.shape == count_rate_1.shape:
 
-            ret_lc_ds = lc0_ds.clone(True)
+            lc_ds, lc_cache_key = DaveReader.get_file_dataset(lc0_destination)
+            ret_lc_ds = lc_ds.clone(True)
 
             count_rate, count_rate_error = get_divided_values_and_error (count_rate_0, count_rate_1,
                                                                         count_rate_error_0, count_rate_error_1)
@@ -533,22 +527,13 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
             ret_lc_ds.tables["RATE"].columns["RATE"].clear()
             ret_lc_ds.tables["RATE"].columns["RATE"].add_values(count_rate, count_rate_error)
 
-            lc0_ds = None  # Dispose memory
-            lc1_ds = None  # Dispose memory
-            count_rate_1 = None  # Dispose memory
-            count_rate_0 = None  # Dispose memory
-            count_rate = None  # Dispose memory
-            count_rate_error_1 = None  # Dispose memory
-            count_rate_error_0 = None  # Dispose memory
-            count_rate_error = None  # Dispose memory
-
             new_cache_key = DsCache.get_key(lc0_destination + "|" + lc1_destination + "|ligthcurve")
             DsCache.add(new_cache_key, ret_lc_ds)  # Adds new cached dataset for new key
             return new_cache_key
 
         else:
             logging.warn("Lightcurves have different shapes.")
-            return None
+            return ""
 
     except:
         logging.error(ExHelper.getException('get_divided_lightcurve_ds'))
@@ -1790,14 +1775,27 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
 
     if DsHelper.is_events_dataset(filtered_ds):
         # Creates lightcurves by gti and joins in one
-        logging.debug("Create lightcurve from evt dataset... Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+        logging.debug("Create lightcurve from evt dataset")
         return get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt)
 
     elif DsHelper.is_lightcurve_dataset(filtered_ds):
         #If dataset is LIGHTCURVE type
         logging.debug("Create lightcurve from lc dataset")
         gti = load_gti_from_destination (gti_destination)
-        return DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, gti=gti)
+        lc = DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, gti=gti)
+
+        #Applies background data if setted
+        if bck_destination:
+
+            #Gets the backscale keyword value
+            src_backscale = None
+            if "BACKSCAL" in filtered_ds.tables["RATE"].header:
+                src_backscale = int(filtered_ds.tables["RATE"].header["BACKSCAL"])
+
+            #Applies background data
+            lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale)
+
+        return lc
 
     else:
         logging.warn("Wrong dataset type")
@@ -1817,11 +1815,19 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
         return None
 
-    filtered_ds = None  # Dispose memory
     lc = eventlist.to_lc(dt)
     if bck_destination:
-        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
+
+        #Gets the backscale keyword value
+        src_backscale = None
+        if "BACKSCAL" in filtered_ds.tables["EVENTS"].header:
+            src_backscale = int(filtered_ds.tables["EVENTS"].header["BACKSCAL"])
+
+        #Applies background data
+        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale)
+
     eventlist = None  # Dispose memory
+    filtered_ds = None  # Dispose memory
 
     # Applies rate filter to lightcurve countrate if filter has been sent
     rate_filter = FltHelper.get_rate_filter(filters)
@@ -1848,25 +1854,46 @@ def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, bck_
     return lightcurves
 
 
-def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt):
-    filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-    if DsHelper.is_events_dataset(filtered_bck_ds):
+def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale=None):
 
+    if lc:
         logging.debug("Create background lightcurve ....")
-        bck_eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_bck_ds)
-        if bck_eventlist and len(bck_eventlist.time) > 0:
-            bck_lc = bck_eventlist.to_lc(dt)
+        bck_lc = get_lightcurve_any_dataset(bck_destination, "", gti_destination, filters, dt)
+        if bck_lc:
+
+            #Calculates the backscale_ratio
+            backscale_ratio = 1;
+            if src_backscale is not None:
+
+                bck_ds, bck_cache_key = DaveReader.get_file_dataset(bck_destination)
+                if bck_ds:
+
+                    #Gets the backscale keyword value
+                    table = DsHelper.get_hdutable_from_dataset(bck_ds)
+                    if table:
+                        if "BACKSCAL" in table.header:
+                            backscale_ratio = src_backscale / int(table.header["BACKSCAL"])
+                    bck_ds = None
+                    table = None
+
+            if backscale_ratio != 1:
+                # Applies the backscale_ratio to background lightcurve
+                logging.debug("Applying backscale_ratio: " + str(backscale_ratio))
+                bck_lc.counts *= backscale_ratio
+                bck_lc.counts_err *= backscale_ratio
+                bck_lc = Lightcurve(bck_lc.time, bck_lc.counts,
+                                    err=bck_lc.counts_err, gti=bck_lc.gti,
+                                    mjdref=bck_lc.mjdref)
+
+            #Substracts background lightcurve from source lightcurve
             lc = lc - bck_lc
             bck_lc = None
 
         else:
-            logging.warn("Wrong lightcurve counts for background data...")
-
-        bck_eventlist = None  # Dispose memory
-        filtered_bck_ds = None
+            logging.warn("Wrong lightcurve for background data...")
 
     else:
-        logging.warn("Background dataset is None!, omiting Bck data.")
+        logging.warn("Wrong source lightcurve.")
 
     return lc
 
@@ -1908,6 +1935,32 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
         return Powerspectrum(lc, norm=norm, gti=gti), lc, gti
     else:
         return AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti), lc, gti
+
+
+def get_countrate_from_lc_ds (lc_destination, bck_destination, lc_name, bck_name):
+
+    lc_ds, lc_cache_key = DaveReader.get_file_dataset(lc_destination)
+    if not DsHelper.is_lightcurve_dataset(lc_ds):
+        logging.warn("Wrong dataset type for " + lc_name)
+        return None, None
+
+    count_rate = np.array(lc_ds.tables["RATE"].columns["RATE"].values)
+    count_rate_error = np.array(lc_ds.tables["RATE"].columns["RATE"].error_values)
+
+    if bck_destination:
+        bck_ds, bck_cache_key = DaveReader.get_file_dataset(bck_destination)
+        if not DsHelper.is_lightcurve_dataset(bck_ds):
+            logging.warn("Wrong dataset type for " + bck_name)
+        else:
+            count_rate_bck = np.array(bck_ds.tables["RATE"].columns["RATE"].values)
+            count_rate_error_bck = np.array(bck_ds.tables["RATE"].columns["RATE"].error_values)
+            if count_rate.shape == count_rate_bck.shape:
+                count_rate -= count_rate_bck
+                count_rate_error -= count_rate_error_bck
+            else:
+                logging.warn("Lightcurves " + lc_name + " and " + bck_name + " have different shapes.")
+
+    return count_rate, count_rate_error
 
 
 def load_gti_from_destination (gti_destination):

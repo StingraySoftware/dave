@@ -19,6 +19,7 @@ function ProjectConfig(){
   this.maxSegmentSize = 0;
 
   this.timeUnit = "s";
+  this.backgroundSubstracted = false;
   this.totalDuration = 0;
   this.eventCountRatio = 1.0;
 
@@ -37,6 +38,9 @@ function ProjectConfig(){
 
     // Sets the time unit
     this.timeUnit = this.schema.getTimeUnit();
+
+    // Sets the background substracted value
+    this.backgroundSubstracted = this.schema.getBackgroundSubstracted();
 
     // Sets the total duration
     this.totalDuration = this.schema.getTotalDuration();
@@ -80,11 +84,25 @@ function ProjectConfig(){
     this.selectorFilenames[selectorKey] = filename;
   }
 
-  this.getFile = function (selectorKey, filename) {
+  this.getFile = function (selectorKey) {
     if (!isNull(this.selectorFilenames[selectorKey])) {
       return this.selectorFilenames[selectorKey];
     }
     return "";
+  }
+
+  this.updateFile = function (selectorKey) {
+    if (selectorKey == "SRC") {
+      this.setFile("SRC", this.filename);
+    } else if (selectorKey == "BCK") {
+      this.setFile("BCK", this.bckFilename);
+    } else if (selectorKey == "GTI") {
+      this.setFile("GTI", this.gtiFilename);
+    } else if (selectorKey == "RMF") {
+      this.setFile("RMF", this.rmfFilename);
+    } else if (selectorKey == "BULK") {
+      this.setFile("BULK", this.bulkFilename);
+    }
   }
 
   this.setRmfData = function (rmfData) {

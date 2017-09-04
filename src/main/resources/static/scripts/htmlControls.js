@@ -78,8 +78,8 @@ function setCheckBoxState (checkBox, checked) {
   }
 }
 
-function getSection (title, cssClass, checked, onCheckChangedFn){
-  var $section = $('<div class="Section ' + cssClass +'">' +
+function getSection (title, cssClass, checked, onCheckChangedFn, extraCssClasses){
+  var $section = $('<div class="Section ' + cssClass + (isNull(extraCssClasses) ? '' : ' ' + extraCssClasses) +'">' +
                       '<h3>' + title + ':</h3>' +
                       '<div class="sectionContainer">' +
                       '</div>' +

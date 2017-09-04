@@ -375,14 +375,21 @@ ul#right-navbar li {
   margin-left: 10px;
 }
 
-.analyzeContainer>.Section h3, .fileSelectorsContainer>.Section>h3 {
-  color: #ff7d1b;
+.Section h3 {
   cursor: pointer;
+}
+
+.HlSection>h3 {
+  color: #ff7d1b;
 }
 
 .Section>.sectionContainer, .plotFilenames {
   padding-left: 10px;
   font-size: 0.98em;
+}
+
+.panelContainer {
+  margin-bottom: 50px;
 }
 
 .analyzePanel .sectionContainer .btn, .dialogContainer .btn {
@@ -412,7 +419,7 @@ ul#right-navbar li {
   color: #d47d47;
 }
 
-.Section .btn-primary {
+.HlSection .btn-primary {
     width: 98%;
     font-size: 1.1em;
     margin-top: 10px;
@@ -587,4 +594,20 @@ input.wrongValue {
     font-size: 0.9em;
     color: #af805d;
     cursor: pointer;
+}
+
+.LogDebug, .LogServerDebug {
+  color: #AAAAAA;
+}
+
+.LogInfo, .LogServerInfo {
+  color: #007fff;
+}
+
+.LogWarn, .LogServerWarn {
+  color: #ff7d1b;
+}
+
+.LogError, .LogServerError {
+  color: #FF0000;
 }
