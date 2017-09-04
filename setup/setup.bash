@@ -165,8 +165,8 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git checkout $STINGRAY_COMMIT_HASH
 
 	#Install stingray libraries
+        conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
 	pip install -r requirements.txt
-	pip install statsmodels
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
 		#Linux
@@ -223,6 +223,7 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 	git checkout $HENDRICS_COMMIT_HASH
 
 	#Install HENDRICS libraries
+        conda install  statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
 	pip install -r requirements.txt
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
