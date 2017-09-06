@@ -1,10 +1,10 @@
 import hashlib
 import utils.exception_helper as ExHelper
 from random import randint
-from lru import LRU
 from config import CONFIG
+import pylru
 
-cached_datasets = LRU(CONFIG.PYTHON_CACHE_SIZE)
+cached_datasets = pylru.lrucache(CONFIG.PYTHON_CACHE_SIZE)
 
 # DATASET CACHE METHODS
 def add(key, dataset):
@@ -68,4 +68,4 @@ def get_key(value, strict=False):
     return ""
 
 def count():
-    return len(cached_datasets.items())
+    return len(cached_datasets)

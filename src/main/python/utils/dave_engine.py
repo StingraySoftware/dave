@@ -265,7 +265,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     confidences = []
 
     try:
-        if len(list(axis)) != 2:
+        if len(axis) != 2:
             logging.warn("Wrong number of axis")
             return None
 
