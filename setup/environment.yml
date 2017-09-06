@@ -14,4 +14,4 @@ dependencies:
   - flask-session==0.3.0
   - hypothesis==3.4.2
   - python-magic==0.4.12
-  - pylru=1.0.4
+  - pylru==1.0.4
