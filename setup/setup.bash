@@ -187,8 +187,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git checkout $STINGRAY_COMMIT_HASH
 
 	# Install stingray libraries
-        conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
-	echo statsmodels >> requirements.txt
+        conda install statsmodels matplotlib astropy numpy numba emcee scipy h5py
 	pip install -r requirements.txt
 
        retVal=$?
