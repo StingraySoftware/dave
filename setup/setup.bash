@@ -186,8 +186,8 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	echo Getting specific version of Stingray
 	git checkout $STINGRAY_COMMIT_HASH
 
-	# Install stingray libraries
-        conda install statsmodels matplotlib astropy numpy numba emcee scipy h5py
+	#Install stingray libraries
+        conda install statsmodels matplotlib astropy numpy numba emcee corner scipy h5py
 	pip install -r requirements.txt
 
        retVal=$?
