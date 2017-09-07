@@ -1,11 +1,15 @@
+
+ModelParammeters = [] //Array with the parammeters names of each type of model
+
 //Model Selector: Container with all supported models
-function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, filename) {
+function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, applyBayesianParEstFn, filename) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.onModelsChangedFn = onModelsChangedFn;
   this.onFitClickedFn = onFitClickedFn;
   this.applyBootstrapFn = applyBootstrapFn;
+  this.applyBayesianParEstFn = applyBayesianParEstFn;
   this.filename = filename.replace(/\./g,'').replace(/\ /g,'');
 
   this.models = [];
@@ -29,7 +33,8 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
                   '<div class="actionsContainer">' +
                     '<button class="btn btn-primary fitBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> FIT</button>' +
                     '<button class="btn btn-success applyBtn"><i class="fa fa-check-circle" aria-hidden="true"></i> APPLY ALL</button>' +
-                    '<button class="btn btn-danger bootstrapBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BOOTSTRAP</button>' +
+                    '<button class="btn btn-danger parEstBtn bayesianParEstBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BAYESIAN PAR. EST.</button>' +
+                    '<button class="btn btn-danger parEstBtn_HIDDEN bootstrapBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BOOTSTRAP</button>' +
                   '</div>' +
                 '</div>');
 
@@ -76,6 +81,10 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.$html.find(".applyBtn").click(function () {
     currentObj.applyAllEstimations();
     $(this).hide();
+  }).hide();
+
+  this.$html.find(".bayesianParEstBtn").click(function () {
+    currentObj.applyBayesianParEstFn();
   }).hide();
 
   this.$html.find(".bootstrapBtn").click(function () {
@@ -186,7 +195,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     for (i in this.models){
       this.models[i].applyEstimations();
     }
-    this.$html.find(".bootstrapBtn").show();
+    this.$html.find(".parEstBtn").show();
     this.onModelsChanged();
   };
 
@@ -195,7 +204,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
       this.models[i].clearEstimationsAndErrors();
     }
     this.$html.find(".applyBtn").hide();
-    this.$html.find(".bootstrapBtn").hide();
+    this.$html.find(".parEstBtn").hide();
   };
 
   this.saveModels = function () {
@@ -238,13 +247,13 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.getConfig = function () {
     return { models: this.getModels(),
              applyBtnVisible: this.$html.find(".applyBtn").is(":visible"),
-             bootstrapBtnVisible: this.$html.find(".bootstrapBtn").is(":visible") };
+             parEstBtnVisible: this.$html.find(".parEstBtn").is(":visible") };
   }
 
   this.setConfig = function (config, updateHistory) {
     this.setModels(config.models, updateHistory);
     setVisibility(this.$html.find(".applyBtn"), config.applyBtnVisible);
-    setVisibility(this.$html.find(".bootstrapBtn"), config.bootstrapBtnVisible);
+    setVisibility(this.$html.find(".parEstBtn"), config.parEstBtnVisible);
   }
 
   this.saveHistory = function (){
@@ -265,7 +274,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
 
   this.historyManager = new HistoryManager(this.applyAction);
   this.saveHistory();
-  
+
   log ("new ModelSelector id: " + this.id);
 
   return this;
@@ -535,7 +544,7 @@ function GaussianModel(idx, color, onModelsChangedFn) {
   this.stddev = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "mean", "stddev"];
+    return ModelParammeters["Gaussian"];
   }
 
   Model.call(this,
@@ -550,7 +559,8 @@ function GaussianModel(idx, color, onModelsChangedFn) {
   log ("new GaussianModel id: " + this.id);
 
   return this;
-}
+};
+ModelParammeters["Gaussian"] = ["amplitude", "mean", "stddev"];
 
 
 //Model: Lorentz specific model inherited from Model class
@@ -564,7 +574,7 @@ function LorentzModel(idx, color, onModelsChangedFn) {
   this.fwhm = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "x_0", "fwhm"];
+    return ModelParammeters["Lorentz"];
   }
 
   Model.call(this,
@@ -580,7 +590,7 @@ function LorentzModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
-
+ModelParammeters["Lorentz"] = ["amplitude", "x_0", "fwhm"];
 
 //Model: PowerLaw specific model inherited from Model class
 function PowerLawModel(idx, color, onModelsChangedFn) {
@@ -593,7 +603,7 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
   this.alpha = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "x_0", "alpha"];
+    return ModelParammeters["PowerLaw"];
   }
 
   Model.call(this,
@@ -609,6 +619,7 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
+ModelParammeters["PowerLaw"] = ["amplitude", "x_0", "alpha"];
 
 
 //Model: BrokenPowerLaw specific model inherited from Model class
@@ -623,7 +634,7 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
   this.alpha_2 = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "x_break", "alpha_1", "alpha_2"];
+    return ModelParammeters["BrokenPowerLaw"];
   }
 
   Model.call(this,
@@ -639,3 +650,4 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
+ModelParammeters["BrokenPowerLaw"] = ["amplitude", "x_break", "alpha_1", "alpha_2"];

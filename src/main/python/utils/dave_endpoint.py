@@ -579,7 +579,8 @@ def get_plot_data_from_models(models, x_values):
 
 
 def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                models, priors=None, sampling_params=None):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -607,9 +608,12 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
     logging.debug("get_fit_powerspectrum_result: norm %s" % norm)
     logging.debug("get_fit_powerspectrum_result: type %s" % pds_type)
     logging.debug("get_fit_powerspectrum_result: models %s" % models)
+    logging.debug("get_fit_powerspectrum_result: priors %s" % priors)
+    logging.debug("get_fit_powerspectrum_result: sampling_params %s" % sampling_params)
 
     data = DaveEngine.get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models)
+                                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                                models, priors, sampling_params)
 
     logging.debug("get_fit_powerspectrum_result: Finish!")
 

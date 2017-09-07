@@ -202,11 +202,20 @@ def get_plot_data_from_models():
 
 @app.route('/get_fit_powerspectrum_result', methods=['POST'])
 def get_fit_powerspectrum_result():
+    priors = None
+    if "priors" in request.json:
+        priors = request.json['priors']
+
+    sampling_params = None
+    if "sampling_params" in request.json:
+        sampling_params = request.json['sampling_params']
+
     return DaveEndpoint.get_fit_powerspectrum_result(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], request.json['models'])
+            request.json['norm'], request.json['type'], request.json['models'],
+            priors, sampling_params)
 
 
 @app.route('/get_bootstrap_results', methods=['POST'])

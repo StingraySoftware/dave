@@ -86,12 +86,14 @@ function Schema(schema){
       }
     }
 
-    var eventsCount = this.getEventsCount();
+    /*var eventsCount = this.getEventsCount();
     if (eventsCount > 0) {
       return this.getTotalDuration() / eventsCount;
     } else {
       return 1.0;
-    }
+    }*/
+
+    return 1E-9;
   }
 
   this.getTotalDuration = function () {

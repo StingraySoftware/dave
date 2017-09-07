@@ -10,6 +10,10 @@ html,body,.container {
   margin: 0;
 }
 
+h2 {
+    font-size: 18px;
+}
+
 h3
 {
   font-size: 1.2em;
@@ -155,6 +159,16 @@ ul#right-navbar li {
 {
   float:right;
   margin-top: 12px;
+}
+
+.infoPanel .posteriorTable {
+    width: 80%;
+}
+
+.infoPanel img {
+  width: 80%;
+  margin-top: 24px;
+  margin-left: -30px;
 }
 
 .property .tag {
@@ -437,6 +451,12 @@ ul#right-navbar li {
   margin-top: 30px;
 }
 
+.actionsContainer .btn.parEstBtn {
+    width: 95%;
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
 .paramContainer input[type="text"] {
   width: 80px;
   float: right;
@@ -591,9 +611,43 @@ input.wrongValue {
 }
 
 .BulkAnalisysSection .plotBulkResults h4 {
-    font-size: 0.9em;
-    color: #af805d;
-    cursor: pointer;
+  font-size: 0.9em;
+  color: #af805d;
+  cursor: pointer;
+}
+
+.BayesianParEst {
+  font-size: 0.83em !important;
+}
+
+.BayesianParEst .Section {
+    margin-left: 0px;
+    font-size: 1.1em;
+}
+
+.BayesianParEst .Section h3 {
+    font-size: 18px;
+}
+
+.BayesianParEst div {
+    margin-left: 12px;
+}
+
+.priorType .ui-checkboxradio-label {
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 0.95em;
+}
+
+.BayesianParEst .parEstBtn {
+  width: 95%;
+  font-size: 1.5em;
+  margin-top: 24px;
+}
+
+.rangeBoxSpan {
+  font-size:0.8em;
+  color:#777777;
 }
 
 .LogDebug, .LogServerDebug {

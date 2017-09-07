@@ -19,6 +19,7 @@ var retries = 0;
 var connected = false;
 var subpy = null;
 var processRunning = false;
+var logEnabled = true;
 var logDebugMode = false;
 var mainConfig = null;
 var LOGS_PATH = "";
@@ -193,8 +194,10 @@ function loadDaveContents (url){
 }
 
 function log (msg){
-  console.log(msg);
-  logToWindow(msg);
+  if (logEnabled){
+    console.log(msg);
+    logToWindow(msg);
+  }
 }
 
 function logToWindow (msg){
@@ -223,7 +226,7 @@ function getTailFromLogFile (logFilePath) {
     stdout += data;
   });
   tailProc.on('close', (code) => {
-    logToWindow("LOGFILE: " + stdout);
+    log("LOGFILE: " + stdout);
   });
 }
 
@@ -255,6 +258,14 @@ ipcMain.on('connectedToServer', function(){
     log('DAVE connected to Python Server...');
   }
   connected = true;
+});
+
+ipcMain.on('enableLogError', function(){
+  logEnabled = true;
+});
+
+ipcMain.on('disableLogError', function(){
+  logEnabled = false;
 });
 
 function stop (){

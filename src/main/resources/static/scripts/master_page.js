@@ -173,6 +173,15 @@ function showError(errorMsg, exception, options) {
 
 
 //----------- CROSS GUI & SERVER METHODS  -----------------
+function disableLogError() {
+  //Used to avoid python outputs to block electron process
+  sendEventToElectron("disableLogError");
+}
+
+function enableLogError() {
+  sendEventToElectron("enableLogError");
+}
+
 function logError(errorMsg) {
   var logMsgs = errorMsg.split("#");
   for (i in logMsgs) {

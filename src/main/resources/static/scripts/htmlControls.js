@@ -54,6 +54,10 @@ function getCheckedState(value) {
   return value ? 'checked="checked"' : "";
 }
 
+function getBootstrapRow() {
+  return $('<div class="row"></div>');
+}
+
 function getCheckBox(cssClass, checked, onCheckChangedFn) {
   var checkBoxWrp = $('<div class="switch-wrapper">' +
                         '<div class="switch-btn fa ' + cssClass + '" aria-hidden="true"></div>' +
@@ -76,6 +80,24 @@ function setCheckBoxState (checkBox, checked) {
   } else {
     checkBox.addClass("fa-plus-square");
   }
+}
+
+function getInputBox (name, cssClass, title, defaultValue) {
+  return '<label for="' + name + '">' + title + ':</label>' +
+          '<input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" />';
+}
+
+function getRangeBoxCfg (name, cssClass, title, config, onChangeFn) {
+  return getRangeBox (name, cssClass, title, config.default, config.min, config.max, onChangeFn);
+}
+
+function getRangeBox (name, cssClass, title, defaultValue, minValue, maxValue, onChangeFn) {
+  var $rangeBox = $('<p>' + title + ':</br><input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" /> <span class="rangeBoxSpan">' + minValue + '-' + maxValue + '</span></p>');
+  $rangeBox.find("input").on('change', function() {
+    var value = getInputIntValueCropped($(this), defaultValue, minValue, maxValue);
+    onChangeFn(value, $(this));
+  });
+  return $rangeBox;
 }
 
 function getSection (title, cssClass, checked, onCheckChangedFn, extraCssClasses){
@@ -110,9 +132,9 @@ function getRadioControl (id, title, cssClass, options, selectedValue, onChangeF
                         '<fieldset></fieldset>' +
                       '</div>');
 
-  for (i = 0; i < options.length; i++){
+  for (var i = 0; i < options.length; i++){
     var option = options[i]; //{ id:"rad0", label:"Radio 0", value:"radio0"}
-    var optId = id + '_' + option.id;
+    var optId = radioName + '_' + option.id;
     var $optionElem = '<label for="' + optId + '">' + option.label + '</label>' +
                       '<input type="radio" name="' + radioName + '" id="' + optId + '" value="' + option.value + '" ' + getCheckedState(selectedValue == option.value) + '>';
     $radiosCont.find("fieldset").append($optionElem);
@@ -120,7 +142,7 @@ function getRadioControl (id, title, cssClass, options, selectedValue, onChangeF
   var $radios = $radiosCont.find("input[type=radio][name=" + radioName + "]")
   $radios.checkboxradio();
   $radiosCont.find("fieldset").controlgroup();
-  $radios.change(function() { onChangeFn(this.value); });
+  $radios.change(function() { onChangeFn(this.value, this.id); });
   return $radiosCont;
 }
 

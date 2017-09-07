@@ -18,7 +18,7 @@ from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import baseline_als, excess_variance
-from stingray.modeling import fit_powerspectrum
+from stingray.modeling import PSDLogLikelihood, PSDPosterior, PSDParEst
 from stingray.simulator import simulator
 from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
 from stingray.pulse.pulsar import z2_n_detection_level
@@ -1256,7 +1256,10 @@ def get_plot_data_from_models(models, x_values):
     return models_arr
 
 
-# get_fit_powerspectrum_result: Returns the PDS of a given dataset
+# get_fit_powerspectrum_result:
+# Returns the results of fitting a PDS with an astropy model. If priors are
+# sent the a Bayesian parameter estimation is calculated, else a Maximum Likelihood Fitting
+# is used as default.
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -1271,10 +1274,13 @@ def get_plot_data_from_models(models, x_values):
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
-# @param: models: array of models
+# @param: models: array of models, dave_model definition with the starting parammeters
+# @param: priors: array of priors, dave_priors defined for each model parammeters
+# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
 #
 def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                models, priors=None, sampling_params=None):
     results = []
 
     try:
@@ -1284,13 +1290,52 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 
             fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
             if fit_model:
-                parest, res = fit_powerspectrum(pds, fit_model, starting_pars, max_post=False, priors=None,
-                          fitmethod="L-BFGS-B")
 
+                # Default fit parammeters
+                max_post=False
+                fitmethod="L-BFGS-B"
+                as_priors=None
+
+                if priors is not None:
+                    # Creates the priors from dave_priors
+                    as_priors = ModelHelper.get_astropy_priors(priors)
+                    if len(as_priors.keys()) > 0:
+                        # If there are priors then is a Bayesian Parammeters Estimation
+                        max_post=True
+                        fitmethod="BFGS"
+
+                    else:
+                        as_priors=None
+                        logging.warn("get_fit_powerspectrum_result: can't create priors from dave_priors.")
+
+                if as_priors:
+                    # Creates a Posterior object with the priors
+                    lpost = PSDPosterior(pds.freq, pds.power, fit_model, priors=as_priors, m=pds.m)
+                else:
+                    # Creates the Maximum Likelihood object for fitting
+                    lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
+
+                # Creates the PSD Parammeters Estimation object and runs the fitting
+                parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
+                res = parest.fit(lpost, starting_pars, neg=True)
+
+                sample = None
+                if as_priors and sampling_params is not None:
+                    # If is a Bayesian Par. Est. and has sampling parammeters
+                    # then sample the posterior distribution defined in `lpost` using MCMC
+                    sample = parest.sample(lpost, res.p_opt, cov=res.cov,
+                                             nwalkers=sampling_params["nwalkers"],
+                                             niter=sampling_params["niter"],
+                                             burnin=sampling_params["burnin"],
+                                             threads=sampling_params["threads"],
+                                             print_results=False, plot=False)
+
+                # Prepares the results to be returned to GUI
                 fixed = [fit_model.fixed[n] for n in fit_model.param_names]
                 parnames = [n for n, f in zip(fit_model.param_names, fixed) \
                             if f is False]
 
+                # Add to results the estimated parammeters
                 params = []
                 for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
                     param = dict()
@@ -1302,6 +1347,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 
                 results = push_to_results_array(results, params)
 
+                # Add to results the estimation statistics
                 stats = dict()
                 try:
                     stats["deviance"] = res.deviance
@@ -1321,6 +1367,36 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
                     stats["merit"] = "ERROR"
 
                 results = push_to_results_array(results, stats)
+
+                # If there is sampling data add it to results
+                if sample:
+                    sample_stats = dict()
+                    try:
+                        sample_stats["acceptance"] = sample.acceptance
+                        sample_stats["rhat"] = sample.rhat
+                        sample_stats["mean"] = sample.mean
+                        sample_stats["std"] = sample.std
+                        sample_stats["ci"] = sample.ci
+
+                        try:
+                            #Acor is not always present
+                            sample_stats["acor"] = sample.acor
+                        except AttributeError:
+                            sample_stats["acor"] = "ERROR"
+
+                        #Creates an IMG Html tag from plot
+                        try:
+                            fig = sample.plot_results(nsamples=sampling_params["nsamples"])
+                            sample_stats["img"] = Plotter.convert_fig_to_html(fig)
+                        except:
+                            sample_stats["img"] = "ERROR"
+                            logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant create image from plot.'))
+
+                    except AttributeError:
+                        sample_stats["acceptance"] = "ERROR"
+                        logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant add sample data.'))
+
+                    results = push_to_results_array(results, sample_stats)
 
                 pds = None  # Dispose memory
                 lc = None  # Dispose memory
@@ -2004,8 +2080,8 @@ def lightcurve_fractional_rms(lc):
     return excess_variance(lc, normalization='fvar')
 
 def get_means_from_array(array, elements_per_mean):
-    splited = np.array_split(array, math.floor(len(array) / elements_per_mean))
-    return np.array([np.mean(arr) for arr in splited])
+    split = np.array_split(array, math.floor(len(array) / elements_per_mean))
+    return np.array([np.mean(arr) for arr in split])
 
 def mean_confidence_interval(data, confidence=0.95):
     a = 1.0*np.array(data)

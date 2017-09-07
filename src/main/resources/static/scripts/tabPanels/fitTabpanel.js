@@ -54,10 +54,10 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       if (!isNull(data) && data.length > 0) {
         currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;
-        currentObj.addInfoPanel(data[1].values);
+        currentObj.addInfoPanel(data[1].values, null);
         waitingDialog.hide();
       } else {
-        showError();
+        showError("Wrong fit data received!");
       }
     });
 
@@ -72,7 +72,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     paramsData.red_noise = 1;
     paramsData.seed = -1;
 
-    var $bootstrapDialog = $('<div id="dialog_' + currentObj.id +  '" title="Bootstrap settings:">' +
+    var $bootstrapDialog = $('<div id="dialog_' + currentObj.id +  '" title="Bootstrap Settings:">' +
                               '<form>' +
                                 '<fieldset>' +
                                   '<div class="row">' +
@@ -150,10 +150,227 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
      $bootstrapDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
-  this.addInfoPanel = function ( statsData ) {
+  this.showBayesianParEst = function () {
+
+    //Get models from modelSelector
+    var models = currentObj.modelSelector.getModels(false);
+
+    //Gets analizeContainer from toolPanel.AnalyzePanel
+    var $container = currentObj.toolPanel.$html.find(".analyzeContainer");
+    $container.addClass("BayesianParEst");
+    $container.html("");
+
+    //Adds the back button to panel
+    var btnBack = $('<button class="btn btn-default btnBack' + currentObj.id + '" data-toggle="tooltip" title="Go back to Fit"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back</button>');
+    $container.append(btnBack);
+    btnBack.click(function(event){
+      currentObj.toolPanel.showPanel("loadPanel");
+    });
+
+    //For each model add its parammeters controls
+    $container.append($('<h2>Prior parammeters:</h2>'));
+    var $priorsContainer = $('<div class="priorsContainer"></div>');
+    $container.append($priorsContainer);
+
+    for (var i = 0; i < models.length; i++) {
+      var model = models[i];
+      var modelParams = ModelParammeters[model["type"]];
+      var firstParam = true;
+      for (p in modelParams){
+        var paramName = modelParams[p];
+
+        if (isNull(model["fixed"]) || !(model["fixed"].includes(paramName))){
+          //If param is not fixed add it to select the prior data
+
+          if (firstParam){
+            //If is first param of model add the model title
+            $priorsContainer.append($('<h3 style="color: ' + model["color"] + '">' + model["type"] + " " + i + ':</h3>'));
+            firstParam = false;
+          }
+
+          var name = paramName + "-" + i;
+
+          //Add the prior type selector for this parammeter
+          var $priorTypeRadioCont = getRadioControl(currentObj.id,
+                                            paramName + " (" + model[paramName].toFixed(3)  + ")",
+                                            "priorType_" + name,
+                                            [
+                                              { id:"Uni", label:"Uniform", value:"uniform"},
+                                              { id:"Nor", label:"Normal", value:"normal"},
+                                              { id:"Log", label:"Lognormal", value:"lognormal"}
+                                            ],
+                                            "uniform",
+                                            function(value, id) {
+                                              var $radioBtn = currentObj.toolPanel.$html.find("#" + id);
+                                              var paramName = $radioBtn.attr("name").replace(currentObj.id, "").replace("_priorType_", "");
+                                              currentObj.onPriorTypeChanged(paramName, value);
+                                            });
+          $priorTypeRadioCont.addClass("priorType");
+          $priorsContainer.append($priorTypeRadioCont);
+
+          //Add the prior values selector
+          $priorsContainer.append($('<div class="' + currentObj.id + "_prior_" + name + '"></div>'));
+          currentObj.onPriorTypeChanged(name, "uniform");
+        }
+      }
+    }
+
+
+    //Adds the sampling controls
+    var $samplingSection = getSection ("Markov Chain Monte Carlo", "samplingSection", currentObj.sampleEnabled, function ( enabled ) {
+       currentObj.sampleEnabled = enabled;
+    });
+    var $samplingSectionContainer = getSectionContainer($samplingSection);
+    $samplingSectionContainer.append("<p>Sample the posterior distribution using MCMC.</p>");
+    $samplingSectionContainer.append(getRangeBoxCfg ("nwalkers_" + currentObj.id, "inputNwalkers",
+                                                      "Nº of walkers", currentObj.sampleOpts.nwalkers,
+                                                     function(value, input) { currentObj.sampleParams.nwalkers = value; }));
+    $samplingSectionContainer.append(getRangeBoxCfg ("niter_" + currentObj.id, "inputNiter",
+                                                      "Nº of iterations", currentObj.sampleOpts.niter,
+                                                      function(value, input) { currentObj.sampleParams.niter = value; }));
+    $samplingSectionContainer.append(getRangeBoxCfg ("burnin_" + currentObj.id, "inputBurnin",
+                                                      "Burnin value", currentObj.sampleOpts.burnin,
+                                                      function(value, input) { currentObj.sampleParams.burnin = value; }));
+    /*Looks like using multiple threads on Stingray causes lost of contexts in Flask
+    $samplingSectionContainer.append(getRangeBoxCfg ("threads_" + currentObj.id, "inputThreads",
+                                                      "Nº of threads", currentObj.sampleOpts.threads,
+                                                      function(value, input) { currentObj.sampleParams.threads = value; }));*/
+    $samplingSectionContainer.append(getRangeBoxCfg ("nsamples_" + currentObj.id, "inputNsamples",
+                                                      "Nº of plot samples", currentObj.sampleOpts.nsamples,
+                                                      function(value, input) { currentObj.sampleParams.nsamples = value; }));
+    $container.append($samplingSection);
+
+
+    //Adds the procced with BAYESIAN PAR. EST. button
+    var $parEstBtn = $('<button class="btn btn-danger parEstBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BAYESIAN PAR. EST.</button>');
+    $parEstBtn.click(function(event){
+      currentObj.launchBayesianParEst();
+    });
+    $container.append($parEstBtn);
+
+    //Shows the analyze panel
+    currentObj.toolPanel.analyzeContainer.removeClass("hidden");
+    currentObj.toolPanel.showPanel("analyzePanel");
+  }
+
+  this.onPriorTypeChanged = function (paramName, priorType) {
+    var nameArr = paramName.split("-");
+
+    if (nameArr.length == 2) {
+      var models = currentObj.modelSelector.getModels(false);
+      var paramValue = models[parseInt(nameArr[1])][nameArr[0]];
+      var paramDelta = paramValue * 0.5;
+
+      var $container = currentObj.toolPanel.$html.find("." + currentObj.id + "_prior_" + paramName);
+      $container.html("");
+      if (priorType == "uniform") {
+        currentObj.addUniformPrior (paramName, (paramValue - paramDelta), (paramValue + paramDelta), $container);
+      } else if (priorType == "normal") {
+        currentObj.addNormPrior (paramName, paramValue, paramDelta, $container);
+      } else if (priorType == "lognormal") {
+        currentObj.addLognormPrior (paramName, paramValue, paramDelta, $container);
+      }
+    }
+  }
+
+  this.addUniformPrior = function (paramName, minValue, maxValue, $container){
+    var $input = $(getInputBox (paramName + "-min", paramName + "-min", "Min", minValue.toFixed(3)));
+    $input.attr("priorType", "uniform");
+    $container.append($input);
+    $container.append("</br>");
+    $container.append(getInputBox (paramName + "-max", paramName + "-max", "Max", maxValue.toFixed(3)));
+  }
+
+  this.addNormPrior = function (paramName, mean, sigma, $container){
+    var $input = $(getInputBox (paramName + "-mean", paramName + "-mean", "Mean", mean.toFixed(3)));
+    $input.attr("priorType", "normal");
+    $container.append($input);
+    $container.append("</br>");
+    $container.append(getInputBox (paramName + "-sigma", paramName + "-sigma", "Sigma", sigma.toFixed(3)));
+  }
+
+  this.addLognormPrior = function (paramName, mean, sigma, $container){
+    var $input = $(getInputBox (paramName + "-mean", paramName + "-mean", "Mean", mean.toFixed(3)));
+    $input.attr("priorType", "lognormal");
+    $container.append($input);
+    $container.append("</br>");
+    $container.append(getInputBox (paramName + "-sigma", paramName + "-sigma", "Sigma", sigma.toFixed(3)));
+  }
+
+  //Returns the priors data to be sent to server
+  this.getPriors = function (){
+
+    var priorsArray = [];
+
+    currentObj.paramNames = []; //Reset the param names array
+
+    //For each input get the values and store in priorsArray
+    currentObj.toolPanel.$html.find(".priorsContainer").find("input:text").each(function(index) {
+      var nameArr = $(this).attr("name").split("-");
+
+      if (nameArr.length == 3) {
+        var paramName = nameArr[0];
+        var modelIdx = parseInt(nameArr[1]);
+        var priorName = nameArr[2];
+
+        //Prepares arrays
+        if (isNull(priorsArray[modelIdx])) { priorsArray[modelIdx] = {}; }
+        if (isNull(priorsArray[modelIdx][paramName])) { priorsArray[modelIdx][paramName] = {}; }
+
+        if (!isNull($(this).attr("priorType"))) {
+          priorsArray[modelIdx][paramName]["type"] = $(this).attr("priorType");
+          currentObj.paramNames.push(paramName + "-" + modelIdx); //Stores the param name
+        }
+
+        priorsArray[modelIdx][paramName][priorName] = $(this).val();
+
+      } else {
+        logErr("Can't extract priors values from string: " + $(this).attr("name"));
+      }
+
+    });
+
+    return priorsArray;
+  }
+
+  //Calls server to do Bayesian Parameter Estimation
+  this.launchBayesianParEst = function () {
+
+    waitingDialog.show('Applying Bayesian Parameter Estimation...');
+    disableLogError();
+
+    var paramsData = $.extend(true, {}, currentObj.plot.plotConfig);
+    paramsData.models = currentObj.modelSelector.getModels(false);
+    paramsData.priors = currentObj.getPriors();
+    if (currentObj.sampleEnabled) {
+      paramsData.sampling_params = currentObj.sampleParams;
+    }
+
+    currentObj.modelSelector.clearAllEstimationsAndErrors();
+
+    currentObj.service.request_fit_powerspectrum_result(paramsData, function( jsdata ) {
+
+      log("Bayesian Par. Est. data received!, FitTabPanel: " + currentObj.id);
+      enableLogError();
+
+      var data = JSON.parse(jsdata);
+      if (!isNull(data) && data.length > 0) {
+        currentObj.modelSelector.setEstimation(data[0].values, true);
+        data[1].values.count = currentObj.plot.data[0].values.length;
+        currentObj.addInfoPanel(data[1].values, data[2].values);
+        currentObj.toolPanel.showPanel("loadPanel");
+        waitingDialog.hide();
+      } else {
+        showError("Bayesian Par. Est. wrong data received!!");
+      }
+    });
+  }
+
+  this.addInfoPanel = function ( statsData, sampleData ) {
     this.infoPanelData = statsData;
+    this.infoPanelSampleData = sampleData;
     this.outputPanel.$body.find(".infoPanel").remove();
-    this.infoPanel = new InfoPanel("infoPanel", "Fitting statistics", statsData, [], null);
+    this.infoPanel = new InfoPanel("infoPanel", "Fitting statistics", statsData, sampleData, null);
     this.infoPanel.redraw = function() {
 
       var content = "<tr><td> Number of data points = " + this.header.count + "</td></tr>";
@@ -175,6 +392,66 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
         content += "<tr><td> Merit function (SSE) M = ERROR: MERIT NOT CALCULATED</td></tr>";
       }
 
+      if (!isNull(this.headerComments) && !isNull(this.headerComments.acceptance)) {
+        //MCMC Sample data were passed
+        this.$html.addClass("fullScreen"); //Makes panel bigger
+
+        content += "<tr><td></br></td></tr>";
+        content += "<tr><td><h3>Markov Chain Monte Carlo results:</h3></td></tr>";
+
+        if (this.headerComments.acceptance != "ERROR"){
+
+          content += "<tr><td> The acceptance fraction is: " + this.headerComments.acceptance.toFixed(5) + "</td></tr>";
+
+          if (this.headerComments.acor != "ERROR"){
+            content += "<tr><td> The autocorrelation time is: " + this.headerComments.acor.toFixed(5) + "</td></tr>";
+          } else {
+            content += "<tr><td> The autocorrelation time is: Chains too short to compute autocorrelation lengths.</td></tr>";
+          }
+
+          //Adds Posterior Summary of Parameters
+          content += "<tr><td><h3>Posterior Summary of Parameters:</h3></td></tr>";
+
+          var models = currentObj.modelSelector.getModels(false); //Get models from modelSelector
+          var prevIdx = -1;
+          var posteriorTable = '<table class="posteriorTable">';
+          posteriorTable += "<tr><th>Parameter</th><th>Mean</th><th>Std</th><th>5%</th><th>95%</th><th>R Hat</th></tr>";
+          for (var i=0; i<this.headerComments.mean.length; i++){
+            var splitStr = currentObj.paramNames[i].split("-");
+            var paramName = splitStr[0];
+            var idx = splitStr[1];
+
+            if (prevIdx != idx){
+              posteriorTable += "<tr>" +
+                                  "<td colspan='6'><h3 style='color: " + models[idx]["color"] + "; font-size: 1.1em;'>" + models[idx]["type"] + " " + idx + ":</h3></td>" +
+                                "</tr>";
+              prevIdx = idx;
+            }
+
+            posteriorTable += "<tr>" +
+                                "<td>" + paramName + "</td>" +
+                                "<td>" + this.headerComments.mean[i].toFixed(5) + "</td>" +
+                                "<td>" + this.headerComments.std[i].toFixed(5) + "</td>" +
+                                "<td>" + this.headerComments.ci[0][i].toFixed(5) + "</td>" +
+                                "<td>" + this.headerComments.ci[1][i].toFixed(5) + "</td>" +
+                                "<td>" + this.headerComments.rhat[i].toFixed(5) + "</td>" +
+                              "</tr>";
+          }
+          posteriorTable += '</table>';
+          content += "<tr><td>" + posteriorTable + "</td></tr>";
+
+          //Adds the MCMC Corner plot
+          if (this.headerComments.img != "ERROR"){
+            content += "<tr><td>" + this.headerComments.img + "</td></tr>";
+          } else {
+            content += "<tr><td> ERROR CREATING MCMC CORNER PLOT </td></tr>";
+          }
+
+        } else {
+         content += "<tr><td> WRONG MCMC RETURNED SAMPLE DATA</td></tr>";
+        }
+      }
+
       this.container.html(content);
     }
     this.infoPanel.redraw();
@@ -188,7 +465,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              plotConfig: this.plot.getConfig(),
              projectConfig: this.projectConfig.getConfig(),
              modelsConfig: this.modelSelector.getConfig(),
-             infoPanelData: this.infoPanelData
+             infoPanelData: this.infoPanelData,
+             infoPanelSampleData: this.infoPanelSampleData
            };
   }
 
@@ -202,7 +480,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.plot.onDatasetValuesChanged(this.outputPanel.getFilters());
 
     if (!isNull(tabConfig.infoPanelData)){
-      this.addInfoPanel(tabConfig.infoPanelData);
+      this.addInfoPanel(tabConfig.infoPanelData, tabConfig.infoPanelSampleData);
     }
 
     callback();
@@ -234,6 +512,24 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
   //FitTabPanel Initialzation:
   this.infoPanelData = null;
+  this.infoPanelSampleData = null;
+  this.paramNames = [];
+  this.sampleEnabled = false;
+
+  this.sampleOpts = {}; //Default, min and max values for sample params
+  this.sampleOpts.nwalkers = { default:500, min:1, max: 25000}; //The number of walkers (chains) to use during the MCMC
+  this.sampleOpts.niter = { default:100, min:1, max: 5000}; //The number of iterations to run the MCMC chains
+  this.sampleOpts.burnin = { default:100, min:1, max: 5000}; //The number of iterations to run the walkers before convergence is assumed to have occurred.
+  this.sampleOpts.threads = { default:1, min:1, max: 100}; //The number of threads for parallelization. FIXED TO 1 for avoid Flask context loss
+  this.sampleOpts.nsamples = { default:1000, min:1, max: 10000}; //The number of threads for parallelization.
+
+  this.sampleParams = {}; //Sample params values to be sent, initialized to default values
+  this.sampleParams.nwalkers = this.sampleOpts.nwalkers.default;
+  this.sampleParams.niter = this.sampleOpts.niter.default;
+  this.sampleParams.burnin = this.sampleOpts.burnin.default;
+  this.sampleParams.threads = this.sampleOpts.threads.default;
+  this.sampleParams.nsamples = this.sampleOpts.nsamples.default;
+
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Models');
 
   this.toolPanel.clearFileSelectors();
@@ -242,6 +538,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                                         this.onModelsChanged,
                                         this.onFitClicked,
                                         this.applyBootstrap,
+                                        this.showBayesianParEst,
                                         isNull(plotConfig.styles.title) ? plotConfig.filename : plotConfig.styles.title);
 
   this.outputPanel.getFilters = function () {
