@@ -2,7 +2,7 @@
   "name": "DAVE",
   "description": "Data Analysis for Variable Events",
   "author": "Timelab Technologies Ltd.",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "repository": "https://github.com/StingraySoftware/dave",
   "main": "main.js",
