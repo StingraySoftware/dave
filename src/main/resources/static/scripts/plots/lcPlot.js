@@ -8,7 +8,6 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   //LC plot attributes:
   this.baselineEnabled = false;
-
   this.baseline_opts = {};
   this.baseline_opts.lam = { default:1000, min:1, max: 100000}; //Baseline Smoothness ranges
   this.baseline_opts.p = { default:0.01, min:0.001, max: 1}; //Baseline Asymmetry ranges
@@ -19,11 +18,12 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
     if (this.settingsPanel.find(".baseline").length == 0) {
 
+      //Baseline controls set
       var $baseline = $('<div class="baseline">' +
                           '<h3>' +
                             'Draw baseline:' +
                             '<div class="switch-wrapper">' +
-                              '<div id="switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
+                              '<div id="baseline_switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
                             '</div>' +
                           '</h3>' +
                           '<div class="baselineContainer">' +
@@ -34,26 +34,19 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                           '</div>' +
                         '</div>');
 
-      //Prepares switchBox
-      var switchBox = $baseline.find("#switch_" + this.id);
-      switchBox.click( function ( event ) {
-        currentObj.baselineEnabled = !currentObj.baselineEnabled;
-        currentObj.onBaselineValuesChanged();
-        if (currentObj.baselineEnabled) {
-          $(this).switchClass("fa-plus-square", "fa-minus-square");
-          currentObj.settingsPanel.find(".baselineContainer").fadeIn();
-        } else {
-          $(this).switchClass("fa-minus-square", "fa-plus-square");
-          currentObj.settingsPanel.find(".baselineContainer").fadeOut();
-        }
+      //Prepares baselineSwitchBox
+      var baselineSwitchBox = $baseline.find("#baseline_switch_" + this.id);
+      baselineSwitchBox.click( function ( event ) {
+        currentObj.setBaselineEnabled(!currentObj.baselineEnabled);
       });
 
       //Prepares input events
-      $baseline.find(".baselineContainer").hide();
+      setVisibility($baseline.find(".baselineContainer"), currentObj.baselineEnabled);
       $baseline.find("input").on('change', this.onBaselineValuesChanged);
 
       this.settingsPanel.find(".leftCol").append($baseline);
 
+      //Send setting created event
       this.onSettingsCreated();
     }
   }
@@ -64,24 +57,29 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       currentObj.plotConfig.baseline_opts.p = getInputFloatValueCropped(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p, currentObj.baseline_opts.p.min, currentObj.baseline_opts.p.max);
       currentObj.plotConfig.baseline_opts.niter = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter, currentObj.baseline_opts.niter.min, currentObj.baseline_opts.niter.max);
     } else {
-      currentObj.disableBaseline();
+      currentObj.plotConfig.baseline_opts = { niter: 0 };
     }
   }
 
-  this.updateBaselineInputs = function (bsOpts) {
-    if (bsOpts.niter > 0) {
-      currentObj.settingsPanel.find(".inputLam").val(bsOpts.lam);
-      currentObj.settingsPanel.find(".inputP").val(bsOpts.p);
-      currentObj.settingsPanel.find(".inputNiter").val(bsOpts.niter);
+  this.updateBaselineControls = function () {
+    var switchBox = currentObj.settingsPanel.find("#baseline_switch_" + currentObj.id);
+    if (currentObj.baselineEnabled) {
+      switchBox.switchClass("fa-plus-square", "fa-minus-square");
+      currentObj.settingsPanel.find(".baselineContainer").fadeIn();
+    } else {
+      switchBox.switchClass("fa-minus-square", "fa-plus-square");
+      currentObj.settingsPanel.find(".baselineContainer").fadeOut();
     }
-    setVisibility(currentObj.settingsPanel.find(".baselineContainer"), bsOpts.niter > 0);
   }
 
-  this.disableBaseline = function () {
-    currentObj.plotConfig.baseline_opts = { niter: 0 };
+  this.setBaselineEnabled = function (enabled) {
+    currentObj.baselineEnabled = enabled;
+    currentObj.onBaselineValuesChanged();
+    currentObj.updateBaselineControls();
   }
 
   this.getPlotlyConfig = function (data) {
+
     var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
 
     var dataWithGaps = this.addGapsToData(data[0].values, data[1].values, data[2].values, currentObj.plotConfig.dt * 5);
@@ -96,17 +94,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     if (data.length > 5) {
       if (data[5].values.length > 0) {
         //Lightcurve has baseline values
-        plotlyConfig.data.push({
-                                type : 'scatter',
-                                showlegend : false,
-                                hoverinfo : 'none',
-                                connectgaps : false,
-                                x : data[0].values,
-                                y : data[5].values,
-                                line : {
-                                        color : '#DD3333'
-                                      }
-                              });
+        plotlyConfig.data.push(getLine (data[0].values, data[5].values, '#DD3333'));
       }
     } else {
       currentObj.btnSettings.hide();
@@ -133,7 +121,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   }
 
   this.getPlotDefaultTracesCount = function (){
-      return (currentObj.data.length > 5 && currentObj.data[5].values.length > 0) ? 2 : 1;
+    return (currentObj.data.length > 5 && currentObj.data[5].values.length > 0) ? 2 : 1;
   }
 
   this.mustPropagateAxisFilter = function (axis) {
@@ -179,8 +167,8 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     return [times, values, errorValues];
   }
 
-  //LC BaseLine parameters:
-  this.disableBaseline();
+  //Disable BaseLine and Variance parameters:
+  this.setBaselineEnabled(false);
 
   log ("new LcPlot id: " + this.id);
 

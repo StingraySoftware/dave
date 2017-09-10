@@ -1,12 +1,24 @@
 
 //Adds new Cross Spectrum Tab Panel
-function addXdTabPanel(navBarList, panelContainer, plotConfigs, projectConfigs, id, navItemClass){
+function addXsTabPanel(navBarList, panelContainer, plotConfigs, projectConfigs, id, navItemClass){
   return new XSTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
                         theService, navBarList, panelContainer, plotConfigs, projectConfigs);
 }
 
+//Subscribes the load workspace XSTabPanel function
+tabPanelsLoadFns["XSTabPanel"] = function (tabConfig) {
+  //Creates new CrossSpectra Tab Panel
+  return addXsTabPanel($("#navbar").find("ul").first(),
+                      $(".daveContainer"),
+                      tabConfig.plotConfigs,
+                      [],
+                      tabConfig.id,
+                      tabConfig.navItemClass);
+}
+
+//Cross Spectrum Tab Panel
 function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfigs, projectConfigs) {
 
   var currentObj = this;
@@ -16,7 +28,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   //XSTabPanel METHODS:
 
-  this.getXSDataFromServer = function (paramsData, fn) {
+  this.getXSDataFromServer = function (paramsData) {
 
     log("XSTabPanel getXSDataFromServer...");
 
@@ -24,15 +36,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.currentRequest.abort();
     }
 
-    var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
-    if (timeLagPlot.isVisible) {
-      timeLagPlot.setReadyState(false);
-    }
-
-    var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
-    if (coherencePlot.isVisible) {
-      coherencePlot.setReadyState(false);
-    }
+    currentObj.outputPanel.setPlotsReadyState(false);
 
     currentObj.currentRequest = currentObj.service.request_cross_spectrum(paramsData, function( jsdata ) {
 
@@ -44,8 +48,9 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("XSData received!, XSTabPanel: " + currentObj.id);
       data = JSON.parse(jsdata);
 
-      if (data == null) {
+      if (isNull(data)) {
         log("onPlotReceived wrong data!, XSTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
         return;
 
       } else {
@@ -75,12 +80,6 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }
     });
 
-  };
-
-  this.addPlot = function (plot){
-    this.outputPanel.plots.push(plot);
-    this.projectConfig.plots.push(plot);
-    this.outputPanel.appendPlot(plot, false);
   };
 
   this.getConfig = function () {
@@ -137,7 +136,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 this.projectConfig
                               );
       this.xsPlotIdx = this.outputPanel.plots.length;
-      this.addPlot(xsPlot);
+      this.addPlot(xsPlot, false);
 
 
       //Adds TimeLag Plot to outputPanel
@@ -156,7 +155,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 false
                               );
       this.timeLagPlotIdx = this.outputPanel.plots.length;
-      this.addPlot(timeLagPlot);
+      this.addPlot(timeLagPlot, false);
 
 
       //Adds Coherence Plot to outputPanel
@@ -175,7 +174,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 false
                               );
       this.coherencePlotIdx = this.outputPanel.plots.length;
-      this.addPlot(coherencePlot);
+      this.addPlot(coherencePlot, false);
 
       //Request plot data after all plots were added
       xsPlot.onDatasetValuesChanged(this.outputPanel.getFilters());
@@ -204,4 +203,5 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   log("XSTabPanel ready! id: " + this.id);
+  return this;
 }

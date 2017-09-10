@@ -1,4 +1,5 @@
 var tabPanels = [];
+var tabPanelsLoadFns = [];
 
 function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) {
 
@@ -39,6 +40,12 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     removeTab(this.id);
   }
 
+  this.addPlot = function (plot, refreshData){
+    this.outputPanel.plots.push(plot);
+    this.projectConfig.plots.push(plot);
+    this.outputPanel.appendPlot(plot, refreshData);
+  };
+
   this.containsId = function (id) {
     return this.id == id;
   }
@@ -74,6 +81,7 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
   this.show();
 
   log("TabPanel ready! id: " + this.id);
+  return this;
 }
 
 
@@ -166,48 +174,27 @@ function makeTabCallbackFunc (tabConfig) {
         try {
               var tab = null;
 
-              if (tabConfig.type == "WfTabPanel") {
-
-                //Creates new Workflow Tab Panel
-                tab = addWfTabPanel($("#navbar").find("ul").first(),
-                                    $(".daveContainer"),
-                                    tabConfig.id,
-                                    tabConfig.navItemClass);
-
-              } else if (tabConfig.type == "XSTabPanel") {
-
-                //Creates new CrossSpectra Tab Panel
-                tab = addXdTabPanel($("#navbar").find("ul").first(),
-                                    $(".daveContainer"),
-                                    tabConfig.plotConfigs,
-                                    [],
-                                    tabConfig.id,
-                                    tabConfig.navItemClass);
-
-              } else if (tabConfig.type == "FitTabPanel") {
-
-                //Creates new Fit Tab Panel
-                tab = addFitTabPanel($("#navbar").find("ul").first(),
-                                     $(".daveContainer"),
-                                     tabConfig.plotConfig,
-                                     null,
-                                     tabConfig.id,
-                                     tabConfig.navItemClass);
-
-              } else if (tabConfig.type == "CONFIG") {
+              if (tabConfig.type == "CONFIG") {
 
                 //Sets general configuration
                 delete tabConfig.type;
                 $.extend (CONFIG, tabConfig);
                 callback();
-                return;
 
-              }
-
-              if (!isNull(tab)) {
-                tab.setConfig(tabConfig, callback);
               } else {
-                showError("Error loading tab: " + tabConfig.id, null, { ignoreCalls: true });
+
+                //Calls the load tab function subscribed on tabPanelsLoadFns
+                if (!isNull(tabPanelsLoadFns[tabConfig.type])) {
+                  tab = tabPanelsLoadFns[tabConfig.type](tabConfig);
+                  if (!isNull(tab)) {
+                    tab.setConfig(tabConfig, callback);
+                  } else {
+                    showError("Error loading tab: " + tabConfig.id, null, { ignoreCalls: true });
+                  }
+                } else {
+                  showError("Error tab type not subscribed: " + tabConfig.type, null, { ignoreCalls: true });
+                }
+
               }
 
             } catch (e) {

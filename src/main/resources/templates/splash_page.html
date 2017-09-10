@@ -34,6 +34,22 @@
         font-size: 0.65em;
       }
 
+      .LogDebug, .LogServerDebug {
+        color: #AAAAAA;
+      }
+
+      .LogInfo, .LogServerInfo {
+        color: #007fff;
+      }
+
+      .LogWarn, .LogServerWarn {
+        color: #ff7d1b;
+      }
+
+      .LogError, .LogServerError {
+        color: #FF0000;
+      }
+
     </style>
 
     <!-- Insert this line above script imports for solve Electron import issues -->
@@ -42,8 +58,8 @@
     <script type=text/javascript src="../static/scripts/external/jquery-3.1.1.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/jquery-ui-1.12.1.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/bootstrap-3.3.7.min.js"></script>
-    <script type="text/javascript" src="../static/scripts/external/logger-1.15.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/waiting_dialog.js"></script>
+    <script type="text/javascript" src="../static/scripts/external/logger.js"></script>
     <script type="text/javascript" src="../static/scripts/version.js"></script>
 
     <!-- Insert this line after script imports for solve Electron import issues -->
@@ -57,7 +73,7 @@
         var version = !isNull(BUILD_VERSION) ? BUILD_VERSION : "Unknown";
         $(".build_version").text("Version: " + version);
 
-        log("App started!! Version: " + version);
+        logInfo("App started!! Version: " + version);
 
       });
 
@@ -68,16 +84,16 @@
       function showError(errorMsg) {
         var errorArr = errorMsg.split("|");
         waitingDialog.show(errorArr[0], { progressType: "warning" });
-        log("PYTHON SERVER LOG:");
-        logError(errorArr[1]);
+        logErr("PYTHON SERVER LOG:");
+        logError(errorArr[1], "LogError");
         Logger.open();
       }
 
-      function logError(errorMsg) {
+      function logError(errorMsg, cssClass) {
         var logMsgs = errorMsg.split("#");
         for (i in logMsgs) {
           if (logMsgs[i] != "") {
-            log(logMsgs[i]);
+            log(logMsgs[i], cssClass);
           }
         }
       }

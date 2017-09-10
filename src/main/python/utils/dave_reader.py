@@ -21,7 +21,7 @@ gtistring='GTI,STDGTI,STDGTI04'
 def get_cache_key_for_destination (destination, time_offset):
     if os.path.isfile(destination):
         # If destination is a valid file, so is not a cache key
-        return DsCache.get_key(destination + "|" + str(time_offset))
+        return DsCache.get_key(destination + "|" + str(time_offset), True)
     else:
         return destination # If destination is a cache key
 
@@ -29,6 +29,7 @@ def get_cache_key_for_destination (destination, time_offset):
 def get_file_dataset(destination, time_offset=0):
 
     dataset = None
+    cache_key = ""
 
     try:
 
@@ -37,7 +38,7 @@ def get_file_dataset(destination, time_offset=0):
             cache_key = get_cache_key_for_destination(destination, time_offset)
             if DsCache.contains(cache_key):
                 logging.debug("get_file_dataset: returned cached dataset, cache_key: " + str(cache_key))
-                return DsCache.get(cache_key)
+                return DsCache.get(cache_key), cache_key
 
             logging.debug("get_file_dataset: reading destination: " + str(destination))
             filename = os.path.splitext(destination)[0]
@@ -57,7 +58,8 @@ def get_file_dataset(destination, time_offset=0):
                 random_values = np.random.uniform(-1, 1, size=numValues)
                 table.columns["AMPLITUDE"].values = random_values
 
-            elif file_extension.find("FITS") == 0:
+            elif file_extension.find("FITS") == 0 \
+                 or file_extension.find("gzip") > -1:
 
                 # Opening Fits
                 hdulist = fits.open(destination, memmap=True)
@@ -94,6 +96,7 @@ def get_file_dataset(destination, time_offset=0):
 
             if dataset:
                 DsCache.add(cache_key, dataset)
+                logging.debug("get_file_dataset, dataset added to cache, cache_key: " + str(cache_key))
 
         else:
             logging.error("get_file_dataset: Destination is empty")
@@ -101,7 +104,7 @@ def get_file_dataset(destination, time_offset=0):
     except:
         logging.error(ExHelper.getException('get_file_dataset'))
 
-    return dataset
+    return dataset, cache_key
 
 
 def get_txt_dataset(destination, table_id, header_names):
@@ -365,10 +368,14 @@ def load_dataset_from_intermediate_file(fname):
     from stingray.events import EventList
     from stingray.crossspectrum import Crossspectrum
     from hendrics.io import get_file_type
+    from stingray.io import _retrieve_pickle_object
 
-    ftype, contents = get_file_type(fname)
     # This will return an EventList, a light curve, a Powerspectrum, ...
     # depending on the contents of the file
+    try:
+        ftype, contents = get_file_type(fname)
+    except:
+        contents = _retrieve_pickle_object(fname)
 
     if isinstance(contents, Lightcurve):
         return DataSet.get_lightcurve_dataset_from_stingray_Lightcurve(contents)

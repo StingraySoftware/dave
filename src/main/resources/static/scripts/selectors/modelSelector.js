@@ -1,17 +1,23 @@
+
+ModelParammeters = [] //Array with the parammeters names of each type of model
+
 //Model Selector: Container with all supported models
-function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, filename) {
+function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, applyBayesianParEstFn, filename) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.onModelsChangedFn = onModelsChangedFn;
   this.onFitClickedFn = onFitClickedFn;
   this.applyBootstrapFn = applyBootstrapFn;
+  this.applyBayesianParEstFn = applyBayesianParEstFn;
   this.filename = filename.replace(/\./g,'').replace(/\ /g,'');
 
   this.models = [];
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
                   '<div class="floatingContainer">' +
+                    '<button class="btn button btnClear" data-toggle="tooltip" title="Clear actions"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnUndo" data-toggle="tooltip" title="Undo last"><i class="fa fa-history" aria-hidden="true"></i></button>' +
                     '<button class="btn button btnLoad" data-toggle="tooltip" title="Load models"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
                     '<button class="btn button btnSave" data-toggle="tooltip" title="Save models"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                     '<button class="btn button btnCopy" data-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
@@ -27,10 +33,18 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
                   '<div class="actionsContainer">' +
                     '<button class="btn btn-primary fitBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> FIT</button>' +
                     '<button class="btn btn-success applyBtn"><i class="fa fa-check-circle" aria-hidden="true"></i> APPLY ALL</button>' +
-                    '<button class="btn btn-danger bootstrapBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BOOTSTRAP</button>' +
+                    '<button class="btn btn-danger parEstBtn bayesianParEstBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BAYESIAN PAR. EST.</button>' +
+                    '<button class="btn btn-danger parEstBtn_HIDDEN bootstrapBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BOOTSTRAP</button>' +
                   '</div>' +
                 '</div>');
 
+  this.$html.find(".btnClear").click(function () {
+    currentObj.historyManager.resetHistory();
+  });
+
+  this.$html.find(".btnUndo").click(function () {
+    currentObj.historyManager.undoHistory();
+  });
 
   this.$html.find(".btnLoad").click(function () {
     currentObj.loadModels();
@@ -69,6 +83,10 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     $(this).hide();
   }).hide();
 
+  this.$html.find(".bayesianParEstBtn").click(function () {
+    currentObj.applyBayesianParEstFn();
+  }).hide();
+
   this.$html.find(".bootstrapBtn").click(function () {
     currentObj.applyBootstrapFn();
   }).hide();
@@ -80,13 +98,13 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.getModelFromDaveModel = function (daveModel) {
     var model = null;
     if (daveModel.type == "Gaussian") {
-      model = new GaussianModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+      model = new GaussianModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
     } else if (daveModel.type == "Lorentz") {
-      model = new LorentzModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+      model = new LorentzModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
     } else if (daveModel.type == "PowerLaw") {
-      model = new PowerLawModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+      model = new PowerLawModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
     } else if (daveModel.type == "BrokenPowerLaw") {
-      model = new BrokenPowerLawModel(currentObj.models.length, daveModel.color, currentObj.onModelsChangedFn)
+      model = new BrokenPowerLawModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
     }
 
     if (!isNull(model) && Object.keys(daveModel).length > 2) {
@@ -111,7 +129,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     this.$html.find(".modelsContainer").append(model.$html);
     this.$html.find(".fitBtn").show();
     if (isNull(refresh) || refresh) {
-      this.onModelsChangedFn();
+      this.onModelsChanged();
     }
   }
 
@@ -132,8 +150,8 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     return models;
   };
 
-  this.setModels = function (models) {
-    this.clearModels();
+  this.setModels = function (models, updateHistory) {
+    this.clearModels(updateHistory);
     for (i in models){
       var model = null;
       if (!isNull(models[i].type) && !isNull(models[i].color)){
@@ -146,7 +164,14 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
        return;
       }
     }
-    this.onModelsChangedFn();
+    this.onModelsChanged(updateHistory);
+  }
+
+  this.onModelsChanged = function (saveHistory) {
+    if (isNull(saveHistory) || saveHistory){
+      currentObj.saveHistory();
+    }
+    currentObj.onModelsChangedFn();
   }
 
   this.setEstimation = function (params, showApplyBtn) {
@@ -162,7 +187,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     var applyBtnVisible = idx > 0 && showApplyBtn;
     setVisibility(this.$html.find(".applyBtn"), applyBtnVisible);
     if (applyBtnVisible) {
-      this.onModelsChangedFn();
+      this.onModelsChanged();
     }
   }
 
@@ -170,8 +195,8 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     for (i in this.models){
       this.models[i].applyEstimations();
     }
-    this.$html.find(".bootstrapBtn").show();
-    this.onModelsChangedFn();
+    this.$html.find(".parEstBtn").show();
+    this.onModelsChanged();
   };
 
   this.clearAllEstimationsAndErrors = function (){
@@ -179,7 +204,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
       this.models[i].clearEstimationsAndErrors();
     }
     this.$html.find(".applyBtn").hide();
-    this.$html.find(".bootstrapBtn").hide();
+    this.$html.find(".parEstBtn").hide();
   };
 
   this.saveModels = function () {
@@ -207,23 +232,48 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     return laTeX;
   }
 
-  this.clearModels = function() {
+  this.clearModels = function(resetHistory) {
     this.models = [];
     this.$html.find(".modelsContainer").html("");
     this.$html.find(".actionsContainer").hide();
+
+    //Reset History and add default models
+    if (isNull(resetHistory) || resetHistory){
+      currentObj.historyManager.actionsHistory = [];
+      currentObj.saveHistory();
+    }
   }
 
   this.getConfig = function () {
     return { models: this.getModels(),
              applyBtnVisible: this.$html.find(".applyBtn").is(":visible"),
-             bootstrapBtnVisible: this.$html.find(".bootstrapBtn").is(":visible") };
+             parEstBtnVisible: this.$html.find(".parEstBtn").is(":visible") };
   }
 
-  this.setConfig = function (config) {
-    this.setModels(config.models);
+  this.setConfig = function (config, updateHistory) {
+    this.setModels(config.models, updateHistory);
     setVisibility(this.$html.find(".applyBtn"), config.applyBtnVisible);
-    setVisibility(this.$html.find(".bootstrapBtn"), config.bootstrapBtnVisible);
+    setVisibility(this.$html.find(".parEstBtn"), config.parEstBtnVisible);
   }
+
+  this.saveHistory = function (){
+      //Prepares undo button
+      currentObj.$html.find(".btnUndo").prop('disabled', (currentObj.historyManager.prevAction == null));
+
+      //Adds config as action to historyManager
+      currentObj.historyManager.addToHistory($.extend(true, [], currentObj.getConfig()));
+  }
+
+  this.applyAction = function (action){
+    if (action != null){
+      //Sets stored config saved as action on historyManager, updates models without modifiying history
+      currentObj.setConfig(action, false);
+      currentObj.$html.find(".btnUndo").prop('disabled', currentObj.historyManager.actionsHistory.length == 0);
+    }
+  }
+
+  this.historyManager = new HistoryManager(this.applyAction);
+  this.saveHistory();
 
   log ("new ModelSelector id: " + this.id);
 
@@ -494,7 +544,7 @@ function GaussianModel(idx, color, onModelsChangedFn) {
   this.stddev = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "mean", "stddev"];
+    return ModelParammeters["Gaussian"];
   }
 
   Model.call(this,
@@ -509,7 +559,8 @@ function GaussianModel(idx, color, onModelsChangedFn) {
   log ("new GaussianModel id: " + this.id);
 
   return this;
-}
+};
+ModelParammeters["Gaussian"] = ["amplitude", "mean", "stddev"];
 
 
 //Model: Lorentz specific model inherited from Model class
@@ -523,7 +574,7 @@ function LorentzModel(idx, color, onModelsChangedFn) {
   this.fwhm = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "x_0", "fwhm"];
+    return ModelParammeters["Lorentz"];
   }
 
   Model.call(this,
@@ -539,7 +590,7 @@ function LorentzModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
-
+ModelParammeters["Lorentz"] = ["amplitude", "x_0", "fwhm"];
 
 //Model: PowerLaw specific model inherited from Model class
 function PowerLawModel(idx, color, onModelsChangedFn) {
@@ -552,7 +603,7 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
   this.alpha = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "x_0", "alpha"];
+    return ModelParammeters["PowerLaw"];
   }
 
   Model.call(this,
@@ -568,6 +619,7 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
+ModelParammeters["PowerLaw"] = ["amplitude", "x_0", "alpha"];
 
 
 //Model: BrokenPowerLaw specific model inherited from Model class
@@ -582,7 +634,7 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
   this.alpha_2 = 0.5;
 
   this.getParammeters = function () {
-    return ["amplitude", "x_break", "alpha_1", "alpha_2"];
+    return ModelParammeters["BrokenPowerLaw"];
   }
 
   Model.call(this,
@@ -598,3 +650,4 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
+ModelParammeters["BrokenPowerLaw"] = ["amplitude", "x_break", "alpha_1", "alpha_2"];

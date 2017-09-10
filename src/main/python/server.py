@@ -12,7 +12,7 @@ matplotlib.use('TkAgg')  # Changes the matplotlib framework
 
 import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
-import utils.dave_logger as Logger
+import random
 from utils.np_encoder import NPEncoder
 from config import CONFIG
 
@@ -28,8 +28,11 @@ server_port = 5000
 if len(sys.argv) > 3 and sys.argv[3] != "":
     server_port = int(sys.argv[3])
 
-logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
+build_version = "0"
+if len(sys.argv) > 4 and sys.argv[4] != "":
+    build_version = sys.argv[4]
 
+logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
 logging.info("Logs file is " + logsdir + "/flaskserver.log")
 logging.info("Templates dir is " + scriptdir + "/../resources/templates")
 
@@ -103,16 +106,22 @@ def get_plot_data():
 
 @app.route('/get_lightcurve', methods=['POST'])
 def get_lightcurve():
+    variance_opts = None
+    if "variance_opts" in request.json:
+        variance_opts = request.json['variance_opts']
+
     return DaveEndpoint.get_lightcurve(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']), request.json['baseline_opts'])
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['baseline_opts'], variance_opts)
 
 
 @app.route('/get_joined_lightcurves', methods=['POST'])
 def get_joined_lightcurves():
     return DaveEndpoint.get_joined_lightcurves(request.json['lc0_filename'],
-            request.json['lc1_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']))
+            request.json['lc1_filename'], request.json['lc0_bck_filename'],
+            request.json['lc1_bck_filename'], UPLOADS_TARGET, request.json['filters'],
+            request.json['axis'], float(request.json['dt']))
 
 
 @app.route('/get_divided_lightcurves_from_colors', methods=['POST'])
@@ -125,7 +134,8 @@ def get_divided_lightcurves_from_colors():
 @app.route('/get_divided_lightcurve_ds', methods=['POST'])
 def get_divided_lightcurve_ds():
     return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
-            request.json['lc1_filename'], UPLOADS_TARGET)
+            request.json['lc1_filename'], request.json['lc0_bck_filename'],
+            request.json['lc1_bck_filename'], UPLOADS_TARGET)
 
 
 @app.route('/get_power_density_spectrum', methods=['POST'])
@@ -192,11 +202,20 @@ def get_plot_data_from_models():
 
 @app.route('/get_fit_powerspectrum_result', methods=['POST'])
 def get_fit_powerspectrum_result():
+    priors = None
+    if "priors" in request.json:
+        priors = request.json['priors']
+
+    sampling_params = None
+    if "sampling_params" in request.json:
+        sampling_params = request.json['sampling_params']
+
     return DaveEndpoint.get_fit_powerspectrum_result(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], request.json['models'])
+            request.json['norm'], request.json['type'], request.json['models'],
+            priors, sampling_params)
 
 
 @app.route('/get_bootstrap_results', methods=['POST'])
@@ -221,6 +240,32 @@ def bulk_analisys():
             request.json['outdir'], UPLOADS_TARGET)
 
 
+@app.route('/get_lomb_scargle', methods=['POST'])
+def get_lomb_scargle():
+    return DaveEndpoint.get_lomb_scargle(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
+            int(request.json['samples_per_peak']))
+
+
+@app.route('/get_pulse_search', methods=['POST'])
+def get_pulse_search():
+    return DaveEndpoint.get_pulse_search(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['freq_range'], request.json['mode'], int(request.json['oversampling']),
+            int(request.json['nharm']), int(request.json['nbin']), float(request.json['segment_size']))
+
+
+@app.route('/get_phaseogram', methods=['POST'])
+def get_phaseogram():
+    return DaveEndpoint.get_phaseogram(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            float(request.json['f']), int(request.json['nph']), int(request.json['nt']))
+
+
 # Receives a message from client and send it to all subscribers
 @app.route("/publish", methods=['POST'])
 def publish():
@@ -234,7 +279,7 @@ def subscribe():
 
 @app.route('/')
 def root():
-    return render_template("master_page.html")
+    return render_template("master_page.html", get_version=get_version)
 
 
 @app.route('/shutdown')
@@ -244,11 +289,18 @@ def shutdown():
     return 'Server shutting down...'
 
 
+def get_version():
+    if CONFIG.USE_JAVASCRIPT_CACHE:
+        return build_version
+    else:
+        return str(random.randint(0, CONFIG.BIG_NUMBER))
+
+
 # Shutdown flask server
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
-        logging.warn('Not running with the Werkzeug Server')
+        logging.warn('shutdown_server: Not running with the Werkzeug Server')
         exit()
     func()
 
@@ -257,7 +309,6 @@ def shutdown_server():
 def http_error_handler(error):
     try:
         logging.error('ERROR: http_error_handler ' + str(error))
-        #return render_template("error.html", error=error), error
         return json.dumps(dict(error=str(error)))
     except:
         logging.error('ERROR: http_error_handler --> EXCEPT ')
@@ -267,4 +318,4 @@ for error in (400, 401, 403, 404, 500):  # or with other http code you consider 
 
 if __name__ == '__main__':
     GeHelper.start(server_port, app)
-    app.run(debug=True, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces
+    app.run(debug=CONFIG.DEBUG_MODE, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces

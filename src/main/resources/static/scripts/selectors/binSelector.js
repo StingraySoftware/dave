@@ -1,5 +1,5 @@
 
-function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn) {
+function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
@@ -86,10 +86,10 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      }
    }
 
-   this.setMinMaxValues = function (minValue, maxValue) {
+   this.setMinMaxValues = function (minValue, maxValue, step) {
      this.fromValue = minValue;
      this.initFromValue = this.fromValue;
-     this.step = this.fromValue;
+     this.step = isNull(step) ? this.fromValue : step;
      this.toValue = maxValue;
      this.initToValue = this.toValue;
      this.$html.find("#slider-" + this.id).remove();
@@ -99,20 +99,22 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
    }
 
+    this.onSlideChanged = !isNull(onSlideChanged) ? onSlideChanged : function( event, ui ) {
+      var sliderId = event.target.id.replace("slider-", "");
+      var tab = getTabForSelector(sliderId);
+      if (tab != null){
+        tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
+        tab.toolPanel.binSelector.onSelectorValuesChanged();
+      }
+    };
+
    this.createSlider = function () {
      this.slider.slider({
             min: this.fromValue,
             max: this.toValue,
             values: [this.value],
             step: this.step,
-            slide: function( event, ui ) {
-              var sliderId = event.target.id.replace("slider-", "");
-              var tab = getTabForSelector(sliderId);
-              if (tab != null){
-                tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
-                tab.toolPanel.binSelector.onSelectorValuesChanged();
-              }
-            }
+            slide: this.onSlideChanged
         });
       this.setValues( this.value );
    }

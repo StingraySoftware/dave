@@ -3,6 +3,7 @@ import utils.dataset_helper as DsHelper
 import utils.filters_helper as FltHelper
 import utils.dave_logger as logging
 from random import randint
+import numpy as np
 
 
 class DataSet:
@@ -240,15 +241,16 @@ def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
     hdu_table.columns[column].add_values(evlist.time)
 
     if hasattr(evlist, 'energy'):
-        if len(evlist.energy) == len(evlist.time):
+        if evlist.energy is not None and len(evlist.energy) == len(evlist.time):
             hdu_table.columns['E'].add_values(evlist.energy)
         else:
             logging.warn("Event list energies differs from event counts, setted all energies as 0")
             hdu_table.columns['E'].add_values(np.zeros_like(evlist.time))
 
-    if hasattr(evlist, 'pi') and len(evlist.pi) == len(evlist.time):
+    if hasattr(evlist, 'pi') and evlist.pi is not None and len(evlist.pi) == len(evlist.time):
         hdu_table.columns['PI'].add_values(evlist.pi)
     else:
+        logging.warn("Event list has no PI values, using np.zeros_like")
         hdu_table.columns['PI'].add_values(np.zeros_like(evlist.time))
 
     dataset.tables["GTI"] = \

@@ -35,8 +35,6 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.plotConfig.freq_range = [currentObj.freqRangeSelector.fromValue, currentObj.freqRangeSelector.toValue];
   }
 
-  this.onNBandsChanged =
-
   this.onSettingsCreated = function(){
 
     //Hides pds settings controls that doesn't apply to rms plot
@@ -54,7 +52,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
                                       null);
-    this.freqRangeSelector.step = 0.1;
+    this.freqRangeSelector.step = getStepSizeFromRange(freqRange[1] - freqRange[0], 100);
     this.freqRangeSelector.slider.slider({
            min: this.freqRangeSelector.fromValue,
            max: this.freqRangeSelector.toValue,

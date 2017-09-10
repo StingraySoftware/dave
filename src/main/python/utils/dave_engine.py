@@ -6,18 +6,23 @@ import utils.exception_helper as ExHelper
 import utils.plotter as Plotter
 import math
 import numpy as np
+import scipy as sp
 import utils.dave_logger as logging
 import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray.events import EventList
+from stingray.lightcurve import Lightcurve
 from stingray import Powerspectrum, AveragedPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
-from stingray.utils import baseline_als
-from stingray.modeling import fit_powerspectrum
+from stingray.utils import baseline_als, excess_variance
+from stingray.modeling import PSDLogLikelihood, PSDPosterior, PSDParEst
 from stingray.simulator import simulator
+from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
+from stingray.pulse.pulsar import z2_n_detection_level
+from astropy.stats import LombScargle, poisson_conf_interval
 from config import CONFIG
 import sys
 
@@ -27,7 +32,7 @@ import sys
 # @param: destination: file destination
 #
 def get_dataset_schema(destination):
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_schema()
     else:
@@ -40,7 +45,7 @@ def get_dataset_schema(destination):
 # @param: destination: file destination
 #
 def get_dataset_header(destination):
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_header()
     else:
@@ -54,13 +59,13 @@ def get_dataset_header(destination):
 # @param: next_destination: file destination of file to append
 #
 def append_file_to_dataset(destination, next_destination):
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
 
         # Tries to get TSTART from dataset to set the ofset to next_dataset
         ds_start_time = DsHelper.get_dataset_start_time(dataset)
 
-        next_dataset = DaveReader.get_file_dataset(next_destination, ds_start_time)
+        next_dataset, next_cache_key = DaveReader.get_file_dataset(next_destination, ds_start_time)
         if next_dataset:
 
             if DsHelper.are_datasets_of_same_type(dataset, next_dataset):
@@ -114,9 +119,9 @@ def append_file_to_dataset(destination, next_destination):
 #
 def apply_rmf_file_to_dataset(destination, rmf_destination):
     try:
-        dataset = DaveReader.get_file_dataset(destination)
+        dataset, cache_key = DaveReader.get_file_dataset(destination)
         if DsHelper.is_events_dataset(dataset):
-            rmf_dataset = DaveReader.get_file_dataset(rmf_destination)
+            rmf_dataset, rmf_cache_key = DaveReader.get_file_dataset(rmf_destination)
             if DsHelper.is_rmf_dataset(rmf_dataset):
                 # Applies rmf data to dataset
                 events_table = dataset.tables["EVENTS"]
@@ -138,11 +143,16 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                     else:
                         e_values.append(0)
 
-                events_table.add_columns(["E"])
+                if "E" not in events_table.columns:
+                    events_table.add_columns(["E"])
+                else:
+                    events_table.columns["E"].clear()
+
                 events_table.columns["E"].add_values(e_values)
 
                 DsCache.remove_with_prefix("FILTERED") # Removes all filtered datasets from cache
-                DsCache.add(destination, dataset) # Stores dataset on cache
+                DsCache.remove_with_prefix("LC")
+                DsCache.add(cache_key, dataset) # Stores dataset on cache
                 if len(events_table.columns["E"].values) == len(pha_data):
                     return list(e_avg_data.values())
     except:
@@ -227,8 +237,10 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 # @param: baseline_opts: Object with the baseline parameters.
+# @param: variance_opts: Object with the excess variance parameters.
 #
-def get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt, baseline_opts):
+def get_lightcurve(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, baseline_opts, variance_opts):
 
     time_vals = []
     count_rate = []
@@ -236,6 +248,21 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
     gti_start_values = []
     gti_stop_values = []
     baseline = []
+    chunk_times = []
+    chunk_lengths = []
+    mean = []
+    mean_err = []
+    excessvar = []
+    excessvar_err = []
+    excessvarmean = []
+    excessvarmean_err = []
+    fvar = []
+    fvar_err = []
+    fvarmean = []
+    fvarmean_err = []
+    chunk_mean_times = []
+    chunk_mean_lengths = []
+    confidences = []
 
     try:
         if len(axis) != 2:
@@ -265,6 +292,41 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
             niter = baseline_opts["niter"]  # 10
             baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
 
+        # Gets the Long-term variability of AGN values
+        if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
+            logging.debug("Preparing lightcurve excess variance");
+            chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
+
+            start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_meancount)
+            mean = np.nan_to_num(res[0])
+            mean_err = np.nan_to_num(res[1])
+
+            chunk_times = np.array([(s + e)/2 for s, e in zip(start, stop)])
+            chunk_lengths = np.array([(e - s)/2 for s, e in zip(start, stop)]) # This will be plotted as an error bar on xAxis, soo only need the half of the values
+
+            start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_excvar)
+            excessvar = np.nan_to_num(res[0])
+            excessvar_err = np.nan_to_num(res[1])
+
+            excessvarmean = get_means_from_array(excessvar, variance_opts["mean_count"])
+            excessvarmean_err = get_means_from_array(excessvar_err, variance_opts["mean_count"])
+
+            start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_fractional_rms)
+            fvar = np.nan_to_num(res[0])
+            fvar_err = np.nan_to_num(res[1])
+
+            fvarmean = get_means_from_array(fvar, variance_opts["mean_count"])
+            fvarmean_err = get_means_from_array(fvar_err, variance_opts["mean_count"])
+
+            chunk_mean_times = get_means_from_array(chunk_times, variance_opts["mean_count"])
+            chunk_mean_lengths = np.array([l * variance_opts["mean_count"] for l in chunk_lengths])
+
+            confidences += (mean_confidence_interval(excessvar, confidence=0.90))
+            confidences += (mean_confidence_interval(excessvar, confidence=0.99))
+
+            confidences += (mean_confidence_interval(fvar, confidence=0.90))
+            confidences += (mean_confidence_interval(fvar, confidence=0.99))
+
         lc = None  # Dispose memory
 
     except:
@@ -272,12 +334,28 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 
     # Preapares the result
     logging.debug("Result lightcurve .... " + str(len(time_vals)))
-    result = push_to_results_array([], time_vals)
-    result = push_to_results_array(result, count_rate)
-    result = push_to_results_array(result, error_values)
-    result = push_to_results_array(result, gti_start_values)
-    result = push_to_results_array(result, gti_stop_values)
-    result = push_to_results_array(result, baseline)
+    result = push_to_results_array([], time_vals) #0
+    result = push_to_results_array(result, count_rate) #1
+    result = push_to_results_array(result, error_values) #2
+    result = push_to_results_array(result, gti_start_values) #3
+    result = push_to_results_array(result, gti_stop_values) #4
+    result = push_to_results_array(result, baseline) #5
+    result = push_to_results_array(result, chunk_times) #6
+    result = push_to_results_array(result, chunk_lengths) #7
+    result = push_to_results_array(result, mean) #8
+    result = push_to_results_array(result, mean_err) #9
+    result = push_to_results_array(result, excessvar) #10
+    result = push_to_results_array(result, excessvar_err) #11
+    result = push_to_results_array(result, excessvarmean) #12
+    result = push_to_results_array(result, excessvarmean_err) #13
+    result = push_to_results_array(result, fvar) #14
+    result = push_to_results_array(result, fvar_err) #15
+    result = push_to_results_array(result, fvarmean) #16
+    result = push_to_results_array(result, fvarmean_err) #17
+    result = push_to_results_array(result, chunk_mean_times) #18
+    result = push_to_results_array(result, chunk_mean_lengths) #19
+    result = push_to_results_array(result, confidences) #20
+
     return result
 
 
@@ -285,6 +363,8 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 #
 # @param: lc0_destination: lightcurve 0 file destination
 # @param: lc1_destination: lightcurve 1 file destination
+# @param: bck0_destination: lightcurve 0 backgrund file destination
+# @param: bck1_destination: lightcurve 1 backgrund file destination
 # @param: filters: array with the filters to apply
 #         [{ table = "RATE", column = "Time", from=0, to=10 }, ... ]
 # @param: axis: array with the column names to use in ploting
@@ -292,7 +372,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination, filters, a
 #            { table = "RATE", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 #
-def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
+def get_joined_lightcurves(lc0_destination, lc1_destination, bck0_destination, bck1_destination, filters, axis, dt):
 
     try:
 
@@ -300,26 +380,22 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt):
             logging.warn("Wrong number of axis")
             return None
 
-        filters = FltHelper.get_filters_clean_color_filters(filters)
-        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
-
-        lc0_ds = get_filtered_dataset(lc0_destination, filters)
-        if not DsHelper.is_lightcurve_dataset(lc0_ds):
+        lc0 = get_lightcurve_any_dataset(lc0_destination, bck0_destination, "", filters, dt)
+        if not lc0:
             logging.warn("Wrong dataset type for lc0")
             return None
 
-        lc1_ds = get_filtered_dataset(lc1_destination, filters)
-        if not DsHelper.is_lightcurve_dataset(lc1_ds):
+        lc1 = get_lightcurve_any_dataset(lc1_destination, bck1_destination, "", filters, dt)
+        if not lc1:
             logging.warn("Wrong dataset type for lc1")
             return None
 
-        #  Problaby here we can use a stronger checking
-        if len(lc0_ds.tables["RATE"].columns["TIME"].values) == len(lc1_ds.tables["RATE"].columns["TIME"].values):
+        if lc0.countrate.shape == lc1.countrate.shape:
 
             # Preapares the result
             logging.debug("Result joined lightcurves ....")
-            result = push_to_results_array([], lc0_ds.tables["RATE"].columns["RATE"].values)
-            result = push_to_results_array(result, lc1_ds.tables["RATE"].columns["RATE"].values)
+            result = push_to_results_array([], lc0.countrate)
+            result = push_to_results_array(result, lc1.countrate)
             return result
 
         else:
@@ -425,30 +501,25 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
 #
 # @param: lc0_destination: lightcurve 0 file destination
 # @param: lc1_destination: lightcurve 1 file destination
+# @param: lc0_bck_destination: lightcurve 0 background file destination
+# @param: lc1_bck_destination: lightcurve 1 background file destination
 #
-def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
+def get_divided_lightcurve_ds(lc0_destination, lc1_destination, lc0_bck_destination, lc1_bck_destination):
 
     try:
 
-        lc0_ds = DaveReader.get_file_dataset(lc0_destination)
-        if not DsHelper.is_lightcurve_dataset(lc0_ds):
-            logging.warn("Wrong dataset type for lc0")
+        count_rate_0, count_rate_error_0 = get_countrate_from_lc_ds (lc0_destination, lc0_bck_destination, "lc0_ds", "lc0_bck")
+        if count_rate_0 is None:
             return ""
 
-        count_rate_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].values)
-        count_rate_error_0 = np.array(lc0_ds.tables["RATE"].columns["RATE"].error_values)
-
-        lc1_ds = DaveReader.get_file_dataset(lc1_destination)
-        if not DsHelper.is_lightcurve_dataset(lc1_ds):
-            logging.warn("Wrong dataset type for lc1")
+        count_rate_1, count_rate_error_1 = get_countrate_from_lc_ds (lc1_destination, lc1_bck_destination, "lc1_ds", "lc1_bck")
+        if count_rate_1 is None:
             return ""
-
-        count_rate_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].values)
-        count_rate_error_1 = np.array(lc1_ds.tables["RATE"].columns["RATE"].error_values)
 
         if count_rate_0.shape == count_rate_1.shape:
 
-            ret_lc_ds = lc0_ds.clone(True)
+            lc_ds, lc_cache_key = DaveReader.get_file_dataset(lc0_destination)
+            ret_lc_ds = lc_ds.clone(True)
 
             count_rate, count_rate_error = get_divided_values_and_error (count_rate_0, count_rate_1,
                                                                         count_rate_error_0, count_rate_error_1)
@@ -456,22 +527,13 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination):
             ret_lc_ds.tables["RATE"].columns["RATE"].clear()
             ret_lc_ds.tables["RATE"].columns["RATE"].add_values(count_rate, count_rate_error)
 
-            lc0_ds = None  # Dispose memory
-            lc1_ds = None  # Dispose memory
-            count_rate_1 = None  # Dispose memory
-            count_rate_0 = None  # Dispose memory
-            count_rate = None  # Dispose memory
-            count_rate_error_1 = None  # Dispose memory
-            count_rate_error_0 = None  # Dispose memory
-            count_rate_error = None  # Dispose memory
-
             new_cache_key = DsCache.get_key(lc0_destination + "|" + lc1_destination + "|ligthcurve")
             DsCache.add(new_cache_key, ret_lc_ds)  # Adds new cached dataset for new key
             return new_cache_key
 
         else:
             logging.warn("Lightcurves have different shapes.")
-            return None
+            return ""
 
     except:
         logging.error(ExHelper.getException('get_divided_lightcurve_ds'))
@@ -1194,7 +1256,10 @@ def get_plot_data_from_models(models, x_values):
     return models_arr
 
 
-# get_fit_powerspectrum_result: Returns the PDS of a given dataset
+# get_fit_powerspectrum_result:
+# Returns the results of fitting a PDS with an astropy model. If priors are
+# sent the a Bayesian parameter estimation is calculated, else a Maximum Likelihood Fitting
+# is used as default.
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -1209,10 +1274,13 @@ def get_plot_data_from_models(models, x_values):
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
-# @param: models: array of models
+# @param: models: array of models, dave_model definition with the starting parammeters
+# @param: priors: array of priors, dave_priors defined for each model parammeters
+# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
 #
 def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                models, priors=None, sampling_params=None):
     results = []
 
     try:
@@ -1222,13 +1290,52 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 
             fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
             if fit_model:
-                parest, res = fit_powerspectrum(pds, fit_model, starting_pars, max_post=False, priors=None,
-                          fitmethod="L-BFGS-B")
 
+                # Default fit parammeters
+                max_post=False
+                fitmethod="L-BFGS-B"
+                as_priors=None
+
+                if priors is not None:
+                    # Creates the priors from dave_priors
+                    as_priors = ModelHelper.get_astropy_priors(priors)
+                    if len(as_priors.keys()) > 0:
+                        # If there are priors then is a Bayesian Parammeters Estimation
+                        max_post=True
+                        fitmethod="BFGS"
+
+                    else:
+                        as_priors=None
+                        logging.warn("get_fit_powerspectrum_result: can't create priors from dave_priors.")
+
+                if as_priors:
+                    # Creates a Posterior object with the priors
+                    lpost = PSDPosterior(pds.freq, pds.power, fit_model, priors=as_priors, m=pds.m)
+                else:
+                    # Creates the Maximum Likelihood object for fitting
+                    lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
+
+                # Creates the PSD Parammeters Estimation object and runs the fitting
+                parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
+                res = parest.fit(lpost, starting_pars, neg=True)
+
+                sample = None
+                if as_priors and sampling_params is not None:
+                    # If is a Bayesian Par. Est. and has sampling parammeters
+                    # then sample the posterior distribution defined in `lpost` using MCMC
+                    sample = parest.sample(lpost, res.p_opt, cov=res.cov,
+                                             nwalkers=sampling_params["nwalkers"],
+                                             niter=sampling_params["niter"],
+                                             burnin=sampling_params["burnin"],
+                                             threads=sampling_params["threads"],
+                                             print_results=False, plot=False)
+
+                # Prepares the results to be returned to GUI
                 fixed = [fit_model.fixed[n] for n in fit_model.param_names]
                 parnames = [n for n, f in zip(fit_model.param_names, fixed) \
                             if f is False]
 
+                # Add to results the estimated parammeters
                 params = []
                 for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
                     param = dict()
@@ -1240,6 +1347,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 
                 results = push_to_results_array(results, params)
 
+                # Add to results the estimation statistics
                 stats = dict()
                 try:
                     stats["deviance"] = res.deviance
@@ -1259,6 +1367,36 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
                     stats["merit"] = "ERROR"
 
                 results = push_to_results_array(results, stats)
+
+                # If there is sampling data add it to results
+                if sample:
+                    sample_stats = dict()
+                    try:
+                        sample_stats["acceptance"] = sample.acceptance
+                        sample_stats["rhat"] = sample.rhat
+                        sample_stats["mean"] = sample.mean
+                        sample_stats["std"] = sample.std
+                        sample_stats["ci"] = sample.ci
+
+                        try:
+                            #Acor is not always present
+                            sample_stats["acor"] = sample.acor
+                        except AttributeError:
+                            sample_stats["acor"] = "ERROR"
+
+                        #Creates an IMG Html tag from plot
+                        try:
+                            fig = sample.plot_results(nsamples=sampling_params["nsamples"])
+                            sample_stats["img"] = Plotter.convert_fig_to_html(fig)
+                        except:
+                            sample_stats["img"] = "ERROR"
+                            logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant create image from plot.'))
+
+                    except AttributeError:
+                        sample_stats["acceptance"] = "ERROR"
+                        logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant add sample data.'))
+
+                    results = push_to_results_array(results, sample_stats)
 
                 pds = None  # Dispose memory
                 lc = None  # Dispose memory
@@ -1414,6 +1552,199 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
     return results
 
 
+# get_lomb_scargle:
+# Returns LombScargle frequencies and powers from a given lightcurve
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: nyquist_factor: Average Nyquist frequency factor
+# @param: ls_norm: Periodogram normalization ["standard", "model", "log", "psd"]
+# @param: samples_per_peak: Points across each significant periodogram peak
+#
+def get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak):
+    frequency = []
+    power = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        # Creates the lightcurve
+        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+        if not lc:
+            logging.warn("Can't create lightcurve")
+            return None
+
+        # Calculates the LombScargle values
+        frequency, power = LombScargle(lc.time, lc.counts).autopower(minimum_frequency=freq_range[0],
+                                                                     maximum_frequency=freq_range[1],
+                                                                     nyquist_factor=nyquist_factor,
+                                                                     normalization=ls_norm,
+                                                                     samples_per_peak=samples_per_peak)
+
+    except:
+        logging.error(ExHelper.getException('get_lomb_scargle'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], frequency)
+    result = push_to_results_array(result, np.nan_to_num(power))
+    return result
+
+
+# get_pulse_search: Returns z_n_search result of a given events dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency
+# @param: mode: Pulse search merhod ["epoch_folding", "z_n_search"].
+# @param: oversampling: Pulse peak oversampling.
+# @param: nharm: Number of harmonics.
+# @param: nbin: Number of bins of the folded profiles.
+# @param: segment_size: Length of the segments to be averaged in the periodogram.
+#
+def get_pulse_search(src_destination, bck_destination, gti_destination, filters, axis,
+                   dt, freq_range, mode="z_n_search", oversampling=15, nharm=4, nbin=128, segment_size=5000):
+    freq = []
+    zstat = []
+    cand_freqs_z = []
+    cand_stat_z = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        if mode not in ['epoch_folding', 'z_n_search']:
+            logging.warn("Wrong mode, using default: z_n_search")
+            mode = "z_n_search"
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        ds = get_filtered_dataset(src_destination, filters, gti_destination)
+        if not ds:
+            logging.warn("Cant read dataset!")
+            return None
+
+        # Gets time data
+        time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
+
+        # We will search for pulsations over a range
+        # of frequencies around the known pulsation period.
+
+        # Calculates frequencies from min frequency, and frequency step
+        df_min = 1/(max(time_data) - min(time_data))
+        df = df_min / oversampling
+        frequencies = np.arange(freq_range[0], freq_range[1], df)
+
+        if mode == "z_n_search":
+            freq, zstat = z_n_search(time_data, frequencies, nbin=nbin, nharm=nharm, segment_size=segment_size)
+        else:
+            freq, zstat = epoch_folding_search(time_data, frequencies, nbin=nbin, segment_size=segment_size)
+
+        z_detlev = z2_n_detection_level(n=1, epsilon=0.001, ntrial=len(freq))
+        cand_freqs_z, cand_stat_z = search_best_peaks(freq, zstat, z_detlev)
+
+    except:
+        logging.error(ExHelper.getException('get_pulse_search'))
+
+    # Preapares the result
+    result = push_to_results_array([], freq)
+    result = push_to_results_array(result, zstat)
+    result = push_to_results_array(result, cand_freqs_z)
+    result = push_to_results_array(result, cand_stat_z)
+    return result
+
+
+# get_phaseogram: Returns phaseogram of a given events dataset
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: f: Pulse frequency.
+# @param: nph: Number of phase bins.
+# @param: nt: Number of time bins.
+#
+def get_phaseogram(src_destination, bck_destination, gti_destination, filters, axis,
+                   dt, f, nph, nt):
+    phaseogr = []
+    phases = []
+    times = []
+    mean_phases = []
+    profile = []
+    error_dist = []
+
+    try:
+
+        if len(axis) != 2:
+            logging.warn("Wrong number of axis")
+            return None
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+        filters = FltHelper.apply_bin_size_to_filters(filters, dt)
+
+        ds = get_filtered_dataset(src_destination, filters, gti_destination)
+        if not ds:
+            logging.warn("Cant read dataset!")
+            return None
+
+        # Calculate the phaseogram plot data
+        time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
+        phaseogr, phases, times, additional_info = \
+                    phaseogram(time_data, f, nph=nph, nt=nt)
+        phaseogr = np.transpose(phaseogr)
+
+        # Calculates the profile plot data
+        mean_phases = (phases[:-1] + phases[1:]) / 2
+        profile = np.sum(phaseogr, axis=1)
+        mean_profile = np.mean(profile)
+        if np.all(mean_phases < 1.5):
+            mean_phases = np.concatenate((mean_phases, mean_phases + 1))
+            profile = np.concatenate((profile, profile))
+        err_low, err_high = poisson_conf_interval(mean_profile, interval='frequentist-confidence', sigma=1)
+        error_dist = [err_low, err_high]
+
+    except:
+        logging.error(ExHelper.getException('get_phaseogram'))
+
+    # Preapares the result
+    result = push_to_results_array([], phaseogr)
+    result = push_to_results_array(result, phases)
+    result = push_to_results_array(result, times)
+    result = push_to_results_array(result, mean_phases)
+    result = push_to_results_array(result, profile)
+    result = push_to_results_array(result, error_dist)
+    return result
+
+
 # ----- HELPER FUNCTIONS.. NOT EXPOSED  -------------
 
 def get_filtered_dataset(destination, filters, gti_destination=""):
@@ -1424,13 +1755,13 @@ def get_filtered_dataset(destination, filters, gti_destination=""):
         logging.debug("Returned cached filtered dataset, cache_key: " + cache_key + ", count: " + str(DsCache.count()))
         return DsCache.get(cache_key)
 
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, ds_cache_key = DaveReader.get_file_dataset(destination)
     if not dataset:
         logging.warn("get_filtered_dataset: destination specified but not loadable.")
         return None
 
     if gti_destination:
-        gti_dataset = DaveReader.get_file_dataset(gti_destination)
+        gti_dataset, gti_cache_key = DaveReader.get_file_dataset(gti_destination)
         if gti_dataset:
             dataset = DsHelper.get_dataset_applying_gti_dataset(dataset, gti_dataset)
             if not dataset:
@@ -1520,14 +1851,27 @@ def get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination
 
     if DsHelper.is_events_dataset(filtered_ds):
         # Creates lightcurves by gti and joins in one
-        logging.debug("Create lightcurve from evt dataset... Event count: " + str(len(filtered_ds.tables["EVENTS"].columns["TIME"].values)))
+        logging.debug("Create lightcurve from evt dataset")
         return get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gti_destination, dt)
 
     elif DsHelper.is_lightcurve_dataset(filtered_ds):
         #If dataset is LIGHTCURVE type
         logging.debug("Create lightcurve from lc dataset")
         gti = load_gti_from_destination (gti_destination)
-        return DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, gti=gti)
+        lc = DsHelper.get_lightcurve_from_lc_dataset(filtered_ds, gti=gti)
+
+        #Applies background data if setted
+        if bck_destination:
+
+            #Gets the backscale keyword value
+            src_backscale = None
+            if "BACKSCAL" in filtered_ds.tables["RATE"].header:
+                src_backscale = int(filtered_ds.tables["RATE"].header["BACKSCAL"])
+
+            #Applies background data
+            lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale)
+
+        return lc
 
     else:
         logging.warn("Wrong dataset type")
@@ -1547,11 +1891,19 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
         return None
 
-    filtered_ds = None  # Dispose memory
     lc = eventlist.to_lc(dt)
     if bck_destination:
-        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt)
+
+        #Gets the backscale keyword value
+        src_backscale = None
+        if "BACKSCAL" in filtered_ds.tables["EVENTS"].header:
+            src_backscale = int(filtered_ds.tables["EVENTS"].header["BACKSCAL"])
+
+        #Applies background data
+        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale)
+
     eventlist = None  # Dispose memory
+    filtered_ds = None  # Dispose memory
 
     # Applies rate filter to lightcurve countrate if filter has been sent
     rate_filter = FltHelper.get_rate_filter(filters)
@@ -1578,25 +1930,46 @@ def get_lightcurves_from_events_datasets_array (datasets_array, color_keys, bck_
     return lightcurves
 
 
-def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt):
-    filtered_bck_ds = get_filtered_dataset(bck_destination, filters, gti_destination)
-    if DsHelper.is_events_dataset(filtered_bck_ds):
+def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale=None):
 
+    if lc:
         logging.debug("Create background lightcurve ....")
-        bck_eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_bck_ds)
-        if bck_eventlist and len(bck_eventlist.time) > 0:
-            bck_lc = bck_eventlist.to_lc(dt)
+        bck_lc = get_lightcurve_any_dataset(bck_destination, "", gti_destination, filters, dt)
+        if bck_lc:
+
+            #Calculates the backscale_ratio
+            backscale_ratio = 1;
+            if src_backscale is not None:
+
+                bck_ds, bck_cache_key = DaveReader.get_file_dataset(bck_destination)
+                if bck_ds:
+
+                    #Gets the backscale keyword value
+                    table = DsHelper.get_hdutable_from_dataset(bck_ds)
+                    if table:
+                        if "BACKSCAL" in table.header:
+                            backscale_ratio = src_backscale / int(table.header["BACKSCAL"])
+                    bck_ds = None
+                    table = None
+
+            if backscale_ratio != 1:
+                # Applies the backscale_ratio to background lightcurve
+                logging.debug("Applying backscale_ratio: " + str(backscale_ratio))
+                bck_lc.counts *= backscale_ratio
+                bck_lc.counts_err *= backscale_ratio
+                bck_lc = Lightcurve(bck_lc.time, bck_lc.counts,
+                                    err=bck_lc.counts_err, gti=bck_lc.gti,
+                                    mjdref=bck_lc.mjdref)
+
+            #Substracts background lightcurve from source lightcurve
             lc = lc - bck_lc
             bck_lc = None
 
         else:
-            logging.warn("Wrong lightcurve counts for background data...")
-
-        bck_eventlist = None  # Dispose memory
-        filtered_bck_ds = None
+            logging.warn("Wrong lightcurve for background data...")
 
     else:
-        logging.warn("Background dataset is None!, omiting Bck data.")
+        logging.warn("Wrong source lightcurve.")
 
     return lc
 
@@ -1640,6 +2013,32 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
         return AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti), lc, gti
 
 
+def get_countrate_from_lc_ds (lc_destination, bck_destination, lc_name, bck_name):
+
+    lc_ds, lc_cache_key = DaveReader.get_file_dataset(lc_destination)
+    if not DsHelper.is_lightcurve_dataset(lc_ds):
+        logging.warn("Wrong dataset type for " + lc_name)
+        return None, None
+
+    count_rate = np.array(lc_ds.tables["RATE"].columns["RATE"].values)
+    count_rate_error = np.array(lc_ds.tables["RATE"].columns["RATE"].error_values)
+
+    if bck_destination:
+        bck_ds, bck_cache_key = DaveReader.get_file_dataset(bck_destination)
+        if not DsHelper.is_lightcurve_dataset(bck_ds):
+            logging.warn("Wrong dataset type for " + bck_name)
+        else:
+            count_rate_bck = np.array(bck_ds.tables["RATE"].columns["RATE"].values)
+            count_rate_error_bck = np.array(bck_ds.tables["RATE"].columns["RATE"].error_values)
+            if count_rate.shape == count_rate_bck.shape:
+                count_rate -= count_rate_bck
+                count_rate_error -= count_rate_error_bck
+            else:
+                logging.warn("Lightcurves " + lc_name + " and " + bck_name + " have different shapes.")
+
+    return count_rate, count_rate_error
+
+
 def load_gti_from_destination (gti_destination):
 
     # Try to get the gtis from cache
@@ -1650,7 +2049,7 @@ def load_gti_from_destination (gti_destination):
 
     gti = None
     if gti_destination:
-        gti_dataset = DaveReader.get_file_dataset(gti_destination)
+        gti_dataset, gti_cache_key = DaveReader.get_file_dataset(gti_destination)
         if gti_dataset:
             gti = DsHelper.get_stingray_gti_from_gti_table (gti_dataset.tables["GTI"])
             DsCache.add(cache_key, gti)
@@ -1667,3 +2066,26 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
     divided_values[divided_values > CONFIG.BIG_NUMBER]=0
     divided_error[divided_error > CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error
+
+
+# ----- Long-term variability of AGN FUNCTIONS.. NOT EXPOSED  -------------
+
+def lightcurve_meancount(lc):
+    return lc.meancounts, np.std(lc.counts)
+
+def lightcurve_excvar(lc):
+    return excess_variance(lc, normalization='none')
+
+def lightcurve_fractional_rms(lc):
+    return excess_variance(lc, normalization='fvar')
+
+def get_means_from_array(array, elements_per_mean):
+    split = np.array_split(array, math.floor(len(array) / elements_per_mean))
+    return np.array([np.mean(arr) for arr in split])
+
+def mean_confidence_interval(data, confidence=0.95):
+    a = 1.0*np.array(data)
+    n = len(a)
+    m, se = np.mean(a), sp.stats.sem(a)
+    h = se * sp.stats.t._ppf((1+confidence)/2., n-1)
+    return m, m-h, m+h

@@ -20,7 +20,7 @@ def test_get_eventlist_from_evt_dataset(s):
     if not FileUtils.is_valid_file(destination):
         return None
 
-    dataset = DaveReader.get_file_dataset(destination)
+    dataset, cache_key = DaveReader.get_file_dataset(destination)
 
     if not dataset:
         return None

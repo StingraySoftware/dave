@@ -67,6 +67,14 @@ function Schema(schema){
     return "";
   }
 
+  this.getBackgroundSubstracted = function () {
+    if (this.hasHeader()){
+      return getBackgroundSubstracted (this.getHeader());
+    }
+
+    return false;
+  }
+
   this.getTimeResolution = function () {
     if (this.hasHeader()){
       var tableHeader = this.getHeader();
@@ -78,7 +86,14 @@ function Schema(schema){
       }
     }
 
-    return 1.0;
+    /*var eventsCount = this.getEventsCount();
+    if (eventsCount > 0) {
+      return this.getTotalDuration() / eventsCount;
+    } else {
+      return 1.0;
+    }*/
+
+    return 1E-9;
   }
 
   this.getTotalDuration = function () {
@@ -146,4 +161,47 @@ function Schema(schema){
   }
 
   return this;
+}
+
+//STATIC HEADER METHODS:
+
+//Returns if a lightcurve is background substracted
+function getBackgroundSubstracted (rateTableHeader) {
+  if (!isNull(rateTableHeader)){
+    if (!isNull(rateTableHeader["BACKAPP"])) {
+      return rateTableHeader["BACKAPP"].toLowerCase() == "true";
+    }
+  }
+  return false;
+}
+
+//Extracts te text for the energy range used to create a lightcurve
+function extractEnergyRangeTextFromHeader (header) {
+
+  var tableName = "RATE";
+  var filterColumn = "PI";
+  var searchFieldPrefix = "DSTYP";
+  var unitFieldPrefix = "DSUNI";
+  var valueFieldPrefix = "DSVAL";
+
+  if (!isNull(header) && !isNull(header[tableName])) {
+
+    var rateTable = header[tableName];
+
+    for (i=0; i<20; i++) {
+      //Looks for the searchField index
+      var searchField = searchFieldPrefix + i;
+      if (!isNull(rateTable[searchField]) && rateTable[searchField] == filterColumn){
+        var unit = rateTable[unitFieldPrefix + i];
+        var range = rateTable[valueFieldPrefix + i];
+
+        if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
+          var rangeVals = range.split(":");
+          return "From " + rangeVals[0] + " " + unit + ", to " + rangeVals[1] + " " + unit;
+        }
+      }
+    }
+  }
+
+  return "";
 }

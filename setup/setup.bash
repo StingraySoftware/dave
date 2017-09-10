@@ -140,6 +140,28 @@ if conda env list | grep -q "^dave[ ]\+"; then
 else
   echo "Creating virtual Python environment dave"
   conda env create -f setup/environment.yml
+  retVal=$?
+  if [[ retVal -ne 0 ]] ; then
+      echo "Failed to create virtual Python environment."
+      return 1
+  
+# We can try to fix it by deleting the pip cache but the case so far I've seen, deleting the pip cache doens't solve it.
+#      echo "Failed to create virtual Python environment. Deleting pip cache and try again."
+#      if [[ "$OSTYPE" == "linux-gnu" ]]; then
+#          rm -rf ~/.cache/pip
+#      elif [[ "$OSTYPE" == "darwin"* ]]; then
+#          rm -rf ~/Library/Caches/pip
+#      fi
+#      # retry installing
+#      conda env remove -y -n dave
+#      conda env create -f setup/environment.yml
+#      retVal=$?
+#      if [[ retVal -ne 0 ]] ; then
+#          echo "Failed to create virtual Python environment on second attempt too. Bailing out."
+#          return 1
+#      fi
+  fi
+  
 fi
 source activate dave
 
@@ -147,8 +169,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Aug 4th, 2017 -> https://github.com/StingraySoftware/stingray/commit/ecee4be21ef6234a95d9c5715f455439777849bd
-STINGRAY_COMMIT_HASH=ecee4be21ef6234a95d9c5715f455439777849bd
+# Sep 7th, 2017 -> https://github.com/StingraySoftware/stingray/commit/e833a5c4090641c84f16df64439b27af8356bbb2
+STINGRAY_COMMIT_HASH=e833a5c4090641c84f16df64439b27af8356bbb2
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
@@ -165,8 +187,15 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git checkout $STINGRAY_COMMIT_HASH
 
 	#Install stingray libraries
+	echo statsmodels >> requirements.txt
 	pip install -r requirements.txt
-	pip install statsmodels
+	
+       retVal=$?
+       if [[ retVal -ne 0 ]] ; then
+           echo "Failed to install Stingray dependencies"
+           return 1
+       fi
+
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
 		#Linux
@@ -208,8 +237,8 @@ fi
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Aug 4th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/e0191779adaccb0a51ce80d9207aa3f09a0f1d21
-HENDRICS_COMMIT_HASH=e0191779adaccb0a51ce80d9207aa3f09a0f1d21
+# Sep 4, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/a1757c0b21bd3aeb55bec22bc23d3c5440f7440c
+HENDRICS_COMMIT_HASH=a1757c0b21bd3aeb55bec22bc23d3c5440f7440c
 
 if [ ! -e $HENDRICS_FOLDER ]; then
 

@@ -10,7 +10,6 @@ var DEFAULT_MARGINS = { b : 38, r : 12, l: 64, t: 30 }
 var ERROR_BAR_OPACITY = 0.2;
 
 function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
-
     return {
         data: [
                 {
@@ -19,40 +18,23 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_
                   hoverinfo : 'none',
                   x : x_values,
                   y : y_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          }
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y_error_values)
                 }
               ],
         layout : {
-                   title : !isNull(title) ? title : '',
+                   title: !isNull(title) ? title : '',
                    hovermode: 'closest',
-                   xaxis : {
-                             title : x_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                           },
-                   yaxis: {
-                             title : y_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                         },
-                  dragmode:'select',
-                  margin: DEFAULT_MARGINS,
-                  shapes: getShapesFromWti (wti_x_ranges)
+                   xaxis: getLabelConfig(x_label),
+                   yaxis: getLabelConfig(y_label),
+                   dragmode:'select',
+                   margin: DEFAULT_MARGINS,
+                   shapes: getShapesFromWti (wti_x_ranges)
                 }
-        }
+      }
 }
 
 function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
-
     return {
         data: [
                 {
@@ -62,18 +44,8 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                   connectgaps : false,
                   x : x_values,
                   y : y_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y_error_values),
                   line : {
                           shape	:	'hvh',
                           color : '#1f77b4'
@@ -81,25 +53,18 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                 }
               ],
         layout : {
-                   title : !isNull(title) ? title : '',
+                   title: !isNull(title) ? title : '',
                    hovermode: 'closest',
-                   xaxis : {
-                             title : x_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                           },
-                   yaxis: {
-                             title : y_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                         },
-                  dragmode:'select',
-                  margin: DEFAULT_MARGINS,
-                  shapes: getShapesFromWti (wti_x_ranges)
-                }
-        }
+                   xaxis: getLabelConfig(x_label),
+                   yaxis: getLabelConfig(y_label),
+                   dragmode:'select',
+                   margin: DEFAULT_MARGINS,
+                   shapes: getShapesFromWti (wti_x_ranges)
+                 }
+      }
 }
 
 function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_values, z_error_values, title, color_label, color_array){
-
     return {
         data: [
                 {
@@ -107,24 +72,9 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                   x : x_values,
                   y : y_values,
                   z : z_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_z : {
-                             type : 'data',
-                             array : z_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y_error_values),
+                  error_z : getErrorConfig(z_error_values),
                   marker : {
                             size : 5,
                             color : color_array,  // set color to an array/list of desired values
@@ -139,14 +89,13 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                 }
               ],
         layout : {
-                   title : !isNull(title) ? title : '',
+                   title: !isNull(title) ? title : '',
                    margin: DEFAULT_MARGINS
                 }
-        }
+      }
 }
 
 function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
-
   return {
       data: [
               {
@@ -161,24 +110,18 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
                     }
               }
             ],
-      layout : {
-                 title : !isNull(title) ? title : '',
-                 hovermode: 'closest',
-                 xaxis : {
-                           title : x_label,
-                           titlefont : DEFAULT_TITLE_FONT
-                         },
-                 yaxis: {
-                           title : y_label,
-                           titlefont : DEFAULT_TITLE_FONT
-                       },
-                 margin: DEFAULT_MARGINS
-              }
-      }
+      layout : getDefaultLayout (title, x_label, y_label)
+    }
+}
+
+function get_plotdiv_scatter_with_errors(x_values, y_values, x_error_values, y_error_values, x_label, y_label, title) {
+  var plotdiv = get_plotdiv_scatter(x_values, y_values, x_label, y_label, title);
+  plotdiv.data[0].error_x = getErrorConfig(x_error_values);
+  plotdiv.data[0].error_y = getErrorConfig(y_error_values);
+  return plotdiv;
 }
 
 function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label, title) {
-
   return {
       data: [
               {
@@ -199,25 +142,11 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
                     }
               }
             ],
-      layout : {
-                 title : !isNull(title) ? title : '',
-                 hovermode: 'closest',
-                 xaxis : {
-                           title : x_label,
-                           titlefont : DEFAULT_TITLE_FONT
-                         },
-                 yaxis: {
-                           title : y_label,
-                           titlefont : DEFAULT_TITLE_FONT
-                       },
-                 margin: DEFAULT_MARGINS
-              }
-      }
-
+      layout : getDefaultLayout (title, x_label, y_label)
+    }
 }
 
 function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y_label, z_label, colorscale, title) {
-
   return {
       data: [
               {
@@ -229,21 +158,14 @@ function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y
               }
             ],
       layout : {
-                 title : !isNull(title) ? title : '',
+                 title: !isNull(title) ? title : '',
                  hovermode: 'closest',
+                 xaxis: getLabelConfig(x_label),
+                 yaxis: getLabelConfig(y_label),
                  scene: {
-                   xaxis : {
-                             title : x_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                           },
-                   yaxis: {
-                             title : y_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                         },
-                   zaxis: {
-                             title : z_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                       }
+                   xaxis: getLabelConfig(x_label),
+                   yaxis: getLabelConfig(y_label),
+                   zaxis: getLabelConfig(z_label)
               		},
                  margin: DEFAULT_MARGINS
               }
@@ -253,7 +175,6 @@ function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y
 function get_plotdiv_xyy(x_values, y0_values, y1_values,
                           x_error_values, y0_error_values, y1_error_values,
                           wti_x_ranges, x_label, y0_label, y1_label, title){
-
     return {
         data: [
                 {
@@ -262,18 +183,8 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y0_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y0_error_values,
-                             visible : true,
-                             opacity: ERROR_BAR_OPACITY
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y0_error_values),
                   name: y0_label
                 },
                 {
@@ -282,29 +193,18 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                   showlegend : false,
                   x : x_values,
                   y : y1_values,
-                  error_x : {
-                             type : 'data',
-                             array : x_error_values,
-                             visible : true
-                          },
-                  error_y : {
-                             type : 'data',
-                             array : y1_error_values,
-                             visible : true
-                          },
+                  error_x : getErrorConfig(x_error_values),
+                  error_y : getErrorConfig(y1_error_values),
                   name: y1_label
                 }
               ],
         layout : {
-                   title : !isNull(title) ? title : '',
+                   title: !isNull(title) ? title : '',
                    hovermode: 'closest',
-                   xaxis : {
-                             title : x_label,
-                             titlefont : DEFAULT_TITLE_FONT
-                           },
-                  dragmode:'select',
-                  margin: DEFAULT_MARGINS,
-                  shapes: getShapesFromWti (wti_x_ranges)
+                   xaxis: getLabelConfig(x_label),
+                   dragmode:'select',
+                   margin: DEFAULT_MARGINS,
+                   shapes: getShapesFromWti (wti_x_ranges)
                 }
         }
 }
@@ -337,15 +237,95 @@ function getShapesFromWti (wti_x_ranges) {
   return wti_shapes;
 }
 
-function getCrossLine (xrange, yrange){
-  return { visible: false,
+function getConfidenceShape (y_range) {
+  return {
+          type: 'rect',
+          xref: 'paper',
+          yref: 'y',
+          x0: 0,
+          y0: y_range[0],
+          x1: 1,
+          y1: y_range[1],
+          fillcolor: '#265a88',
+          opacity: 0.2,
+          line: {
+              width: 0
+          }
+      };
+}
+
+function getDefaultLayout (title, x_label, y_label) {
+  return {
+             title: !isNull(title) ? title : '',
+             hovermode: 'closest',
+             xaxis: getLabelConfig(x_label),
+             yaxis: getLabelConfig(y_label),
+             margin: DEFAULT_MARGINS
+          };
+}
+
+function getLabelConfig (label){
+  return { title : label, titlefont : DEFAULT_TITLE_FONT };
+}
+
+function getLine (xdata, ydata, color){
+  return {
+          type : 'scatter',
+          showlegend : false,
+          hoverinfo : 'none',
+          connectgaps : false,
+          x : xdata,
+          y : ydata,
+          line : {
+                  color : color
+                }
+        };
+}
+
+function getCrossLine (xrange, yrange, color, width, style, opacity){
+  return { visible: !isNull(color),
            x: xrange,
            y: yrange,
            mode:"lines",
            showlegend: false,
            line: {
-                  width: 1,
-                  color: '#dd4814'
+                  dash: isNull(style) ? 'solid' : style,
+                  width: isNull(width) ? 1 : width,
+                  color: isNull(color) ? '#dd4814' : color,
+                  width: isNull(opacity) ? 1 : opacity
                 },
            hoverinfo: "none" };
+}
+
+function getErrorConfig(error_data) {
+  return {
+           type : 'data',
+           array : error_data,
+           visible : true,
+           opacity: ERROR_BAR_OPACITY
+        };
+}
+
+function getAgnPlotTrace(yaxis, xData, yData, yErrorData) {
+  var plotTrace = {
+          type : 'scatter',
+          mode : "markers",
+          showlegend : false,
+          hoverinfo : 'x+y',
+          x : xData,
+          y : yData,
+          error_y : getErrorConfig(yErrorData)
+        };
+
+  if (!isNull(yaxis)) {
+    plotTrace.yaxis = yaxis;
+  }
+
+  return plotTrace;
+}
+
+function getAgnPlotTraceWithXErrorData(yaxis, xData, yData, xErrorData, yErrorData) {
+  var plotTrace = getAgnPlotTrace(yaxis, xData, yData, yErrorData);
+  plotTrace.error_x = getErrorConfig(xErrorData);
+  return plotTrace;
 }

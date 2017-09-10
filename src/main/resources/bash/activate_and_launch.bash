@@ -26,8 +26,9 @@ echo "Python Environment folder: $ENVDIR"
 
 #Check DAVE environment version
 VERSION_FILE=$ENVDIR/version.txt
+VERSION=$(cat $RES_DIR/resources/version.txt)
 if [ -e $VERSION_FILE ]; then
-	if [[ $(cat $VERSION_FILE) != $(cat $RES_DIR/resources/version.txt) ]]; then
+	if [[ $(cat $VERSION_FILE) != $VERSION ]]; then
 		echo "Wrong DAVE Version found, updating Python Environment"
 		rm -rf $ENVDIR
 	else
@@ -58,7 +59,7 @@ pip install -r requirements.txt
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
-python server.py $ENVDIR . & >> $ENVDIR/flaskserver.log 2>&1
+python server.py $ENVDIR . 5000 $VERSION & >> $ENVDIR/flaskserver.log 2>&1
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 cd -

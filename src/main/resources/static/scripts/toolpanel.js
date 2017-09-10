@@ -6,8 +6,7 @@ function ToolPanel (id,
                     onDatasetChangedFn,
                     onLcDatasetChangedFn,
                     onFiltersChangedFn,
-                    undoHistoryFn,
-                    resetHistoryFn,
+                    historyManager,
                     onDragDropChangedFn)
 {
 
@@ -35,8 +34,7 @@ function ToolPanel (id,
   this.onDatasetChangedFn = onDatasetChangedFn;
   this.onLcDatasetChangedFn = onLcDatasetChangedFn;
   this.onFiltersChanged = onFiltersChangedFn;
-  this.undoHistory = undoHistoryFn;
-  this.resetHistory = resetHistoryFn;
+  this.historyManager = historyManager;
   this.onDragDropChanged = onDragDropChangedFn;
 
   this.lastTimeoutId = null;
@@ -47,8 +45,11 @@ function ToolPanel (id,
   this.selectors_array = [];
   this.replaceColumn = "PHA";
 
-  this.addFileSelector = function (selector) {
-    this.$html.find(".fileSelectorsContainer").append(selector.$html);
+  this.addFileSelector = function (selector, container) {
+    if (isNull(container)){
+      container = this.$html.find(".fileSelectorsContainer");
+    }
+    container.append(selector.$html);
     this.file_selectors_ids_array.push(selector.id);
     this.file_selectors_array.push(selector);
   }
@@ -66,41 +67,61 @@ function ToolPanel (id,
      this.$html.find(".fileSelectorsContainer").append($selectedFile);
   }
 
-  this.setInfoTextToFileSelector = function (selectorKey, infoText) {
+  this.setInfoTextToFileSelector = function (selectorKey, infoText, hideButtons) {
     var fileSelector = this.getFileSelector(selectorKey);
     if (!isNull(fileSelector)) {
-      fileSelector.showInfoText(infoText);
+      fileSelector.showInfoText(infoText, hideButtons);
     }
   }
 
   this.getFileSelector = function (selectorKey) {
     for (idx in this.file_selectors_array) {
-      if (this.file_selectors_array[idx].selectorKey == selectorKey) {
-        return this.file_selectors_array[idx];
+      var selector = this.file_selectors_array[idx];
+      if (selector.selectorKey == selectorKey) {
+        return selector;
       }
     }
 
     return null;
   }
 
+  this.resetFileSelectors = function (excludeKey) {
+    for (idx in this.file_selectors_array) {
+      var selector = this.file_selectors_array[idx];
+      if (isNull(excludeKey) || selector.selectorKey != excludeKey) {
+        selector.reset();
+      }
+    }
+  }
+
   this.showEventsSelectors = function () {
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
     this.rmfFileSelector.show();
+    this.lcBckFileSelector.hide();
     this.lcAFileSelector.hide();
     this.lcBFileSelector.hide();
     this.lcCFileSelector.hide();
     this.lcDFileSelector.hide();
+    this.lcABckFileSelector.hide();
+    this.lcBBckFileSelector.hide();
+    this.lcCBckFileSelector.hide();
+    this.lcDBckFileSelector.hide();
   }
 
   this.showLcSelectors = function () {
-    this.bckFileSelector.hide();
     this.gtiFileSelector.hide();
     this.rmfFileSelector.hide();
+    this.bckFileSelector.hide();
+    this.lcBckFileSelector.show();
     this.lcAFileSelector.show();
     this.lcBFileSelector.show();
     this.lcCFileSelector.show();
     this.lcDFileSelector.show();
+    this.lcABckFileSelector.hide();
+    this.lcBBckFileSelector.hide();
+    this.lcCBckFileSelector.hide();
+    this.lcDBckFileSelector.hide();
   }
 
   this.showPanel = function ( panel ) {
@@ -193,15 +214,23 @@ function ToolPanel (id,
       this.binSelector.$html.remove();
     }
 
+    this.removeSngOrMultiFileSelector();
+    this.resetFileSelectors("SRC");
+    
     if (projectConfig.schema.isEventsFile()){
 
-      this.removeSngOrMultiFileSelector();
       this.showEventsSelectors();
 
+      //Sets RMF fileSelector message depending on PHA column
+      var rmfMessage = "";
       if (!projectConfig.schema.hasColumn("PHA")){
           //PHA Column doesn't exist, show we can't apply RMF file
-          this.rmfFileSelector.disable("PHA column not found in SRC file");
+          rmfMessage = "PHA column not found in SRC file";
+      } else if (projectConfig.schema.getTable()["PHA"].min_value >= projectConfig.schema.getTable()["PHA"].max_value){
+          //PHA Column is empty, show we can't apply RMF file
+          rmfMessage = "PHA column is empty in SRC file";
       }
+      this.rmfFileSelector.disable(rmfMessage);
 
       //Caluculates max, min and step values for slider with time ranges
       var minBinSize = 1;
@@ -245,9 +274,11 @@ function ToolPanel (id,
 
     } else if (projectConfig.schema.isLightCurveFile()){
 
-      this.removeSngOrMultiFileSelector();
+      //Prepares file selectors for lightcurve
       this.showLcSelectors();
+      this.lcBckFileSelector.showInfoText((projectConfig.backgroundSubstracted ? "Background already substracted" : ""), CONFIG.DENY_BCK_IF_SUBS);
 
+      //Sets fixed binSize panel
       var binDiv = $('<div class="sliderSelector binLabel">' +
                       '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
                     '</div>');
@@ -590,7 +621,7 @@ function ToolPanel (id,
       try {
         var action = JSON.parse(e.target.result);
         if (!isNull(action.type) && !isNull(action.actionData)){
-          getTabForSelector(currentObj.id).applyAction(action);
+          getTabForSelector(currentObj.id).historyManager.applyAction(action);
         } else {
           showError("File is not supported as filters");
         }
@@ -623,7 +654,7 @@ function ToolPanel (id,
         }
     ];
 
-    var lcSelectorKeys = ["LCA", "LCB", "LCC", "LCD"];
+    var lcSelectorKeys = ["LCA", "LCB", "LCC", "LCD", "LCA_BCK", "LCB_BCK", "LCC_BCK", "LCD_BCK"];
     var makeLcCallbackFunc = function(lcKey, filename) {
         return function(callback) {
           currentObj.setFilesOnFileSelector(lcKey, filename, [], currentObj.onLcDatasetChangedFn, callback);
@@ -670,7 +701,7 @@ function ToolPanel (id,
   }
 
   this.addAnalisysSection = function (section) {
-    var $section = $('<div class="Section Disabled ' + section.cssClass + '">' +
+    var $section = $('<div class="Section HlSection Disabled ' + section.cssClass + '">' +
                       '<div class="switch-wrapper">' +
                       '  <div id="switch_' + section.cssClass + '_' + this.id + '" section="' + section.cssClass + '" class="switch-btn fa fa-square-o" aria-hidden="true"></div>' +
                       '</div>' +
@@ -694,7 +725,7 @@ function ToolPanel (id,
   }
 
   this.addBulkAnalisysButton = function () {
-    var $section = $('<div class="Section BulkAnalisysSection">' +
+    var $section = $('<div class="Section HlSection ulkAnalisysSection">' +
                       '<h3>Bulk Analisys <i class="fa fa-list" aria-hidden="true"></i></h3>' +
                       '<div class="sectionContainer"></div>' +
                     '</div>');
@@ -724,29 +755,18 @@ function ToolPanel (id,
                             '</div>');
     $sectionContainer.append($plotBulkResults);
 
-    var $plotFilenames = $plotBulkResults.find(".plotFilenames");
-    //$plotFilenames.hide();
-
     //Show and hide plot filenames
     $plotBulkResults.find(".switch-btn").click(function ( event ) {
       var plotId = $(this).attr("plot_id");
       var $plotsection = currentObj.$html.find(".BulkAnalisysSection").find("." + plotId);
       var $switchBtn = $plotsection.find(".switch-btn");
-      var enabled = !$switchBtn.hasClass("fa-check-square-o");
-
-      setVisibility($plotsection.find(".plotFilenames"), enabled);
-      if (enabled) {
-        $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
-        $plotsection.removeClass("Disabled");
-        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
-      } else {
-        $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
-        $plotsection.addClass("Disabled");
-        //getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
-      }
+      this.setEnabledSectionCore($plotsection,
+                                 $plotsection.find(".plotFilenames"),
+                                 $switchBtn,
+                                 !$switchBtn.hasClass("fa-check-square-o"));
     });
 
-    return $plotFilenames;
+    return $plotBulkResults.find(".plotFilenames");
   }
 
   this.isSectionEnabled = function (sectionClass) {
@@ -761,20 +781,22 @@ function ToolPanel (id,
 
   this.setEnabledSection = function (sectionClass, enabled) {
     var $section = this.$html.find(".analyzeContainer").find("." + sectionClass);
-    var $switchBtn = $section.find(".switch-btn");
+    this.setEnabledSectionCore($section,
+                               $section.find(".sectionContainer"),
+                               $section.find(".switch-btn"),
+                               enabled);
+  }
 
-    setVisibility($section.find(".sectionContainer"), enabled);
+  this.setEnabledSectionCore = function ($section, $sectionContainer, $switchBtn, enabled){
+    setVisibility($sectionContainer, enabled);
     if (enabled) {
       $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
       $section.removeClass("Disabled");
-      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, true);
     } else {
       $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
       $section.addClass("Disabled");
-      getTabForSelector(this.id).outputPanel.setEnabledSection(sectionClass, false);
     }
   }
-
 
   //Normal file selectors, SRC is valid on both events files and lightcurves
 
@@ -812,12 +834,34 @@ function ToolPanel (id,
   this.addFileSelector(this.lcDFileSelector);
   this.lcDFileSelector.hide();
 
+  //Adds lightcurves background selectors
+  this.lcBckFileSelector = new fileSelector("lcBckFileSelector_" + this.id, "Source Background File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
+  this.lcBckFileSelector.hide();
+  this.addFileSelector(this.lcBckFileSelector);
+
+  this.lcABckFileSelector = new fileSelector("lcABckFileSelector_" + this.id, "Lc A Background File:", "LCA_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcABckFileSelector.hide();
+  this.addFileSelector(this.lcABckFileSelector);
+
+  this.lcBBckFileSelector = new fileSelector("lcBBckFileSelector_" + this.id, "Lc B Background File:", "LCB_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcBBckFileSelector.hide();
+  this.addFileSelector(this.lcBBckFileSelector);
+
+  this.lcCBckFileSelector = new fileSelector("lcCBckFileSelector_" + this.id, "Lc C Background File:", "LCC_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcCBckFileSelector.hide();
+  this.addFileSelector(this.lcCBckFileSelector);
+
+  this.lcDBckFileSelector = new fileSelector("lcDBckFileSelector_" + this.id, "Lc D Background File:", "LCD_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcDBckFileSelector.hide();
+  this.addFileSelector(this.lcDBckFileSelector);
+
+  //Filter tab buttons
   this.clearBtn.click(function () {
-      currentObj.resetHistory();
+      currentObj.historyManager.resetHistory();
   });
 
   this.undoBtn.click(function () {
-      currentObj.undoHistory();
+      currentObj.historyManager.undoHistory();
   });
 
   this.loadBtn.click(function () {
@@ -844,4 +888,5 @@ function ToolPanel (id,
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);
+  return this;
 }

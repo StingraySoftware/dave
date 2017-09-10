@@ -1,4 +1,5 @@
 const electron = require('electron');
+const {ipcMain} = require('electron')
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 
@@ -17,39 +18,34 @@ var retryInterval = 0.5 * 1000;
 var retries = 0;
 var connected = false;
 var subpy = null;
-var processRunning = true; //If false could cause fail of first connectToServer call
+var processRunning = false;
+var logEnabled = true;
 var logDebugMode = false;
+var mainConfig = null;
 var LOGS_PATH = "";
-
 var PYTHON_URL = "";
 
 app.on('ready', function() {
 
-  var config = loadConfig();
-  console.log('config: ' + JSON.stringify(config));
+  mainConfig = loadConfig();
+  console.log('mainConfig: ' + JSON.stringify(mainConfig));
 
-  createWindow(config.splash_path);
+  createWindow(mainConfig.splash_path);
 
-  if (config.error == null) {
+  if (mainConfig.error == null) {
 
-    logDebugMode = config.logDebugMode;
+    logDebugMode = mainConfig.logDebugMode;
+    PYTHON_URL = mainConfig.pythonUrl;
+    LOGS_PATH = mainConfig.logsPath.replace("$HOME", require('os').homedir());
 
-    if (!config.pythonEnabled && !config.envEnabled) {
-      log('All server modes are disabled on configuration. Connecting anyways...');
-    } else if (config.pythonEnabled) {
-      launchProcess ("python", [config.pythonPath, '/tmp', '..'], "Python");
-    } else if (config.envEnabled) {
-      launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
-    }
-
-    PYTHON_URL = config.pythonUrl;
-    LOGS_PATH = config.logsPath.replace("$HOME", require('os').homedir());
-    console.log('Connecting to server... URL: ' + PYTHON_URL);
-    connectToServer ();
+    launchPythonServer(mainConfig, function() {
+      console.log('Connecting to server... URL: ' + PYTHON_URL);
+      connectToServer ();
+    });
 
   } else {
 
-    log('Error loading DAVE configuration: </br> ERROR: ' + config.error +  '</br> CWD: ' + __dirname);
+    log('Error loading DAVE configuration: </br> ERROR: ' + mainConfig.error +  '</br> CWD: ' + __dirname);
   }
 });
 
@@ -77,6 +73,29 @@ function loadConfig(){
     }
 }
 
+function launchPythonServer(config, callback) {
+
+  var port = config.pythonUrl.split(":")[2];
+  checkPortInUse(port, function (inUse) {
+    if (!inUse) {
+      if (!config.pythonEnabled && !config.envEnabled) {
+        log('All server modes are disabled on configuration. Connecting anyways...');
+      } else if (config.pythonEnabled) {
+        launchProcess ("python", [config.pythonPath, '/tmp', '..', port, 'PY_ENV'], "Python");
+      } else if (config.envEnabled) {
+        launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
+      }
+
+      if (callback != null) {
+        callback();
+      }
+    } else {
+      sendErrorToWindow("Port " + port + " already in use!|");
+    }
+  });
+
+}
+
 function launchProcess(process, argument, processName) {
   try {
     if (logDebugMode) {
@@ -84,6 +103,7 @@ function launchProcess(process, argument, processName) {
     }
 
     subpy = cp.spawn(process, argument);
+    processRunning = true;
 
     subpy.stdout.on('data', (data) => {
       log(processName + ': ' + data);
@@ -96,16 +116,27 @@ function launchProcess(process, argument, processName) {
     });
 
     subpy.on('close', (code) => {
+
       processRunning = false;
+      var hadConnection = connected;
+      connected = false;
+      subpy = null;
+      retries = 0;
+
       if (code == 0) {
         log(processName + ' server stopped!');
+        if (hadConnection) {
+          connectionLost();
+        }
       } else {
 
         getTailFromLogFile(LOGS_PATH);
         if (parseInt(code) == 10){
           sendErrorToWindow("Error creating Python Environment|");
-        } else {
+        } else if (!hadConnection) {
           sendErrorToWindow("Error launching Python Server|");
+        } else {
+          connectionLost();
         }
         log(processName + ' server stopped with code: ' + code);
       }
@@ -138,7 +169,10 @@ function connectToServer (){
 
         console.log('Connection error: ' + err);
         retries ++;
-        setTimeout (function(){ console.log('.....'); connectToServer(); }, retryInterval);
+        setTimeout (function(){
+                                console.log('...');
+                                connectToServer();
+                              }, retryInterval);
       });
     } else if (processRunning) {
 
@@ -160,8 +194,10 @@ function loadDaveContents (url){
 }
 
 function log (msg){
-  console.log(msg);
-  logToWindow(msg);
+  if (logEnabled){
+    console.log(msg);
+    logToWindow(msg);
+  }
 }
 
 function logToWindow (msg){
@@ -176,6 +212,12 @@ function sendErrorToWindow (msg){
   }
 }
 
+function connectionLost (){
+  if (mainWindow != null) {
+    mainWindow.webContents.executeJavaScript("connectionLost();");
+  }
+}
+
 function getTailFromLogFile (logFilePath) {
   log('Getting log info from: ' + logFilePath);
   var tailProc = cp.spawn("tail", [ "-10", logFilePath ]);
@@ -184,11 +226,11 @@ function getTailFromLogFile (logFilePath) {
     stdout += data;
   });
   tailProc.on('close', (code) => {
-    logToWindow("LOGFILE: " + stdout);
+    log("LOGFILE: " + stdout);
   });
 }
 
- function escapeSpecialChars (text) {
+function escapeSpecialChars (text) {
     return text.replace(/\r?\n/g, "#")
                  .replace(/\\n/g, "#")
                  .replace(/\\'/g, "")
@@ -204,6 +246,28 @@ app.on('window-all-closed', function() {
     stop();
 });
 
+ipcMain.on('relaunchServer', function(){
+  if (logDebugMode) {
+    log('Relaunching Python Server...');
+  }
+  launchPythonServer(mainConfig, null);
+});
+
+ipcMain.on('connectedToServer', function(){
+  if (logDebugMode) {
+    log('DAVE connected to Python Server...');
+  }
+  connected = true;
+});
+
+ipcMain.on('enableLogError', function(){
+  logEnabled = true;
+});
+
+ipcMain.on('disableLogError', function(){
+  logEnabled = false;
+});
+
 function stop (){
   if (mainWindow != null){
     mainWindow = null;
@@ -217,6 +281,7 @@ function stop (){
 }
 
 function sendkillToServer (){
+  connected = false;
   try {
     request(PYTHON_URL + '/shutdown', function (error, response, body) {
       setTimeout (function(){
@@ -232,7 +297,9 @@ function sendkillToServer (){
 }
 
 function killServer (){
-  subpy.kill('SIGINT');
+  if (subpy != null) {
+    subpy.kill('SIGINT');
+  }
 }
 
 function delayedQuit(){
@@ -262,4 +329,23 @@ function prepareMenu (){
     ];
 
     Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function checkPortInUse(port, callback) {
+  var net = require('net');
+  var server = net.createServer();
+  server.once('error', function(err) {
+     if (err.code === 'EADDRINUSE') {
+       // port is currently in use
+       console.log('Port ' + port + ' is in use!');
+       callback(true);
+     }
+  });
+  server.once('listening', function() {
+     // close the server if listening doesn't fail
+     server.close();
+     console.log('Port ' + port + ' available!');
+     callback(false);
+  });
+  server.listen(port);
 }

@@ -16,7 +16,20 @@ rm -rf $BUILD_FOLDER
 rm -f build/$BUILD_NAME.zip
 
 cd src/main/js/electron
+# Construct a version to be whatever is in the package.json + the build info. Revert to original package.json first in case script is run more than once.
+git checkout -- package.json
+NPM_VERSION=$(cat package.json | jq '.version' | sed 's/"//g')"-"$(echo $BUILD_VERSION | sed 's/[_-+ ]//g')
+# Update the version in the package.json.
+cat package.json | jq --arg VERSION $NPM_VERSION 'to_entries | map(if .key == "version" then . + {"value": $VERSION} else . end ) | from_entries' > package.json.tmp
+mv package.json.tmp package.json
 npm run build-linux
+retVal=$?
+if [[ retVal -ne 0 ]] ; then
+        rm $MINICONDA
+        echo "npm build failed"
+        return 1
+fi
+
 cd -
 
 \cp setup/config/deply_linux_config.js $BUILD_FOLDER/resources/app/config.js

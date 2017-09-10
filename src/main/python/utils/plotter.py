@@ -1,7 +1,6 @@
 import numpy as np
 import utils.dave_logger as logging
 
-
 def get_plotdiv_xy(dataset, axis):
     data = build_data_list(dataset, axis)
     return data
@@ -50,6 +49,7 @@ def build_data_list(dataset, axis):
             logging.error("Accessing unknown table: %s" % table_name)
     return data
 
+
 def get_axis_with_gtis (axis):
     for i in range(len(axis)):
         # If TIME in axis append GTIs
@@ -57,3 +57,17 @@ def get_axis_with_gtis (axis):
             axis = np.append(axis, [{"table":"GTI", "column":"START"}])
             axis = np.append(axis, [{"table":"GTI", "column":"STOP"}])
     return axis
+
+
+def convert_fig_to_html(fig):
+  """ Convert Matplotlib figure 'fig' into a <img> tag for HTML use using base64 encoding. """
+  import base64
+  from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+  from io import BytesIO
+
+  canvas = FigureCanvas(fig)
+  png_output = BytesIO()
+  canvas.print_png(png_output)
+  data = png_output.getvalue()
+
+  return '<img src="data:image/png;base64,{}">'.format(base64.encodebytes(data).decode())

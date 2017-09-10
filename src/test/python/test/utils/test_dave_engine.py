@@ -40,7 +40,7 @@ def test_get_lightcurve(s):
     baseline_opts["p"] = 0.01
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts)
+        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts, None)
         assert result is not None
 
 
@@ -50,7 +50,7 @@ def test_get_divided_lightcurve_ds(s):
     result = ""
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_divided_lightcurve_ds(destination, destination)
+        result = DaveEngine.get_divided_lightcurve_ds(destination, destination, "", "")
         assert len(result) > 0
 
 

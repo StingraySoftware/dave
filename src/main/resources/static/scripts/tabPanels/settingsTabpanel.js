@@ -84,4 +84,5 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
   });
 
   log("SettingsTabPanel ready! id: " + this.id);
+  return this;
 }

@@ -33,9 +33,9 @@
   <button class="btn button btn-success btnRefreshFloating"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button>
 </div>
 
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/fileSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/sliderSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/binSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/modelSelector.js') }}?v={{ range (1, 9999) | random }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/fileSelector.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/sliderSelector.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/binSelector.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/selectors/modelSelector.js') }}?v={{ get_version() }}"></script>
 
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/toolpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/toolpanel.js') }}?v={{ get_version() }}"></script>

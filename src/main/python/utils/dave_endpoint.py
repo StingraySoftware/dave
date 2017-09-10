@@ -54,9 +54,6 @@ def get_destination(filename, target):
             if not FileUtils.file_exist(target, filename):
                 logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
                 return None
-            else:
-                logging.info("Filename readed from upload in previous session, filename %s" % filename)
-
 
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
@@ -176,7 +173,8 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt, baseline_opts):
+def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt,
+                    baseline_opts, variance_opts):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -200,15 +198,18 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     logging.debug("get_lightcurve: axis %s" % axis)
     logging.debug("get_lightcurve: dt %f" % dt)
     logging.debug("get_lightcurve: baseline_opts %s" % baseline_opts)
+    logging.debug("get_lightcurve: variance_opts %s" % variance_opts)
 
-    data = DaveEngine.get_lightcurve(src_destination, bck_destination, gti_destination, filters, axis, dt, baseline_opts)
+    data = DaveEngine.get_lightcurve(src_destination, bck_destination, gti_destination,
+                                    filters, axis, dt, baseline_opts, variance_opts)
 
     logging.debug("get_lightcurve: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt):
+def get_joined_lightcurves(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck_filename,
+                            target, filters, axis, dt):
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -217,13 +218,29 @@ def get_joined_lightcurves(lc0_filename, lc1_filename, target, filters, axis, dt
     if not lc1_destination:
         return common_error("Invalid file or cache key for lc1 data")
 
+    lc0_bck_destination = ""
+    if lc0_bck_filename:
+        lc0_bck_destination = get_destination(lc0_bck_filename, target)
+        if not lc0_bck_destination:
+            return common_error("Invalid file or cache key for lc0_bck data")
+
+    lc1_bck_destination = ""
+    if lc1_bck_filename:
+        lc1_bck_destination = get_destination(lc1_bck_filename, target)
+        if not lc1_bck_destination:
+            return common_error("Invalid file or cache key for lc1_bck data")
+
     logging.debug("get_joined_lightcurves lc0: %s" % lc0_filename)
     logging.debug("get_joined_lightcurves lc1: %s" % lc1_filename)
+    logging.debug("get_joined_lightcurves lc0_bck: %s" % lc0_bck_filename)
+    logging.debug("get_joined_lightcurves lc1_bck: %s" % lc1_bck_filename)
     logging.debug("get_joined_lightcurves: filters %s" % filters)
     logging.debug("get_joined_lightcurves: axis %s" % axis)
     logging.debug("get_joined_lightcurves: dt %f" % dt)
 
-    data = DaveEngine.get_joined_lightcurves(lc0_destination, lc1_destination, filters, axis, dt)
+    data = DaveEngine.get_joined_lightcurves(lc0_destination, lc1_destination,
+                                             lc0_bck_destination, lc1_bck_destination,
+                                             filters, axis, dt)
 
     logging.debug("get_joined_lightcurves: Finish!")
 
@@ -261,7 +278,7 @@ def get_divided_lightcurves_from_colors(src_filename, bck_filename, gti_filename
     return json.dumps(data, cls=NPEncoder)
 
 
-def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
+def get_divided_lightcurve_ds(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck_filename, target):
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -270,10 +287,25 @@ def get_divided_lightcurve_ds(lc0_filename, lc1_filename, target):
     if not lc1_destination:
         return common_error("Invalid file or cache key for lc1 data")
 
+    lc0_bck_destination = ""
+    if lc0_bck_filename:
+        lc0_bck_destination = get_destination(lc0_bck_filename, target)
+        if not lc0_bck_destination:
+            return common_error("Invalid file or cache key for lc0_bck data")
+
+    lc1_bck_destination = ""
+    if lc1_bck_filename:
+        lc1_bck_destination = get_destination(lc1_bck_filename, target)
+        if not lc1_bck_destination:
+            return common_error("Invalid file or cache key for lc1_bck data")
+
     logging.debug("get_divided_lightcurve_ds lc0: %s" % lc0_filename)
     logging.debug("get_divided_lightcurve_ds lc1: %s" % lc1_filename)
+    logging.debug("get_divided_lightcurve_ds lc0_bck: %s" % lc0_bck_filename)
+    logging.debug("get_divided_lightcurve_ds lc1_bck: %s" % lc1_bck_filename)
 
-    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination)
+    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination,
+                                                    lc0_bck_destination, lc1_bck_destination)
 
     logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
 
@@ -410,7 +442,7 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
                                         src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
                                         nsegm, segm_size, norm, xds_type)
 
-   logging.debug("get_cross_spectrum: Finish! %s" % data)
+   logging.debug("get_cross_spectrum: Finish!")
 
    return json.dumps(data, cls=NPEncoder)
 
@@ -547,7 +579,8 @@ def get_plot_data_from_models(models, x_values):
 
 
 def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                models, priors=None, sampling_params=None):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -575,9 +608,12 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
     logging.debug("get_fit_powerspectrum_result: norm %s" % norm)
     logging.debug("get_fit_powerspectrum_result: type %s" % pds_type)
     logging.debug("get_fit_powerspectrum_result: models %s" % models)
+    logging.debug("get_fit_powerspectrum_result: priors %s" % priors)
+    logging.debug("get_fit_powerspectrum_result: sampling_params %s" % sampling_params)
 
     data = DaveEngine.get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, models)
+                                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                                models, priors, sampling_params)
 
     logging.debug("get_fit_powerspectrum_result: Finish!")
 
@@ -654,3 +690,122 @@ def bulk_analisys(filenames, plot_configs, outdir, target):
     bulk_data = DaveBulk.bulk_analisys(filenames, plot_configs, absolute_outdir)
     logging.debug("bulk_analisys: Finish!")
     return json.dumps(bulk_data, cls=NPEncoder)
+
+
+def get_lomb_scargle(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, freq_range, nyquist_factor,
+                    ls_norm, samples_per_peak):
+
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_lomb_scargle src: %s" % src_filename)
+    logging.debug("get_lomb_scargle bck: %s" % bck_filename)
+    logging.debug("get_lomb_scargle gti: %s" % gti_filename)
+    logging.debug("get_lomb_scargle: filters %s" % filters)
+    logging.debug("get_lomb_scargle: axis %s" % axis)
+    logging.debug("get_lomb_scargle: dt %f" % dt)
+    logging.debug("get_lomb_scargle: freq_range %s" % freq_range)
+    logging.debug("get_lomb_scargle: nyquist_factor %s" % nyquist_factor)
+    logging.debug("get_lomb_scargle: ls_norm %s" % ls_norm)
+    logging.debug("get_lomb_scargle: samples_per_peak %s" % samples_per_peak)
+
+    data = DaveEngine.get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, freq_range, nyquist_factor,
+                                        ls_norm, samples_per_peak)
+
+    logging.debug("get_lomb_scargle: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_pulse_search(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, freq_range, mode, oversampling,
+                    nharm, nbin, segment_size):
+
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_pulse_search src: %s" % src_filename)
+    logging.debug("get_pulse_search bck: %s" % bck_filename)
+    logging.debug("get_pulse_search gti: %s" % gti_filename)
+    logging.debug("get_pulse_search: filters %s" % filters)
+    logging.debug("get_pulse_search: axis %s" % axis)
+    logging.debug("get_pulse_search: dt %f" % dt)
+    logging.debug("get_pulse_search: freq_range %s" % freq_range)
+    logging.debug("get_pulse_search: mode %s" % mode)
+    logging.debug("get_pulse_search: oversampling %s" % oversampling)
+    logging.debug("get_pulse_search: nharm %s" % nharm)
+    logging.debug("get_pulse_search: nbin %s" % nbin)
+    logging.debug("get_pulse_search: segment_size %s" % segment_size)
+
+    data = DaveEngine.get_pulse_search(src_destination, bck_destination, gti_destination,
+                                    filters, axis, dt, freq_range, mode, oversampling,
+                                    nharm, nbin, segment_size)
+
+    logging.debug("get_pulse_search: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_phaseogram(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, f, nph, nt):
+
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_phaseogram src: %s" % src_filename)
+    logging.debug("get_phaseogram bck: %s" % bck_filename)
+    logging.debug("get_phaseogram gti: %s" % gti_filename)
+    logging.debug("get_phaseogram: filters %s" % filters)
+    logging.debug("get_phaseogram: axis %s" % axis)
+    logging.debug("get_phaseogram: dt %f" % dt)
+    logging.debug("get_phaseogram: f %s" % f)
+    logging.debug("get_phaseogram: nph %s" % nph)
+    logging.debug("get_phaseogram: nt %s" % nt)
+
+    data = DaveEngine.get_phaseogram(src_destination, bck_destination, gti_destination,
+                                    filters, axis, dt, f, nph, nt)
+
+    logging.debug("get_phaseogram: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)

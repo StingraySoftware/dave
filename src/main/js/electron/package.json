@@ -1,8 +1,10 @@
 {
   "name": "DAVE",
   "description": "Data Analysis for Variable Events",
-  "author": "TimeLab Technologies",
-  "version": "0.2.0",
+  "author": "Timelab Technologies Ltd.",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/StingraySoftware/dave",
   "main": "main.js",
   "scripts": {
     "start": "electron .",

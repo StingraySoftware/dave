@@ -33,6 +33,7 @@ def is_valid_file(destination):
 
         return (ext.find("ASCII") == 0) \
                 or (ext.find("FITS") == 0) \
+                or (ext.find("gzip") > -1) \
                 or ((ext == "data") and (file_extension in [".p", ".nc"]))
     except:
         return False

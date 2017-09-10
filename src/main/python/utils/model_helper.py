@@ -1,8 +1,9 @@
-
+import utils.dave_logger as logging
 from astropy.modeling.models import Gaussian1D, Lorentz1D
 from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
-from stingray.modeling import ParameterEstimation
-from stingray.modeling import PSDLogLikelihood
+from stingray.modeling import ParameterEstimation, PSDLogLikelihood
+import scipy.stats
+
 
 
 # get_astropy_model:
@@ -45,7 +46,7 @@ def fix_parammeters_to_astropy_model(astropy_model, model):
 
 
 # get_starting_params_from_model:
-# Returns an list of starting params (without the fixed params on dave model)<- Commented 
+# Returns an list of starting params (without the fixed params on dave model)<- Commented
 #
 # @param: model: Dave Model specification
 # @param: params: list of starting params
@@ -112,3 +113,47 @@ def fit_data_with_gaussian(x_values, y_values, amplitude=1., mean=0, stddev=1.):
     opt_mean = res.p_opt[1]
     opt_stddev = res.p_opt[2]
     return opt_amplitude, opt_mean, opt_stddev
+
+
+# get_astropy_priors
+# Returns a dictionary with the priors. A dict of form {"parameter name": function}
+# A dictionary with the definitions for the prior probabilities.
+#
+# @param: dave_priors: array of priors, dave_priors defined for each model parammeters
+#
+def get_astropy_priors(dave_priors):
+    priors = {}
+
+    for i in range(len(dave_priors)):
+        model_params = dave_priors[i]
+
+        for paramName in model_params.keys():
+
+            prior_key = str(paramName) + "_" + str(i)
+            model_param = model_params[paramName]
+
+            if "type" in model_param:
+                if model_param["type"] == "uniform":
+                    if ("min" in model_param) and ("max" in model_param):
+                        priors[prior_key] = lambda value, min=float(model_param["min"]), max=float(model_param["max"]): ((min <= value) & (value <= max))
+                    else:
+                        logging.warn("get_astropy_priors: Wrong uniform prior parammeters, prior_key: " + prior_key)
+
+                elif model_param["type"] == "normal":
+                    if ("mean" in model_param) and ("sigma" in model_param):
+                        priors[prior_key] = lambda value, mean=float(model_param["mean"]), sigma=float(model_param["sigma"]): scipy.stats.norm(mean, sigma).pdf(value)
+                    else:
+                        logging.warn("get_astropy_priors: Wrong normal prior parammeters, prior_key: " + prior_key)
+
+                elif model_param["type"] == "lognormal":
+                    if ("mean" in model_param) and ("sigma" in model_param):
+                        priors[prior_key] = lambda value, mean=float(model_param["mean"]), sigma=float(model_param["sigma"]): scipy.stats.lognorm(mean, sigma).pdf(value)
+                    else:
+                        logging.warn("get_astropy_priors: Wrong lognormal prior parammeters, prior_key: " + prior_key)
+
+                else:
+                    logging.warn("get_astropy_priors: Unknown prior 'type', prior_key: " + prior_key + ", type: " + model_param["type"])
+            else:
+                logging.warn("get_astropy_priors: can't find 'type' key on dave_priors, prior_key: " + prior_key)
+
+    return priors

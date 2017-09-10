@@ -28,8 +28,11 @@
   </div>
 </div>
 
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/tabpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/wfTabpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/xsTabpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/fitTabpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/settingsTabpanel.js') }}?v={{ range (1, 9999) | random }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/tabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/wfTabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/xsTabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/fitTabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/agnTabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/pgTabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/phTabpanel.js') }}?v={{ get_version() }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='scripts/tabPanels/settingsTabpanel.js') }}?v={{ get_version() }}"></script>
