@@ -18,7 +18,7 @@ rm -f build/$BUILD_NAME.zip
 
 cd src/main/js/electron
 # Construct a version to be whatever is in the package.json + the build info. Revert to original version first in case this script is run twice.
-git co -- package.json
+git checkout -- package.json
 NPM_VERSION=$(cat package.json | jq '.version' | sed 's/"//g')"-"$(echo $BUILD_VERSION | sed 's/[_-+ ]//g')
 # Update the version in the package.json. 
 cat package.json | jq --arg VERSION $NPM_VERSION 'to_entries | map(if .key == "version" then . + {"value": $VERSION} else . end ) | from_entries' > package.json
