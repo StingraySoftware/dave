@@ -216,7 +216,9 @@ function ToolPanel (id,
 
     this.removeSngOrMultiFileSelector();
     this.resetFileSelectors("SRC");
-    
+
+    var excludedFilters = $.extend(true, [], CONFIG.EXCLUDED_FILTERS);
+
     if (projectConfig.schema.isEventsFile()){
 
       this.showEventsSelectors();
@@ -230,46 +232,28 @@ function ToolPanel (id,
           //PHA Column is empty, show we can't apply RMF file
           rmfMessage = "PHA column is empty in SRC file";
       }
+
+      if (rmfMessage != ""){
+        //If hasen't PHA column then remove PI from excludedFilters
+        excludedFilters = excludedFilters.filter(function(column) { return column != "PI"; });
+      }
       this.rmfFileSelector.disable(rmfMessage);
 
-      //Caluculates max, min and step values for slider with time ranges
-      var minBinSize = 1;
-      var initValue = 1;
-      var step = 1;
-      var multiplier = 1;
+      //Caluculates intial, max, min and step values for slider with time ranges
+      var binSelectorConfig = getBinSelectorConfig(projectConfig);
 
-      //If binSize is smaller than 1.0 find the divisor
-      while (projectConfig.maxBinSize * multiplier < 1) {
-        multiplier *= 10;
-      }
-
-      var tmpStep = (1.0 / multiplier) / 100.0;
-      if ((projectConfig.maxBinSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
-        //Fix step for not allowing more plot point than CONFIG.MAX_PLOT_POINTS
-        tmpStep = projectConfig.maxBinSize / CONFIG.MAX_PLOT_POINTS;
-      }
-      minBinSize = tmpStep;
-      step = minBinSize / 100.0; // We need at least 100 steps on slider
-
-      if (projectConfig.minBinSize > 0) {
-        minBinSize = projectConfig.minBinSize;
-        var minAvailableBinSize = projectConfig.getMaxTimeRange() / CONFIG.MAX_PLOT_POINTS;
-        if (CONFIG.AUTO_BINSIZE && (minAvailableBinSize > minBinSize)){
-          minBinSize = minAvailableBinSize;
-        }
-        initValue = minBinSize;
-        step = minBinSize;
-      } else {
-        initValue = (projectConfig.maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
-      }
-
-      projectConfig.binSize = initValue;
+      projectConfig.binSize = binSelectorConfig.binSize;
 
       this.binSelector = new BinSelector(this.id + "_binSelector",
                                         "BIN SIZE (" + projectConfig.timeUnit  + "):",
                                         "From",
-                                        minBinSize, projectConfig.maxBinSize, step, initValue,
-                                        this.onSelectorValuesChanged);
+                                        binSelectorConfig.minBinSize,
+                                        binSelectorConfig.maxBinSize,
+                                        binSelectorConfig.step,
+                                        binSelectorConfig.binSize,
+                                        this.onSelectorValuesChanged,
+                                        null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
     } else if (projectConfig.schema.isLightCurveFile()){
@@ -294,7 +278,7 @@ function ToolPanel (id,
 
         for (columnName in table) {
           var column = table[columnName];
-          if (!CONFIG.EXCLUDED_FILTERS.includes(columnName) && column.min_value < column.max_value) {
+          if (!excludedFilters.includes(columnName) && column.min_value < column.max_value) {
 
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
@@ -308,7 +292,8 @@ function ToolPanel (id,
                                               "From", "To",
                                               column.min_value, column.max_value,
                                               this.onSelectorValuesChanged,
-                                              this.selectors_array);
+                                              this.selectors_array,
+                                              null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
             if ((columnName == "TIME")

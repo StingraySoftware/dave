@@ -1,5 +1,5 @@
 
-function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged) {
+function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged, precision) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
@@ -11,7 +11,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
   this.toValue = toValue;
   this.value = initValue;
   this.step = step;
-  this.precision = 3;
+  this.precision = !isNull(precision) ? precision : CONFIG.DEFAULT_NUMBER_DECIMALS;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.onSelectorEnabledChanged = null;
 
@@ -57,7 +57,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
 
    //Set values method
    this.setValues = function (value, source) {
-     this.value = Math.min(Math.max(parseFloat(value), this.initFromValue), this.initToValue);
+     this.value = Math.min(Math.max(fixedPrecision(value, this.precision), this.initFromValue), this.initToValue);
      this.fromInput.val( fixedPrecision(this.value, this.precision) ).removeClass("wrongValue");
      if (source != "slider") {
        this.slider.slider('values', 0, this.value);
@@ -65,7 +65,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
 
      var tab = getTabForSelector(this.id);
      if (!isNull(tab)) {
-       tab.projectConfig.binSize = this.value;
+       tab.projectConfig.binSize = fixedPrecision(this.value, this.precision);
        if (tab.projectConfig.binSizeCouldHaveAliasing()) {
          this.showWarn("Aliasing/Moiré effects could arise");
        } else {
@@ -97,6 +97,11 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      this.container.append(this.slider);
      this.createSlider();
      this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
+   }
+
+   this.setStep = function (step) {
+     this.step = step;
+     this.slider.slider("option", "step", this.step);
    }
 
     this.onSlideChanged = !isNull(onSlideChanged) ? onSlideChanged : function( event, ui ) {
@@ -134,4 +139,45 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
    log ("new binSelector id: " + this.id + ", Value: " + this.value + ", fromValue: " + this.fromValue + ", toValue: " + this.toValue + ", step: " + this.step);
 
    return this;
+}
+
+//Caluculates intial, max, min and step values for bin size slider
+function getBinSelectorConfig (projectConfig) {
+
+  var minBinSize = 1;
+  var initValue = 1;
+  var step = 1;
+  var multiplier = 1;
+
+  //If binSize is smaller than 1.0 find the divisor
+  while (projectConfig.maxBinSize * multiplier < 1) {
+    multiplier *= 10;
+  }
+
+  var tmpStep = (1.0 / multiplier) / 100.0;
+  if ((projectConfig.maxBinSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
+    //Fix step for not allowing more plot point than CONFIG.MAX_PLOT_POINTS
+    tmpStep = projectConfig.maxBinSize / CONFIG.MAX_PLOT_POINTS;
+  }
+  minBinSize = tmpStep;
+  step = minBinSize / 100.0; // We need at least 100 steps on slider
+
+  if (projectConfig.minBinSize > 0) {
+    minBinSize = projectConfig.minBinSize;
+    var minAvailableBinSize = fixedPrecision(projectConfig.getMaxTimeRange() / CONFIG.MAX_PLOT_POINTS, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+    if (CONFIG.AUTO_BINSIZE && (minAvailableBinSize > minBinSize)){
+      minBinSize = minAvailableBinSize;
+    }
+    initValue = minBinSize;
+    step = minBinSize;
+  } else {
+    initValue = (projectConfig.maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
+  }
+
+  return {
+            binSize: initValue,
+            minBinSize: minBinSize,
+            maxBinSize: projectConfig.maxBinSize,
+            step: step
+          };
 }

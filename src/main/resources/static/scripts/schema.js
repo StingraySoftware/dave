@@ -93,7 +93,7 @@ function Schema(schema){
       return 1.0;
     }*/
 
-    return 1E-9;
+    return Math.pow(10, -CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
   }
 
   this.getTotalDuration = function () {

@@ -1,5 +1,11 @@
 
-function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array, onSlideChanged) {
+function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array, onSlideChanged, precision, fixed_step) {
+
+  var thePrecision = !isNull(precision) ? precision : CONFIG.DEFAULT_NUMBER_DECIMALS;
+  if (!isNull(fixed_step)) {
+    var fsPrecision = getPrecisionFromFloat(fixed_step);
+    if (fsPrecision > thePrecision) { thePrecision = fsPrecision };
+  }
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
@@ -12,9 +18,9 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.fromValue = fromValue;
   this.toValue = toValue;
   this.maxRange = this.initToValue - this.initFromValue;
-  this.precision = 3;
-  this.fixed_step = null; // Sets the value step for snaping, fixed_step = 0.5 -> values: ... -1.0, -0.5, 0.0, 0.5, 1.0 ...
-  this.step = 1.0;
+  this.precision = thePrecision;
+  this.fixed_step = !isNull(fixed_step) ? fixed_step : null; // Sets the value step for snaping, fixed_step = 0.5 -> values: ... -1.0, -0.5, 0.0, 0.5, 1.0 ...
+  this.step = !isNull(fixed_step) ? fixed_step : 1.0;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
@@ -78,6 +84,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
             range:true,
             min: this.fromValue,
             max: this.toValue,
+            step: this.step,
             values: [ fromValue, toValue ],
             slide: this.onSlideChanged
         });

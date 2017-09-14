@@ -197,6 +197,10 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
 
     event_list, events_start_time = substract_tstart_from_events(fits_data, time_offset)
 
+    # Gets PI column data from eventlist if requiered and not in additional_data
+    if "PI" in additional_columns and "PI" not in fits_data.additional_data:
+        fits_data.additional_data["PI"] = event_list.pi
+
     dataset = DataSet.get_dataset_applying_gtis(dsId, header, header_comments,
                                                 fits_data.additional_data, [],
                                                 event_list.time, [],

@@ -41,6 +41,10 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, AGNTabPanel: " + currentObj.id);
+        if (data.statusText == "error"){
+          //If abort cause is because python server died
+          currentObj.outputPanel.setPlotsReadyState(true);
+        }
         return; //Comes from request abort call.
       }
 

@@ -697,6 +697,28 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                     );
   }
 
+  /*this.getEventsPlot = function ( projectConfig ){
+    var eventPlotId = this.generatePlotId("events_" + projectConfig.filename);
+    return new Plot(
+                      eventPlotId,
+                      {
+                        id: eventPlotId,
+                        selectorKey: "SRC",
+                        filename: projectConfig.filename,
+                        bck_filename: "",
+                        gti_filename: "",
+                        styles: { type: "2d", labels: ["TIME", "PI"], title: "EVENTS" },
+                        axis: [ { table: "EVENTS", column:"TIME" },
+                                { table: "EVENTS", column:"PI" } ]
+                      },
+                      this.service.request_plot_data,
+                      this.onFiltersChangedFromPlot,
+                      this.onPlotReady,
+                      getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"),
+                      "LcPlot fullWidth",
+                      false
+                    );
+  }*/
 
   log ("Workflow Output panel ready!!");
   return this;

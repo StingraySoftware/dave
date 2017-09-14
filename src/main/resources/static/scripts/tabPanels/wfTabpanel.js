@@ -510,6 +510,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onFiltersChangedFromPlot = function (filters) {
     log("onFiltersChangedFromPlot: filters: " + JSON.stringify(filters));
     currentObj.toolPanel.applyFilters(filters);
+    currentObj.toolPanel.showPanel("filterPanel");
   }
 
   this.onTimeRangeChanged = function (timeRange) {

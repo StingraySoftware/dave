@@ -39,10 +39,19 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     currentObj.refreshData();
   });
 
-  this.updateMaxMinFreq = function () {
-    this.plotConfig.maxSupportedFreq = 0.6 / this.plotConfig.dt;
-    this.plotConfig.freqMax = Math.min(this.plotConfig.maxSupportedFreq, this.plotConfig.freqMax);
-    this.plotConfig.freqMin = Math.max(0.0, this.plotConfig.freqMin);
+  this.updateMaxMinFreq = function (forceMaxFreq) {
+    this.plotConfig.maxSupportedFreq = 0.6 / this.getBinSize();
+    this.plotConfig.freqMax = (!isNull(forceMaxFreq) && forceMaxFreq) ? this.plotConfig.maxSupportedFreq : Math.min(this.plotConfig.maxSupportedFreq, this.plotConfig.freqMax);
+    this.plotConfig.freqMin = (!isNull(forceMaxFreq) && forceMaxFreq) ? 0.0 : Math.max(0.0, this.plotConfig.freqMin);
+  }
+
+  this.onBinSizeChanged = function () {
+    currentObj.plotConfig.dt = currentObj.binSelector.value;
+    currentObj.updateSegmSelector();
+    currentObj.updateMaxMinFreq(true);
+    if (!isNull(currentObj.freqSelector)) {
+      currentObj.freqSelector.setMinMaxValues (currentObj.plotConfig.freqMin, currentObj.plotConfig.freqMax);
+    }
   }
 
   this.prepareData = function (data) {
@@ -109,6 +118,8 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
           && data[3].values[0] > 0) {
         this.plotConfig.duration = data[3].values[0];
       }
+
+      this.updateSettings();
 
     } else {
       this.showWarn("Wrong data received");
@@ -234,19 +245,14 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                       "From", "To",
                                       this.plotConfig.freqMin, this.plotConfig.freqMax,
                                       this.onFreqSelectorValuesChanged,
-                                      null);
-    this.freqSelector.step = 0.01;
+                                      null,
+                                      function( event, ui ) {
+                                        currentObj.freqSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider" );
+                                        currentObj.onFreqSelectorValuesChanged();
+                                      },
+                                      null,
+                                      getStepSizeFromRange(this.plotConfig.freqMax - this.plotConfig.freqMin, 100));
     this.freqSelector.setDisableable(false);
-    this.freqSelector.slider.slider({
-           min: this.freqSelector.fromValue,
-           max: this.freqSelector.toValue,
-           values: [ this.freqSelector.fromValue, this.freqSelector.toValue ],
-           step: this.freqSelector.step,
-           slide: function( event, ui ) {
-             currentObj.freqSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider" );
-             currentObj.onFreqSelectorValuesChanged();
-           }
-       });
     this.freqSelector.inputChanged = function ( event ) {
        currentObj.setValues( getInputFloatValue(currentObj.freqSelector.fromInput, currentObj.freqSelector.fromValue),
                              getInputFloatValue(currentObj.freqSelector.toInput, currentObj.freqSelector.toValue) );
@@ -266,17 +272,11 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                       "x0:",
                                       "From",
                                       0.0, 1.0, 0.01, 0.5,
-                                      this.onX0SelectorValuesChanged);
-    this.x0Selector.slider.slider({
-           min: this.x0Selector.fromValue,
-           max: this.x0Selector.toValue,
-           values: [this.x0Selector.value],
-           step: this.x0Selector.step,
-           slide: function( event, ui ) {
-             currentObj.x0Selector.setValues( ui.values[ 0 ], "slider");
-             currentObj.onX0SelectorValuesChanged();
-           }
-       });
+                                      this.onX0SelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.x0Selector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onX0SelectorValuesChanged();
+                                      });
     this.x0Selector.inputChanged = function ( event ) {
        currentObj.x0Selector.setValues( getInputFloatValue(currentObj.x0Selector.fromInput, currentObj.x0Selector.value) );
        currentObj.onX0SelectorValuesChanged();
@@ -288,17 +288,11 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                       "y0:",
                                       "From",
                                       0.0, 1.0, 0.01, 0.5,
-                                      this.onY0SelectorValuesChanged);
-    this.y0Selector.slider.slider({
-           min: this.y0Selector.fromValue,
-           max: this.y0Selector.toValue,
-           values: [this.y0Selector.value],
-           step: this.y0Selector.step,
-           slide: function( event, ui ) {
-             currentObj.y0Selector.setValues( ui.values[ 0 ], "slider");
-             currentObj.onY0SelectorValuesChanged();
-           }
-       });
+                                      this.onY0SelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.y0Selector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onY0SelectorValuesChanged();
+                                      });
     this.y0Selector.inputChanged = function ( event ) {
        currentObj.y0Selector.setValues( getInputFloatValue(currentObj.y0Selector.fromInput, currentObj.y0Selector.value) );
        currentObj.onY0SelectorValuesChanged();
@@ -310,17 +304,11 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                       "m:",
                                       "From",
                                       0.0, 1.0, 0.01, 0.25,
-                                      this.onMSelectorValuesChanged);
-    this.mSelector.slider.slider({
-           min: this.mSelector.fromValue,
-           max: this.mSelector.toValue,
-           values: [this.mSelector.value],
-           step: this.mSelector.step,
-           slide: function( event, ui ) {
-             currentObj.mSelector.setValues( ui.values[ 0 ], "slider");
-             currentObj.onMSelectorValuesChanged();
-           }
-       });
+                                      this.onMSelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.mSelector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onMSelectorValuesChanged();
+                                      });
     this.mSelector.inputChanged = function ( event ) {
        currentObj.mSelector.setValues( getInputFloatValue(currentObj.mSelector.fromInput, currentObj.mSelector.value) );
        currentObj.onMSelectorValuesChanged();

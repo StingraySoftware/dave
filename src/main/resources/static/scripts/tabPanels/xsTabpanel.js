@@ -42,6 +42,10 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, XSTabPanel: " + currentObj.id);
+        if (data.statusText == "error"){
+          //If abort cause is because python server died
+          currentObj.outputPanel.setPlotsReadyState(true);
+        }
         return; //Comes from request abort call.
       }
 

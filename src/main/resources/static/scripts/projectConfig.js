@@ -45,13 +45,13 @@ function ProjectConfig(){
     // Sets the total duration
     this.totalDuration = this.schema.getTotalDuration();
 
-    // Sets the event count ratio
-    this.eventCountRatio = Math.min (CONFIG.MAX_PLOT_POINTS / this.schema.getEventsCount(), 1.0);
-
     // Sets the time resolution
     this.minBinSize = this.schema.getTimeResolution();
     this.maxBinSize = this.totalDuration / CONFIG.MIN_PLOT_POINTS;
     this.binSize = this.minBinSize;
+
+    // Sets the event count ratio
+    this.eventCountRatio = Math.min ((CONFIG.MAX_PLOT_POINTS / this.schema.getEventsCount()), 1.0);
 
     //Sets the segment size for spectrums
     this.maxSegmentSize = this.schema.getMaxSegmentSize();
@@ -136,7 +136,7 @@ function ProjectConfig(){
   }
 
   this.getMaxTimeRange = function () {
-    return this.totalDuration * this.eventCountRatio;
+    return this.totalDuration * this.binSize * this.eventCountRatio;
   }
 
   this.isMaxTimeRangeRatioFixed = function () {

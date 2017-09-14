@@ -55,6 +55,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
 
   this.$container.find(".inputMAX_PLOT_POINTS").on('change', function(){
     CONFIG.MAX_PLOT_POINTS = getInputIntValueCropped(currentObj.$container.find(".inputMAX_PLOT_POINTS"), CONFIG.MAX_PLOT_POINTS, CONFIG.MIN_PLOT_POINTS, 9999999);
+    updateServerConfig();
   });
 
   var $autoFilterRadios = this.$container.find(".autoFilterType").find("input[type=radio][name=" + this.id + "_AutoFilter]");

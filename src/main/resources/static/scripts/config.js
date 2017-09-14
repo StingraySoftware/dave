@@ -17,5 +17,7 @@ CONFIG = {
   BULK_ANALYSIS_ENABLED: false,
   LOG_TO_SERVER_ENABLED: true, //If true, python server logs will be visible from GUI Log tab
   LOG_LEVEL: -1, // PYTHON SERVER LOG LEVEL -> ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
-  DENY_BCK_IF_SUBS: true //Avoid set background file if lightcurve bck data is allready substracted
+  DENY_BCK_IF_SUBS: true, //Avoid set background file if lightcurve bck data is allready substracted
+  MAX_TIME_RESOLUTION_DECIMALS: 5, //Defines the maximun time resolution of DAVE GUI, default 100ns
+  DEFAULT_NUMBER_DECIMALS: 3 //The defaul number precision on selectors and textboxes
 }

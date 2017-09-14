@@ -22,8 +22,8 @@ function PgPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.getDefaultFreqRange = function (){
     if (this.plotConfig.default_freq_range[0] < 0
         && !isNull(this.data) && this.data.length >= 4) {
-      this.plotConfig.default_freq_range = [ Math.min.apply(null, this.data[0].values),
-                                             Math.max.apply(null, this.data[0].values) ];
+      var minMax = minMax2DArray(this.data[0].values);
+      this.plotConfig.default_freq_range = [ minMax.min, minMax.max ];
     }
     return this.plotConfig.default_freq_range;
   }

@@ -658,7 +658,7 @@ input.wrongValue {
   color: #007fff;
 }
 
-.LogWarn, .LogServerWarn {
+.LogWarn, .LogServerWarn, .Orange {
   color: #ff7d1b;
 }
 
