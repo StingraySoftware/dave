@@ -7,7 +7,7 @@ CONFIG = {
   MIN_PLOT_POINTS: 2,
   MAX_PLOT_POINTS: 1000,
   AUTO_BINSIZE: true, //If AUTO_BINSIZE is enabled, then the binSize will be automatically calculated to avoid exceding MAX_PLOT_POINTS, else the time filter will have a maxTimeRange to avoid exeding the MAX_PLOT_POINTS
-  MIN_SEGMENT_MULTIPLIER: 6,
+  MIN_SEGMENT_MULTIPLIER: 1,
   DEFAULT_SEGMENT_DIVIDER: 4,
   PLOT_ENABLE_HOVER_TIMEOUT: 1000,
   PLOT_TRIGGER_HOVER_TIMEOUT: 250,

@@ -25,7 +25,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
   });
 
   //If plot is pds adds Fits button to plot
-  this.btnStyle = $('<button class="btn btn-default btnStyle"  data-toggle="tooltip" title="Change plot dimensions">2D</button>');
+  this.btnStyle = $('<button class="btn btn-default btnStyle" data-toggle="tooltip" title="Change plot dimensions">2D</button>');
   this.$html.find(".plotTools").prepend(this.btnStyle);
   this.btnStyle.click(function(event){
     if (currentObj.plotConfig.plotStyle == "3d") {
@@ -47,6 +47,8 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
 
   this.onBinSizeChanged = function () {
     currentObj.plotConfig.dt = currentObj.binSelector.value;
+    var segmConfig = this.getSegmSelectorConfig();
+    currentObj.segmSelector.setMinMaxValues(segmConfig.minValue, segmConfig.maxValue, segmConfig.step);
     currentObj.updateSegmSelector();
     currentObj.updateMaxMinFreq(true);
     if (!isNull(currentObj.freqSelector)) {

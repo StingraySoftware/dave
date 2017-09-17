@@ -109,63 +109,47 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.addAxesTypeControlsToSettings = function (columnClass) {
     if (!isNull(this.plotConfig.xAxisType) && !isNull(this.plotConfig.yAxisType)) {
 
-      // Creates the X axis type radio buttons
-      this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
-                            '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type:</h3>' +
-                            '<fieldset>' +
-                              '<label for="' + this.id + '_Xlinear">Linear</label>' +
-                              '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + getCheckedState(this.plotConfig.xAxisType == "linear") + '>' +
-                              '<label for="' + this.id + '_Xlog">Logarithmic</label>' +
-                              '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlog" value="log" ' + getCheckedState(this.plotConfig.xAxisType == "log") + '>' +
-                            '</fieldset>' +
-                          '</div>');
+      var options = [
+        { id:"linear", label:"Linear", value:"linear"},
+        { id:"log", label:"Logarithmic", value:"log"}
+      ];
 
+      // Creates the X axis type radio buttons
+      this.xAxisRadios = getRadioControl(this.id,
+                                        this.plotConfig.styles.labels[0] + ' axis type',
+                                        "pdsXAxisType",
+                                        options,
+                                        this.plotConfig.xAxisType,
+                                        function(value, id) {
+                                          currentObj.plotConfig.xAxisType = value;
+                                        });
+      this.xAxisRadios.addClass("AxisType");
       this.settingsPanel.find(columnClass).append(this.xAxisRadios);
-      var $xAxisRadios = this.xAxisRadios.find("input[type=radio][name=" + this.id + "XAxisType]")
-      $xAxisRadios.checkboxradio();
-      this.xAxisRadios.find("fieldset").controlgroup();
-      $xAxisRadios.change(function() {
-        currentObj.plotConfig.xAxisType = this.value;
-      });
 
       // Creates the Y axis type radio buttons
-      this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
-                            '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type:</h3>' +
-                            '<fieldset>' +
-                              '<label for="' + this.id + '_Ylinear">Linear</label>' +
-                              '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + getCheckedState(this.plotConfig.yAxisType == "linear") + '>' +
-                              '<label for="' + this.id + '_Ylog">Logarithmic</label>' +
-                              '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylog" value="log" ' + getCheckedState(this.plotConfig.yAxisType == "log") + '>' +
-                            '</fieldset>' +
-                          '</div>');
-
+      this.yAxisRadios = getRadioControl(this.id,
+                                        this.plotConfig.styles.labels[1] + ' axis type',
+                                        "pdsYAxisType",
+                                        options,
+                                        this.plotConfig.yAxisType,
+                                        function(value, id) {
+                                          currentObj.plotConfig.yAxisType = value;
+                                        });
+      this.yAxisRadios.addClass("AxisType");
       this.settingsPanel.find(columnClass).append(this.yAxisRadios);
-      var $yAxisRadios = this.yAxisRadios.find("input[type=radio][name=" + this.id + "YAxisType]")
-      $yAxisRadios.checkboxradio();
-      this.yAxisRadios.find("fieldset").controlgroup();
-      $yAxisRadios.change(function() {
-        currentObj.plotConfig.yAxisType = this.value;
-      });
 
       if (!isNull(this.plotConfig.zAxisType)) {
-        // Creates the X axis type radio buttons
-        this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
-                              '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type:</h3>' +
-                              '<fieldset>' +
-                                '<label for="' + this.id + '_Zlinear">Linear</label>' +
-                                '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + getCheckedState(this.plotConfig.zAxisType == "linear") + '>' +
-                                '<label for="' + this.id + '_Zlog">Logarithmic</label>' +
-                                '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlog" value="log" ' + getCheckedState(this.plotConfig.zAxisType == "log") + '>' +
-                              '</fieldset>' +
-                            '</div>');
-
+        // Creates the Z axis type radio buttons
+        this.zAxisRadios = getRadioControl(this.id,
+                                          this.plotConfig.styles.labels[2] + ' axis type',
+                                          "pdsZAxisType",
+                                          options,
+                                          this.plotConfig.zAxisType,
+                                          function(value, id) {
+                                            currentObj.plotConfig.zAxisType = value;
+                                          });
+        this.zAxisRadios.addClass("AxisType");
         this.settingsPanel.find(columnClass).append(this.zAxisRadios);
-        var $zAxisRadios = this.zAxisRadios.find("input[type=radio][name=" + this.id + "ZAxisType]")
-        $zAxisRadios.checkboxradio();
-        this.zAxisRadios.find("fieldset").controlgroup();
-        $zAxisRadios.change(function() {
-          currentObj.plotConfig.zAxisType = this.value;
-        });
       }
 
     } else {
