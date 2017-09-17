@@ -280,24 +280,24 @@ fi
 
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	# Mac OSX
-	#This is for MagicFile but only applies to macosx
-	if [ ! -f /usr/local/bin/brew ]; then
-		if hash /opt/local/bin/port 2>/dev/null; then
-				echo "Installing LibMagic with MacPorts"
-        sudo /opt/local/bin/port install file
-    else
-				echo "Please install HomeBrew or MacPorts before continue."
-				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-				echo "Or install MacPorts with this guide:"
-				echo 'https://www.macports.org/install.php'
-				exit 1
-    fi
-	else
-		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
-	fi
+    # Mac OSX
+    # This is for MagicFile but only applies to macosx
+    if [ ! -f /usr/local/bin/brew ]; then
+        if hash /opt/local/bin/port 2>/dev/null; then
+            echo "Installing LibMagic with MacPorts"
+            yes | sudo /opt/local/bin/port install libmagic
+        else
+            echo "Please install HomeBrew or MacPorts before continue."
+            echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
+            echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+            echo "Or install MacPorts with this guide:"
+            echo 'https://www.macports.org/install.php'
+            exit 1
+       fi
+   else
+       echo "Installing LibMagic with HomeBrew"
+       /usr/local/bin/brew install libmagic
+   fi
 fi
 
 
