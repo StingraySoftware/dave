@@ -18,7 +18,7 @@ function ToolPanel (id,
   container.html(this.$html);
   this.$html.show();
   this.filters = [];
-  this.loadFileType = "Single"; // Supported: Single, Concatenated, Independent
+  this.loadFileType = "Single"; // Supported: Single, Concatenated
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.analyzeContainer = this.$html.find(".analyzeContainer");
@@ -131,66 +131,28 @@ function ToolPanel (id,
 
   this.createSngOrMultiFileSelector = function () {
     // Creates Single file or Multifile selection radio buttons
-    this.sngOrMultiFileSelector = $('<div class="SngOrMultiFileSelector">' +
-                                    '<h3>Choose single or multiple files load:</h3>' +
-                                    '<fieldset>' +
-                                      '<label for="' + this.id + '_SngFile">Single file</label>' +
-                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_SngFile" value="Single" ' + getCheckedState(this.loadFileType == "Single") + '>' +
-                                      '<label for="' + this.id + '_MulFile">Multiple files</label>' +
-                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_MulFile" value="Multi" ' + getCheckedState(this.loadFileType != "Single") + '>' +
-                                    '</fieldset>' +
-                                  '</div>');
-
+    this.sngOrMultiFileSelector = getRadioControl(this.id,
+                                      "Choose single or multiple files load",
+                                      "SngOrMultiFile",
+                                      [
+                                        { id:"SngFile", label:"Single file", value:"Single"},
+                                        { id:"ConFile", label:"Multiple files", value:"Concatenated"}
+                                      ],
+                                      "Single",
+                                      function(value, id) {
+                                        currentObj.loadFileType = value;
+                                        for (idx in currentObj.file_selectors_array) {
+                                          var fileSelector = currentObj.file_selectors_array[idx];
+                                          fileSelector.setMultiFileEnabled(value != "Single"
+                                                                           && (fileSelector.selectorKey != "RMF")
+                                                                           && (!fileSelector.selectorKey.startsWith("LC")));
+                                        }
+                                      });
     this.$html.find(".fileSelectorsContainer").append(this.sngOrMultiFileSelector);
-    var $loadTypeRadios = this.sngOrMultiFileSelector.find("input[type=radio][name=" + this.id + "_SngOrMultiFile]")
-    $loadTypeRadios.checkboxradio();
-    this.sngOrMultiFileSelector.find("fieldset").controlgroup();
-    $loadTypeRadios.change(function() {
-      currentObj.updateLoadFileType();
-      var multiFileEnabled = currentObj.loadFileType != "Single";
-      setVisibility(currentObj.conOrIndFileSelector, multiFileEnabled);
-      for (idx in currentObj.file_selectors_array) {
-        var fileSelector = currentObj.file_selectors_array[idx];
-        fileSelector.setMultiFileEnabled(multiFileEnabled
-                                         && (fileSelector.selectorKey != "RMF")
-                                         && (!fileSelector.selectorKey.startsWith("LC")));
-      }
-    });
-
-    // Creates Concatenated files or Independent selection radio buttons
-    this.conOrIndFileSelector = $('<div class="ConOrIndFileSelector">' +
-                                    '<h3>Choose concatenated or independent files load:</h3>' +
-                                    '<fieldset>' +
-                                      '<label for="' + this.id + '_ConFile">Concatenated</label>' +
-                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_ConFile" value="Concatenated" ' + getCheckedState((this.loadFileType == "Single") || (this.loadFileType == "Concatenated")) + '>' +
-                                      '<label for="' + this.id + '_IndFile">Independent</label>' +
-                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_IndFile" value="Independent" ' + getCheckedState(this.loadFileType == "Concatenated") + '>' +
-                                    '</fieldset>' +
-                                  '</div>');
-
-    setVisibility(this.conOrIndFileSelector, this.loadFileType == "Multi");
-    this.$html.find(".fileSelectorsContainer").append(this.conOrIndFileSelector);
-    var $loadType2Radios = this.conOrIndFileSelector.find("input[type=radio][name=" + this.id + "_ConOrIndFile]")
-    $loadType2Radios.checkboxradio();
-    this.conOrIndFileSelector.find("fieldset").controlgroup();
-    $loadType2Radios.change(function() {
-      currentObj.updateLoadFileType();
-    });
-  }
-
-  this.updateLoadFileType = function () {
-    if (this.sngOrMultiFileSelector.find("input").filter('[value=Single]').prop('checked')) {
-      this.loadFileType = "Single";
-    } else if (this.conOrIndFileSelector.find("input").filter('[value=Concatenated]').prop('checked')) {
-      this.loadFileType = "Concatenated";
-    } else {
-      this.loadFileType = "Independent";
-    }
   }
 
   this.removeSngOrMultiFileSelector = function () {
     this.sngOrMultiFileSelector.remove();
-    this.conOrIndFileSelector.remove();
   }
 
   this.onTimeRangeChanged = function (timeRange) {
