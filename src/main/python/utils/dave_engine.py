@@ -648,7 +648,7 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
 
         if pds:
 
-            pds = rebin_spectrum_if_necessary(pds)
+            #pds = rebin_spectrum_if_necessary(pds)
 
             freq = pds.freq
 
@@ -1152,7 +1152,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                                     if pds:
 
-                                        pds = rebin_spectrum_if_necessary(pds)
+                                        #pds = rebin_spectrum_if_necessary(pds)
 
                                         if freq_range[0] < 0:
                                             freq_low = min(pds.freq)
@@ -1475,7 +1475,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                             sim_pds = AveragedPowerspectrum(lc=sim_lc, segment_size=segm_size, norm=norm, gti=gti)
 
                         if sim_pds:
-                            sim_pds = rebin_spectrum_if_necessary(sim_pds)
+                            #sim_pds = rebin_spectrum_if_necessary(sim_pds)
 
                             parest, res = fit_powerspectrum(sim_pds, fit_model, starting_pars,
                                             max_post=False, priors=None, fitmethod="L-BFGS-B")
@@ -2005,14 +2005,15 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     else:
         pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
-    if pds:
-        pds = rebin_spectrum_if_necessary(pds)
-    else:
-        logging.warn("Can't create power spectrum")
+    #if pds:
+    #    pds = rebin_spectrum_if_necessary(pds)
+    #else:
+    #    logging.warn("Can't create power spectrum")
 
     return pds, lc, gti
 
 
+# Reduces the pds data to Max_plot_points for improve pds performance
 def rebin_spectrum_if_necessary (pds):
     freq_size = len(pds.freq)
     if freq_size > CONFIG.MAX_PLOT_POINTS:

@@ -164,11 +164,12 @@ function getBinSelectorConfig (projectConfig) {
 
   if (projectConfig.minBinSize > 0) {
     minBinSize = projectConfig.minBinSize;
-    var minAvailableBinSize = fixedPrecision(projectConfig.getMaxTimeRange() / CONFIG.MAX_PLOT_POINTS, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+    var minAvailableBinSize = fixedPrecision(projectConfig.totalDuration / CONFIG.MAX_PLOT_POINTS, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
     if (CONFIG.AUTO_BINSIZE && (minAvailableBinSize > minBinSize)){
-      minBinSize = minAvailableBinSize;
+      initValue = minAvailableBinSize;
+    } else {
+      initValue = minBinSize;
     }
-    initValue = minBinSize;
     step = minBinSize;
   } else {
     initValue = (projectConfig.maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points

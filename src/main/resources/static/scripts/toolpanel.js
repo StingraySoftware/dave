@@ -156,14 +156,14 @@ function ToolPanel (id,
   }
 
   this.onTimeRangeChanged = function (timeRange) {
-    if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
+    /*if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
       var tab = getTabForSelector(this.id);
       if (!isNull(tab)){
         var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, tab.projectConfig.minBinSize);
         var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, tab.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
         this.binSelector.setMinMaxValues(minValue, maxValue);
       }
-    }
+    }*/
   }
 
   this.onDatasetSchemaChanged = function ( projectConfig ) {
@@ -263,7 +263,8 @@ function ToolPanel (id,
                 && projectConfig.isMaxTimeRangeRatioFixed()) {
 
                   //If full events were cropped to CONFIG.MAX_PLOT_POINTS
-                  selector.setMaxRange(projectConfig.getMaxTimeRange());
+                  //selector.setMaxRange(projectConfig.getMaxTimeRange());
+                  selector.setValues( selector.initFromValue, selector.initFromValue + projectConfig.getMaxTimeRange() );
                   selector.setEnabled (true);
             }
 
