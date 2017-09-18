@@ -20,11 +20,21 @@ function fillWithZeros(num, length) {
 }
 
 function closest(arr, closestTo){
-    var closest = Math.max.apply(null, arr);
+    var closest = minMax2DArray(arr).max;
     for(var i = 0; i < arr.length; i++){
         if(arr[i] >= closestTo && arr[i] < closest) closest = arr[i];
     }
     return closest;
+}
+
+function minMax2DArray(arr) {
+  var max = Number.MIN_VALUE,
+      min = Number.MAX_VALUE;
+  arr.forEach(function(e) {
+    if (max < e) { max = e; }
+    if (min > e) { min = e; }
+  });
+  return {max: max, min: min};
 }
 
 function getStepSizeFromRange(range, numSteps) {
@@ -34,6 +44,15 @@ function getStepSizeFromRange(range, numSteps) {
     multiplier *= 10;
   }
   return (1.0 / multiplier) / numSteps;
+}
+
+function getPrecisionFromFloat(value) {
+  var strVal = value + "";
+  if (strVal.indexOf(".") > -1){
+    return strVal.split(".")[1].length;
+  } else {
+    return Math.pow(10, -strVal.length);
+  }
 }
 
 

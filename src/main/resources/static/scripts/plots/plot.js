@@ -220,11 +220,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.updatePlotConfig = function () {
+   var binSize = this.getBinSize();
+   if (!isNull(binSize)){
+     this.plotConfig.dt = binSize;
+   } else {
+     log("ERROR on updatePlotConfig: BinSize is null, Plot: " + this.id);
+   }
+ }
+
+ this.getBinSize = function () {
    var tab = getTabForSelector(this.id);
    if (!isNull(tab)){
-     this.plotConfig.dt = tab.projectConfig.binSize;
+     return tab.projectConfig.binSize;
    } else {
-     log("ERROR on updatePlotConfig: Plot not attached to tab, Plot: " + this.id);
+     log("ERROR on getBinSize: Plot not attached to tab, Plot: " + this.id);
+     return null;
    }
  }
 
@@ -232,6 +242,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
    if (!isNull(data.abort)){
      log("Current request aborted, Plot: " + currentObj.id);
+     if (data.statusText == "error"){
+       //If abort cause is because python server died
+       currentObj.setReadyState(true);
+       currentObj.showWarn("Connection lost!");
+     }
      return; //Comes from request abort call.
    }
 
@@ -608,10 +623,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.updateMinMaxCoords = function (){
     if (this.data != null) {
       var coords = this.getSwitchedCoords( { x: 0, y: 1} );
-      this.minX = Math.min.apply(null, this.data[coords.x].values);
-      this.minY = Math.min.apply(null, this.data[coords.y].values);
-      this.maxX = Math.max.apply(null, this.data[coords.x].values);
-      this.maxY = Math.max.apply(null, this.data[coords.y].values);
+      var minMaxX = minMax2DArray(this.data[coords.x].values);
+      var minMaxY = minMax2DArray(this.data[coords.y].values);
+      this.minX = minMaxX.min;
+      this.minY = minMaxY.min;
+      this.maxX = minMaxX.max;
+      this.maxY = minMaxY.max;
     }
   }
 

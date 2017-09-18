@@ -51,18 +51,13 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                       "From", "To",
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
-                                      null);
-    this.freqRangeSelector.step = getStepSizeFromRange(freqRange[1] - freqRange[0], 100);
-    this.freqRangeSelector.slider.slider({
-           min: this.freqRangeSelector.fromValue,
-           max: this.freqRangeSelector.toValue,
-           values: [this.freqRangeSelector.fromValue, this.freqRangeSelector.toValue],
-           step: this.freqRangeSelector.step,
-           slide: function( event, ui ) {
-             currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-             currentObj.onFreqRangeValuesChanged();
-           }
-       });
+                                      null,
+                                      function( event, ui ) {
+                                        currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+                                        currentObj.onFreqRangeValuesChanged();
+                                      },
+                                      null,
+                                      getStepSizeFromRange(freqRange[1] - freqRange[0], 100));
     this.freqRangeSelector.setEnabled(true);
     if (this.plotConfig.freq_range[0] > -1) {
       this.freqRangeSelector.setValues(this.plotConfig.freq_range[0], this.plotConfig.freq_range[1]);

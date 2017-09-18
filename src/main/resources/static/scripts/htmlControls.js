@@ -125,8 +125,8 @@ function getSectionContainer ($section){
   return $section.find(".sectionContainer").first();
 }
 
-function getRadioControl (id, title, cssClass, options, selectedValue, onChangeFn){
-  var radioName = id + "_" + cssClass;
+function getRadioControl (containerId, title, cssClass, options, selectedValue, onChangeFn){
+  var radioName = containerId + "_" + cssClass;
   var $radiosCont = $('<div class="' + cssClass + '">' +
                         '<h3>' + title + ':</h3>' +
                         '<fieldset></fieldset>' +

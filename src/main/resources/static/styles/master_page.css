@@ -344,6 +344,10 @@ ul#right-navbar li {
   margin-bottom: -2px;
 }
 
+.selectorsContainer .btnWarn {
+  margin-top: 24px;
+}
+
 .bigWarnBtn {
   width: 73%;
 }
@@ -658,7 +662,7 @@ input.wrongValue {
   color: #007fff;
 }
 
-.LogWarn, .LogServerWarn {
+.LogWarn, .LogServerWarn, .Orange {
   color: #ff7d1b;
 }
 

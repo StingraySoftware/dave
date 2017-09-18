@@ -18,7 +18,7 @@ function ToolPanel (id,
   container.html(this.$html);
   this.$html.show();
   this.filters = [];
-  this.loadFileType = "Single"; // Supported: Single, Concatenated, Independent
+  this.loadFileType = "Single"; // Supported: Single, Concatenated
 
   this.buttonsContainer = this.$html.find(".buttonsContainer");
   this.analyzeContainer = this.$html.find(".analyzeContainer");
@@ -131,69 +131,31 @@ function ToolPanel (id,
 
   this.createSngOrMultiFileSelector = function () {
     // Creates Single file or Multifile selection radio buttons
-    this.sngOrMultiFileSelector = $('<div class="SngOrMultiFileSelector">' +
-                                    '<h3>Choose single or multiple files load:</h3>' +
-                                    '<fieldset>' +
-                                      '<label for="' + this.id + '_SngFile">Single file</label>' +
-                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_SngFile" value="Single" ' + getCheckedState(this.loadFileType == "Single") + '>' +
-                                      '<label for="' + this.id + '_MulFile">Multiple files</label>' +
-                                      '<input type="radio" name="' + this.id + '_SngOrMultiFile" id="' + this.id + '_MulFile" value="Multi" ' + getCheckedState(this.loadFileType != "Single") + '>' +
-                                    '</fieldset>' +
-                                  '</div>');
-
+    this.sngOrMultiFileSelector = getRadioControl(this.id,
+                                      "Choose single or multiple files load",
+                                      "SngOrMultiFile",
+                                      [
+                                        { id:"SngFile", label:"Single file", value:"Single"},
+                                        { id:"ConFile", label:"Multiple files", value:"Concatenated"}
+                                      ],
+                                      "Single",
+                                      function(value, id) {
+                                        currentObj.loadFileType = value;
+                                        for (idx in currentObj.file_selectors_array) {
+                                          var fileSelector = currentObj.file_selectors_array[idx];
+                                          fileSelector.setMultiFileEnabled(value != "Single"
+                                                                           && (fileSelector.selectorKey != "RMF")
+                                                                           && (!fileSelector.selectorKey.startsWith("LC")));
+                                        }
+                                      });
     this.$html.find(".fileSelectorsContainer").append(this.sngOrMultiFileSelector);
-    var $loadTypeRadios = this.sngOrMultiFileSelector.find("input[type=radio][name=" + this.id + "_SngOrMultiFile]")
-    $loadTypeRadios.checkboxradio();
-    this.sngOrMultiFileSelector.find("fieldset").controlgroup();
-    $loadTypeRadios.change(function() {
-      currentObj.updateLoadFileType();
-      var multiFileEnabled = currentObj.loadFileType != "Single";
-      setVisibility(currentObj.conOrIndFileSelector, multiFileEnabled);
-      for (idx in currentObj.file_selectors_array) {
-        var fileSelector = currentObj.file_selectors_array[idx];
-        fileSelector.setMultiFileEnabled(multiFileEnabled
-                                         && (fileSelector.selectorKey != "RMF")
-                                         && (!fileSelector.selectorKey.startsWith("LC")));
-      }
-    });
-
-    // Creates Concatenated files or Independent selection radio buttons
-    this.conOrIndFileSelector = $('<div class="ConOrIndFileSelector">' +
-                                    '<h3>Choose concatenated or independent files load:</h3>' +
-                                    '<fieldset>' +
-                                      '<label for="' + this.id + '_ConFile">Concatenated</label>' +
-                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_ConFile" value="Concatenated" ' + getCheckedState((this.loadFileType == "Single") || (this.loadFileType == "Concatenated")) + '>' +
-                                      '<label for="' + this.id + '_IndFile">Independent</label>' +
-                                      '<input type="radio" name="' + this.id + '_ConOrIndFile" id="' + this.id + '_IndFile" value="Independent" ' + getCheckedState(this.loadFileType == "Concatenated") + '>' +
-                                    '</fieldset>' +
-                                  '</div>');
-
-    setVisibility(this.conOrIndFileSelector, this.loadFileType == "Multi");
-    this.$html.find(".fileSelectorsContainer").append(this.conOrIndFileSelector);
-    var $loadType2Radios = this.conOrIndFileSelector.find("input[type=radio][name=" + this.id + "_ConOrIndFile]")
-    $loadType2Radios.checkboxradio();
-    this.conOrIndFileSelector.find("fieldset").controlgroup();
-    $loadType2Radios.change(function() {
-      currentObj.updateLoadFileType();
-    });
-  }
-
-  this.updateLoadFileType = function () {
-    if (this.sngOrMultiFileSelector.find("input").filter('[value=Single]').prop('checked')) {
-      this.loadFileType = "Single";
-    } else if (this.conOrIndFileSelector.find("input").filter('[value=Concatenated]').prop('checked')) {
-      this.loadFileType = "Concatenated";
-    } else {
-      this.loadFileType = "Independent";
-    }
   }
 
   this.removeSngOrMultiFileSelector = function () {
     this.sngOrMultiFileSelector.remove();
-    this.conOrIndFileSelector.remove();
   }
 
-  this.onTimeRangeChanged = function (timeRange) {
+  /*this.onTimeRangeChanged = function (timeRange) {
     if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
       var tab = getTabForSelector(this.id);
       if (!isNull(tab)){
@@ -201,6 +163,34 @@ function ToolPanel (id,
         var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, tab.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
         this.binSelector.setMinMaxValues(minValue, maxValue);
       }
+    }
+  }*/
+
+  this.onBinSizeChanged = function () {
+    currentObj.onSelectorValuesChanged();
+    var tab = getTabForSelector(currentObj.id);
+    if (!isNull(tab)){
+      if (!isNull(currentObj.timeSelector)) {
+        currentObj.timeSelector.setFixedStep(tab.projectConfig.binSize, false);
+      }
+      currentObj.onNumPointsChanged(tab.projectConfig.getNumPoints());
+    }
+  }
+
+  this.onNumPointsChanged = function (numPoints) {
+    if (numPoints > CONFIG.MAX_PLOT_POINTS) {
+      this.showWarn("You are about to plot " + numPoints + " points. Performance will be degraded.");
+    } else {
+      this.showWarn("");
+    }
+  }
+
+  this.showWarn = function (msg) {
+    this.$html.find(".selectorsContainer").find(".btnWarn").remove();
+    if (!isNull(msg) && msg != ""){
+      this.$html.find(".selectorsContainer").prepend($('<a href="#" class="btn btn-danger btnWarn"><div>' +
+                                                          '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
+                                                        '</div></a>'));
     }
   }
 
@@ -216,7 +206,9 @@ function ToolPanel (id,
 
     this.removeSngOrMultiFileSelector();
     this.resetFileSelectors("SRC");
-    
+
+    var excludedFilters = $.extend(true, [], CONFIG.EXCLUDED_FILTERS);
+
     if (projectConfig.schema.isEventsFile()){
 
       this.showEventsSelectors();
@@ -230,46 +222,28 @@ function ToolPanel (id,
           //PHA Column is empty, show we can't apply RMF file
           rmfMessage = "PHA column is empty in SRC file";
       }
+
+      if (rmfMessage != ""){
+        //If hasen't PHA column then remove PI from excludedFilters
+        excludedFilters = excludedFilters.filter(function(column) { return column != "PI"; });
+      }
       this.rmfFileSelector.disable(rmfMessage);
 
-      //Caluculates max, min and step values for slider with time ranges
-      var minBinSize = 1;
-      var initValue = 1;
-      var step = 1;
-      var multiplier = 1;
+      //Caluculates intial, max, min and step values for slider with time ranges
+      var binSelectorConfig = getBinSelectorConfig(projectConfig);
 
-      //If binSize is smaller than 1.0 find the divisor
-      while (projectConfig.maxBinSize * multiplier < 1) {
-        multiplier *= 10;
-      }
-
-      var tmpStep = (1.0 / multiplier) / 100.0;
-      if ((projectConfig.maxBinSize / tmpStep) > CONFIG.MAX_PLOT_POINTS) {
-        //Fix step for not allowing more plot point than CONFIG.MAX_PLOT_POINTS
-        tmpStep = projectConfig.maxBinSize / CONFIG.MAX_PLOT_POINTS;
-      }
-      minBinSize = tmpStep;
-      step = minBinSize / 100.0; // We need at least 100 steps on slider
-
-      if (projectConfig.minBinSize > 0) {
-        minBinSize = projectConfig.minBinSize;
-        var minAvailableBinSize = projectConfig.getMaxTimeRange() / CONFIG.MAX_PLOT_POINTS;
-        if (CONFIG.AUTO_BINSIZE && (minAvailableBinSize > minBinSize)){
-          minBinSize = minAvailableBinSize;
-        }
-        initValue = minBinSize;
-        step = minBinSize;
-      } else {
-        initValue = (projectConfig.maxBinSize - minBinSize) / 50; // Start initValue triying to plot at least 50 points
-      }
-
-      projectConfig.binSize = initValue;
+      projectConfig.binSize = binSelectorConfig.binSize;
 
       this.binSelector = new BinSelector(this.id + "_binSelector",
                                         "BIN SIZE (" + projectConfig.timeUnit  + "):",
                                         "From",
-                                        minBinSize, projectConfig.maxBinSize, step, initValue,
-                                        this.onSelectorValuesChanged);
+                                        binSelectorConfig.minBinSize,
+                                        binSelectorConfig.maxBinSize,
+                                        binSelectorConfig.step,
+                                        binSelectorConfig.binSize,
+                                        this.onBinSizeChanged,
+                                        null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
     } else if (projectConfig.schema.isLightCurveFile()){
@@ -294,30 +268,53 @@ function ToolPanel (id,
 
         for (columnName in table) {
           var column = table[columnName];
-          if (!CONFIG.EXCLUDED_FILTERS.includes(columnName) && column.min_value < column.max_value) {
+          if (!excludedFilters.includes(columnName) && column.min_value < column.max_value) {
 
+            var multiplier = 1.0;
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
                columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
+            } else if ((columnName == "RATE") && projectConfig.schema.isLightCurveFile()){
+               //This multiplier its only intended to calculate CountRate from counts when BinSize != 1
+               //The RATE values that comes from schema means counts, but filters and LCs shows countrate
+               //so a multiplication by binSize is requiered for calculating the rate.
+               multiplier = projectConfig.binSize;
             }
 
             var selector = new sliderSelector(this.id + "_" + columnName,
                                               columnTitle,
                                               filterData,
                                               "From", "To",
-                                              column.min_value, column.max_value,
-                                              this.onSelectorValuesChanged,
-                                              this.selectors_array);
+                                              Math.floor(column.min_value / multiplier),
+                                              Math.ceil(column.max_value / multiplier),
+                                              (columnName != "TIME") ?
+                                                this.onSelectorValuesChanged :
+                                                function (selector) {
+                                                //Notifies that time range has changed
+                                                var tabPanel = getTabForSelector(selector.id);
+                                                if (!isNull(tabPanel)){
+                                                  tabPanel.onTimeRangeChanged(Math.max ((selector.toValue - selector.fromValue) * 0.95, selector.step));
+                                                }
+                                              },
+                                              this.selectors_array,
+                                              null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+            selector.multiplier = multiplier;
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if ((columnName == "TIME")
-                && (!CONFIG.AUTO_BINSIZE || projectConfig.schema.isLightCurveFile())
-                && projectConfig.isMaxTimeRangeRatioFixed()) {
+            if (columnName == "TIME"){
 
-                  //If full events were cropped to CONFIG.MAX_PLOT_POINTS
-                  selector.setMaxRange(projectConfig.getMaxTimeRange());
-                  selector.setEnabled (true);
+              //Stores this selector
+              this.timeSelector = selector;
+
+              if ((!CONFIG.AUTO_BINSIZE || projectConfig.schema.isLightCurveFile())
+                  && projectConfig.isMaxTimeRangeRatioFixed()) {
+
+                    //If full events were cropped to CONFIG.MAX_PLOT_POINTS
+                    //selector.setMaxRange(projectConfig.getMaxTimeRange());
+                    selector.setValues( selector.initFromValue, selector.initFromValue + projectConfig.getMaxTimeRange() );
+                    selector.setEnabled (true);
+              }
             }
 
             if (tableName == "EVENTS" && columnName == "PHA") {

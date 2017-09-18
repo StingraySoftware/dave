@@ -74,6 +74,7 @@ def test_get_power_density_spectrum(s):
 
 @given(text(min_size=1))
 @example("test.evt")
+@example("/\x00")
 def test_get_cross_spectrum(s):
     destination = FileUtils.get_destination(TEST_RESOURCES, s)
     result = None

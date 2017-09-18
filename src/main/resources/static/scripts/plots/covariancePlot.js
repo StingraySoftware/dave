@@ -51,17 +51,11 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
                                       "From", "To",
                                       this.plotConfig.ref_band_interest[0], this.plotConfig.ref_band_interest[1],
                                       this.onReferenceBandValuesChanged,
-                                      null);
-    this.refBandSelector.slider.slider({
-           min: this.refBandSelector.fromValue,
-           max: this.refBandSelector.toValue,
-           values: [this.refBandSelector.fromValue, this.refBandSelector.toValue],
-           step: CONFIG.ENERGY_FILTER_STEP,
-           slide: function( event, ui ) {
-             currentObj.refBandSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-             currentObj.onReferenceBandValuesChanged();
-           }
-       });
+                                      null,
+                                      function( event, ui ) {
+                                        currentObj.refBandSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+                                        currentObj.onReferenceBandValuesChanged();
+                                      });
     this.refBandSelector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
     this.refBandSelector.setEnabled(true);
     this.settingsPanel.find(".leftCol").append(this.refBandSelector.$html);

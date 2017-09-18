@@ -44,6 +44,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
     if (!this.settingsVisible) {
       this.settingsVisible = true;
       this.setHoverDisablerEnabled(false);
+      this.setLegendText("");
       var height = parseInt(this.$html.find(".plot").height());
       this.$html.find(".plot").hide();
       this.$html.find(".plotTools").children().hide();
@@ -53,6 +54,8 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
         title = this.plotConfig.styles.title + ' Settings:';
       }
       this.setSettingsTitle(title);
+
+      this.addBinSizeSelectorToSettings(".leftCol");
 
       this.addSettingsControls();
 
@@ -106,67 +109,51 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.addAxesTypeControlsToSettings = function (columnClass) {
     if (!isNull(this.plotConfig.xAxisType) && !isNull(this.plotConfig.yAxisType)) {
 
-      // Creates the X axis type radio buttons
-      this.xAxisRadios = $('<div class="pdsXAxisType AxisType">' +
-                            '<h3>' + currentObj.plotConfig.styles.labels[0] + ' axis type:</h3>' +
-                            '<fieldset>' +
-                              '<label for="' + this.id + '_Xlinear">Linear</label>' +
-                              '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlinear" value="linear" ' + getCheckedState(this.plotConfig.xAxisType == "linear") + '>' +
-                              '<label for="' + this.id + '_Xlog">Logarithmic</label>' +
-                              '<input type="radio" name="' + this.id + 'XAxisType" id="' + this.id + '_Xlog" value="log" ' + getCheckedState(this.plotConfig.xAxisType == "log") + '>' +
-                            '</fieldset>' +
-                          '</div>');
+      var options = [
+        { id:"linear", label:"Linear", value:"linear"},
+        { id:"log", label:"Logarithmic", value:"log"}
+      ];
 
+      // Creates the X axis type radio buttons
+      this.xAxisRadios = getRadioControl(this.id,
+                                        this.plotConfig.styles.labels[0] + ' axis type',
+                                        "pdsXAxisType",
+                                        options,
+                                        this.plotConfig.xAxisType,
+                                        function(value, id) {
+                                          currentObj.plotConfig.xAxisType = value;
+                                        });
+      this.xAxisRadios.addClass("AxisType");
       this.settingsPanel.find(columnClass).append(this.xAxisRadios);
-      var $xAxisRadios = this.xAxisRadios.find("input[type=radio][name=" + this.id + "XAxisType]")
-      $xAxisRadios.checkboxradio();
-      this.xAxisRadios.find("fieldset").controlgroup();
-      $xAxisRadios.change(function() {
-        currentObj.plotConfig.xAxisType = this.value;
-      });
 
       // Creates the Y axis type radio buttons
-      this.yAxisRadios = $('<div class="pdsYAxisType AxisType">' +
-                            '<h3>' + currentObj.plotConfig.styles.labels[1] + ' axis type:</h3>' +
-                            '<fieldset>' +
-                              '<label for="' + this.id + '_Ylinear">Linear</label>' +
-                              '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylinear" value="linear" ' + getCheckedState(this.plotConfig.yAxisType == "linear") + '>' +
-                              '<label for="' + this.id + '_Ylog">Logarithmic</label>' +
-                              '<input type="radio" name="' + this.id + 'YAxisType" id="' + this.id + '_Ylog" value="log" ' + getCheckedState(this.plotConfig.yAxisType == "log") + '>' +
-                            '</fieldset>' +
-                          '</div>');
-
+      this.yAxisRadios = getRadioControl(this.id,
+                                        this.plotConfig.styles.labels[1] + ' axis type',
+                                        "pdsYAxisType",
+                                        options,
+                                        this.plotConfig.yAxisType,
+                                        function(value, id) {
+                                          currentObj.plotConfig.yAxisType = value;
+                                        });
+      this.yAxisRadios.addClass("AxisType");
       this.settingsPanel.find(columnClass).append(this.yAxisRadios);
-      var $yAxisRadios = this.yAxisRadios.find("input[type=radio][name=" + this.id + "YAxisType]")
-      $yAxisRadios.checkboxradio();
-      this.yAxisRadios.find("fieldset").controlgroup();
-      $yAxisRadios.change(function() {
-        currentObj.plotConfig.yAxisType = this.value;
-      });
 
       if (!isNull(this.plotConfig.zAxisType)) {
-        // Creates the X axis type radio buttons
-        this.zAxisRadios = $('<div class="pdsZAxisType AxisType">' +
-                              '<h3>' + currentObj.plotConfig.styles.labels[2] + ' axis type:</h3>' +
-                              '<fieldset>' +
-                                '<label for="' + this.id + '_Zlinear">Linear</label>' +
-                                '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlinear" value="linear" ' + getCheckedState(this.plotConfig.zAxisType == "linear") + '>' +
-                                '<label for="' + this.id + '_Zlog">Logarithmic</label>' +
-                                '<input type="radio" name="' + this.id + 'ZAxisType" id="' + this.id + '_Zlog" value="log" ' + getCheckedState(this.plotConfig.zAxisType == "log") + '>' +
-                              '</fieldset>' +
-                            '</div>');
-
+        // Creates the Z axis type radio buttons
+        this.zAxisRadios = getRadioControl(this.id,
+                                          this.plotConfig.styles.labels[2] + ' axis type',
+                                          "pdsZAxisType",
+                                          options,
+                                          this.plotConfig.zAxisType,
+                                          function(value, id) {
+                                            currentObj.plotConfig.zAxisType = value;
+                                          });
+        this.zAxisRadios.addClass("AxisType");
         this.settingsPanel.find(columnClass).append(this.zAxisRadios);
-        var $zAxisRadios = this.zAxisRadios.find("input[type=radio][name=" + this.id + "ZAxisType]")
-        $zAxisRadios.checkboxradio();
-        this.zAxisRadios.find("fieldset").controlgroup();
-        $zAxisRadios.change(function() {
-          currentObj.plotConfig.zAxisType = this.value;
-        });
       }
 
     } else {
-      log ("PlotWithSettings id: " + this.id + " - addAxesTypeControlsToSettings ERROR: plotConfig.xAxisType or plotConfig.yAxisType not initialized!");
+      logErr ("PlotWithSettings id: " + this.id + " - addAxesTypeControlsToSettings ERROR: plotConfig.xAxisType or plotConfig.yAxisType not initialized!");
     }
   }
 
@@ -186,17 +173,11 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
                                         "From", "To",
                                         this.plotConfig.default_energy_range[0], this.plotConfig.default_energy_range[1],
                                         this.onEnergyRangeValuesChanged,
-                                        null);
-      this.energyRangeSelector.slider.slider({
-             min: this.energyRangeSelector.fromValue,
-             max: this.energyRangeSelector.toValue,
-             values: [this.energyRangeSelector.fromValue, this.energyRangeSelector.toValue],
-             step: CONFIG.ENERGY_FILTER_STEP,
-             slide: function( event, ui ) {
-               currentObj.energyRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-               currentObj.onEnergyRangeValuesChanged();
-             }
-         });
+                                        null,
+                                        function( event, ui ) {
+                                          currentObj.energyRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+                                          currentObj.onEnergyRangeValuesChanged();
+                                        });
 
       this.energyRangeSelector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
       this.energyRangeSelector.setEnabled(true);
@@ -204,7 +185,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.settingsPanel.find(columnClass).append(this.energyRangeSelector.$html);
 
     } else {
-      log ("PlotWithSettings id: " + this.id + " - addEnergyRangeControlToSetting ERROR: plotConfig.energy_range not initialized!");
+      logErr ("PlotWithSettings id: " + this.id + " - addEnergyRangeControlToSetting ERROR: plotConfig.energy_range not initialized!");
     }
   }
 
@@ -218,7 +199,95 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       });
 
     } else {
-      log ("PlotWithSettings id: " + this.id + " - addNumberOfBandsControlToSettings ERROR: plotConfig.n_bands not initialized!");
+      logErr ("PlotWithSettings id: " + this.id + " - addNumberOfBandsControlToSettings ERROR: plotConfig.n_bands not initialized!");
+    }
+  }
+
+  this.addBinSizeSelectorToSettings = function (columnClass) {
+    if (this.settingsPanel.find(".binSelectorCheckBox").length > 0) {
+      return;
+    }
+
+    if (!isNull(this.plotConfig.dt)) {
+
+      //Adds bin size selector to plot
+      var tab = getTabForSelector(currentObj.id);
+      if (!isNull(tab) && !isNull(tab.toolPanel.binSelector)){
+
+        var enabled = !isNull(this.binSelector) && this.binSelector.enabled;
+        var binSize = (enabled) ? this.plotConfig.dt : tab.projectConfig.binSize;
+
+        //Adds the custom binSize switch
+        var $binSelectorCheckBox = $('<div class="binSelectorCheckBox ' + ((enabled) ? '' : 'Orange') + '">' +
+                                        'Use bin size on filter tab' +
+                                        '<div class="switch-wrapper">' +
+                                          '<div id="' + this.id + '_binSelectorSwitch" class="switch-btn fa ' + ((enabled) ? 'fa-square-o' : 'fa-check-square-o') + '" aria-hidden="true"></div>' +
+                                        '</div>' +
+                                      '</div>');
+        $binSelectorCheckBox.find(".switch-btn").click( function ( event ) {
+          var checkBox = $(this);
+          if (checkBox.hasClass("fa-square-o")){
+            checkBox.switchClass("fa-square-o", "fa-check-square-o");
+            checkBox.parent().parent().addClass("Orange");
+            currentObj.binSelector.enabled = false;
+            currentObj.binSelector.$html.fadeOut();
+          } else {
+            checkBox.switchClass("fa-check-square-o", "fa-square-o");
+            checkBox.parent().parent().removeClass("Orange");
+            currentObj.binSelector.enabled = true;
+            currentObj.binSelector.setValues(tab.projectConfig.binSize);
+            currentObj.binSelector.$html.fadeIn();
+          }
+          currentObj.onBinSizeChanged();
+        });
+        this.settingsPanel.find(columnClass).append($binSelectorCheckBox);
+
+        //Caluculates intial, max, min and step values for slider with time ranges
+        var binSelectorConfig = getBinSelectorConfig(tab.projectConfig);
+
+        this.binSelector = new BinSelector(this.id + "_binSelector",
+                                          "BIN SIZE (" + tab.projectConfig.timeUnit  + "):",
+                                          "From",
+                                          tab.projectConfig.minBinSize,
+                                          tab.projectConfig.maxBinSize,
+                                          binSelectorConfig.step,
+                                          binSize,
+                                          this.onBinSizeChanged,
+                                          function( event, ui ) {
+                                            currentObj.binSelector.setValues( ui.values[ 0 ], "slider");
+                                            currentObj.onBinSizeChanged();
+                                          },
+                                          CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+        this.binSelector.inputChanged = function ( event ) {
+           currentObj.binSelector.setValues( getInputFloatValue(currentObj.binSelector.fromInput, currentObj.plotConfig.dt) );
+           currentObj.onBinSizeChanged();
+        };
+
+        this.binSelector.enabled = enabled;
+        setVisibility(this.binSelector.$html, enabled);
+
+        this.settingsPanel.find(columnClass).append(this.binSelector.$html);
+      }
+    } else {
+      logErr ("PlotWithSettings id: " + this.id + " - addBinSizeSelectorToSettings ERROR: plotConfig.dt is null!");
+    }
+  }
+
+  this.onBinSizeChanged = function () {
+    currentObj.plotConfig.dt = currentObj.binSelector.value;
+  }
+
+  this.getBinSize = function () {
+    if (isNull(currentObj.binSelector) || !currentObj.binSelector.enabled) {
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)){
+        return tab.projectConfig.binSize;
+      } else {
+        log("ERROR on getBinSize: Plot not attached to tab, Plot: " + this.id);
+        return null;
+      }
+    } else {
+      return currentObj.binSelector.value;
     }
   }
 

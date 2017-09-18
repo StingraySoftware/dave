@@ -43,7 +43,7 @@ fi
 
 # install in directory work in the top-level dir in the project
 DIR=$_SCRIPT_FOLDER/../..
-WORKDIR=$HOME/Dave_work
+WORKDIR=$HOME/.dave
 
 if [ ! -e $WORKDIR ]; then
 	echo "Creating Python Environment folder: $WORKDIR"

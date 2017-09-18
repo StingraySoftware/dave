@@ -79,38 +79,25 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     } else if (filenames.length > 1){
 
-      if (currentObj.toolPanel.loadFileType == "Independent") {
-
-        //Load an independent tab for each file
-        for (idx in filenames){
-            var file = filenames[idx];
-            openIndependentFileTab(file);
-        }
-        //Removes this tab
-        removeTab(currentObj.id);
-
-      } else {
-
-        //Concatenate all files
-        currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
-        var params = {};
-        if (selectorKey == "SRC") {
-          params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
-        } else if (selectorKey == "BCK") {
-          params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
-        } else if (selectorKey == "GTI") {
-          params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
-        } else if (selectorKey == "RMF") {
-          log("onDatasetChanged: RMF files doesn't support multiple selection!");
-          return;
-        }
-
-        if (!isNull(callback)){
-          params.callback = callback;
-        }
-
-        currentObj.onSchemaChangedMultipleFiles(null, params);
+      //Concatenate all files
+      currentObj.projectConfig.setFiles(selectorKey, filenames, filenames[0]);
+      var params = {};
+      if (selectorKey == "SRC") {
+        params = { filename: currentObj.projectConfig.filename, filenames: currentObj.projectConfig.filenames, currentFile: 1, onSchemaChanged:currentObj.onSrcSchemaChanged };
+      } else if (selectorKey == "BCK") {
+        params = { filename: currentObj.projectConfig.bckFilename, filenames: currentObj.projectConfig.bckFilenames, currentFile: 1, onSchemaChanged:currentObj.onBckSchemaChanged };
+      } else if (selectorKey == "GTI") {
+        params = { filename: currentObj.projectConfig.gtiFilename, filenames: currentObj.projectConfig.gtiFilenames, currentFile: 1, onSchemaChanged:currentObj.onGtiSchemaChanged };
+      } else if (selectorKey == "RMF") {
+        log("onDatasetChanged: RMF files doesn't support multiple selection!");
+        return;
       }
+
+      if (!isNull(callback)){
+        params.callback = callback;
+      }
+
+      currentObj.onSchemaChangedMultipleFiles(null, params);
 
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
@@ -510,16 +497,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onFiltersChangedFromPlot = function (filters) {
     log("onFiltersChangedFromPlot: filters: " + JSON.stringify(filters));
     currentObj.toolPanel.applyFilters(filters);
+    currentObj.toolPanel.showPanel("filterPanel");
   }
 
   this.onTimeRangeChanged = function (timeRange) {
-    this.updateTimeRange(timeRange);
-    this.toolPanel.onTimeRangeChanged(timeRange);
-  }
-
-  this.updateTimeRange = function (timeRange) {
-    this.projectConfig.maxSegmentSize = timeRange * 0.95; //Math.min (timeRange * 0.95, currentObj.projectConfig.maxSegmentSize);
-    this.projectConfig.avgSegmentSize = this.projectConfig.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
+    this.projectConfig.setTimeRange(timeRange);
+    this.toolPanel.onNumPointsChanged(this.projectConfig.getNumPoints());
   }
 
   this.getReplaceColumn = function () {
@@ -789,10 +772,4 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   log("WfTabPanel ready! id: " + this.id);
 
   return this;
-}
-
-function openIndependentFileTab (filename) {
-    var tab = addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
-    tab.toolPanel.srcFileSelector.onUploadSuccess([filename]);
-    tab.onDatasetChanged([filename], "SRC");
 }

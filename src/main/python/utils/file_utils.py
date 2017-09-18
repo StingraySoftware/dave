@@ -1,22 +1,27 @@
 
 import os
-import utils.dave_logger as logging
 import magic
+import utils.dave_logger as logging
+import utils.exception_helper as ExHelper
 from shutil import copyfile
 from werkzeug import secure_filename
 from config import CONFIG
 
 
 def get_destination(target, filename):
-    if CONFIG.IS_LOCAL_SERVER:
-        if filename.startswith('/') and os.path.isfile(filename):
-            # This is supposed to be an absolute path
-            return filename
+    try:
+        if CONFIG.IS_LOCAL_SERVER:
+            if filename.startswith('/') and os.path.isfile(filename):
+                # This is supposed to be an absolute path
+                return filename
+            else:
+                # Relative path
+                return "/".join([target, filename])
         else:
-            # Relative path
-            return "/".join([target, filename])
-    else:
-        return "/".join([target, secure_filename(filename)])
+            return "/".join([target, secure_filename(filename)])
+    except:
+        logging.error(ExHelper.getException('get_destination'))
+        return ""
 
 def file_exist(target, filename):
     return os.path.isfile(get_destination(target, filename))

@@ -24,6 +24,11 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
     if (!isNull(data.abort)){
       log("Current request aborted, Plot: " + currentObj.id);
+      if (data.statusText == "error"){
+        //If abort cause is because python server died
+        currentObj.setReadyState(true);
+        currentObj.showWarn("Connection lost!");
+      }
       return; //Comes from request abort call.
     }
 

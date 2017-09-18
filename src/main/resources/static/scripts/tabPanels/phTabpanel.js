@@ -165,8 +165,9 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                       null,
                                       function( event, ui ) {
                                         currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-                                      });
-    this.freqRangeSelector.step = getStepSizeFromRange(freqRange[1] - freqRange[0], 100);
+                                      },
+                                      null,
+                                      getStepSizeFromRange(freqRange[1] - freqRange[0], 100));
     this.freqRangeSelector.setEnabled(true);
     $pulseSearchContainer.append(this.freqRangeSelector.$html);
 
@@ -355,6 +356,10 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, PhTabPanel: " + currentObj.id);
+        if (data.statusText == "error"){
+          //If abort cause is because python server died
+          currentObj.outputPanel.setPlotsReadyState(true);
+        }
         return; //Comes from request abort call.
       }
 

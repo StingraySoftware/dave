@@ -144,7 +144,7 @@ else
   if [[ retVal -ne 0 ]] ; then
       echo "Failed to create virtual Python environment."
       return 1
-  
+
 # We can try to fix it by deleting the pip cache but the case so far I've seen, deleting the pip cache doens't solve it.
 #      echo "Failed to create virtual Python environment. Deleting pip cache and try again."
 #      if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -161,7 +161,7 @@ else
 #          return 1
 #      fi
   fi
-  
+
 fi
 source activate dave
 
@@ -169,8 +169,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Sep 7th, 2017 -> https://github.com/StingraySoftware/stingray/commit/e833a5c4090641c84f16df64439b27af8356bbb2
-STINGRAY_COMMIT_HASH=e833a5c4090641c84f16df64439b27af8356bbb2
+# Sep 10th, 2017 -> https://github.com/StingraySoftware/stingray/commit/97094d49a8ff0a4e8392fde509116ba9f366a9f2
+STINGRAY_COMMIT_HASH=97094d49a8ff0a4e8392fde509116ba9f366a9f2
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
@@ -189,7 +189,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	#Install stingray libraries
 	echo statsmodels >> requirements.txt
 	pip install -r requirements.txt
-	
+
        retVal=$?
        if [[ retVal -ne 0 ]] ; then
            echo "Failed to install Stingray dependencies"
@@ -237,8 +237,8 @@ fi
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Sep 4, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/a1757c0b21bd3aeb55bec22bc23d3c5440f7440c
-HENDRICS_COMMIT_HASH=a1757c0b21bd3aeb55bec22bc23d3c5440f7440c
+# Sep 9th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/a5b7b7389b832b1eeaa87e6e470c659e454f490f
+HENDRICS_COMMIT_HASH=a5b7b7389b832b1eeaa87e6e470c659e454f490f
 
 if [ ! -e $HENDRICS_FOLDER ]; then
 
@@ -280,24 +280,24 @@ fi
 
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-	# Mac OSX
-	#This is for MagicFile but only applies to macosx
-	if [ ! -f /usr/local/bin/brew ]; then
-		if hash /opt/local/bin/port 2>/dev/null; then
-				echo "Installing LibMagic with MacPorts"
-        sudo /opt/local/bin/port install file
-    else
-				echo "Please install HomeBrew or MacPorts before continue."
-				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-				echo "Or install MacPorts with this guide:"
-				echo 'https://www.macports.org/install.php'
-				exit 1
-    fi
-	else
-		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
-	fi
+    # Mac OSX
+    # This is for MagicFile but only applies to macosx
+    if [ ! -f /usr/local/bin/brew ]; then
+        if hash /opt/local/bin/port 2>/dev/null; then
+            echo "Installing LibMagic with MacPorts"
+            yes | sudo /opt/local/bin/port install libmagic
+        else
+            echo "Please install HomeBrew or MacPorts before continue."
+            echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
+            echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+            echo "Or install MacPorts with this guide:"
+            echo 'https://www.macports.org/install.php'
+            exit 1
+       fi
+   else
+       echo "Installing LibMagic with HomeBrew"
+       /usr/local/bin/brew install libmagic
+   fi
 fi
 
 

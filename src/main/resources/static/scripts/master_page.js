@@ -9,9 +9,7 @@ $(document).ready(function () {
 
   theService = new Service(CONFIG.DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
-  theService.set_config({ CONFIG: CONFIG }, function (res) {
-    logInfo("Server configuration setted -> " + res);
-  })
+  updateServerConfig();
 
   $("#navbar").find(".addTabPanel").click(function () {
     addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
@@ -242,4 +240,10 @@ function onServerMessageReceived (msg) {
     cssClass = "LogServerError";
   }
   log("SERVER -> " + msg, cssClass);
+}
+
+function updateServerConfig(){
+  theService.set_config({ CONFIG: CONFIG }, function (res) {
+    logInfo("Server configuration setted -> " + res);
+  })
 }

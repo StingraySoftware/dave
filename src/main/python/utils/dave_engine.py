@@ -169,7 +169,7 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
 # @param: filters: array with the filters to apply
 #         [{ table = "txt_table", column = "Time", from=0, to=10 }, ... ]
 # @param: styles: dictionary with the plot style info
-#           { type = "2d", labels=["Time", "Rate Count"]}
+#           { type = "2d", ... }
 # @param: axis: array with the column names to use in ploting
 #           [{ table = "txt_table", column = "Time" },
 #            { table = "txt_table", column = "Rate" } ... ]
@@ -186,14 +186,6 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
             logging.warn("No plot type specified on styles")
             return None
 
-        if "labels" not in styles:
-            logging.warn("No plot labels specified on styles")
-            return None
-
-        if len(styles["labels"]) < 2:
-            logging.warn("Wrong number of labels specified on styles")
-            return None
-
         if len(axis) < 2:
             logging.warn("Wrong number of axis")
             return None
@@ -203,15 +195,6 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
             return Plotter.get_plotdiv_xy(filtered_ds, axis)
 
         elif styles["type"] == "3d":
-
-            if len(styles["labels"]) < 3:
-                logging.warn("Wrong number of labels specified on styles")
-                return None
-
-            if len(axis) < 3:
-                logging.warn("Wrong number of axis")
-                return None
-
             return Plotter.get_plotdiv_xyz(filtered_ds, axis)
 
         elif styles["type"] == "scatter":
@@ -664,6 +647,9 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
         if pds:
+
+            #pds = rebin_spectrum_if_necessary(pds)
+
             freq = pds.freq
 
             pds_array, nphots_all = pds._make_segment_spectrum(lc, segm_size)
@@ -1166,6 +1152,8 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                                     if pds:
 
+                                        #pds = rebin_spectrum_if_necessary(pds)
+
                                         if freq_range[0] < 0:
                                             freq_low = min(pds.freq)
                                         else:
@@ -1486,12 +1474,17 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         else:
                             sim_pds = AveragedPowerspectrum(lc=sim_lc, segment_size=segm_size, norm=norm, gti=gti)
 
-                        parest, res = fit_powerspectrum(sim_pds, fit_model, starting_pars,
-                                        max_post=False, priors=None, fitmethod="L-BFGS-B")
+                        if sim_pds:
+                            #sim_pds = rebin_spectrum_if_necessary(sim_pds)
 
-                        models_params.append(res.p_opt)
-                        powers.append(sim_pds.power)
+                            parest, res = fit_powerspectrum(sim_pds, fit_model, starting_pars,
+                                            max_post=False, priors=None, fitmethod="L-BFGS-B")
 
+                            models_params.append(res.p_opt)
+                            powers.append(sim_pds.power)
+
+                        else:
+                            logging.warn(ExHelper.getException('get_bootstrap_results: cant create powerspectrum for i: ' + str(i)))
                     except:
                         logging.error(ExHelper.getException('get_bootstrap_results for i: ' + str(i)))
 
@@ -2008,9 +2001,26 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     logging.debug("Create power density spectrum")
 
     if pds_type == 'Sng':
-        return Powerspectrum(lc, norm=norm, gti=gti), lc, gti
+        pds = Powerspectrum(lc, norm=norm, gti=gti)
     else:
-        return AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti), lc, gti
+        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+
+    #if pds:
+    #    pds = rebin_spectrum_if_necessary(pds)
+    #else:
+    #    logging.warn("Can't create power spectrum")
+
+    return pds, lc, gti
+
+
+# Reduces the pds data to Max_plot_points for improve pds performance
+def rebin_spectrum_if_necessary (pds):
+    freq_size = len(pds.freq)
+    if freq_size > CONFIG.MAX_PLOT_POINTS:
+        df = (max(pds.freq) - min(pds.freq)) / CONFIG.MAX_PLOT_POINTS
+        logging.warn("Spectrum rebined to " + str(CONFIG.MAX_PLOT_POINTS) + " points, from " + str(freq_size) + " points, with df: " + str(df))
+        pds = pds.rebin(df=df)
+    return pds
 
 
 def get_countrate_from_lc_ds (lc_destination, bck_destination, lc_name, bck_name):

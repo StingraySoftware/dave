@@ -42,56 +42,38 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   //PDS plot methods:
   this.addSettingsControls = function(){
 
-    if (this.settingsPanel.find(".sliderSelector").length == 0) {
+    if (this.settingsPanel.find(".pdsNorm").length == 0) {
 
       if (isNull(this.plotConfig.styles.showPdsType) || this.plotConfig.styles.showPdsType){
         // Creates PDS type radio buttons
-        this.typeRadios = $('<div class="pdsType">' +
-                              '<h3>PDS Type:</h3>' +
-                              '<fieldset>' +
-                                '<label for="' + this.id + '_Sng">Single</label>' +
-                                '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Sng" value="Sng" ' + getCheckedState(this.plotConfig.type == "Sng") + '>' +
-                                '<label for="' + this.id + '_Avg">Averaged</label>' +
-                                '<input type="radio" name="' + this.id + '_Type" id="' + this.id + '_Avg" value="Avg" ' + getCheckedState(this.plotConfig.type == "Avg") + '>' +
-                              '</fieldset>' +
-                            '</div>');
-
+        this.typeRadios = getRadioControl(this.id,
+                                          'PDS Type',
+                                          "pdsType",
+                                          [
+                                            { id:"Sng", label:"Single", value:"Sng"},
+                                            { id:"Avg", label:"Averaged", value:"Avg"}
+                                          ],
+                                          this.plotConfig.type,
+                                          function(value, id) {
+                                            currentObj.plotConfig.type = value;
+                                            setVisibility(currentObj.segmSelector.$html, value != "Sng");
+                                          });
         this.settingsPanel.find(".leftCol").append(this.typeRadios);
-        var $typeRadios = this.typeRadios.find("input[type=radio][name=" + this.id + "_Type]")
-        $typeRadios.checkboxradio();
-        this.typeRadios.find("fieldset").controlgroup();
-        $typeRadios.change(function() {
-          currentObj.plotConfig.type = this.value;
-          setVisibility(currentObj.segmSelector.$html, currentObj.plotConfig.type != "Sng");
-        });
       }
 
       // Creates the Segment length selector
       var tab = getTabForSelector(this.id);
-      var binSize = this.plotConfig.dt;
-      var segmSize = this.plotConfig.segment_size;
-      var minValue = binSize * CONFIG.MIN_SEGMENT_MULTIPLIER;
-      var maxValue = (this.plotConfig.maxSegmentSize > 0) ? this.plotConfig.maxSegmentSize : segmSize * 100;
-      if (this.plotConfig.duration > 0) {
-        maxValue = Math.min(maxValue, this.plotConfig.duration);
-      }
-
+      var segmConfig = this.getSegmSelectorConfig();
       this.segmSelector = new BinSelector(this.id + "_segmSelector",
                                         "Segment Length (" + tab.projectConfig.timeUnit  + "):",
                                         "From",
-                                        minValue, maxValue, binSize, segmSize,
-                                        this.onSegmSelectorValuesChanged);
+                                        segmConfig.minValue, segmConfig.maxValue, segmConfig.step, segmConfig.initValue,
+                                        this.onSegmSelectorValuesChanged,
+                                        function( event, ui ) {
+                                          currentObj.segmSelector.setValues( ui.values[ 0 ], "slider");
+                                          currentObj.onSegmSelectorValuesChanged();
+                                        });
       this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit + "): <span style='font-size: 0.75em'>Nº Segments= " + fixedPrecision(this.plotConfig.nsegm, 2) + "</span>");
-      this.segmSelector.slider.slider({
-             min: this.segmSelector.fromValue,
-             max: this.segmSelector.toValue,
-             values: [this.segmSelector.value],
-             step: this.segmSelector.step,
-             slide: function( event, ui ) {
-               currentObj.segmSelector.setValues( ui.values[ 0 ], "slider");
-               currentObj.onSegmSelectorValuesChanged();
-             }
-         });
       this.segmSelector.inputChanged = function ( event ) {
          currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, currentObj.plotConfig.segment_size) );
          currentObj.onSegmSelectorValuesChanged();
@@ -102,84 +84,81 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       }
 
       // Creates the Normalization radio buttons
-      this.normRadios = $('<div class="pdsNorm">' +
-                            '<h3>Normalization:</h3>' +
-                            '<fieldset>' +
-                              '<label for="' + this.id + '_leahy">Leahy</label>' +
-                              '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_leahy" value="leahy" ' + getCheckedState(this.plotConfig.norm == "leahy") + '>' +
-                              '<label for="' + this.id + '_frac">Frac</label>' +
-                              '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_frac" value="frac" ' + getCheckedState(this.plotConfig.norm == "frac") + '>' +
-                              '<label for="' + this.id + '_abs">Abs</label>' +
-                              '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_abs" value="abs" ' + getCheckedState(this.plotConfig.norm == "abs") + '>' +
-                              '<label for="' + this.id + '_none">None</label>' +
-                              '<input type="radio" name="' + this.id + 'norm" id="' + this.id + '_none" value="none" ' + getCheckedState(this.plotConfig.norm == "none") + '>' +
-                            '</fieldset>' +
-                          '</div>');
-
+      this.normRadios = getRadioControl(this.id,
+                                        'Normalization',
+                                        "pdsNorm",
+                                        [
+                                          { id:"leahy", label:"Leahy", value:"leahy"},
+                                          { id:"frac", label:"Frac", value:"frac"},
+                                          { id:"abs", label:"Abs", value:"abs"},
+                                          { id:"none", label:"None", value:"none"}
+                                        ],
+                                        this.plotConfig.norm,
+                                        function(value, id) {
+                                          currentObj.plotConfig.norm = value;
+                                        });
       this.settingsPanel.find(".leftCol").append(this.normRadios);
-      var $normRadios = this.normRadios.find("input[type=radio][name=" + this.id + "norm]")
-      $normRadios.checkboxradio();
-      this.normRadios.find("fieldset").controlgroup();
-      $normRadios.change(function() {
-        currentObj.plotConfig.norm = this.value;
-      });
-
 
       // Creates the Plot Binnin Size selector
-      this.binSelector = new BinSelector(this.id + "_binSelector",
-                                        "Binning (Freq):",
-                                        "From",
-                                        this.plotConfig.minRebinSize, this.plotConfig.maxRebinSize, this.plotConfig.minRebinSize, this.plotConfig.rebinSize,
-                                        this.onBinSelectorValuesChanged);
-      this.binSelector.setDisableable(true);
-      this.binSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
-      this.binSelector.switchBox.click( function ( event ) {
+      this.rebinSelector = new BinSelector(this.id + "_rebinSelector",
+                                          "Binning (Freq):",
+                                          "From",
+                                          this.plotConfig.minRebinSize, this.plotConfig.maxRebinSize, this.plotConfig.minRebinSize, this.plotConfig.rebinSize,
+                                          this.onBinSelectorValuesChanged,
+                                          function( event, ui ) {
+                                            currentObj.rebinSelector.setValues( ui.values[ 0 ], "slider");
+                                            currentObj.onBinSelectorValuesChanged();
+                                          });
+      this.rebinSelector.setDisableable(true);
+      this.rebinSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
+      this.rebinSelector.switchBox.click( function ( event ) {
         currentObj.plotConfig.rebinEnabled = !currentObj.plotConfig.rebinEnabled;
-        currentObj.binSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
+        currentObj.rebinSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
       });
-      this.binSelector.slider.slider({
-             min: this.binSelector.fromValue,
-             max: this.binSelector.toValue,
-             values: [this.binSelector.value],
-             step: this.binSelector.step,
-             slide: function( event, ui ) {
-               currentObj.binSelector.setValues( ui.values[ 0 ], "slider");
-               currentObj.onBinSelectorValuesChanged();
-             }
-         });
-      this.binSelector.inputChanged = function ( event ) {
-         currentObj.binSelector.setValues( getInputFloatValue(currentObj.binSelector.fromInput, currentObj.binSelector.value) );
+      this.rebinSelector.inputChanged = function ( event ) {
+         currentObj.rebinSelector.setValues( getInputFloatValue(currentObj.rebinSelector.fromInput, currentObj.rebinSelector.value) );
          currentObj.onBinSelectorValuesChanged();
       };
-      this.settingsPanel.find(".leftCol").append(this.binSelector.$html);
+      this.settingsPanel.find(".leftCol").append(this.rebinSelector.$html);
 
       this.addAxesTypeControlsToSettings(".rightCol");
 
       // Creates the plot type radio buttons
-      this.plotTypeRadios = $('<div class="pdsPlotType">' +
-                            '<h3>' + currentObj.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data:</h3>' +
-                            '<fieldset>' +
-                              '<label for="' + this.id + '_TypeXY">Power x Frequency</label>' +
-                              '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeXY" value="X*Y" ' + getCheckedState(this.plotConfig.plotType == "X*Y") + '>' +
-                              '<label for="' + this.id + '_TypeX">Power</label>' +
-                              '<input type="radio" name="' + this.id + 'PlotType" id="' + this.id + '_TypeX" value="X" ' + getCheckedState(this.plotConfig.plotType == "X") + '>' +
-                            '</fieldset>' +
-                          '</div>');
-
+      this.plotTypeRadios = getRadioControl(this.id,
+                                        this.plotConfig.styles.labels[!isNull(this.plotConfig.zAxisType) ? 2 : 1] + ' axis data',
+                                        "pdsPlotType",
+                                        [
+                                          { id:"TypeXY", label:"Power x Frequency", value:"X*Y"},
+                                          { id:"TypeX", label:"Power", value:"X"}
+                                        ],
+                                        this.plotConfig.plotType,
+                                        function(value, id) {
+                                          currentObj.plotConfig.plotType = value;
+                                        });
       this.settingsPanel.find(".rightCol").append(this.plotTypeRadios);
-      var $plotTypeRadios = this.plotTypeRadios.find("input[type=radio][name=" + this.id + "PlotType]")
-      $plotTypeRadios.checkboxradio();
-      this.plotTypeRadios.find("fieldset").controlgroup();
-      $plotTypeRadios.change(function() {
-        currentObj.plotConfig.plotType = this.value;
-      });
 
       this.onSettingsCreated();
     }
   }
 
+  this.getSegmSelectorConfig = function () {
+    var binSize = this.getBinSize();
+    var segmSize = this.plotConfig.segment_size;
+    var minValue = binSize * CONFIG.MIN_SEGMENT_MULTIPLIER;
+    var maxValue = (this.plotConfig.maxSegmentSize > 0) ? this.plotConfig.maxSegmentSize : segmSize * 100;
+    if (this.plotConfig.duration > 0) {
+      maxValue = Math.min(maxValue, this.plotConfig.duration);
+    }
+
+    return { initValue: segmSize,
+             minValue: minValue,
+             maxValue: maxValue,
+             step: binSize
+           }
+  }
+
   this.updateSettings = function(){
-    if (this.settingsPanel.find(".sliderSelector").length > 0) {
+    if (this.settingsPanel.find(".pdsNorm").length > 0) {
 
       if (!isNull(this.segmSelector)){
         if ((this.segmSelector.step != this.plotConfig.binSize)
@@ -219,16 +198,29 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     }
   }
 
+  this.onBinSizeChanged = function () {
+    currentObj.plotConfig.dt = currentObj.binSelector.value;
+    var segmConfig = this.getSegmSelectorConfig();
+    currentObj.segmSelector.setMinMaxValues(segmConfig.minValue, segmConfig.maxValue, segmConfig.step);
+    currentObj.updateSegmSelector();
+  }
+
   this.onBinSelectorValuesChanged = function(){
     if (currentObj.plotConfig.duration > 0) {
-      currentObj.plotConfig.rebinSize = currentObj.binSelector.value;
+      currentObj.plotConfig.rebinSize = currentObj.rebinSelector.value;
     }
   }
 
   this.updatePlotConfig = function () {
+    var binSize = this.getBinSize();
+    if (!isNull(binSize)){
+      this.plotConfig.dt = binSize;
+    } else {
+      log("ERROR on updatePlotConfig: BinSize is null, Plot: " + this.id);
+    }
+
     var tab = getTabForSelector(this.id);
     if (!isNull(tab)) {
-      this.plotConfig.dt = tab.projectConfig.binSize;
       this.plotConfig.maxSegmentSize = !isNull(this.plotConfig.zAxisType) ? tab.projectConfig.maxSegmentSize / 2 : tab.projectConfig.maxSegmentSize;
       this.plotConfig.segment_size = !isNull(this.segmSelector) ? Math.min(this.segmSelector.value, this.plotConfig.maxSegmentSize) : this.plotConfig.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
       this.updateNSegm();

@@ -108,10 +108,12 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.updateMinMaxCoords = function (){
     if (this.data != null) {
       var coords = this.getSwitchedCoords( { x: 0, y: 1} );
-      this.minX = Math.min.apply(null, this.data[coords.x].values);
-      this.minY = Math.min.apply(null, this.data[coords.y].values);
-      this.maxX = Math.max.apply(null, this.data[coords.x].values);
-      this.maxY = Math.max.apply(null, this.data[coords.y].values);
+      var minMaxX = minMax2DArray(this.data[coords.x].values);
+      var minMaxY = minMax2DArray(this.data[coords.y].values);
+      this.minX = minMaxX.min;
+      this.minY = minMaxY.min;
+      this.maxX = minMaxX.max;
+      this.maxY = minMaxY.max;
 
       var tab = getTabForSelector(this.id);
       if (!isNull(tab) && (0 <= this.minY < this.maxY)){
