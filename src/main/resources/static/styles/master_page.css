@@ -344,6 +344,10 @@ ul#right-navbar li {
   margin-bottom: -2px;
 }
 
+.selectorsContainer .btnWarn {
+  margin-top: 24px;
+}
+
 .bigWarnBtn {
   width: 73%;
 }

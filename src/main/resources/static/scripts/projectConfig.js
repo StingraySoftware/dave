@@ -135,12 +135,30 @@ function ProjectConfig(){
     return this.binSize != this.minBinSize && this.binSize < (this.minBinSize * 2.0);
   }
 
+  this.setTimeRange = function (timeRange) {
+    this.timeRange = timeRange;
+    this.maxSegmentSize = timeRange * CONFIG.TIMERANGE_MULTIPLIER;
+    this.avgSegmentSize = this.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
+  }
+
+  this.getTimeRange = function () {
+    if (!isNull(this.timeRange)) {
+      return this.timeRange;
+    } else {
+      return this.totalDuration;
+    }
+  }
+
   this.getMaxTimeRange = function () {
     return this.totalDuration * this.binSize * this.eventCountRatio;
   }
 
   this.isMaxTimeRangeRatioFixed = function () {
     return this.eventCountRatio < 1.0;
+  }
+
+  this.getNumPoints = function () {
+    return Math.ceil(this.getTimeRange() / this.binSize);
   }
 
   this.updateFromProjectConfigs = function (projectConfigs) {

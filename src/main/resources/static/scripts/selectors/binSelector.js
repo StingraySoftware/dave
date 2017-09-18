@@ -104,14 +104,14 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      this.slider.slider("option", "step", this.step);
    }
 
-    this.onSlideChanged = !isNull(onSlideChanged) ? onSlideChanged : function( event, ui ) {
-      var sliderId = event.target.id.replace("slider-", "");
-      var tab = getTabForSelector(sliderId);
-      if (tab != null){
-        tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
-        tab.toolPanel.binSelector.onSelectorValuesChanged();
-      }
-    };
+   this.onSlideChanged = !isNull(onSlideChanged) ? onSlideChanged : function( event, ui ) {
+     var sliderId = event.target.id.replace("slider-", "");
+     var tab = getTabForSelector(sliderId);
+     if (tab != null){
+       tab.toolPanel.binSelector.setValues( ui.values[ 0 ], "slider");
+       tab.toolPanel.binSelector.onSelectorValuesChanged();
+     }
+   };
 
    this.createSlider = function () {
      this.slider.slider({

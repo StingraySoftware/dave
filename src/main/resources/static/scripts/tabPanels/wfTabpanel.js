@@ -501,13 +501,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onTimeRangeChanged = function (timeRange) {
-    this.updateTimeRange(timeRange);
-    this.toolPanel.onTimeRangeChanged(timeRange);
-  }
-
-  this.updateTimeRange = function (timeRange) {
-    this.projectConfig.maxSegmentSize = timeRange * 0.95; //Math.min (timeRange * 0.95, currentObj.projectConfig.maxSegmentSize);
-    this.projectConfig.avgSegmentSize = this.projectConfig.maxSegmentSize / CONFIG.DEFAULT_SEGMENT_DIVIDER;
+    this.projectConfig.setTimeRange(timeRange);
+    this.toolPanel.onNumPointsChanged(this.projectConfig.getNumPoints());
   }
 
   this.getReplaceColumn = function () {

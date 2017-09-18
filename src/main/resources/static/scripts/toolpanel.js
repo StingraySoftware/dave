@@ -155,15 +155,43 @@ function ToolPanel (id,
     this.sngOrMultiFileSelector.remove();
   }
 
-  this.onTimeRangeChanged = function (timeRange) {
-    /*if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
+  /*this.onTimeRangeChanged = function (timeRange) {
+    if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
       var tab = getTabForSelector(this.id);
       if (!isNull(tab)){
         var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, tab.projectConfig.minBinSize);
         var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, tab.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
         this.binSelector.setMinMaxValues(minValue, maxValue);
       }
-    }*/
+    }
+  }*/
+
+  this.onBinSizeChanged = function () {
+    currentObj.onSelectorValuesChanged();
+    var tab = getTabForSelector(currentObj.id);
+    if (!isNull(tab)){
+      if (!isNull(currentObj.timeSelector)) {
+        currentObj.timeSelector.setFixedStep(tab.projectConfig.binSize, false);
+      }
+      currentObj.onNumPointsChanged(tab.projectConfig.getNumPoints());
+    }
+  }
+
+  this.onNumPointsChanged = function (numPoints) {
+    if (numPoints > CONFIG.MAX_PLOT_POINTS) {
+      this.showWarn("You are about to plot " + numPoints + " points. Performance will be degraded.");
+    } else {
+      this.showWarn("");
+    }
+  }
+
+  this.showWarn = function (msg) {
+    this.$html.find(".selectorsContainer").find(".btnWarn").remove();
+    if (!isNull(msg) && msg != ""){
+      this.$html.find(".selectorsContainer").prepend($('<a href="#" class="btn btn-danger btnWarn"><div>' +
+                                                          '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + msg +
+                                                        '</div></a>'));
+    }
   }
 
   this.onDatasetSchemaChanged = function ( projectConfig ) {
@@ -213,7 +241,7 @@ function ToolPanel (id,
                                         binSelectorConfig.maxBinSize,
                                         binSelectorConfig.step,
                                         binSelectorConfig.binSize,
-                                        this.onSelectorValuesChanged,
+                                        this.onBinSizeChanged,
                                         null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
 
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
@@ -253,19 +281,32 @@ function ToolPanel (id,
                                               filterData,
                                               "From", "To",
                                               column.min_value, column.max_value,
-                                              this.onSelectorValuesChanged,
+                                              (columnName != "TIME") ?
+                                                this.onSelectorValuesChanged :
+                                                function (selector) {
+                                                //Notifies that time range has changed
+                                                var tabPanel = getTabForSelector(selector.id);
+                                                if (!isNull(tabPanel)){
+                                                  tabPanel.onTimeRangeChanged(Math.max ((selector.toValue - selector.fromValue) * 0.95, selector.step));
+                                                }
+                                              },
                                               this.selectors_array,
                                               null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if ((columnName == "TIME")
-                && (!CONFIG.AUTO_BINSIZE || projectConfig.schema.isLightCurveFile())
-                && projectConfig.isMaxTimeRangeRatioFixed()) {
+            if (columnName == "TIME"){
 
-                  //If full events were cropped to CONFIG.MAX_PLOT_POINTS
-                  //selector.setMaxRange(projectConfig.getMaxTimeRange());
-                  selector.setValues( selector.initFromValue, selector.initFromValue + projectConfig.getMaxTimeRange() );
-                  selector.setEnabled (true);
+              //Stores this selector
+              this.timeSelector = selector;
+
+              if ((!CONFIG.AUTO_BINSIZE || projectConfig.schema.isLightCurveFile())
+                  && projectConfig.isMaxTimeRangeRatioFixed()) {
+
+                    //If full events were cropped to CONFIG.MAX_PLOT_POINTS
+                    //selector.setMaxRange(projectConfig.getMaxTimeRange());
+                    selector.setValues( selector.initFromValue, selector.initFromValue + projectConfig.getMaxTimeRange() );
+                    selector.setEnabled (true);
+              }
             }
 
             if (tableName == "EVENTS" && columnName == "PHA") {

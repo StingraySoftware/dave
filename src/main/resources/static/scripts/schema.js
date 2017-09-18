@@ -157,7 +157,7 @@ function Schema(schema){
   }
 
   this.getMaxSegmentSize = function () {
-    return this.getTotalDuration() * 0.95;
+    return this.getTotalDuration() * CONFIG.TIMERANGE_MULTIPLIER;
   }
 
   return this;
