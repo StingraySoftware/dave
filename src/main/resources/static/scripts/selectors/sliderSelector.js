@@ -24,6 +24,7 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
+  this.multiplier = 1.0;
 
   if (!isNull(selectors_array)){
     selectors_array[this.id] = this;
@@ -165,8 +166,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
 
    this.getFilter = function () {
      if (this.enabled) {
-        this.filterData.from = this.fromValue;
-        this.filterData.to = this.toValue;
+        this.filterData.from = this.fromValue * this.multiplier;
+        this.filterData.to = this.toValue * this.multiplier;
         return this.filterData;
      } else {
         return null;

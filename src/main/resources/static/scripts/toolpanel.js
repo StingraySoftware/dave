@@ -270,17 +270,24 @@ function ToolPanel (id,
           var column = table[columnName];
           if (!excludedFilters.includes(columnName) && column.min_value < column.max_value) {
 
+            var multiplier = 1.0;
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
             if (columnName == "TIME") {
                columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
+            } else if ((columnName == "RATE") && projectConfig.schema.isLightCurveFile()){
+               //This multiplier its only intended to calculate CountRate from counts when BinSize != 1
+               //The RATE values that comes from schema means counts, but filters and LCs shows countrate
+               //so a multiplication by binSize is requiered for calculating the rate.
+               multiplier = projectConfig.binSize;
             }
 
             var selector = new sliderSelector(this.id + "_" + columnName,
                                               columnTitle,
                                               filterData,
                                               "From", "To",
-                                              column.min_value, column.max_value,
+                                              Math.floor(column.min_value / multiplier),
+                                              Math.ceil(column.max_value / multiplier),
                                               (columnName != "TIME") ?
                                                 this.onSelectorValuesChanged :
                                                 function (selector) {
@@ -292,6 +299,7 @@ function ToolPanel (id,
                                               },
                                               this.selectors_array,
                                               null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+            selector.multiplier = multiplier;
             this.$html.find(".selectorsContainer").append(selector.$html);
 
             if (columnName == "TIME"){
