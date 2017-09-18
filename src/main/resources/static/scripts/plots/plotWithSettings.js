@@ -219,7 +219,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
         //Adds the custom binSize switch
         var $binSelectorCheckBox = $('<div class="binSelectorCheckBox ' + ((enabled) ? '' : 'Orange') + '">' +
-                                        'Use general bin size' +
+                                        'Use bin size on filter tab' +
                                         '<div class="switch-wrapper">' +
                                           '<div id="' + this.id + '_binSelectorSwitch" class="switch-btn fa ' + ((enabled) ? 'fa-square-o' : 'fa-check-square-o') + '" aria-hidden="true"></div>' +
                                         '</div>' +
