@@ -21,7 +21,7 @@ cd $RES_DIR
 RES_DIR=$(pwd)
 cd -
 
-ENVDIR=$HOME/Dave_work
+ENVDIR=$HOME/.dave
 echo "Python Environment folder: $ENVDIR"
 
 #Check DAVE environment version
