@@ -415,32 +415,35 @@ function ToolPanel (id,
     }
   }
 
-  this.isCountRateSliderCreated = function ( visible ) {
-    return !isNull(getTabForSelector(this.id + "_Rate"));
-  }
-
-  this.createCountRateSlider = function ( minRate, maxRate ) {
-    var rateSelector = new sliderSelector(this.id + "_Rate",
-                                      "COUNT RATE (c/s):",
-                                      { table:"EVENTS", column:"RATE" },
-                                      "From", "To",
-                                      minRate, maxRate,
-                                      this.onSelectorValuesChanged,
-                                      this.selectors_array);
-    rateSelector.$html.insertAfter("." + this.id + "_TIME");
-  }
-
   this.updateCountRateSlider = function ( minRate, maxRate ) {
-    var rateSliderId = this.id + "_Rate";
-    var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
-    if (!isNull(rateSelector)) {
-      var newMinRate = Math.min(rateSelector.initFromValue, minRate);
-      var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
-      if ((newMinRate != rateSelector.initFromValue)
-          || (newMaxRate != rateSelector.initToValue)) {
-            rateSelector.setMinMaxValues(newMinRate, newMaxRate);
-          }
+    var rateSliderId = this.id + "_RATE";
+    if (isNull(getTabForSelector(rateSliderId))) {
+
+      //Creates the rate slider if not created yet:
+      var rateSelector = new sliderSelector(rateSliderId,
+                                            "COUNT RATE (c/s):",
+                                            { table:"EVENTS", column:"RATE" },
+                                            "From", "To",
+                                            minRate, maxRate,
+                                            this.onSelectorValuesChanged,
+                                            this.selectors_array);
+      rateSelector.$html.insertAfter("." + this.id + "_TIME");
+
+    } else {
+
+      //Udpated rate slider min and max values
+      var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
+      if (!isNull(rateSelector)) {
+        var newMinRate = Math.min(rateSelector.initFromValue, minRate);
+        var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
+        if ((newMinRate != rateSelector.initFromValue)
+            || (newMaxRate != rateSelector.initToValue)) {
+              rateSelector.setMinMaxValues(newMinRate, newMaxRate);
+            }
+      }
+
     }
+
   }
 
   this.setColorFilterRadios = function (column) {

@@ -465,26 +465,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onSchemaError = function ( error ) {
-      log("onSchemaError error:" + JSON.stringify(error));
-      waitingDialog.hide();
-      showError();
+    log("onSchemaError error:" + JSON.stringify(error));
+    waitingDialog.hide();
+    showError();
   }
 
   this.updateMinMaxCountRate = function (minRate, maxRate) {
-    if (this.projectConfig.hasSchema()
-        && this.projectConfig.schema.isEventsFile()) {
-
-      minRate = Math.floor (minRate);
-      maxRate = Math.ceil (maxRate);
-
-      if (!currentObj.toolPanel.isCountRateSliderCreated()) {
-        //Creates the rate slider if not created yet:
-        currentObj.toolPanel.createCountRateSlider(minRate, maxRate);
-      } else {
-        //Udpated rate slider min and max values
-        currentObj.toolPanel.updateCountRateSlider(minRate, maxRate);
-      }
-
+    if (this.projectConfig.hasSchema()) {
+      currentObj.toolPanel.updateCountRateSlider(Math.floor (minRate), Math.ceil (maxRate));
     }
   }
 
