@@ -381,7 +381,7 @@ ul#right-navbar li {
   font-size: 0.85em;
 }
 
-.fileSelector .InfoText {
+.InfoText {
   color: #2e6da4;
   font-size: 0.85em;
 }
@@ -612,9 +612,8 @@ input.wrongValue {
   color: #d0d0d0;
 }
 
-.aboutDaveDiv {
+.floatRight {
   float: right;
-  font-size: 0.85em;
 }
 
 .BulkAnalisysSection h3 i {

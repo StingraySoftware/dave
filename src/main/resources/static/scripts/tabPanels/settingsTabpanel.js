@@ -19,8 +19,8 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
   this.setTitle("Settings");
 
   this.$container = this.$html.find(".toolPanelContainer");
-  this.$container.html('<div class="aboutDaveDiv">' +
-                          '<a href="#" class="btnAboutDave">About DAVE <i class="fa fa-info-circle" aria-hidden="true"></i></a>' +
+  this.$container.html('<div class="aboutDaveDiv floatRight">' +
+                          '<a href="#" class="btnAboutDave InfoText">About DAVE <i class="fa fa-info-circle" aria-hidden="true"></i></a>' +
                         '</div>' +
                         '<h2>' +
                           'General Settings:' +

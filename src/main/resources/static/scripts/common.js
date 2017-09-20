@@ -119,14 +119,18 @@ function saveToFile (filename, contents) {
   a.click();
 }
 
-function showLoadFile(onLoadFn) {
+function showLoadFile(onLoadFn, fileExtension) {
   var input = $('<input type="file" id="load-input" />');
   input.on('change', function (e) {
     if (e.target.files.length == 1) {
       var file = e.target.files[0];
-      var reader = new FileReader();
-      reader.onload = function (e) { onLoadFn (e, file) };
-      reader.readAsText(file);
+      if (isNull(fileExtension) || file.name.endsWith(fileExtension)){
+        var reader = new FileReader();
+        reader.onload = function (e) { onLoadFn (e, file) };
+        reader.readAsText(file);
+      } else {
+        onLoadFn (null, file);
+      }
     }
    });
    input.click();

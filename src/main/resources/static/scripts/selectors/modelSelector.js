@@ -212,13 +212,17 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   }
 
   this.loadModels = function () {
-    showLoadFile (function(e) {
+    showLoadFile (function(e, file) {
       try {
-        currentObj.setModels(JSON.parse(e.target.result));
+        if (!isNull(e)) {
+          currentObj.setModels(JSON.parse(e.target.result));
+        } else {
+          showError("File: " + file.name + " is not supported as models");
+        }
      } catch (e) {
-       showError("File is not supported as models", e);
+       showError("File: " + file.name + " is not supported as models", e);
      }
-    });
+    }, ".mdl");
   }
 
   this.modelsToLaTeX = function() {
