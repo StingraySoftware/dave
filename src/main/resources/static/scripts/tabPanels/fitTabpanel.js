@@ -357,7 +357,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       if (!isNull(data) && data.length > 0) {
         currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;
-        currentObj.addInfoPanel(data[1].values, data[2].values);
+        currentObj.addInfoPanel(data[1].values, (data.length > 2) ? data[2].values : null);
         currentObj.toolPanel.showPanel("loadPanel");
         waitingDialog.hide();
       } else {

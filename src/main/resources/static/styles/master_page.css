@@ -162,7 +162,13 @@ ul#right-navbar li {
 }
 
 .infoPanel .posteriorTable {
-    width: 80%;
+  width: 80%;
+  border: 1px solid lightgrey;
+}
+
+.posteriorTable td {
+  padding: 6px;
+  border: 1px solid lightgrey;
 }
 
 .infoPanel img {
