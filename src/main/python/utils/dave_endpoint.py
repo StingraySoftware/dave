@@ -313,7 +313,7 @@ def get_divided_lightcurve_ds(lc0_filename, lc1_filename, lc0_bck_filename, lc1_
 
 
 def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -340,9 +340,10 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_power_density_spectrum: segm_size %f" % segm_size)
     logging.debug("get_power_density_spectrum: norm %s" % norm)
     logging.debug("get_power_density_spectrum: type %s" % pds_type)
+    logging.debug("get_power_density_spectrum: df %s" % df)
 
     data = DaveEngine.get_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
 
     logging.debug("get_power_density_spectrum: Finish!")
 
@@ -350,7 +351,7 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
 
 
 def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm):
+                            filters, axis, dt, nsegm, segm_size, norm, df):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -376,9 +377,10 @@ def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_dynamical_spectrum: nsegm %f" % nsegm)
     logging.debug("get_dynamical_spectrum: segm_size %f" % segm_size)
     logging.debug("get_dynamical_spectrum: norm %s" % norm)
+    logging.debug("get_dynamical_spectrum: df %s" % df)
 
     data = DaveEngine.get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm)
+                                                filters, axis, dt, nsegm, segm_size, norm, df)
 
     logging.debug("get_dynamical_spectrum: Finish!")
 
@@ -470,7 +472,7 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
     logging.debug("get_covariance_spectrum: filters %s" % filters)
     logging.debug("get_covariance_spectrum dt: %s" % dt)
     logging.debug("get_covariance_spectrum ref_band_interest: %s" % ref_band_interest)
-    logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
+    logging.debug("get_covariance_spectrum: energy_range %s" % energy_range)
     logging.debug("get_covariance_spectrum n_bands: %s" % n_bands)
     logging.debug("get_covariance_spectrum std: %s" % std)
 
@@ -483,7 +485,7 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
 
 
 def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                     freq_range, energy_range, n_bands):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -511,12 +513,13 @@ def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_phase_lag_spectrum: segm_size %f" % segm_size)
     logging.debug("get_phase_lag_spectrum: norm %s" % norm)
     logging.debug("get_phase_lag_spectrum: type %s" % pds_type)
+    logging.debug("get_phase_lag_spectrum: df %s" % df)
     logging.debug("get_phase_lag_spectrum: freq_range %s" % freq_range)
     logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
     logging.debug("get_phase_lag_spectrum: n_bands %s" % n_bands)
 
     data = DaveEngine.get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                                         freq_range, energy_range, n_bands)
 
     logging.debug("get_phase_lag_spectrum: Finish!")
@@ -525,7 +528,7 @@ def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
 
 
 def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                     freq_range, energy_range, n_bands):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -553,12 +556,13 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_spectrum: segm_size %f" % segm_size)
     logging.debug("get_rms_spectrum: norm %s" % norm)
     logging.debug("get_rms_spectrum: type %s" % pds_type)
+    logging.debug("get_rms_spectrum: df %s" % df)
     logging.debug("get_rms_spectrum: freq_range %s" % freq_range)
     logging.debug("get_rms_spectrum: energy_range %s" % energy_range)
     logging.debug("get_rms_spectrum: n_bands %s" % n_bands)
 
     data = DaveEngine.get_rms_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                                         freq_range, energy_range, n_bands)
 
     logging.debug("get_rms_spectrum: Finish!")
@@ -579,7 +583,7 @@ def get_plot_data_from_models(models, x_values):
 
 
 def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                                 models, priors=None, sampling_params=None):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -607,12 +611,13 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
     logging.debug("get_fit_powerspectrum_result: segm_size %f" % segm_size)
     logging.debug("get_fit_powerspectrum_result: norm %s" % norm)
     logging.debug("get_fit_powerspectrum_result: type %s" % pds_type)
+    logging.debug("get_fit_powerspectrum_result: df %s" % df)
     logging.debug("get_fit_powerspectrum_result: models %s" % models)
     logging.debug("get_fit_powerspectrum_result: priors %s" % priors)
     logging.debug("get_fit_powerspectrum_result: sampling_params %s" % sampling_params)
 
     data = DaveEngine.get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                                                 models, priors, sampling_params)
 
     logging.debug("get_fit_powerspectrum_result: Finish!")
@@ -621,7 +626,7 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
 
 
 def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
-                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                             models, n_iter, mean, red_noise, seed):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -649,6 +654,7 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_bootstrap_results: segm_size %f" % segm_size)
     logging.debug("get_bootstrap_results: norm %s" % norm)
     logging.debug("get_bootstrap_results: type %s" % pds_type)
+    logging.debug("get_bootstrap_results: df %s" % df)
     logging.debug("get_bootstrap_results: models %s" % models)
     logging.debug("get_bootstrap_results: n_iter %s" % n_iter)
     logging.debug("get_bootstrap_results: mean %s" % mean)
@@ -656,7 +662,7 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_bootstrap_results: seed %s" % seed)
 
     data = DaveEngine.get_bootstrap_results(src_destination, bck_destination, gti_destination,
-                                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                            filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                                             models, n_iter, mean, red_noise, seed)
 
     logging.debug("get_bootstrap_results: Finish!")

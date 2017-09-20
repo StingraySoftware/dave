@@ -170,7 +170,6 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.energyRangeSelector = new sliderSelector(this.id + "_EnergyRange",
                                         title + ":",
                                         { table:"EVENTS", column:"E", source: "energy" },
-                                        "From", "To",
                                         this.plotConfig.default_energy_range[0], this.plotConfig.default_energy_range[1],
                                         this.onEnergyRangeValuesChanged,
                                         null,
@@ -247,7 +246,6 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
         this.binSelector = new BinSelector(this.id + "_binSelector",
                                           "BIN SIZE (" + tab.projectConfig.timeUnit  + "):",
-                                          "From",
                                           tab.projectConfig.minBinSize,
                                           tab.projectConfig.maxBinSize,
                                           binSelectorConfig.step,

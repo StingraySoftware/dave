@@ -1,10 +1,9 @@
 
-function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged, precision) {
+function BinSelector(id, title, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged, precision) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.title = title;
-  this.fromLabel = fromLabel;
   this.initFromValue = fromValue;
   this.initToValue = toValue;
   this.fromValue = fromValue;
@@ -23,7 +22,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
                     '</div>' +
                   '</h3>' +
                   '<div class="selectorContainer">' +
-                  ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromLabel + '" value="' + fromValue + '" />' +
+                  ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromValue + '" value="' + fromValue + '" />' +
                   ' <div id="slider-' + this.id + '" class="selectorSlider"></div>' +
                   '</div>' +
                 '</div>');
@@ -86,7 +85,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      }
    }
 
-   this.setMinMaxValues = function (minValue, maxValue, step) {
+   this.setMinMaxValues = function (minValue, maxValue, step, showRange) {
      this.fromValue = minValue;
      this.initFromValue = this.fromValue;
      this.step = isNull(step) ? this.fromValue : step;
@@ -96,7 +95,9 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      this.slider = $('<div id="slider-' + this.id + '" class="selectorSlider"></div>');
      this.container.append(this.slider);
      this.createSlider();
-     this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
+     if (isNull(showRange) || showRange){
+       this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
+     }
    }
 
    this.setStep = function (step) {

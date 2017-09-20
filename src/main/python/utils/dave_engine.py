@@ -539,9 +539,10 @@ def get_divided_lightcurve_ds(lc0_destination, lc1_destination, lc0_bck_destinat
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
 #
 def get_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df=0):
 
     freq = []
     power = []
@@ -551,7 +552,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
     try:
         pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
         if pds:
             freq = pds.freq
             power = pds.power
@@ -593,10 +594,10 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
-# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
 #
 def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                                filters, axis, dt, nsegm, segm_size, norm):
+                            filters, axis, dt, nsegm, segm_size, norm, df=0):
 
     freq = []
     power_all = []
@@ -647,6 +648,9 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
         if pds:
+
+            if df > 0:
+                pds = pds.rebin(df=df)
 
             #pds = rebin_spectrum_if_necessary(pds)
 
@@ -923,6 +927,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
 # @param: freq_range: A tuple with minimum and maximum values of the
 #         range of frequency, send [-1, -1] for use all frequencies
 # @param: energy_range: A tuple with minimum and maximum values of the
@@ -930,7 +935,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 # @param: n_bands: The number of bands to split the refence band
 #
 def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
-                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                             freq_range, energy_range, n_bands):
 
     energy_arr = []
@@ -970,7 +975,7 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
             if "E" in events_table.columns:
 
                 pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                               filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                                               filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
                 if pds:
 
                     #Preapares the eventlist with energies and gtis
@@ -1057,6 +1062,7 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
 # @param: freq_range: A tuple with minimum and maximum values of the
 #         range of frequency, send [-1, -1] for use all frequencies
 # @param: energy_range: A tuple with minimum and maximum values of the
@@ -1064,7 +1070,8 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 # @param: n_bands: The number of bands to split the refence band
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, freq_range, energy_range, n_bands):
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
+                    freq_range, energy_range, n_bands):
     energy_arr = []
     rms_arr =[]
     rms_err_arr = []
@@ -1151,6 +1158,9 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                         pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
                                     if pds:
+
+                                        if df > 0:
+                                            pds = pds.rebin(df=df)
 
                                         #pds = rebin_spectrum_if_necessary(pds)
 
@@ -1262,18 +1272,19 @@ def get_plot_data_from_models(models, x_values):
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
 # @param: models: array of models, dave_model definition with the starting parammeters
 # @param: priors: array of priors, dave_priors defined for each model parammeters
 # @param: sampling_params: dict with the parammeter values for do the MCMC sampling
 #
 def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                                 models, priors=None, sampling_params=None):
     results = []
 
     try:
         pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
         if pds:
 
             fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
@@ -1417,6 +1428,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
 # @param: models: array of models, dave_model definition with the optimal parammeters
 # @param: n_iter: Number of bootstrap iterations
 # @param: mean: Mean value of the simulated light curve
@@ -1424,7 +1436,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 # @param: seed: The random state seed for simulator
 #
 def get_bootstrap_results(src_destination, bck_destination, gti_destination,
-                            filters, axis, dt, nsegm, segm_size, norm, pds_type,
+                            filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
                             models, n_iter, mean, red_noise, seed):
 
     results = []
@@ -1432,7 +1444,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
     try:
         # Gets de power density espectrum from given params
         pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type)
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
         if pds:
 
             # Creates the model from dave_model
@@ -1475,6 +1487,10 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                             sim_pds = AveragedPowerspectrum(lc=sim_lc, segment_size=segm_size, norm=norm, gti=gti)
 
                         if sim_pds:
+
+                            if df > 0:
+                                pds = pds.rebin(df=df)
+
                             #sim_pds = rebin_spectrum_if_necessary(sim_pds)
 
                             parest, res = fit_powerspectrum(sim_pds, fit_model, starting_pars,
@@ -1968,7 +1984,7 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, sr
 
 
 def create_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type):
+                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df=0):
 
     if len(axis) != 2:
         logging.warn("Wrong number of axis")
@@ -2005,10 +2021,12 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     else:
         pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
-    #if pds:
-    #    pds = rebin_spectrum_if_necessary(pds)
-    #else:
-    #    logging.warn("Can't create power spectrum")
+    if pds:
+        if df > 0:
+            pds = pds.rebin(df=df)
+        #pds = rebin_spectrum_if_necessary(pds)
+    else:
+        logging.warn("Can't create power spectrum")
 
     return pds, lc, gti
 
@@ -2021,7 +2039,6 @@ def rebin_spectrum_if_necessary (pds):
         logging.warn("Spectrum rebined to " + str(CONFIG.MAX_PLOT_POINTS) + " points, from " + str(freq_size) + " points, with df: " + str(df))
         pds = pds.rebin(df=df)
     return pds
-
 
 def get_countrate_from_lc_ds (lc_destination, bck_destination, lc_name, bck_name):
 

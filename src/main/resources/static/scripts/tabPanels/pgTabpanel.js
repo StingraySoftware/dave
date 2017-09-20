@@ -96,7 +96,6 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
                                       "Frequency range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
-                                      "From", "To",
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
                                       null,

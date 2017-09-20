@@ -3,7 +3,6 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   var currentObj = this;
   plotConfig.n_bands = 10;
   plotConfig.freq_range = [-1, -1];
-  plotConfig.default_freq_range = [-1, -1];
   plotConfig.energy_range = [-1, -1];
   plotConfig.default_energy_range = [-1, -1];
 
@@ -31,10 +30,6 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.yAxisType = "linear";
   this.plotConfig.plotType = "X";
 
-  this.onFreqRangeValuesChanged = function() {
-    currentObj.plotConfig.freq_range = [currentObj.freqRangeSelector.fromValue, currentObj.freqRangeSelector.toValue];
-  }
-
   this.onSettingsCreated = function(){
 
     //Hides pds settings controls that doesn't apply to rms plot
@@ -44,40 +39,15 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.plotTypeRadios.hide();
 
     //Adds frequency range selector
-    var freqRange = this.getDefaultFreqRange();
-    this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
-                                      this.freq_range_title,
-                                      { table:"EVENTS", column:"FREQ", source: "frequency" },
-                                      "From", "To",
-                                      freqRange[0], freqRange[1],
-                                      this.onFreqRangeValuesChanged,
-                                      null,
-                                      function( event, ui ) {
-                                        currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
-                                        currentObj.onFreqRangeValuesChanged();
-                                      },
-                                      null,
-                                      getStepSizeFromRange(freqRange[1] - freqRange[0], 100));
-    this.freqRangeSelector.setEnabled(true);
-    if (this.plotConfig.freq_range[0] > -1) {
-      this.freqRangeSelector.setValues(this.plotConfig.freq_range[0], this.plotConfig.freq_range[1]);
-    }
-    this.settingsPanel.find(".rightCol").append(this.freqRangeSelector.$html);
+    this.addFrequencyRangeSelector(this.freq_range_title,
+                                    { table:"EVENTS", column:"FREQ", source: "frequency" },
+                                    ".rightCol");
 
     //Adds energy range selector
     this.addEnergyRangeControlToSetting("Energy range (keV)", ".rightCol");
 
     //Adds number of point control of rms plot
     this.addNumberOfBandsControlToSettings("Nº Energy Segments", ".rightCol");
-  }
-
-  this.getDefaultFreqRange = function (){
-    if (this.plotConfig.default_freq_range[0] < 0 && !isNull(this.data) && this.data.length >= 5) {
-      if (this.data[4].values.length == 2) {
-        this.plotConfig.default_freq_range = this.data[4].values;
-      }
-    }
-    return this.plotConfig.default_freq_range;
   }
 
   log ("new RmsPlot id: " + this.id);

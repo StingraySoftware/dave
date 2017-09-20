@@ -55,6 +55,54 @@ function getPrecisionFromFloat(value) {
   }
 }
 
+function rebinData(x, y, dx_new, method){
+
+  // Rebin some data to an arbitrary new data resolution. Either sum
+  // the data points in the new bins or average them.
+  if (isNull(method)) { method = "sum"; }
+
+  if (x.length < 2 || x.length != y.length) {
+      return {x: x, y: y};
+  }
+
+  if (dx_new < x[1] - x[0]) {
+    throw new Error("New frequency resolution must be larger than old frequency resolution.");
+  }
+
+  var newX = [];
+  var newY = [];
+  var initX = x[0];
+  var sumDx = x[0];
+  var sumDy = 0;
+  var sumCount = 1;
+  for (i in x) {
+    if (i > 0){
+      var dx= x[i] - x[i - 1];
+      sumDx += dx;
+      sumDy += y[i];
+      sumCount ++;
+    }
+
+    if (sumDx >= dx_new) {
+      if (method == 'sum') {
+        newY.push(sumDy);
+      } else if (method == 'avg') {
+        newY.push(sumDy / sumCount);
+      } else {
+        throw new Error("Unknown binning method: " + method);
+      }
+      newX.push((initX + x[i]) / 2);
+      sumDx = 0;
+      sumDy = 0;
+      sumCount = 0;
+      initX = x[i];
+    }
+
+  }
+
+  return {x: newX, y: newY};
+}
+
 
 // ------- CLIPBOARD AND FILE MEHTODS -------
 function copyToClipboard(text) {
