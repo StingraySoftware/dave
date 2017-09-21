@@ -22,6 +22,8 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     currentObj.resize();
   });
 
+  this.btnLoad.remove();
+
   //If plot is pds adds Fits button to plot
   this.btnStyle = $('<button class="btn btn-default btnStyle" data-toggle="tooltip" title="Change plot dimensions">2D</button>');
   this.$html.find(".plotTools").prepend(this.btnStyle);

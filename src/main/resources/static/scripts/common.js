@@ -103,6 +103,43 @@ function rebinData(x, y, dx_new, method){
   return {x: newX, y: newY};
 }
 
+//Transposes an array: [[1,2,3], [4,5,6], [7,8,9]] -> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+function transposeArray(a) {
+    return Object.keys(a[0]).map(function(c) {
+        return a.map(function(r) { return r[c]; });
+    });
+}
+
+//Extracts an array from csv text contents
+function extractDatafromCSVContents(contents) {
+  var data = [];
+
+  if (contents.length > 0) {
+    var lines = contents.split("\n");
+    logInfo("Extracting CSV data, N lines: " + lines.length);
+
+    for (i in lines){
+      var line = lines[i];
+      if (line.length > 0){
+        var strData = line.split(",");
+        if (strData.length > 2){
+          lineData = [];
+          for (j in strData){
+            var value = strData[j].trim();
+            if (jQuery.isNumeric(value)){
+              value = parseFloat(value);
+            }
+            lineData.push(value);
+          }
+          data.push(lineData);
+        }
+      }
+    }
+  }
+
+  return data;
+}
+
 
 // ------- CLIPBOARD AND FILE MEHTODS -------
 function copyToClipboard(text) {

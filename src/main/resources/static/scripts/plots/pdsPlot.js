@@ -230,7 +230,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.plotConfig.dt = currentObj.binSelector.value;
 
     //Updates Segment Size selector
-    var segmConfig = this.getSegmSelectorConfig();
+    var segmConfig = currentObj.getSegmSelectorConfig();
     currentObj.segmSelector.setMinMaxValues(segmConfig.minValue, segmConfig.maxValue, segmConfig.step);
     currentObj.updateSegmSelector();
 
@@ -239,7 +239,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     if (!isNull(currentObj.rebinSelector)) {
       currentObj.rebinSelector.setMinMaxValues (currentObj.plotConfig.freqMin,
                                                 currentObj.plotConfig.freqMax,
-                                                getStepSizeFromRange(this.plotConfig.freqMax - this.plotConfig.freqMin, 100), false);
+                                                getStepSizeFromRange(currentObj.plotConfig.freqMax - currentObj.plotConfig.freqMin, 100), false);
     }
     if (!isNull(currentObj.freqSelector)) {
       currentObj.freqSelector.setMinMaxValues (currentObj.plotConfig.freqMin,
@@ -340,7 +340,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         this.getLabel(1),
                                         this.plotConfig.styles.title);
 
-    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.prepareAxis(plotlyConfig);
 
     if (this.plotConfig.plotType == "X*Y") {
       plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots

@@ -31,15 +31,16 @@ function TimingPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onP
 
   this.getPlotlyConfig = function (data) {
 
-    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
+    var coords = this.getSwitchedCoords( { x: 0, y: 1} );
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], data[2].values,
-                                        (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
-                                        currentObj.plotConfig.styles.labels[coords.x],
-                                        currentObj.plotConfig.styles.labels[coords.y],
-                                        currentObj.plotConfig.styles.title);
+                                        (data.length > 4) ? this.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
+                                        this.plotConfig.styles.labels[coords.x],
+                                        this.plotConfig.styles.labels[coords.y],
+                                        this.plotConfig.styles.title);
 
-    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.prepareAxis(plotlyConfig);
 
     return plotlyConfig;
   }

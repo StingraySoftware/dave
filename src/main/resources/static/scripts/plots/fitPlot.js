@@ -18,8 +18,9 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   this.errorsData = null;
 
   this.btnFullScreen.remove();
-  this.btnSettings.hide();
-
+  this.btnSettings.remove();
+  this.btnLoad.remove();
+  
   this.onPlotDataReceived = function ( data ) {
 
     if (!isNull(data.abort)){

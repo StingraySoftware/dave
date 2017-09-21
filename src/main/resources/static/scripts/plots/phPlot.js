@@ -16,6 +16,7 @@ function PhPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.ph_opts.nt = { default:32, min:1, max: 512}; //Number of time bins of the phaseogram
 
   this.btnFullScreen.remove();
+  this.btnLoad.remove();
 
   this.getPlotlyConfig = function (data) {
 
