@@ -68,7 +68,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         function( event, ui ) {
                                           currentObj.segmSelector.setValues( ui.values[ 0 ], "slider");
                                           currentObj.onSegmSelectorValuesChanged();
-                                        });
+                                        }, null, "log");
       this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit + "): <span style='font-size: 0.75em'>Nº Segments= " + fixedPrecision(this.plotConfig.nsegm, 2) + "</span>");
       this.segmSelector.inputChanged = function ( event ) {
          currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, currentObj.plotConfig.segment_size) );
@@ -106,7 +106,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                           function( event, ui ) {
                                             currentObj.rebinSelector.setValues( ui.values[ 0 ], "slider");
                                             currentObj.onBinSelectorValuesChanged();
-                                          });
+                                          }, null, "log");
       this.rebinSelector.setDisableable(true);
       this.rebinSelector.setEnabled(this.plotConfig.df > 0);
       this.rebinSelector.switchBox.click( function ( event ) {

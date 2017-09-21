@@ -255,7 +255,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
                                             currentObj.binSelector.setValues( ui.values[ 0 ], "slider");
                                             currentObj.onBinSizeChanged();
                                           },
-                                          CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+                                          CONFIG.MAX_TIME_RESOLUTION_DECIMALS, "log");
         this.binSelector.inputChanged = function ( event ) {
            currentObj.binSelector.setValues( getInputFloatValue(currentObj.binSelector.fromInput, currentObj.plotConfig.dt) );
            currentObj.onBinSizeChanged();

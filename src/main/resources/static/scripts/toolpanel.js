@@ -257,7 +257,7 @@ function ToolPanel (id,
                                         binSelectorConfig.step,
                                         binSelectorConfig.binSize,
                                         this.onBinSizeChanged,
-                                        null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+                                        null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS, "log");
 
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
