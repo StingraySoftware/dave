@@ -1613,10 +1613,16 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
         df = df_min / oversampling
         frequencies = np.arange(freq_range[0], freq_range[1], df)
 
+        weights=1
+        if DsHelper.is_lightcurve_dataset(ds):
+            weights = np.array(ds.tables["RATE"].columns["RATE"].values)
+
         if mode == "z_n_search":
-            freq, zstat = z_n_search(time_data, frequencies, nbin=nbin, nharm=nharm, segment_size=segment_size)
+            freq, zstat = z_n_search(time_data, frequencies, nbin=nbin, \
+                                    nharm=nharm, segment_size=segment_size, weights=weights)
         else:
-            freq, zstat = epoch_folding_search(time_data, frequencies, nbin=nbin, segment_size=segment_size)
+            freq, zstat = epoch_folding_search(time_data, frequencies, nbin=nbin, \
+                                    segment_size=segment_size, weights=weights)
 
         z_detlev = z2_n_detection_level(n=1, epsilon=0.001, ntrial=len(freq))
         cand_freqs_z, cand_stat_z = search_best_peaks(freq, zstat, z_detlev)
@@ -1670,10 +1676,13 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
             logging.warn("Cant read dataset!")
             return None
 
+        weights=None
+        if DsHelper.is_lightcurve_dataset(ds):
+            weights = np.array(ds.tables["RATE"].columns["RATE"].values)
+
         # Calculate the phaseogram plot data
         time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-        phaseogr, phases, times, additional_info = \
-                    phaseogram(time_data, f, nph=nph, nt=nt)
+        phaseogr, phases, times, additional_info = phaseogram(time_data, f, nph=nph, nt=nt, weights=weights)
         phaseogr = np.transpose(phaseogr)
 
         # Calculates the profile plot data
