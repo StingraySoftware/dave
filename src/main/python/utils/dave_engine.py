@@ -281,22 +281,22 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_meancount)
-            mean = np.nan_to_num(res[0])
-            mean_err = np.nan_to_num(res[1])
+            mean = nan_and_inf_to_num(res[0])
+            mean_err = nan_and_inf_to_num(res[1])
 
             chunk_times = np.array([(s + e)/2 for s, e in zip(start, stop)])
             chunk_lengths = np.array([(e - s)/2 for s, e in zip(start, stop)]) # This will be plotted as an error bar on xAxis, soo only need the half of the values
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_excvar)
-            excessvar = np.nan_to_num(res[0])
-            excessvar_err = np.nan_to_num(res[1])
+            excessvar = nan_and_inf_to_num(res[0])
+            excessvar_err = nan_and_inf_to_num(res[1])
 
             excessvarmean = get_means_from_array(excessvar, variance_opts["mean_count"])
             excessvarmean_err = get_means_from_array(excessvar_err, variance_opts["mean_count"])
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_fractional_rms)
-            fvar = np.nan_to_num(res[0])
-            fvar_err = np.nan_to_num(res[1])
+            fvar = nan_and_inf_to_num(res[0])
+            fvar_err = nan_and_inf_to_num(res[1])
 
             fvarmean = get_means_from_array(fvar, variance_opts["mean_count"])
             fvarmean_err = get_means_from_array(fvar_err, variance_opts["mean_count"])
@@ -801,15 +801,15 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             coherence, coherence_err = xs.coherence()
 
             # Replace posible out of range values
-            time_lag = np.nan_to_num(time_lag)
+            time_lag = nan_and_inf_to_num(time_lag)
             time_lag[time_lag > CONFIG.BIG_NUMBER]=0
-            time_lag_err = np.nan_to_num(time_lag_err)
+            time_lag_err = nan_and_inf_to_num(time_lag_err)
             time_lag_err[time_lag_err > CONFIG.BIG_NUMBER]=0
             time_lag_array = [ time_lag, time_lag_err ]
 
-            coherence = np.nan_to_num(coherence)
+            coherence = nan_and_inf_to_num(coherence)
             coherence[coherence > CONFIG.BIG_NUMBER]=0
-            coherence_err = np.nan_to_num(coherence_err)
+            coherence_err = nan_and_inf_to_num(coherence_err)
             coherence_err[coherence_err > CONFIG.BIG_NUMBER]=0
             coherence_array = [ coherence, coherence_err ]
 
@@ -894,8 +894,8 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                 sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
                 sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
                 energy_arr = sorted_covar[:,0]
-                covariance_arr = np.nan_to_num(sorted_covar[:,1])
-                covariance_err_arr = np.nan_to_num(sorted_covar_err[:,1])
+                covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
+                covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
 
             else:
                 logging.warn('get_covariance_spectrum: E column not found!')
@@ -1240,7 +1240,7 @@ def get_plot_data_from_models(models, x_values):
                      val_array.append(model_obj(x_values[i]))
 
                 if len(val_array) > 0:
-                    models_arr = push_to_results_array(models_arr, val_array)
+                    models_arr = push_to_results_array(models_arr, nan_and_inf_to_num(val_array))
                     if len (sum_values) == 0:
                         sum_values = val_array
                     else:
@@ -1285,124 +1285,12 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
     try:
         pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
                                         filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
+        lc = None  # Dispose memory
+        gti = None  # Dispose memory
+
         if pds:
-
-            fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
-            if fit_model:
-
-                # Default fit parammeters
-                max_post=False
-                fitmethod="L-BFGS-B"
-                as_priors=None
-
-                if priors is not None:
-                    # Creates the priors from dave_priors
-                    as_priors = ModelHelper.get_astropy_priors(priors)
-                    if len(as_priors.keys()) > 0:
-                        # If there are priors then is a Bayesian Parammeters Estimation
-                        max_post=True
-                        fitmethod="BFGS"
-
-                    else:
-                        as_priors=None
-                        logging.warn("get_fit_powerspectrum_result: can't create priors from dave_priors.")
-
-                if as_priors:
-                    # Creates a Posterior object with the priors
-                    lpost = PSDPosterior(pds.freq, pds.power, fit_model, priors=as_priors, m=pds.m)
-                else:
-                    # Creates the Maximum Likelihood object for fitting
-                    lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
-
-                # Creates the PSD Parammeters Estimation object and runs the fitting
-                parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
-                res = parest.fit(lpost, starting_pars, neg=True)
-
-                sample = None
-                if as_priors and sampling_params is not None:
-                    # If is a Bayesian Par. Est. and has sampling parammeters
-                    # then sample the posterior distribution defined in `lpost` using MCMC
-                    sample = parest.sample(lpost, res.p_opt, cov=res.cov,
-                                             nwalkers=sampling_params["nwalkers"],
-                                             niter=sampling_params["niter"],
-                                             burnin=sampling_params["burnin"],
-                                             threads=sampling_params["threads"],
-                                             print_results=False, plot=False)
-
-                # Prepares the results to be returned to GUI
-                fixed = [fit_model.fixed[n] for n in fit_model.param_names]
-                parnames = [n for n, f in zip(fit_model.param_names, fixed) \
-                            if f is False]
-
-                # Add to results the estimated parammeters
-                params = []
-                for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
-                    param = dict()
-                    param["index"] = i
-                    param["name"] = p
-                    param["opt"] = x
-                    param["err"] = y
-                    params.append(param)
-
-                results = push_to_results_array(results, params)
-
-                # Add to results the estimation statistics
-                stats = dict()
-                try:
-                    stats["deviance"] = res.deviance
-                    stats["aic"] = res.aic
-                    stats["bic"] = res.bic
-                except AttributeError:
-                    stats["deviance"] = "ERROR"
-
-                try:
-                    stats["merit"] = res.merit
-                    stats["dof"] = res.dof  # Degrees of freedom
-                    stats["dof_ratio"] = res.merit/res.dof
-                    stats["sobs"] = res.sobs
-                    stats["sexp"] = res.sobs
-                    stats["ssd"] = res.ssd
-                except AttributeError:
-                    stats["merit"] = "ERROR"
-
-                results = push_to_results_array(results, stats)
-
-                # If there is sampling data add it to results
-                if sample:
-                    sample_stats = dict()
-                    try:
-                        sample_stats["acceptance"] = sample.acceptance
-                        sample_stats["rhat"] = sample.rhat
-                        sample_stats["mean"] = sample.mean
-                        sample_stats["std"] = sample.std
-                        sample_stats["ci"] = sample.ci
-
-                        try:
-                            #Acor is not always present
-                            sample_stats["acor"] = sample.acor
-                        except AttributeError:
-                            sample_stats["acor"] = "ERROR"
-
-                        #Creates an IMG Html tag from plot
-                        try:
-                            fig = sample.plot_results(nsamples=sampling_params["nsamples"])
-                            sample_stats["img"] = Plotter.convert_fig_to_html(fig)
-                        except:
-                            sample_stats["img"] = "ERROR"
-                            logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant create image from plot.'))
-
-                    except AttributeError:
-                        sample_stats["acceptance"] = "ERROR"
-                        logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant add sample data.'))
-
-                    results = push_to_results_array(results, sample_stats)
-
-                pds = None  # Dispose memory
-                lc = None  # Dispose memory
-                gti = None  # Dispose memory
-
-            else:
-                logging.warn("get_fit_powerspectrum_result: can't create summed model from dave_models.")
+            results = fit_power_density_spectrum(pds, models, priors=priors, sampling_params=sampling_params)
+            pds = None  # Dispose memory
         else:
             logging.warn("get_fit_powerspectrum_result: can't create power density spectrum.")
 
@@ -1526,7 +1414,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         param = dict()
                         param["index"] = i
                         param["name"] = parnames[i]
-                        param["err"] = np.nan_to_num([stddev])
+                        param["err"] = nan_and_inf_to_num([stddev])
                         param_errors.extend([param])
 
                     results = push_to_results_array(results, param_errors)
@@ -1542,8 +1430,8 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
-                        power_means.extend(np.nan_to_num([mean]))
-                        power_errors.extend(np.nan_to_num([stddev]))
+                        power_means.extend(nan_and_inf_to_num([mean]))
+                        power_errors.extend(nan_and_inf_to_num([stddev]))
 
                     results = push_to_results_array(results, power_means)
                     results = push_to_results_array(results, power_errors)
@@ -1561,7 +1449,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
     return results
 
 
-# get_lomb_scargle:
+# get_lomb_scargle_results:
 # Returns LombScargle frequencies and powers from a given lightcurve
 #
 # @param: src_destination: source file destination
@@ -1579,10 +1467,13 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 # @param: ls_norm: Periodogram normalization ["standard", "model", "log", "psd"]
 # @param: samples_per_peak: Points across each significant periodogram peak
 #
-def get_lomb_scargle(src_destination, bck_destination, gti_destination,
+def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
                     filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak):
     frequency = []
     power = []
+    power_err = []
+    duration = []
+    warnmsg = []
 
     try:
 
@@ -1590,30 +1481,84 @@ def get_lomb_scargle(src_destination, bck_destination, gti_destination,
             logging.warn("Wrong number of axis")
             return None
 
-        # Creates the lightcurve
-        lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+        # Calculates the LombScargle values
+        frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                            filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
             logging.warn("Can't create lightcurve")
             return None
 
-        # Calculates the LombScargle values
-        frequency, power = LombScargle(lc.time, lc.counts).autopower(minimum_frequency=freq_range[0],
-                                                                     maximum_frequency=freq_range[1],
-                                                                     nyquist_factor=nyquist_factor,
-                                                                     normalization=ls_norm,
-                                                                     samples_per_peak=samples_per_peak)
+        duration = [lc.tseg]
+        warnmsg = [""]
+        if lc.gti is not None and len(lc.gti) == 0 and DsHelper.hasGTIGaps(lc.time):
+            warnmsg = ["GTI gaps found on LC"]
+        lc = None  # Dispose memory
 
     except:
-        logging.error(ExHelper.getException('get_lomb_scargle'))
+        logging.error(ExHelper.getException('get_lomb_scargle_results'))
         warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
     result = push_to_results_array([], frequency)
-    result = push_to_results_array(result, np.nan_to_num(power))
+    result = push_to_results_array_with_errors(result, power, power_err)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
     return result
 
 
-# get_pulse_search: Returns z_n_search result of a given events dataset
+# get_fit_lomb_scargle_result:
+# Returns the results of fitting a LombScargle with an astropy model. If priors are
+# sent the a Bayesian parameter estimation is calculated, else a Maximum Likelihood Fitting
+# is used as default.
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: nyquist_factor: Average Nyquist frequency factor
+# @param: ls_norm: Periodogram normalization ["standard", "model", "log", "psd"]
+# @param: samples_per_peak: Points across each significant periodogram peak
+# @param: models: array of models, dave_model definition with the starting parammeters
+# @param: priors: array of priors, dave_priors defined for each model parammeters
+# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
+#
+def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destination,
+                                filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak,
+                                models, priors=None, sampling_params=None):
+    results = []
+
+    try:
+        # Calculates the LombScargle values
+        frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                            filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
+        if not lc:
+            logging.warn("Can't create lightcurve")
+            return None
+
+        pds = Powerspectrum()
+        pds.freq = frequency
+        pds.power = power
+
+        if pds:
+            results = fit_power_density_spectrum(pds, models, priors=priors, sampling_params=sampling_params)
+            pds = None  # Dispose memory
+        else:
+            logging.warn("get_fit_lomb_scargle_result: can't create power spectrum.")
+
+    except:
+        logging.error(ExHelper.getException('get_fit_lomb_scargle_result'))
+
+    return results
+
+
+# get_pulse_search: Returns z_n_search or epoch_folding results of a given events dataset
 #
 # @param: src_destination: source file destination
 # @param: bck_destination: background file destination, is optional
@@ -1820,6 +1765,30 @@ def push_to_results_array_with_errors (result, values, errors):
     column["error_values"] = np.around(errors, decimals=CONFIG.PRECISSION)
     result.append(column)
     return result
+
+
+def nan_and_inf_to_num (obj):
+    if isinstance(obj, int) \
+        or isinstance(obj, np.integer) \
+        or isinstance(obj, float) \
+        or isinstance(obj, np.floating):
+        if obj > CONFIG.BIG_NUMBER:
+            return CONFIG.BIG_NUMBER
+        if obj < -CONFIG.BIG_NUMBER:
+            return -CONFIG.BIG_NUMBER
+        if np.isnan(obj):
+            return 0
+
+    elif isinstance(obj, np.ndarray):
+        # Checks if any element is NaN of Inf and replaces it for BIG_NUMBER or 0
+        # This is the fastest way to check it:
+        # https://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
+        if not np.isfinite(np.dot(obj, obj)):
+            obj[np.isposinf(obj)] = CONFIG.BIG_NUMBER
+            obj[np.isneginf(obj)] = -CONFIG.BIG_NUMBER
+            obj[np.isnan(obj)] = 0
+
+    return obj
 
 
 def get_color_axis_for_ds():
@@ -2031,6 +2000,144 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     return pds, lc, gti
 
 
+def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
+    results = []
+
+    fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
+    if fit_model:
+
+        # Default fit parammeters
+        max_post=False
+        fitmethod="L-BFGS-B"
+        as_priors=None
+
+        if priors is not None:
+            # Creates the priors from dave_priors
+            as_priors = ModelHelper.get_astropy_priors(priors)
+            if len(as_priors.keys()) > 0:
+                # If there are priors then is a Bayesian Parammeters Estimation
+                max_post=True
+                fitmethod="BFGS"
+
+            else:
+                as_priors=None
+                logging.warn("get_fit_powerspectrum_result: can't create priors from dave_priors.")
+
+        if as_priors:
+            # Creates a Posterior object with the priors
+            lpost = PSDPosterior(pds.freq, pds.power, fit_model, priors=as_priors, m=pds.m)
+        else:
+            # Creates the Maximum Likelihood object for fitting
+            lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
+
+        # Creates the PSD Parammeters Estimation object and runs the fitting
+        parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
+        res = parest.fit(lpost, starting_pars, neg=True)
+
+        sample = None
+        if as_priors and sampling_params is not None:
+            # If is a Bayesian Par. Est. and has sampling parammeters
+            # then sample the posterior distribution defined in `lpost` using MCMC
+            sample = parest.sample(lpost, res.p_opt, cov=res.cov,
+                                     nwalkers=sampling_params["nwalkers"],
+                                     niter=sampling_params["niter"],
+                                     burnin=sampling_params["burnin"],
+                                     threads=sampling_params["threads"],
+                                     print_results=False, plot=False)
+
+        # Prepares the results to be returned to GUI
+        fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+        parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                    if f is False]
+
+        # Add to results the estimated parammeters
+        params = []
+        for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
+            param = dict()
+            param["index"] = i
+            param["name"] = p
+            param["opt"] = nan_and_inf_to_num(x)
+            param["err"] = nan_and_inf_to_num(y)
+            params.append(param)
+
+        results = push_to_results_array(results, params)
+
+        # Add to results the estimation statistics
+        stats = dict()
+        try:
+            stats["deviance"] = nan_and_inf_to_num(res.deviance)
+            stats["aic"] = nan_and_inf_to_num(res.aic)
+            stats["bic"] = nan_and_inf_to_num(res.bic)
+        except AttributeError:
+            stats["deviance"] = "ERROR"
+
+        try:
+            stats["merit"] = nan_and_inf_to_num(res.merit)
+            stats["dof"] = nan_and_inf_to_num(res.dof)  # Degrees of freedom
+            stats["dof_ratio"] = nan_and_inf_to_num(res.merit/res.dof)
+            stats["sobs"] = nan_and_inf_to_num(res.sobs)
+            stats["sexp"] = nan_and_inf_to_num(res.sexp)
+            stats["ssd"] = nan_and_inf_to_num(res.ssd)
+        except AttributeError:
+            stats["merit"] = "ERROR"
+
+        results = push_to_results_array(results, stats)
+
+        # If there is sampling data add it to results
+        if sample:
+            sample_stats = dict()
+            try:
+                sample_stats["acceptance"] = sample.acceptance
+                sample_stats["rhat"] = sample.rhat
+                sample_stats["mean"] = sample.mean
+                sample_stats["std"] = sample.std
+                sample_stats["ci"] = sample.ci
+
+                try:
+                    #Acor is not always present
+                    sample_stats["acor"] = sample.acor
+                except AttributeError:
+                    sample_stats["acor"] = "ERROR"
+
+                #Creates an IMG Html tag from plot
+                try:
+                    fig = sample.plot_results(nsamples=sampling_params["nsamples"])
+                    sample_stats["img"] = Plotter.convert_fig_to_html(fig)
+                except:
+                    sample_stats["img"] = "ERROR"
+                    logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant create image from plot.'))
+
+            except AttributeError:
+                sample_stats["acceptance"] = "ERROR"
+                logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant add sample data.'))
+
+            results = push_to_results_array(results, sample_stats)
+
+    return results
+
+
+def get_lomb_scargle(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak):
+    # Creates the lightcurve
+    lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
+    if not lc:
+        return None, None, None
+
+    # If freq_range is not set, calculates max and min freq
+    if freq_range[0] < 0:
+        freq_range[0] = 0.6 / lc.tseg
+    if freq_range[1] < 0:
+        freq_range[1] = 0.6 / lc.dt
+
+    # Calculates the LombScargle values
+    frequency, power = LombScargle(lc.time, lc.counts).autopower(minimum_frequency=freq_range[0],
+                                                                 maximum_frequency=freq_range[1],
+                                                                 nyquist_factor=nyquist_factor,
+                                                                 normalization=ls_norm,
+                                                                 samples_per_peak=samples_per_peak)
+    return frequency, nan_and_inf_to_num(power), lc
+
+
 # Reduces the pds data to Max_plot_points for improve pds performance
 def rebin_spectrum_if_necessary (pds):
     freq_size = len(pds.freq)
@@ -2039,6 +2146,7 @@ def rebin_spectrum_if_necessary (pds):
         logging.warn("Spectrum rebined to " + str(CONFIG.MAX_PLOT_POINTS) + " points, from " + str(freq_size) + " points, with df: " + str(df))
         pds = pds.rebin(df=df)
     return pds
+
 
 def get_countrate_from_lc_ds (lc_destination, bck_destination, lc_name, bck_name):
 
@@ -2084,12 +2192,13 @@ def load_gti_from_destination (gti_destination):
 
     return gti
 
+
 def get_divided_values_and_error (values_0, values_1, error_0, error_1):
     divided_error = np.array([])
     with np.errstate(all='ignore'): # Ignore divisions by 0 and others
-        divided_values = np.nan_to_num(values_0 / values_1)
+        divided_values = nan_and_inf_to_num(values_0 / values_1)
         if error_0.shape == error_1.shape == values_0.shape:
-            divided_error = np.nan_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
+            divided_error = nan_and_inf_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
     divided_values[divided_values > CONFIG.BIG_NUMBER]=0
     divided_error[divided_error > CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error

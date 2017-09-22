@@ -45,6 +45,10 @@ h3
   background-color: #000;
 }
 
+#navbar .navbar-left {
+  width: 85%;
+}
+
 ul#right-navbar {
     margin-right: 0px;
 }

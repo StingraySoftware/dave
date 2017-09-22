@@ -698,7 +698,7 @@ def bulk_analisys(filenames, plot_configs, outdir, target):
     return json.dumps(bulk_data, cls=NPEncoder)
 
 
-def get_lomb_scargle(src_filename, bck_filename, gti_filename, target,
+def get_lomb_scargle_results(src_filename, bck_filename, gti_filename, target,
                     filters, axis, dt, freq_range, nyquist_factor,
                     ls_norm, samples_per_peak):
 
@@ -718,22 +718,65 @@ def get_lomb_scargle(src_filename, bck_filename, gti_filename, target,
         if not gti_destination:
             return common_error("Invalid file or cache key for gti data")
 
-    logging.debug("get_lomb_scargle src: %s" % src_filename)
-    logging.debug("get_lomb_scargle bck: %s" % bck_filename)
-    logging.debug("get_lomb_scargle gti: %s" % gti_filename)
-    logging.debug("get_lomb_scargle: filters %s" % filters)
-    logging.debug("get_lomb_scargle: axis %s" % axis)
-    logging.debug("get_lomb_scargle: dt %s" % dt)
-    logging.debug("get_lomb_scargle: freq_range %s" % freq_range)
-    logging.debug("get_lomb_scargle: nyquist_factor %s" % nyquist_factor)
-    logging.debug("get_lomb_scargle: ls_norm %s" % ls_norm)
-    logging.debug("get_lomb_scargle: samples_per_peak %s" % samples_per_peak)
+    logging.debug("get_lomb_scargle_results src: %s" % src_filename)
+    logging.debug("get_lomb_scargle_results bck: %s" % bck_filename)
+    logging.debug("get_lomb_scargle_results gti: %s" % gti_filename)
+    logging.debug("get_lomb_scargle_results: filters %s" % filters)
+    logging.debug("get_lomb_scargle_results: axis %s" % axis)
+    logging.debug("get_lomb_scargle_results: dt %s" % dt)
+    logging.debug("get_lomb_scargle_results: freq_range %s" % freq_range)
+    logging.debug("get_lomb_scargle_results: nyquist_factor %s" % nyquist_factor)
+    logging.debug("get_lomb_scargle_results: ls_norm %s" % ls_norm)
+    logging.debug("get_lomb_scargle_results: samples_per_peak %s" % samples_per_peak)
 
-    data = DaveEngine.get_lomb_scargle(src_destination, bck_destination, gti_destination,
+    data = DaveEngine.get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
                                         filters, axis, dt, freq_range, nyquist_factor,
                                         ls_norm, samples_per_peak)
 
-    logging.debug("get_lomb_scargle: Finish!")
+    logging.debug("get_lomb_scargle_results: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_fit_lomb_scargle_result(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak,
+                    models, priors=None, sampling_params=None):
+
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_fit_lomb_scargle_result src: %s" % src_filename)
+    logging.debug("get_fit_lomb_scargle_result bck: %s" % bck_filename)
+    logging.debug("get_fit_lomb_scargle_result gti: %s" % gti_filename)
+    logging.debug("get_fit_lomb_scargle_result: filters %s" % filters)
+    logging.debug("get_fit_lomb_scargle_result: axis %s" % axis)
+    logging.debug("get_fit_lomb_scargle_result: dt %s" % dt)
+    logging.debug("get_fit_lomb_scargle_result: freq_range %s" % freq_range)
+    logging.debug("get_fit_lomb_scargle_result: nyquist_factor %s" % nyquist_factor)
+    logging.debug("get_fit_lomb_scargle_result: ls_norm %s" % ls_norm)
+    logging.debug("get_fit_lomb_scargle_result: samples_per_peak %s" % samples_per_peak)
+    logging.debug("get_fit_lomb_scargle_result: models %s" % models)
+    logging.debug("get_fit_lomb_scargle_result: priors %s" % priors)
+    logging.debug("get_fit_lomb_scargle_result: sampling_params %s" % sampling_params)
+
+    data = DaveEngine.get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destination,
+                                                filters, axis, dt, freq_range, nyquist_factor,
+                                                ls_norm, samples_per_peak, models, priors, sampling_params)
+
+    logging.debug("get_fit_lomb_scargle_result: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 

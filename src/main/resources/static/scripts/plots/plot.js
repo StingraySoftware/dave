@@ -256,8 +256,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    var tab = getTabForSelector(this.id);
    if (!isNull(tab)){
      return tab.projectConfig.binSize;
+   } else if (!isNull(this.plotConfig.dt) && this.plotConfig.dt > 0){
+     return this.plotConfig.dt;
    } else {
-     log("ERROR on getBinSize: Plot not attached to tab, Plot: " + this.id);
+     logErr("ERROR on getBinSize: Plot not attached to tab and has no plotConfig.dt, Plot: " + this.id);
      return null;
    }
  }

@@ -369,7 +369,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.getWarnMsg = function (){
     if (this.data != null) {
-      if (this.data[3].values.length > 0) {
+      if (!isNull(this.data[3]) && this.data[3].values.length > 0) {
         if (this.data[3].values[0] == "Maximum allowed size exceeded"){
           return "Bin size greater than segment length";
         } else {

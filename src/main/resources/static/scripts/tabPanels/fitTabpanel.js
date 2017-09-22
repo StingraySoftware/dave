@@ -47,7 +47,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     paramsData.models = currentObj.modelSelector.getModels(false);
     currentObj.modelSelector.clearAllEstimationsAndErrors();
 
-    currentObj.service.request_fit_powerspectrum_result(paramsData, function( jsdata ) {
+
+    currentObj.fitCallFn(paramsData, function( jsdata ) {
 
       log("FitData received!, FitTabPanel: " + currentObj.id);
       var data = JSON.parse(jsdata);
@@ -348,7 +349,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
     currentObj.modelSelector.clearAllEstimationsAndErrors();
 
-    currentObj.service.request_fit_powerspectrum_result(paramsData, function( jsdata ) {
+    currentObj.fitCallFn(paramsData, function( jsdata ) {
 
       log("Bayesian Par. Est. data received!, FitTabPanel: " + currentObj.id);
       enableLogError();
@@ -488,12 +489,21 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
   this.createFitPlot = function () {
 
+    //Set the fit call method and the request data call method
+    this.fitCallFn = this.service.request_fit_powerspectrum_result; //Default PDS Fit method
+    var dataCallFn = this.service.request_power_density_spectrum; //Default PDS method
+    if (!isNull(plotConfig.ls_norm)){
+      //If plotConfig comes from PgPlot then use fit LombScargle method
+      this.fitCallFn = this.service.request_fit_lomb_scargle_result;
+      dataCallFn = this.service.request_lomb_scargle_results;
+    }
+
     //Set the selected plot configs
     this.plot = new FitPlot(this.outputPanel.generatePlotId("FitPlot_" + plotConfig.filename),
                              $.extend(true, {}, plotConfig),
                              this.modelSelector.getModels,
-                             service.request_power_density_spectrum,
-                             service.request_plot_data_from_models,
+                             dataCallFn,
+                             this.service.request_plot_data_from_models,
                              this.outputPanel.onFiltersChangedFromPlot,
                              this.outputPanel.onPlotReady,
                              null,

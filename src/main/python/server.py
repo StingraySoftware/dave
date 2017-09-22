@@ -240,13 +240,30 @@ def bulk_analisys():
             request.json['outdir'], UPLOADS_TARGET)
 
 
-@app.route('/get_lomb_scargle', methods=['POST'])
-def get_lomb_scargle():
-    return DaveEndpoint.get_lomb_scargle(request.json['filename'],
+@app.route('/get_lomb_scargle_results', methods=['POST'])
+def get_lomb_scargle_results():
+    return DaveEndpoint.get_lomb_scargle_results(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
             int(request.json['samples_per_peak']))
+
+
+@app.route('/get_fit_lomb_scargle_result', methods=['POST'])
+def get_fit_lomb_scargle_result():
+    priors = None
+    if "priors" in request.json:
+        priors = request.json['priors']
+
+    sampling_params = None
+    if "sampling_params" in request.json:
+        sampling_params = request.json['sampling_params']
+
+    return DaveEndpoint.get_fit_lomb_scargle_result(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
+            int(request.json['samples_per_peak']), request.json['models'], priors, sampling_params)
 
 
 @app.route('/get_pulse_search', methods=['POST'])

@@ -17,25 +17,25 @@ class NPEncoder(json.JSONEncoder):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
-                    return CONFIG.BIG_NUMBER
+                    return -CONFIG.BIG_NUMBER
                 return int(obj)
             elif isinstance(obj, float):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
-                    return CONFIG.BIG_NUMBER
+                    return -CONFIG.BIG_NUMBER
                 return float(obj)
             if isinstance(obj, numpy.integer):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
-                    return CONFIG.BIG_NUMBER
+                    return -CONFIG.BIG_NUMBER
                 return int(obj)
             elif isinstance(obj, numpy.floating):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
-                    return CONFIG.BIG_NUMBER
+                    return -CONFIG.BIG_NUMBER
                 return float(obj)
             elif isinstance(obj, complex):
                 return self.default(numpy.real(obj))
