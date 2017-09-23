@@ -250,13 +250,8 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 	echo "Getting specific version of HENDRICS: $HENDRICS_COMMIT_HASH"
 	git checkout $HENDRICS_COMMIT_HASH
 
-<<<<<<< HEAD
 	# Install HENDRICS libraries
         conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
-=======
-	#Install HENDRICS libraries
-        conda install  statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
->>>>>>> db2456cf153e87921af82fe68f4467bf3b0ced6d
 	pip install -r requirements.txt
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
