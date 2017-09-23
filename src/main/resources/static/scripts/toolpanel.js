@@ -149,10 +149,26 @@ function ToolPanel (id,
                                         }
                                       });
     this.$html.find(".fileSelectorsContainer").append(this.sngOrMultiFileSelector);
+
+    //Adds supported formats link button
+    var btnSupportedFormats = $('<a href="#" class="btnSupportedFormats floatRight InfoText" style="margin-top: 23px;">Supported formats <i class="fa fa-info-circle" aria-hidden="true"></i></a>');
+    btnSupportedFormats.click(function () {
+      showMsg("DAVE Supported Formats",
+              "<p><strong>FITS Files:</strong> FITS, Zipped FITS, Evt FITS, Lc Fits.</p>" +
+              "<p><strong>Text Files:</strong> CSV or TEXT files.</p>" +
+              "<p><strong>Stingray / Hendrics Files:</strong> Pickle files (*.p) and netCDF4 files (*.nc).</p>" +
+              "<p><strong>Bulk Files:</strong> Text files with the absolute paths of each file per line.</p>" +
+              "<hr><p><strong>Other DAVE formats, not for data analisys:</strong></p>" +
+              "<p><strong>*.wsp:</strong> Workspace file format.</p>" +
+              "<p><strong>*.flt:</strong> Filters file format.</p>" +
+              "<p><strong>*.mdl:</strong> Fit models file format.</p>");
+    });
+    this.$html.find(".fileSelectorsContainer").append(btnSupportedFormats);
   }
 
   this.removeSngOrMultiFileSelector = function () {
     this.sngOrMultiFileSelector.remove();
+    this.$html.find(".fileSelectorsContainer").find(".btnSupportedFormats").remove();
   }
 
   /*this.onTimeRangeChanged = function (timeRange) {
@@ -236,13 +252,12 @@ function ToolPanel (id,
 
       this.binSelector = new BinSelector(this.id + "_binSelector",
                                         "BIN SIZE (" + projectConfig.timeUnit  + "):",
-                                        "From",
                                         binSelectorConfig.minBinSize,
                                         binSelectorConfig.maxBinSize,
                                         binSelectorConfig.step,
                                         binSelectorConfig.binSize,
                                         this.onBinSizeChanged,
-                                        null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+                                        null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS, "log");
 
       this.$html.find(".selectorsContainer").append(this.binSelector.$html);
 
@@ -285,7 +300,6 @@ function ToolPanel (id,
             var selector = new sliderSelector(this.id + "_" + columnName,
                                               columnTitle,
                                               filterData,
-                                              "From", "To",
                                               Math.floor(column.min_value / multiplier),
                                               Math.ceil(column.max_value / multiplier),
                                               (columnName != "TIME") ?
@@ -372,7 +386,6 @@ function ToolPanel (id,
       var selector = new sliderSelector(this.id + "_selector_" + selectorKey + "_" + column.id,
                                         ((column.id == "PHA") ? "Channel" : "Energy") + " range " + selectorName + ":",
                                         filterData,
-                                        "From", "To",
                                         column.min_value, column.max_value,
                                         this.onSelectorValuesChanged,
                                         this.selectors_array);
@@ -400,7 +413,6 @@ function ToolPanel (id,
         var selector = new sliderSelector(this.id + "_Energy",
                                           "Energy (keV):",
                                           { table:"EVENTS", column:"E" },
-                                          "From", "To",
                                           column.min_value, column.max_value,
                                           this.onSelectorValuesChanged,
                                           this.selectors_array);
@@ -415,32 +427,34 @@ function ToolPanel (id,
     }
   }
 
-  this.isCountRateSliderCreated = function ( visible ) {
-    return !isNull(getTabForSelector(this.id + "_Rate"));
-  }
-
-  this.createCountRateSlider = function ( minRate, maxRate ) {
-    var rateSelector = new sliderSelector(this.id + "_Rate",
-                                      "COUNT RATE (c/s):",
-                                      { table:"EVENTS", column:"RATE" },
-                                      "From", "To",
-                                      minRate, maxRate,
-                                      this.onSelectorValuesChanged,
-                                      this.selectors_array);
-    rateSelector.$html.insertAfter("." + this.id + "_TIME");
-  }
-
   this.updateCountRateSlider = function ( minRate, maxRate ) {
-    var rateSliderId = this.id + "_Rate";
-    var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
-    if (!isNull(rateSelector)) {
-      var newMinRate = Math.min(rateSelector.initFromValue, minRate);
-      var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
-      if ((newMinRate != rateSelector.initFromValue)
-          || (newMaxRate != rateSelector.initToValue)) {
-            rateSelector.setMinMaxValues(newMinRate, newMaxRate);
-          }
+    var rateSliderId = this.id + "_RATE";
+    if (isNull(getTabForSelector(rateSliderId))) {
+
+      //Creates the rate slider if not created yet:
+      var rateSelector = new sliderSelector(rateSliderId,
+                                            "COUNT RATE (c/s):",
+                                            { table:"EVENTS", column:"RATE" },
+                                            minRate, maxRate,
+                                            this.onSelectorValuesChanged,
+                                            this.selectors_array);
+      rateSelector.$html.insertAfter("." + this.id + "_TIME");
+
+    } else {
+
+      //Udpated rate slider min and max values
+      var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
+      if (!isNull(rateSelector)) {
+        var newMinRate = Math.min(rateSelector.initFromValue, minRate);
+        var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
+        if ((newMinRate != rateSelector.initFromValue)
+            || (newMaxRate != rateSelector.initToValue)) {
+              rateSelector.setMinMaxValues(newMinRate, newMaxRate);
+            }
+      }
+
     }
+
   }
 
   this.setColorFilterRadios = function (column) {
@@ -614,18 +628,23 @@ function ToolPanel (id,
   }
 
   this.loadFilters = function () {
-    showLoadFile (function(e) {
+    showLoadFile (function(e, file) {
       try {
-        var action = JSON.parse(e.target.result);
-        if (!isNull(action.type) && !isNull(action.actionData)){
-          getTabForSelector(currentObj.id).historyManager.applyAction(action);
-        } else {
-          showError("File is not supported as filters");
+        if (!isNull(e)) {
+          var action = JSON.parse(e.target.result);
+          if (!isNull(action.type) && !isNull(action.actionData)){
+            getTabForSelector(currentObj.id).historyManager.applyAction(action);
+            return;
+          }
         }
+
+        //Else show error
+        showError("File: " + file.name + " is not supported as filters");
+
       } catch (e) {
         showError("File is not supported as filters", e);
       }
-    });
+    }, ".flt");
   }
 
   this.getConfig = function (projectConfig) {

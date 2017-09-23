@@ -19,6 +19,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.cssClass = (!isNull(cssClass)) ? cssClass : "";
   this.switchable = (!isNull(switchable)) ? switchable : false;
   this.data = null;
+  this.extraData = null;
   this.tracesCount = 0;
   this.addedTraces = 0;
   this.minX = 0;
@@ -38,6 +39,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                     '<button class="btn btn-default btnFullScreen" data-toggle="tooltip" title="Maximize/Minimize">' +
                       '<i class="fa ' + ((this.cssClass.indexOf("full") > -1) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
+                    '<button class="btn btn-default btnLoad" data-toggle="tooltip" title="Load external data"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
                     '<button class="btn btn-default btnSave" data-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="hoverinfo"></div>' +
@@ -68,6 +70,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.btnFullScreen = this.$html.find(".btnFullScreen");
+ this.btnLoad = this.$html.find(".btnLoad");
  this.btnSave = this.$html.find(".btnSave");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
@@ -145,6 +148,27 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     });
     saveDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
     currentObj.$html.append(saveDialog);
+ });
+
+ this.btnLoad.click(function( event ) {
+   var loadDialog = $('<div id="dialog_' + currentObj.id +  '" title="Load external data for ' + currentObj.plotConfig.styles.title + '"></div>');
+   loadDialog.dialog({
+      buttons: {
+        'Load CSV File': function() {
+           currentObj.loadCSVFile();
+           $(this).dialog('close');
+           loadDialog.remove();
+        },
+        'Cancel/Clear': function() {
+           currentObj.extraData = null;
+           currentObj.redrawDiffered();
+           $(this).dialog('close');
+           loadDialog.remove();
+        }
+      }
+    });
+    loadDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+    currentObj.$html.append(loadDialog);
  });
 
  if (switchable) {
@@ -232,8 +256,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    var tab = getTabForSelector(this.id);
    if (!isNull(tab)){
      return tab.projectConfig.binSize;
+   } else if (!isNull(this.plotConfig.dt) && this.plotConfig.dt > 0){
+     return this.plotConfig.dt;
    } else {
-     log("ERROR on getBinSize: Plot not attached to tab, Plot: " + this.id);
+     logErr("ERROR on getBinSize: Plot not attached to tab and has no plotConfig.dt, Plot: " + this.id);
      return null;
    }
  }
@@ -350,7 +376,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.plotConfig.styles.title);
    }
 
-   plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+   plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+   plotlyConfig = this.prepareAxis(plotlyConfig);
 
    return plotlyConfig;
  }
@@ -366,6 +393,20 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      plotlyConfig.layout.yaxis.autorange = true;
    }
 
+   return plotlyConfig;
+ }
+
+ this.addExtraDataConfig = function (plotlyConfig) {
+   if (!isNull(this.extraData)
+       && this.extraData.length > 1
+       && plotlyConfig.data.length > 0){
+     //If plot config has data, clones first trace and changes its axis data and color
+     var extraTrace = $.extend(true, {}, plotlyConfig.data[0]);
+     extraTrace.x = this.extraData[0];
+     extraTrace.y = this.extraData[1];
+     extraTrace.line = { color : EXTRA_DATA_COLOR };
+     plotlyConfig.data.splice(0, 0, extraTrace);
+   }
    return plotlyConfig;
  }
 
@@ -395,6 +436,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      this.showWarn("Wrong plot config");
      log("setData ERROR: WRONG PLOT CONFIG! plot " + this.id + ", exception:" + e);
    }
+ }
+
+ this.redrawDiffered = function () {
+   setTimeout(function(){
+     //Runs redraw plot on differed execution
+     if (!isNull(currentObj.data)) {
+       var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
+       currentObj.redrawPlot(plotlyConfig);
+     }
+   }, CONFIG.INMEDIATE_TIMEOUT);
  }
 
  this.setReadyState = function (isReady) {
@@ -736,7 +787,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.saveAsPNG = function () {
-
    html2canvas(this.plotElem, {
        onrendered: function(canvas) {
            theCanvas = canvas;
@@ -768,8 +818,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       var csvContent = "data:text/csv;charset=utf-8,";
       data[0].values.forEach(function(values, index){
          var infoArray = [data[0].values[index], data[1].values[index]];
+         if (!isNull(data[1].error_values)) {
+           infoArray.push(data[1].error_values[index]); //Adds errors if available
+         }
          if (data.length > 2 && (data[1].values.length == data[2].values.length)) {
-           infoArray.push(data[2].values[index]); //Adds errors if available
+           infoArray.push(data[2].values[index]); //Adds errors or extra data if available
          }
          dataString = Array.prototype.join.call(infoArray, ",");
          csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
@@ -780,6 +833,26 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
       link.click();
     }
+  }
+
+  this.loadCSVFile = function () {
+    showLoadFile(function(e, file) {
+      try {
+        if ((file.type == "text/plain") || (file.type == "text/csv")) {
+          var externalData = extractDatafromCSVContents(e.target.result);
+          if (externalData.length > 0){
+            currentObj.extraData = transposeArray(externalData);
+            currentObj.redrawDiffered();
+          } else {
+            showError("File: " + file.name + ", data can't be extracted.");
+          }
+        } else {
+          showError("File: " + file.name + " is not a 'text/plain' or 'text/csv' file");
+        }
+      } catch (e) {
+        showError("File: " + file.name + " is not supported as CSV file", e);
+      }
+    });
   }
 
   this.applyValidFilters = function (filters) {

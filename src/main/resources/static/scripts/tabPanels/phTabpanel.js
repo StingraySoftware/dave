@@ -159,7 +159,6 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
                                       "Frequency range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
-                                      "From", "To",
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
                                       null,
@@ -222,7 +221,6 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Candidate frequency slider
     this.freqSelector = new BinSelector(this.id + "_freqSelector",
                                       "Frequency tunning:",
-                                      "From",
                                       freqRange[0], freqRange[1], this.freqRangeSelector.step, (freqRange[1] - freqRange[0])/2,
                                       this.onFreqSelectorValuesChanged,
                                       function( event, ui ) {

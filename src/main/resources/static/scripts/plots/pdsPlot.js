@@ -15,19 +15,16 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.xAxisType = "linear";
   this.plotConfig.yAxisType = "log";
   this.plotConfig.plotType = "X*Y";
-  this.plotConfig.rebinEnabled = false;
-  this.plotConfig.rebinSize = 0;
-  this.plotConfig.minRebinSize = 0;
-  this.plotConfig.maxRebinSize = 0;
+  this.plotConfig.df = 0;
+  this.plotConfig.maxSupportedFreq = 0.6 / Math.pow(10, -CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+  this.plotConfig.freqMax = this.plotConfig.maxSupportedFreq;
+  this.plotConfig.freqMin = 0.0;
 
   if (!isNull(projectConfig)) {
     // Prepare PDS Plot attributes from projectConfig
     this.plotConfig.duration = projectConfig.totalDuration;
     this.plotConfig.maxSegmentSize = projectConfig.maxSegmentSize;
     this.plotConfig.segment_size = projectConfig.avgSegmentSize;
-    this.plotConfig.minRebinSize = projectConfig.minBinSize;
-    this.plotConfig.rebinSize = projectConfig.minBinSize;
-    this.plotConfig.maxRebinSize = projectConfig.totalDuration;
   }
 
   //If plot is pds adds Fits button to plot
@@ -66,13 +63,12 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       var segmConfig = this.getSegmSelectorConfig();
       this.segmSelector = new BinSelector(this.id + "_segmSelector",
                                         "Segment Length (" + tab.projectConfig.timeUnit  + "):",
-                                        "From",
                                         segmConfig.minValue, segmConfig.maxValue, segmConfig.step, segmConfig.initValue,
                                         this.onSegmSelectorValuesChanged,
                                         function( event, ui ) {
                                           currentObj.segmSelector.setValues( ui.values[ 0 ], "slider");
                                           currentObj.onSegmSelectorValuesChanged();
-                                        });
+                                        }, null, "log");
       this.segmSelector.setTitle("Segment Length (" + tab.projectConfig.timeUnit + "): <span style='font-size: 0.75em'>Nº Segments= " + fixedPrecision(this.plotConfig.nsegm, 2) + "</span>");
       this.segmSelector.inputChanged = function ( event ) {
          currentObj.segmSelector.setValues( getInputFloatValue(currentObj.segmSelector.fromInput, currentObj.plotConfig.segment_size) );
@@ -101,19 +97,21 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       // Creates the Plot Binnin Size selector
       this.rebinSelector = new BinSelector(this.id + "_rebinSelector",
-                                          "Binning (Freq):",
-                                          "From",
-                                          this.plotConfig.minRebinSize, this.plotConfig.maxRebinSize, this.plotConfig.minRebinSize, this.plotConfig.rebinSize,
+                                          "Frequency Binning (Hz):",
+                                          this.plotConfig.freqMin,
+                                          this.plotConfig.freqMax,
+                                          getStepSizeFromRange(this.plotConfig.freqMax - this.plotConfig.freqMin, 100),
+                                          (this.plotConfig.df > 0) ? this.plotConfig.df : this.plotConfig.freqMin,
                                           this.onBinSelectorValuesChanged,
                                           function( event, ui ) {
                                             currentObj.rebinSelector.setValues( ui.values[ 0 ], "slider");
                                             currentObj.onBinSelectorValuesChanged();
-                                          });
+                                          }, null, "log");
       this.rebinSelector.setDisableable(true);
-      this.rebinSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
+      this.rebinSelector.setEnabled(this.plotConfig.df > 0);
       this.rebinSelector.switchBox.click( function ( event ) {
-        currentObj.plotConfig.rebinEnabled = !currentObj.plotConfig.rebinEnabled;
-        currentObj.rebinSelector.setEnabled(currentObj.plotConfig.rebinEnabled);
+        currentObj.rebinSelector.setEnabled(!currentObj.rebinSelector.enabled);
+        if (!currentObj.rebinSelector.enabled) { currentObj.plotConfig.df = 0; }
       });
       this.rebinSelector.inputChanged = function ( event ) {
          currentObj.rebinSelector.setValues( getInputFloatValue(currentObj.rebinSelector.fromInput, currentObj.rebinSelector.value) );
@@ -138,6 +136,35 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       this.settingsPanel.find(".rightCol").append(this.plotTypeRadios);
 
       this.onSettingsCreated();
+    }
+  }
+
+  this.addFrequencyRangeSelector = function (title, axis, columnClass) {
+    if (!isNull(this.plotConfig.freq_range)){
+      // Creates the frequency selector
+      this.updateMaxMinFreq();
+      this.freqSelector = new sliderSelector(this.id + "_freqSelector", title, axis,
+                                        this.plotConfig.freqMin, this.plotConfig.freqMax,
+                                        this.onFreqRangeValuesChanged,
+                                        null,
+                                        function( event, ui ) {
+                                          currentObj.freqSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider" );
+                                          currentObj.onFreqRangeValuesChanged();
+                                        },
+                                        null,
+                                        getStepSizeFromRange(this.plotConfig.freqMax - this.plotConfig.freqMin, 100));
+      this.freqSelector.setDisableable(false);
+      this.freqSelector.inputChanged = function ( event ) {
+         currentObj.setValues( getInputFloatValue(currentObj.freqSelector.fromInput, currentObj.freqSelector.fromValue),
+                               getInputFloatValue(currentObj.freqSelector.toInput, currentObj.freqSelector.toValue) );
+         currentObj.onFreqRangeValuesChanged();
+      };
+      if (this.plotConfig.freq_range[0] > -1) {
+        this.freqSelector.setValues( currentObj.plotConfig.freq_range[0], currentObj.plotConfig.freq_range[1] );
+      }
+      this.settingsPanel.find(columnClass).prepend(this.freqSelector.$html);
+    } else {
+      logErr("addFrequencyRangeSelector -> plotConfig.freq_range is NULL, PDSPlot id: " + this.id)
     }
   }
 
@@ -199,16 +226,41 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   }
 
   this.onBinSizeChanged = function () {
+    //Updates dt
     currentObj.plotConfig.dt = currentObj.binSelector.value;
-    var segmConfig = this.getSegmSelectorConfig();
+
+    //Updates Segment Size selector
+    var segmConfig = currentObj.getSegmSelectorConfig();
     currentObj.segmSelector.setMinMaxValues(segmConfig.minValue, segmConfig.maxValue, segmConfig.step);
     currentObj.updateSegmSelector();
+
+    //Updates Rebin selector and Frequency range selector
+    currentObj.updateMaxMinFreq(true);
+    if (!isNull(currentObj.rebinSelector)) {
+      currentObj.rebinSelector.setMinMaxValues (currentObj.plotConfig.freqMin,
+                                                currentObj.plotConfig.freqMax,
+                                                getStepSizeFromRange(currentObj.plotConfig.freqMax - currentObj.plotConfig.freqMin, 100), false);
+    }
+    if (!isNull(currentObj.freqSelector)) {
+      currentObj.freqSelector.setMinMaxValues (currentObj.plotConfig.freqMin,
+                                               currentObj.plotConfig.freqMax);
+    }
   }
 
   this.onBinSelectorValuesChanged = function(){
     if (currentObj.plotConfig.duration > 0) {
-      currentObj.plotConfig.rebinSize = currentObj.rebinSelector.value;
+      currentObj.plotConfig.df = currentObj.rebinSelector.value;
     }
+  }
+
+  this.onFreqRangeValuesChanged = function() {
+    currentObj.plotConfig.freq_range = [currentObj.freqSelector.fromValue, currentObj.freqSelector.toValue];
+  }
+
+  this.updateMaxMinFreq = function (forceMaxFreq) {
+    this.plotConfig.maxSupportedFreq = 0.6 / this.getBinSize();
+    this.plotConfig.freqMax = (!isNull(forceMaxFreq) && forceMaxFreq) ? this.plotConfig.maxSupportedFreq : Math.min(this.plotConfig.maxSupportedFreq, this.plotConfig.freqMax);
+    this.plotConfig.freqMin = (!isNull(forceMaxFreq) && forceMaxFreq) ? 0.0 : Math.max(0.0, this.plotConfig.freqMin);
   }
 
   this.updatePlotConfig = function () {
@@ -216,7 +268,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     if (!isNull(binSize)){
       this.plotConfig.dt = binSize;
     } else {
-      log("ERROR on updatePlotConfig: BinSize is null, Plot: " + this.id);
+      logErr("ERROR on updatePlotConfig: BinSize is null, Plot: " + this.id);
     }
 
     var tab = getTabForSelector(this.id);
@@ -232,19 +284,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.prepareData = function (data) {
 
     if (!isNull(data) && data.length > 2) {
-      if (this.plotConfig.rebinEnabled && this.plotConfig.rebinSize != 0) {
-        try {
-          var rebinnedData = this.rebinData(data[0].values, data[1].values, this.plotConfig.rebinSize, "sum");
-          data[0].values = rebinnedData.x;
-          data[1].values = rebinnedData.y;
-          data[1].error_values = null;
-        } catch (ex) {
-          log("Rebin plot data " + this.id + " error: " + ex);
-        }
-      } else if (data[0].values.length > 1) {
-          this.plotConfig.minRebinSize = data[0].values[1] - data[0].values[0];
-          this.plotConfig.maxRebinSize = (data[0].values[data[0].values.length - 1] - data[0].values[0]) / CONFIG.DEFAULT_SEGMENT_DIVIDER;
-      }
+
+      this.updateMaxMinFreq();
 
       if (this.plotConfig.plotType == "X*Y") {
         var computeErrors = !isNull(data[1].error_values) && (data[1].values.length == data[1].error_values.length);
@@ -256,12 +297,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         }
       }
 
-      if (data[2].values.length > 0
-          && data[2].values[0] > 0) {
-        this.plotConfig.duration = data[2].values[0];
-        this.updateNSegm();
-      }
-
+      this.updateDuration(data[2].values);
       this.updateSettings();
 
     } else {
@@ -269,6 +305,14 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     }
 
     return data;
+  }
+
+  this.updateDuration = function (durationArray) {
+    if (durationArray.length > 0
+        && durationArray[0] > 0) {
+      this.plotConfig.duration = durationArray[0];
+      this.updateNSegm();
+    }
   }
 
   this.getLabel = function (axis) {
@@ -296,7 +340,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         this.getLabel(1),
                                         this.plotConfig.styles.title);
 
-    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.prepareAxis(plotlyConfig);
 
     if (this.plotConfig.plotType == "X*Y") {
       plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots
@@ -324,7 +369,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.getWarnMsg = function (){
     if (this.data != null) {
-      if (this.data[3].values.length > 0) {
+      if (!isNull(this.data[3]) && this.data[3].values.length > 0) {
         if (this.data[3].values[0] == "Maximum allowed size exceeded"){
           return "Bin size greater than segment length";
         } else {
@@ -335,53 +380,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     return "";
   }
 
-  this.rebinData = function (x, y, dx_new, method){
-
-    // Rebin some data to an arbitrary new data resolution. Either sum
-    // the data points in the new bins or average them.
-    if (isNull(method)) { method = "sum"; }
-
-    if (x.length < 2 || x.length != y.length) {
-        return {x: x, y: y};
-    }
-
-    if (dx_new < x[1] - x[0]) {
-      throw new Error("New frequency resolution must be larger than old frequency resolution.");
-    }
-
-    var newX = [];
-    var newY = [];
-    var initX = x[0];
-    var sumDx = x[0];
-    var sumDy = 0;
-    var sumCount = 1;
-    for (i in x) {
-      if (i > 0){
-        var dx= x[i] - x[i - 1];
-        sumDx += dx;
-        sumDy += y[i];
-        sumCount ++;
-      }
-
-      if (sumDx >= dx_new) {
-        if (method == 'sum') {
-          newY.push(sumDy);
-        } else if (method == 'avg') {
-          newY.push(sumDy / sumCount);
-        } else {
-          throw new Error("Unknown binning method: " + method);
-        }
-        newX.push((initX + x[i]) / 2);
-        sumDx = 0;
-        sumDy = 0;
-        sumCount = 0;
-        initX = x[i];
-      }
-
-    }
-
-    return {x: newX, y: newY};
-  }
+  this.updateMaxMinFreq();
 
   log ("new PDSPlot id: " + this.id);
 

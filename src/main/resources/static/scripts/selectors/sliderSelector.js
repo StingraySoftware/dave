@@ -1,5 +1,5 @@
 
-function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, toValue, onSelectorValuesChangedFn, selectors_array, onSlideChanged, precision, fixed_step) {
+function sliderSelector(id, title, filterData, fromValue, toValue, onSelectorValuesChangedFn, selectors_array, onSlideChanged, precision, fixed_step) {
 
   var thePrecision = !isNull(precision) ? precision : CONFIG.DEFAULT_NUMBER_DECIMALS;
   if (!isNull(fixed_step)) {
@@ -11,8 +11,6 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
   this.id = id.replace(/\./g,'');
   this.title = title;
   this.filterData = filterData;
-  this.fromLabel = fromLabel;
-  this.toLabel = toLabel;
   this.initFromValue = fromValue;
   this.initToValue = toValue;
   this.fromValue = fromValue;
@@ -37,8 +35,8 @@ function sliderSelector(id, title, filterData, fromLabel, toLabel, fromValue, to
                   '</div>' +
                   '</h3>' +
                   '<div class="selectorContainer">' +
-                  ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromLabel + '" value="' + fromValue + '" />' +
-                  ' <input id="to_' + this.id + '" class="selectorTo" type="text" name="to_' + this.id + '" placeholder="' + toLabel + '" value="' + toValue + '" />' +
+                  ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromValue + '" value="' + fromValue + '" />' +
+                  ' <input id="to_' + this.id + '" class="selectorTo" type="text" name="to_' + this.id + '" placeholder="' + toValue + '" value="' + toValue + '" />' +
                   ' <div id="slider-' + this.id + '" class="selectorSlider"></div>' +
                   '</div>' +
                 '</div>');

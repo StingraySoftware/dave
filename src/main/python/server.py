@@ -144,7 +144,7 @@ def get_power_density_spectrum():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'])
+            request.json['norm'], request.json['type'], float(request.json['df']))
 
 
 @app.route('/get_dynamical_spectrum', methods=['POST'])
@@ -153,7 +153,7 @@ def get_dynamical_spectrum():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'])
+            request.json['norm'], float(request.json['df']))
 
 
 @app.route('/get_cross_spectrum', methods=['POST'])
@@ -181,8 +181,8 @@ def get_phase_lag_spectrum():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], request.json['freq_range'],
-            request.json['energy_range'], int(request.json['n_bands']))
+            request.json['norm'], request.json['type'], float(request.json['df']),
+            request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']))
 
 
 @app.route('/get_rms_spectrum', methods=['POST'])
@@ -191,8 +191,8 @@ def get_rms_spectrum():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], request.json['freq_range'],
-            request.json['energy_range'], int(request.json['n_bands']))
+            request.json['norm'], request.json['type'], float(request.json['df']),
+            request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']))
 
 
 @app.route('/get_plot_data_from_models', methods=['POST'])
@@ -214,8 +214,8 @@ def get_fit_powerspectrum_result():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], request.json['models'],
-            priors, sampling_params)
+            request.json['norm'], request.json['type'], float(request.json['df']),
+            request.json['models'], priors, sampling_params)
 
 
 @app.route('/get_bootstrap_results', methods=['POST'])
@@ -224,8 +224,8 @@ def get_bootstrap_results():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], request.json['models'],
-            int(request.json['n_iter']), float(request.json['mean']),
+            request.json['norm'], request.json['type'], float(request.json['df']),
+            request.json['models'], int(request.json['n_iter']), float(request.json['mean']),
             int(request.json['red_noise']), int(request.json['seed']))
 
 
@@ -240,13 +240,30 @@ def bulk_analisys():
             request.json['outdir'], UPLOADS_TARGET)
 
 
-@app.route('/get_lomb_scargle', methods=['POST'])
-def get_lomb_scargle():
-    return DaveEndpoint.get_lomb_scargle(request.json['filename'],
+@app.route('/get_lomb_scargle_results', methods=['POST'])
+def get_lomb_scargle_results():
+    return DaveEndpoint.get_lomb_scargle_results(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
             int(request.json['samples_per_peak']))
+
+
+@app.route('/get_fit_lomb_scargle_result', methods=['POST'])
+def get_fit_lomb_scargle_result():
+    priors = None
+    if "priors" in request.json:
+        priors = request.json['priors']
+
+    sampling_params = None
+    if "sampling_params" in request.json:
+        sampling_params = request.json['sampling_params']
+
+    return DaveEndpoint.get_fit_lomb_scargle_result(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
+            int(request.json['samples_per_peak']), request.json['models'], priors, sampling_params)
 
 
 @app.route('/get_pulse_search', methods=['POST'])

@@ -149,8 +149,16 @@ function Service (base_url) {
      return thisService.make_ajax_call("set_config", config, fn);
   };
 
-  this.request_lomb_scargle  = function ( data, fn ) {
-    return thisService.make_ajax_call("get_lomb_scargle", data, fn);
+  this.request_lomb_scargle_results  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_lomb_scargle_results", data, fn);
+  };
+
+  this.request_fit_lomb_scargle_result  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_fit_lomb_scargle_result", data, fn);
+  };
+
+  this.request_fit_powerspectrum_result = function (data, fn) {
+    return thisService.make_ajax_call("get_fit_powerspectrum_result", data, fn);
   };
 
   this.request_pulse_search  = function ( data, fn ) {

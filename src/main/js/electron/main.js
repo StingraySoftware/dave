@@ -190,19 +190,33 @@ function createWindow (splash_path){
 
 function loadDaveContents (url){
   mainWindow.loadURL(url);
-  mainWindow.webContents.session.clearCache(function(){})
+  if (logDebugMode){
+    //If app is in debug mode, clears browser cache
+    mainWindow.webContents.session.clearCache(function(){})
+  }
+  mainWindow.webContents.on('did-finish-load', function() {
+    log("Electron Version: " + process.versions.electron +
+        ", Chrome Version: " + process.versions.chrome +
+        ", NODE Version: " + process.version +
+        ", Platform: " + process.platform, "Info");
+  });
 }
 
-function log (msg){
+function log (msg, mode){
   if (logEnabled){
     console.log(msg);
-    logToWindow(msg);
+    logToWindow(msg, mode);
   }
 }
 
-function logToWindow (msg){
+function logToWindow (msg, mode){
   if (mainWindow != null) {
-    mainWindow.webContents.executeJavaScript("logError('" + escapeSpecialChars(msg) + "');");
+    var logCmd = "logError";
+    if (!isNull(mode)) {
+      //Supported modes: Debug, Info, Warn, Err
+      logCmd = "log" + mode;"logWarn";
+    }
+    mainWindow.webContents.executeJavaScript(logCmd + "('" + escapeSpecialChars(msg) + "');");
   }
 }
 
@@ -219,7 +233,7 @@ function connectionLost (){
 }
 
 function getTailFromLogFile (logFilePath) {
-  log('Getting log info from: ' + logFilePath);
+  log('Getting log info from: ' + logFilePath, "Warn");
   var tailProc = cp.spawn("tail", [ "-10", logFilePath ]);
   var stdout = "";
   tailProc.stdout.on('data', (data) => {
@@ -248,14 +262,14 @@ app.on('window-all-closed', function() {
 
 ipcMain.on('relaunchServer', function(){
   if (logDebugMode) {
-    log('Relaunching Python Server...');
+    log('Relaunching Python Server...', "Warn");
   }
   launchPythonServer(mainConfig, null);
 });
 
 ipcMain.on('connectedToServer', function(){
   if (logDebugMode) {
-    log('DAVE connected to Python Server...');
+    log('DAVE connected to Python Server...', "Info");
   }
   connected = true;
 });
@@ -348,4 +362,8 @@ function checkPortInUse(port, callback) {
      callback(false);
   });
   server.listen(port);
+}
+
+function isNull (value) {
+  return (value === undefined) || (value == null);
 }

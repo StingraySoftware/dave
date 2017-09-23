@@ -45,6 +45,10 @@ h3
   background-color: #000;
 }
 
+#navbar .navbar-left {
+  width: 85%;
+}
+
 ul#right-navbar {
     margin-right: 0px;
 }
@@ -162,7 +166,13 @@ ul#right-navbar li {
 }
 
 .infoPanel .posteriorTable {
-    width: 80%;
+  width: 80%;
+  border: 1px solid lightgrey;
+}
+
+.posteriorTable td {
+  padding: 6px;
+  border: 1px solid lightgrey;
 }
 
 .infoPanel img {
@@ -312,6 +322,10 @@ ul#right-navbar li {
   float: right;
 }
 
+.sliderSelector input::-webkit-input-placeholder {
+  color: #6e6e6e;
+}
+
 .sliderSelector .selectorSlider {
   margin-top: 35px;
   margin-left: 8px;
@@ -349,7 +363,7 @@ ul#right-navbar li {
 }
 
 .bigWarnBtn {
-  width: 73%;
+  width: 65%;
 }
 
 .btnWarn div {
@@ -371,7 +385,7 @@ ul#right-navbar li {
   font-size: 0.85em;
 }
 
-.fileSelector .InfoText {
+.InfoText {
   color: #2e6da4;
   font-size: 0.85em;
 }
@@ -602,9 +616,8 @@ input.wrongValue {
   color: #d0d0d0;
 }
 
-.aboutDaveDiv {
+.floatRight {
   float: right;
-  font-size: 0.85em;
 }
 
 .BulkAnalisysSection h3 i {

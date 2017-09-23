@@ -49,30 +49,27 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.createPlots = function () {
-    //Adds Long-term variability of AGN Plot to outputPanel
+    //Adds PGPlot (Periodogram/LombScargle) to outputPanel
     this.pgPlot = new PgPlot(
                       this.id + "_pg_" + (new Date()).getTime(),
                       $.extend(true, $.extend(true, {}, plotConfig), {
                         styles: { type: "ligthcurve",
-                                  title: "Lomb-Scargle Periodogram & PDS",
+                                  title: "Lomb-Scargle Periodogram",
                                   labels: ["Frequency (Hz)", "Power"],
                                   selectable: false,
                                   showFitBtn: true }
                       }),
-                      this.service.request_power_density_spectrum,
+                      this.service.request_lomb_scargle_results,
                       function (filters) {
-                        //onFiltersChangedFromPlot
                         currentObj.freqRangeSelector.setValues( filters[0].from, filters[0].to );
                         currentObj.onFreqRangeValuesChanged();
                       },
-                      function (comesFromLombScargle) {
+                      function () {
                         if (!isNull(currentObj.pgPlot.data)
                             && currentObj.pgPlot.data[0].values.length > 0){
                               currentObj.outputPanel.onPlotReady();
                               if (isNull(currentObj.freqRangeSelector)){
                                 currentObj.addPgControls();
-                              } else if (isNull(comesFromLombScargle) || !comesFromLombScargle) {
-                                currentObj.getLombScargleFromServer();
                               }
                         } else {
                           currentObj.pgPlot.showWarn("Wrong PDS data");
@@ -83,10 +80,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       false,
                       this.projectConfig
                     );
-    this.addPlot(this.pgPlot, false);
-
-    //Request plot data after all plots were added
-    this.pgPlot.onDatasetValuesChanged(this.outputPanel.getFilters());
+    this.addPlot(this.pgPlot, true);
   }
 
   this.addPgControls = function(){
@@ -96,7 +90,6 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
                                       "Frequency range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
-                                      "From", "To",
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
                                       null,
@@ -129,7 +122,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                             this.pgPlot.plotConfig.ls_norm,
                                             function(value) {
                                               currentObj.pgPlot.plotConfig.ls_norm = value;
-                                              currentObj.getLombScargleFromServer();
+                                              currentObj.outputPanel.onDatasetValuesChanged();
                                             });
     this.toolPanel.$html.find(".fileSelectorsContainer").append($lsNormRadiosCont);
 
@@ -137,54 +130,14 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onFreqRangeValuesChanged = function() {
     currentObj.pgPlot.plotConfig.freq_range = [currentObj.freqRangeSelector.fromValue, currentObj.freqRangeSelector.toValue];
-    currentObj.getLombScargleFromServer();
+    currentObj.outputPanel.onDatasetValuesChanged();
   }
 
   this.onTexboxesChanged = function(){
     currentObj.pgPlot.plotConfig.samples_per_peak = getInputIntValueCropped(currentObj.toolPanel.$html.find(".inputSPP"), currentObj.pgPlot.plotConfig.samples_per_peak, currentObj.pgPlot.ls_opts.samples_per_peak.min, currentObj.pgPlot.ls_opts.samples_per_peak.max);
     currentObj.pgPlot.plotConfig.nyquist_factor = getInputIntValueCropped(currentObj.toolPanel.$html.find(".inputNF"), currentObj.pgPlot.plotConfig.nyquist_factor, currentObj.pgPlot.ls_opts.nyquist_factor.min, currentObj.pgPlot.ls_opts.nyquist_factor.max);
-    currentObj.getLombScargleFromServer();
+    currentObj.outputPanel.onDatasetValuesChanged();
   }
-
-  this.getLombScargleFromServer = function () {
-
-    log("PgTabPanel getLombScargleFromServer...");
-
-    if (!isNull(currentObj.currentRequest) && !isNull(currentObj.currentRequest.abort)) {
-      currentObj.currentRequest.abort();
-    }
-
-    currentObj.outputPanel.setPlotsReadyState(false);
-
-    currentObj.currentRequest = currentObj.service.request_lomb_scargle(currentObj.pgPlot.plotConfig, function( jsdata ) {
-
-      if (!isNull(jsdata.abort)){
-        log("Current request aborted, PgTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
-          //If abort cause is because python server died
-          currentObj.outputPanel.setPlotsReadyState(true);
-        }
-        return; //Comes from request abort call.
-      }
-
-      log("PGData received!, PgTabPanel: " + currentObj.id);
-      data = JSON.parse(jsdata);
-
-      if (isNull(data)) {
-        log("onPlotReceived wrong data!, PgTabPanel: " + currentObj.id);
-        currentObj.outputPanel.setPlotsReadyState(true);
-        return;
-
-      } else {
-
-        //Sends data to agnPlot
-        if (currentObj.pgPlot.isVisible) {
-          currentObj.pgPlot.setLombScargleData(data);
-        }
-      }
-    });
-
-  };
 
   //Set the selected plot configs
   this.plotConfig = plotConfig;

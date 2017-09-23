@@ -39,24 +39,28 @@ $(document).ready(function () {
 
 //----------- GLOBAL EVENTS  -----------------
 function onLoadWorkSpaceClicked() {
-  showLoadFile(function(e) {
+  showLoadFile(function(e, file) {
     try {
-      var tabsConfigs = JSON.parse(e.target.result);
-      if (!isNull(tabsConfigs) && tabsConfigs.length > 0){
+      if (!isNull(e)) {
+        var tabsConfigs = JSON.parse(e.target.result);
+        if (!isNull(tabsConfigs) && tabsConfigs.length > 0){
 
-        logInfo("Loading workspace... nTabs: " + tabsConfigs.length);
-        waitingDialog.show('Loading workspace...', { ignoreCalls: true });
+          logInfo("Loading workspace... nTabs: " + tabsConfigs.length);
+          waitingDialog.show('Loading workspace...', { ignoreCalls: true });
 
-        setTabConfigs (tabsConfigs);
-
-      } else {
-        showError("File is not supported as workspace", null, { ignoreCalls: true });
+          setTabConfigs (tabsConfigs);
+          return;
+        }
       }
+
+      //Else show error:
+      showError("File: " + file.name + " is not supported as workspace", null, { ignoreCalls: true });
+
     } catch (e) {
-      showError("File is not supported as workspace", e);
+      showError("File: " + file.name + " is not supported as workspace", e);
       waitingDialog.hide({ ignoreCalls: true });
     }
-  });
+  }, ".wsp");
 }
 
 function onSaveWorkSpaceClicked() {

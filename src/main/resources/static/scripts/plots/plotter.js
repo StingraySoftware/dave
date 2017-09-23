@@ -8,6 +8,7 @@ var DEFAULT_TITLE_FONT = {
 var DEFAULT_MARGINS = { b : 38, r : 12, l: 64, t: 30 }
 
 var ERROR_BAR_OPACITY = 0.2;
+var EXTRA_DATA_COLOR = '#888888';
 
 function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
     return {

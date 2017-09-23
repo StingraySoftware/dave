@@ -20,5 +20,7 @@ CONFIG = {
   LOG_LEVEL: -1, // PYTHON SERVER LOG LEVEL -> ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
   DENY_BCK_IF_SUBS: true, //Avoid set background file if lightcurve bck data is allready substracted
   MAX_TIME_RESOLUTION_DECIMALS: 5, //Defines the maximun time resolution of DAVE GUI, default 100ns
-  DEFAULT_NUMBER_DECIMALS: 3 //The defaul number precision on selectors and textboxes
+  DEFAULT_NUMBER_DECIMALS: 3, //The defaul number precision on selectors and textboxes
+  BIN_SELECTOR_LOG_SCALE_STEPS: 1000,
+  BIN_SELECTOR_LOG_SCALE_POWER: 4
 }

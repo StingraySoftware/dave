@@ -16,6 +16,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.variance_opts = {};
 
   this.btnFullScreen.remove();
+  this.btnLoad.remove();
 
   //AGN plot methods:
   this.getPlotlyConfig = function (data) {

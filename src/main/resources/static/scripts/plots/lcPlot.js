@@ -80,16 +80,16 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   this.getPlotlyConfig = function (data) {
 
-    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
+    var coords = this.getSwitchedCoords( { x: 0, y: 1} );
 
-    var dataWithGaps = this.addGapsToData(data[0].values, data[1].values, data[2].values, currentObj.plotConfig.dt * 5);
+    var dataWithGaps = this.addGapsToData(data[0].values, data[1].values, data[2].values, this.plotConfig.dt * 5);
 
     var plotlyConfig = get_plotdiv_lightcurve(dataWithGaps[0], dataWithGaps[1],
                                         [], dataWithGaps[2],
-                                        (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
-                                        currentObj.plotConfig.styles.labels[coords.x],
-                                        currentObj.plotConfig.styles.labels[coords.y],
-                                        currentObj.plotConfig.styles.title);
+                                        (data.length > 4) ? this.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
+                                        this.plotConfig.styles.labels[coords.x],
+                                        this.plotConfig.styles.labels[coords.y],
+                                        this.plotConfig.styles.title);
 
     if (data.length > 5) {
       if (data[5].values.length > 0) {
@@ -97,11 +97,20 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
         plotlyConfig.data.push(getLine (data[0].values, data[5].values, '#DD3333'));
       }
     } else {
-      currentObj.btnSettings.hide();
+      this.btnSettings.hide();
     }
 
-    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.prepareAxis(plotlyConfig);
 
+    return plotlyConfig;
+  }
+
+  this.addExtraDataConfig = function (plotlyConfig) {
+    if (!isNull(this.extraData) && this.extraData.length > 1){
+      //Inserts extra data as line in plot
+      plotlyConfig.data.splice(0, 0, getLine (this.extraData[0], this.extraData[1], EXTRA_DATA_COLOR));
+    }
     return plotlyConfig;
   }
 
@@ -116,7 +125,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.maxY = minMaxY.max;
 
       var tab = getTabForSelector(this.id);
-      if (!isNull(tab) && (0 <= this.minY < this.maxY)){
+      if (!isNull(tab) && (0 <= this.minY) && (this.minY < this.maxY)){
         tab.updateMinMaxCountRate(this.minY, this.maxY);
       }
     }

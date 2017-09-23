@@ -1,16 +1,16 @@
 
-function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged, precision) {
+function BinSelector(id, title, fromValue, toValue, step, initValue, onSelectorValuesChangedFn, onSlideChanged, precision, type) {
 
   var currentObj = this;
   this.id = id.replace(/\./g,'');
   this.title = title;
-  this.fromLabel = fromLabel;
   this.initFromValue = fromValue;
   this.initToValue = toValue;
   this.fromValue = fromValue;
   this.toValue = toValue;
   this.value = initValue;
   this.step = step;
+  this.type = (!isNull(type) && (type == "log")) ? type : "linear"; // Type: linear or log
   this.precision = !isNull(precision) ? precision : CONFIG.DEFAULT_NUMBER_DECIMALS;
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.onSelectorEnabledChanged = null;
@@ -23,7 +23,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
                     '</div>' +
                   '</h3>' +
                   '<div class="selectorContainer">' +
-                  ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromLabel + '" value="' + fromValue + '" />' +
+                  ' <input id="from_' + this.id + '" class="selectorFrom" type="text" name="from_' + this.id + '" placeholder="' + fromValue + '" value="' + fromValue + '" />' +
                   ' <div id="slider-' + this.id + '" class="selectorSlider"></div>' +
                   '</div>' +
                 '</div>');
@@ -57,10 +57,14 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
 
    //Set values method
    this.setValues = function (value, source) {
+     if ((this.type == "log") && (source == "slider")) {
+       //If is log scale, and value comes from slider change, the gets the real value from slider ratio
+       value = this.getValueFromRatio(value);
+     }
      this.value = Math.min(Math.max(fixedPrecision(value, this.precision), this.initFromValue), this.initToValue);
      this.fromInput.val( fixedPrecision(this.value, this.precision) ).removeClass("wrongValue");
      if (source != "slider") {
-       this.slider.slider('values', 0, this.value);
+       this.slider.slider('values', 0, (this.type != "log") ? this.value : this.getRatioFromValue(this.value));
      }
 
      var tab = getTabForSelector(this.id);
@@ -86,7 +90,7 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      }
    }
 
-   this.setMinMaxValues = function (minValue, maxValue, step) {
+   this.setMinMaxValues = function (minValue, maxValue, step, showRange) {
      this.fromValue = minValue;
      this.initFromValue = this.fromValue;
      this.step = isNull(step) ? this.fromValue : step;
@@ -96,7 +100,9 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
      this.slider = $('<div id="slider-' + this.id + '" class="selectorSlider"></div>');
      this.container.append(this.slider);
      this.createSlider();
-     this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
+     if (isNull(showRange) || showRange){
+       this.$html.find("h3").first().html(this.title + "<span style='font-size:0.7em'>( " + fixedPrecision(this.fromValue, this.precision) + " - " + fixedPrecision(this.toValue, this.precision) + " )</span>");
+     }
    }
 
    this.setStep = function (step) {
@@ -115,13 +121,21 @@ function BinSelector(id, title, fromLabel, fromValue, toValue, step, initValue, 
 
    this.createSlider = function () {
      this.slider.slider({
-            min: this.fromValue,
-            max: this.toValue,
-            values: [this.value],
-            step: this.step,
+            min: (this.type != "log") ? this.fromValue : 0,
+            max: (this.type != "log") ? this.toValue : CONFIG.BIN_SELECTOR_LOG_SCALE_STEPS,
+            values: (this.type != "log") ? [this.value] : [this.getRatioFromValue(this.value)],
+            step: (this.type != "log") ? this.step : 1,
             slide: this.onSlideChanged
         });
       this.setValues( this.value );
+   }
+
+   this.getRatioFromValue = function (value) {
+     return Math.pow(((value - this.fromValue) / (this.toValue - this.fromValue)), 1 / CONFIG.BIN_SELECTOR_LOG_SCALE_POWER) * CONFIG.BIN_SELECTOR_LOG_SCALE_STEPS;
+   }
+
+   this.getValueFromRatio = function (ratioValue) {
+     return ((this.toValue - this.fromValue) * (Math.pow(ratioValue / CONFIG.BIN_SELECTOR_LOG_SCALE_STEPS, CONFIG.BIN_SELECTOR_LOG_SCALE_POWER))) + this.fromValue;
    }
 
    this.showWarn = function (msg) {

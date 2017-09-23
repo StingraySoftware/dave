@@ -55,6 +55,91 @@ function getPrecisionFromFloat(value) {
   }
 }
 
+function rebinData(x, y, dx_new, method){
+
+  // Rebin some data to an arbitrary new data resolution. Either sum
+  // the data points in the new bins or average them.
+  if (isNull(method)) { method = "sum"; }
+
+  if (x.length < 2 || x.length != y.length) {
+      return {x: x, y: y};
+  }
+
+  if (dx_new < x[1] - x[0]) {
+    throw new Error("New frequency resolution must be larger than old frequency resolution.");
+  }
+
+  var newX = [];
+  var newY = [];
+  var initX = x[0];
+  var sumDx = x[0];
+  var sumDy = 0;
+  var sumCount = 1;
+  for (i in x) {
+    if (i > 0){
+      var dx= x[i] - x[i - 1];
+      sumDx += dx;
+      sumDy += y[i];
+      sumCount ++;
+    }
+
+    if (sumDx >= dx_new) {
+      if (method == 'sum') {
+        newY.push(sumDy);
+      } else if (method == 'avg') {
+        newY.push(sumDy / sumCount);
+      } else {
+        throw new Error("Unknown binning method: " + method);
+      }
+      newX.push((initX + x[i]) / 2);
+      sumDx = 0;
+      sumDy = 0;
+      sumCount = 0;
+      initX = x[i];
+    }
+
+  }
+
+  return {x: newX, y: newY};
+}
+
+//Transposes an array: [[1,2,3], [4,5,6], [7,8,9]] -> [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
+function transposeArray(a) {
+    return Object.keys(a[0]).map(function(c) {
+        return a.map(function(r) { return r[c]; });
+    });
+}
+
+//Extracts an array from csv text contents
+function extractDatafromCSVContents(contents) {
+  var data = [];
+
+  if (contents.length > 0) {
+    var lines = contents.split("\n");
+    logInfo("Extracting CSV data, N lines: " + lines.length);
+
+    for (i in lines){
+      var line = lines[i];
+      if (line.length > 0){
+        var strData = line.split(",");
+        if (strData.length > 2){
+          lineData = [];
+          for (j in strData){
+            var value = strData[j].trim();
+            if (jQuery.isNumeric(value)){
+              value = parseFloat(value);
+            }
+            lineData.push(value);
+          }
+          data.push(lineData);
+        }
+      }
+    }
+  }
+
+  return data;
+}
+
 
 // ------- CLIPBOARD AND FILE MEHTODS -------
 function copyToClipboard(text) {
@@ -71,14 +156,18 @@ function saveToFile (filename, contents) {
   a.click();
 }
 
-function showLoadFile(onLoadFn) {
+function showLoadFile(onLoadFn, fileExtension) {
   var input = $('<input type="file" id="load-input" />');
   input.on('change', function (e) {
     if (e.target.files.length == 1) {
       var file = e.target.files[0];
-      var reader = new FileReader();
-      reader.onload = function (e) { onLoadFn (e, file) };
-      reader.readAsText(file);
+      if (isNull(fileExtension) || file.name.endsWith(fileExtension)){
+        var reader = new FileReader();
+        reader.onload = function (e) { onLoadFn (e, file) };
+        reader.readAsText(file);
+      } else {
+        onLoadFn (null, file);
+      }
     }
    });
    input.click();

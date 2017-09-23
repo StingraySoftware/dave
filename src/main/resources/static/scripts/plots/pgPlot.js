@@ -19,6 +19,10 @@ function PgPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.plotConfig.samples_per_peak = this.ls_opts.samples_per_peak.default;
   this.plotConfig.nyquist_factor = this.ls_opts.nyquist_factor.default;
 
+  this.onSettingsCreated = function(){
+    this.settingsPanel.find(".leftCol").hide();
+  }
+
   this.getDefaultFreqRange = function (){
     if (this.plotConfig.default_freq_range[0] < 0
         && !isNull(this.data) && this.data.length >= 4) {
@@ -26,38 +30,6 @@ function PgPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.plotConfig.default_freq_range = [ minMax.min, minMax.max ];
     }
     return this.plotConfig.default_freq_range;
-  }
-
-  this.setLombScargleData = function ( data ) {
-
-    currentObj.showWarn("");
-
-    if (isNull(data)) {
-
-      currentObj.showWarn("Wrong data received");
-      log("setLombScargleData wrong passed data!, plot" + currentObj.id);
-
-    } else {
-
-      var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
-
-      if (data.length == 2) {
-        if (data[0].values.length > 0) {
-          //LombScargle data has values
-          plotlyConfig.data.push(getLine (data[0].values, data[1].values, '#DD3333'));
-        }
-      }
-
-      currentObj.redrawPlot(plotlyConfig);
-
-      if (currentObj.data.length == 0 || currentObj.data[0].values.length == 0){
-        currentObj.showWarn("Empty plot data");
-      }
-
-    }
-
-    currentObj.setReadyState(true);
-    currentObj.onPlotReady(true);
   }
 
   this.mustPropagateAxisFilter = function (axis) {

@@ -6,14 +6,16 @@ function ConfidencePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
 
   Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
+  this.btnLoad.hide();
+  
   this.getPlotlyConfig = function (data) {
 
-    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
+    var coords = this.getSwitchedCoords( { x: 0, y: 1} );
 
     var plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
-                                      currentObj.getLabel(coords.x),
-                                      currentObj.getLabel(coords.y),
-                                      currentObj.plotConfig.styles.title);
+                                      this.getLabel(coords.x),
+                                      this.getLabel(coords.y),
+                                      this.plotConfig.styles.title);
 
     plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [ data[2].values[0], data[2].values[0] ], '#222222', 2, 'solid'));
     plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [ data[2].values[1], data[2].values[1] ], '#666666', 2, 'dot'));
@@ -22,7 +24,8 @@ function ConfidencePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
     plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [ data[3].values[1], data[3].values[1] ], '#888888', 2, 'dash'));
     plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [ data[3].values[2], data[3].values[2] ], '#888888', 2, 'dash'));
 
-    plotlyConfig = currentObj.prepareAxis(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.prepareAxis(plotlyConfig);
 
     return plotlyConfig;
   }
