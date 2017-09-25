@@ -154,9 +154,8 @@ function ToolPanel (id,
     var btnSupportedFormats = $('<a href="#" class="btnSupportedFormats floatRight InfoText" style="margin-top: 23px;">Supported formats <i class="fa fa-info-circle" aria-hidden="true"></i></a>');
     btnSupportedFormats.click(function () {
       showMsg("DAVE Supported Formats",
-              "<p><strong>FITS Files:</strong> FITS, Zipped FITS, Evt FITS, Lc Fits.</p>" +
-              "<p><strong>Text Files:</strong> CSV or TEXT files.</p>" +
-              "<p><strong>Stingray / Hendrics Files:</strong> Pickle files (*.p) and netCDF4 files (*.nc).</p>" +
+              "<p><strong>Data types:</strong> Light curves and event files</p>" +
+              "<p><strong>FITS Files:</strong> FITS, gzipped FITS, CSV</p>" +
               "<p><strong>Bulk Files:</strong> Text files with the absolute paths of each file per line.</p>" +
               "<hr><p><strong>Other DAVE formats, not for data analisys:</strong></p>" +
               "<p><strong>*.wsp:</strong> Workspace file format.</p>" +
