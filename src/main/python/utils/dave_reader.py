@@ -84,7 +84,7 @@ def get_file_dataset(destination, time_offset=0):
                     dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring, time_offset=time_offset)
 
                 else:
-                    logging.error("Unsupported FITS type!")
+                    logging.error("Unsupported FITS type! Any table found: EVENTS, RATE, EBOUNDS or " + gtistring)
 
             elif file_extension == "data" and (file_extension_from_file in [".p", ".nc"]):
 
