@@ -225,7 +225,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         lc1_filename: lc1_filename,
                         lc0_bck_filename: lc0_bck_filename,
                         lc1_bck_filename: lc1_bck_filename,
-                        styles: { type: "scatter", labels: labels, title: title },
+                        styles: { type: "scatter_with_errors", labels: labels, title: title },
                         axis: [ { table: "RATE", column:"TIME" },
                                 { table: "RATE", column:"PHA" } ]
                       },
@@ -557,7 +557,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "scatter", labels: labels, title: title },
+                        styles: { type: "scatter_with_errors", labels: labels, title: title },
                         axis: [ { table: tableName, column:"TIME" },
                                 { table: tableName, column:"PHA" } ],
                         mandatoryFilters: mandatoryFilters,

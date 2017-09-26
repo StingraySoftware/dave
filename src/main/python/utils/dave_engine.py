@@ -377,8 +377,8 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, bck0_destination, b
 
             # Preapares the result
             logging.debug("Result joined lightcurves ....")
-            result = push_to_results_array([], lc0.countrate)
-            result = push_to_results_array(result, lc1.countrate)
+            result = push_to_results_array_with_errors([], lc0.countrate, lc0.countrate_err)
+            result = push_to_results_array_with_errors(result, lc1.countrate, lc1.countrate_err)
             return result
 
         else:
