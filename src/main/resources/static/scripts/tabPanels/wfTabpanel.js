@@ -338,6 +338,15 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.getAnalysisSections = function (){
     //Returns the analisys tab sections and their buttons
 
+    var pdsPlotsButtons = [];
+    pdsPlotsButtons = currentObj.addButtonToArray("Lomb-Scargle Periodogram",
+                                                  "periodogramBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Lomb-Scargle Periodogram:",
+                                                                                     onPeriodogramPlotSelected);
+                                                  },
+                                                  pdsPlotsButtons);
+
     var timingPlotsButtons = [];
     timingPlotsButtons = currentObj.addButtonToArray("Cross Spectrum",
                                                       "crossSpectraBtn",
@@ -381,19 +390,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                   },
                                                   variancePlotsButtons);
 
-    variancePlotsButtons = currentObj.addButtonToArray("Intrinsic variance estimator",
+    variancePlotsButtons = currentObj.addButtonToArray("Long-term Variability",
                                                   "intVarBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Longterm variability of AGN:",
+                                                    currentObj.showLcSelectionDialog("Long-term Variability:",
                                                                                      onAGNPlotSelected);
-                                                  },
-                                                  variancePlotsButtons);
-
-    variancePlotsButtons = currentObj.addButtonToArray("Periodic signals search",
-                                                  "periodogramBtn",
-                                                  function () {
-                                                    currentObj.showLcSelectionDialog("Periodic signals search:",
-                                                                                     onPeriodogramPlotSelected);
                                                   },
                                                   variancePlotsButtons);
 
@@ -408,9 +409,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     return [
               { cssClass: "LcPlot", title:"Light Curves and Colors" },
-              { cssClass: "PDSPlot", title:"Power Density Spectra" },
+              { cssClass: "PDSPlot", title:"Power Density Spectra", extraButtons: pdsPlotsButtons},
               { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-              { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons },
+              { cssClass: "VariancePlot", title:"Long-term Variability Analysis", extraButtons: variancePlotsButtons },
               { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons }
           ];
   }

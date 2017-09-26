@@ -1,4 +1,4 @@
-//Long-term variance AGN plot
+//Long-term Variability plot
 
 function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable) {
 
@@ -54,7 +54,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       if (data[6].values.length > 0) {
 
-        //Lightcurve has Long-term variability AGN values
+        //Lightcurve has Long-term Variability values
         plotlyConfig.data.push(getAgnPlotTrace("y5", data[6].values, data[8].values, data[9].values));
         plotlyConfig.data.push(getAgnPlotTrace("y4", data[6].values, data[10].values, data[11].values));
         plotlyConfig.data.push(getAgnPlotTraceWithXErrorData("y3", data[18].values, data[12].values, data[19].values, data[13].values));

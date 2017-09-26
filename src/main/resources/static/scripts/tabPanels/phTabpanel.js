@@ -50,7 +50,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.createPlots = function () {
 
-    //Adds Long-term variability of AGN Plot to outputPanel
+    //Adds Long-term variability Plot to outputPanel
     this.pgPlot = new PgPlot(
                       this.id + "_pg_" + (new Date()).getTime(),
                       $.extend(true, $.extend(true, {}, plotConfig), {

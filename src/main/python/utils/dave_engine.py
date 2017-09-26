@@ -275,7 +275,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             niter = baseline_opts["niter"]  # 10
             baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
 
-        # Gets the Long-term variability of AGN values
+        # Gets the Long-term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
             logging.debug("Preparing lightcurve excess variance");
             chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
@@ -2216,7 +2216,7 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
     return divided_values, divided_error
 
 
-# ----- Long-term variability of AGN FUNCTIONS.. NOT EXPOSED  -------------
+# ----- Long-term variability FUNCTIONS.. NOT EXPOSED  -------------
 
 def lightcurve_meancount(lc):
     return lc.meancounts, np.std(lc.counts)
