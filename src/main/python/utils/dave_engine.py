@@ -2012,115 +2012,118 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
 def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
     results = []
 
-    fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
-    if fit_model:
+    try:
+        fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
+        if fit_model:
 
-        # Default fit parammeters
-        max_post=False
-        fitmethod="L-BFGS-B"
-        as_priors=None
+            # Default fit parammeters
+            max_post=False
+            fitmethod="L-BFGS-B"
+            as_priors=None
 
-        if priors is not None:
-            # Creates the priors from dave_priors
-            as_priors = ModelHelper.get_astropy_priors(priors)
-            if len(as_priors.keys()) > 0:
-                # If there are priors then is a Bayesian Parammeters Estimation
-                max_post=True
-                fitmethod="BFGS"
+            if priors is not None:
+                # Creates the priors from dave_priors
+                as_priors = ModelHelper.get_astropy_priors(priors)
+                if len(as_priors.keys()) > 0:
+                    # If there are priors then is a Bayesian Parammeters Estimation
+                    max_post=True
+                    fitmethod="BFGS"
 
+                else:
+                    as_priors=None
+                    logging.warn("fit_power_density_spectrum: can't create priors from dave_priors.")
+
+            if as_priors:
+                # Creates a Posterior object with the priors
+                lpost = PSDPosterior(pds.freq, pds.power, fit_model, priors=as_priors, m=pds.m)
             else:
-                as_priors=None
-                logging.warn("get_fit_powerspectrum_result: can't create priors from dave_priors.")
+                # Creates the Maximum Likelihood object for fitting
+                lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
 
-        if as_priors:
-            # Creates a Posterior object with the priors
-            lpost = PSDPosterior(pds.freq, pds.power, fit_model, priors=as_priors, m=pds.m)
-        else:
-            # Creates the Maximum Likelihood object for fitting
-            lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
+            # Creates the PSD Parammeters Estimation object and runs the fitting
+            parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
+            res = parest.fit(lpost, starting_pars, neg=True)
 
-        # Creates the PSD Parammeters Estimation object and runs the fitting
-        parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
-        res = parest.fit(lpost, starting_pars, neg=True)
+            sample = None
+            if as_priors and sampling_params is not None:
+                # If is a Bayesian Par. Est. and has sampling parammeters
+                # then sample the posterior distribution defined in `lpost` using MCMC
+                sample = parest.sample(lpost, res.p_opt, cov=res.cov,
+                                         nwalkers=sampling_params["nwalkers"],
+                                         niter=sampling_params["niter"],
+                                         burnin=sampling_params["burnin"],
+                                         threads=sampling_params["threads"],
+                                         print_results=False, plot=False)
 
-        sample = None
-        if as_priors and sampling_params is not None:
-            # If is a Bayesian Par. Est. and has sampling parammeters
-            # then sample the posterior distribution defined in `lpost` using MCMC
-            sample = parest.sample(lpost, res.p_opt, cov=res.cov,
-                                     nwalkers=sampling_params["nwalkers"],
-                                     niter=sampling_params["niter"],
-                                     burnin=sampling_params["burnin"],
-                                     threads=sampling_params["threads"],
-                                     print_results=False, plot=False)
+            # Prepares the results to be returned to GUI
+            fixed = [fit_model.fixed[n] for n in fit_model.param_names]
+            parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                        if f is False]
 
-        # Prepares the results to be returned to GUI
-        fixed = [fit_model.fixed[n] for n in fit_model.param_names]
-        parnames = [n for n, f in zip(fit_model.param_names, fixed) \
-                    if f is False]
+            # Add to results the estimated parammeters
+            params = []
+            for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
+                param = dict()
+                param["index"] = i
+                param["name"] = p
+                param["opt"] = nan_and_inf_to_num(x)
+                param["err"] = nan_and_inf_to_num(y)
+                params.append(param)
 
-        # Add to results the estimated parammeters
-        params = []
-        for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
-            param = dict()
-            param["index"] = i
-            param["name"] = p
-            param["opt"] = nan_and_inf_to_num(x)
-            param["err"] = nan_and_inf_to_num(y)
-            params.append(param)
+            results = push_to_results_array(results, params)
 
-        results = push_to_results_array(results, params)
-
-        # Add to results the estimation statistics
-        stats = dict()
-        try:
-            stats["deviance"] = nan_and_inf_to_num(res.deviance)
-            stats["aic"] = nan_and_inf_to_num(res.aic)
-            stats["bic"] = nan_and_inf_to_num(res.bic)
-        except AttributeError:
-            stats["deviance"] = "ERROR"
-
-        try:
-            stats["merit"] = nan_and_inf_to_num(res.merit)
-            stats["dof"] = nan_and_inf_to_num(res.dof)  # Degrees of freedom
-            stats["dof_ratio"] = nan_and_inf_to_num(res.merit/res.dof)
-            stats["sobs"] = nan_and_inf_to_num(res.sobs)
-            stats["sexp"] = nan_and_inf_to_num(res.sexp)
-            stats["ssd"] = nan_and_inf_to_num(res.ssd)
-        except AttributeError:
-            stats["merit"] = "ERROR"
-
-        results = push_to_results_array(results, stats)
-
-        # If there is sampling data add it to results
-        if sample:
-            sample_stats = dict()
+            # Add to results the estimation statistics
+            stats = dict()
             try:
-                sample_stats["acceptance"] = sample.acceptance
-                sample_stats["rhat"] = sample.rhat
-                sample_stats["mean"] = sample.mean
-                sample_stats["std"] = sample.std
-                sample_stats["ci"] = sample.ci
-
-                try:
-                    #Acor is not always present
-                    sample_stats["acor"] = sample.acor
-                except AttributeError:
-                    sample_stats["acor"] = "ERROR"
-
-                #Creates an IMG Html tag from plot
-                try:
-                    fig = sample.plot_results(nsamples=sampling_params["nsamples"])
-                    sample_stats["img"] = Plotter.convert_fig_to_html(fig)
-                except:
-                    sample_stats["img"] = "ERROR"
-                    logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant create image from plot.'))
-
+                stats["deviance"] = nan_and_inf_to_num(res.deviance)
+                stats["aic"] = nan_and_inf_to_num(res.aic)
+                stats["bic"] = nan_and_inf_to_num(res.bic)
             except AttributeError:
-                sample_stats["acceptance"] = "ERROR"
-                logging.error(ExHelper.getException('get_fit_powerspectrum_result: Cant add sample data.'))
+                stats["deviance"] = "ERROR"
 
-            results = push_to_results_array(results, sample_stats)
+            try:
+                stats["merit"] = nan_and_inf_to_num(res.merit)
+                stats["dof"] = nan_and_inf_to_num(res.dof)  # Degrees of freedom
+                stats["dof_ratio"] = nan_and_inf_to_num(res.merit/res.dof)
+                stats["sobs"] = nan_and_inf_to_num(res.sobs)
+                stats["sexp"] = nan_and_inf_to_num(res.sexp)
+                stats["ssd"] = nan_and_inf_to_num(res.ssd)
+            except AttributeError:
+                stats["merit"] = "ERROR"
+
+            results = push_to_results_array(results, stats)
+
+            # If there is sampling data add it to results
+            if sample:
+                sample_stats = dict()
+                try:
+                    sample_stats["acceptance"] = sample.acceptance
+                    sample_stats["rhat"] = sample.rhat
+                    sample_stats["mean"] = sample.mean
+                    sample_stats["std"] = sample.std
+                    sample_stats["ci"] = sample.ci
+
+                    try:
+                        #Acor is not always present
+                        sample_stats["acor"] = sample.acor
+                    except AttributeError:
+                        sample_stats["acor"] = "ERROR"
+
+                    #Creates an IMG Html tag from plot
+                    try:
+                        fig = sample.plot_results(nsamples=sampling_params["nsamples"])
+                        sample_stats["img"] = Plotter.convert_fig_to_html(fig)
+                    except:
+                        sample_stats["img"] = "ERROR"
+                        logging.error(ExHelper.getException('fit_power_density_spectrum: Cant create image from plot.'))
+
+                except AttributeError:
+                    sample_stats["acceptance"] = "ERROR"
+                    logging.error(ExHelper.getException('fit_power_density_spectrum: Cant add sample data.'))
+
+                results = push_to_results_array(results, sample_stats)
+    except:
+        logging.error(ExHelper.getException('fit_power_density_spectrum'))
 
     return results
 

@@ -124,12 +124,17 @@ def fit_data_with_gaussian(x_values, y_values, amplitude=1., mean=0, stddev=1.):
 def get_astropy_priors(dave_priors):
     priors = {}
 
-    for i in range(len(dave_priors)):
+    num_models = len(dave_priors)
+    for i in range(num_models):
         model_params = dave_priors[i]
 
         for paramName in model_params.keys():
 
-            prior_key = str(paramName) + "_" + str(i)
+            if num_models > 1:
+                prior_key = str(paramName) + "_" + str(i)
+            else:
+                prior_key = str(paramName)
+                
             model_param = model_params[paramName]
 
             if "type" in model_param:
