@@ -131,7 +131,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
          }
        }
 
-     } else {
+     } else if (currentObj.selectorKey != "SRC"){
        currentObj.reset();
        currentObj.onFileChangedFn([], currentObj.selectorKey);
      }

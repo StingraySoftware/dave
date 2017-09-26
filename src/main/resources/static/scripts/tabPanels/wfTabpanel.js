@@ -102,18 +102,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
 
-      if (currentObj.projectConfig.getFile(selectorKey) != ""){
-        //If previous file was setted
-
-        if (selectorKey == "SRC") {
-          //Reset this tab
-          removeTab(currentObj.id);
-        } else {
-          //Update projectConfig files
-          currentObj.projectConfig.setFiles(selectorKey, [], "");
-          currentObj.projectConfig.updateFile(selectorKey);
-          currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
-        }
+      if ((currentObj.projectConfig.getFile(selectorKey) != "")
+          && (selectorKey != "SRC")){
+        //If previous file was setted and is not the SRC file then update projectConfig files
+        currentObj.projectConfig.setFiles(selectorKey, [], "");
+        currentObj.projectConfig.updateFile(selectorKey);
+        currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
       }
 
       if (!isNull(callback)) { callback(); }
