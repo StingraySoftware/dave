@@ -6,14 +6,14 @@ function PhPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
-  this.plotConfig.f = 0;
-  this.plotConfig.nph = 128;
-  this.plotConfig.nt = 32;
-  this.plotConfig.colorScale = { x0: 0.5, y0: 0.5, m: 1.0 };
-
   this.ph_opts = {};
-  this.ph_opts.nph = { default:128, min:1, max: 2048}; //Number of phase bins of the phaseogram
-  this.ph_opts.nt = { default:32, min:1, max: 512}; //Number of time bins of the phaseogram
+  this.ph_opts.nph = { default:32, min:1, max: 256}; //Number of phase bins of the phaseogram
+  this.ph_opts.nt = { default:64, min:1, max: 512}; //Number of time bins of the phaseogram
+
+  this.plotConfig.f = 0;
+  this.plotConfig.nph = this.ph_opts.nph.default;
+  this.plotConfig.nt = this.ph_opts.nt.default;
+  this.plotConfig.colorScale = { x0: 0.5, y0: 0.5, m: 1.0 };
 
   this.btnFullScreen.remove();
   this.btnLoad.remove();

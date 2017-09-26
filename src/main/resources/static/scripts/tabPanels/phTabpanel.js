@@ -277,9 +277,20 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }, 350);
   }
 
-  this.onPHTexboxesChanged = function(){
-    currentObj.phPlot.plotConfig.nph = getInputIntValueCropped(currentObj.toolPanel.$html.find(".inputNPH"), currentObj.phPlot.plotConfig.nph, currentObj.phPlot.ph_opts.nph.min, currentObj.phPlot.ph_opts.nph.max);
-    currentObj.phPlot.plotConfig.nt = getInputIntValueCropped(currentObj.toolPanel.$html.find(".inputNTB"), currentObj.phPlot.plotConfig.nt, currentObj.phPlot.ph_opts.nt.min, currentObj.phPlot.ph_opts.nt.max);
+  this.onPHTexboxesChanged = function(event){
+    if ($(event.target).hasClass("inputNPH")){
+      currentObj.phPlot.plotConfig.nph = getInputIntValueCropped(currentObj.toolPanel.$html.find(".inputNPH"), currentObj.phPlot.plotConfig.nph, currentObj.phPlot.ph_opts.nph.min, currentObj.phPlot.ph_opts.nph.max);
+      if (currentObj.phPlot.plotConfig.nt < currentObj.phPlot.plotConfig.nph * 2) {
+        currentObj.phPlot.plotConfig.nt = Math.floor(currentObj.phPlot.plotConfig.nph * 2);
+        currentObj.toolPanel.$html.find(".inputNTB").val(currentObj.phPlot.plotConfig.nt);
+      }
+    } else {
+      currentObj.phPlot.plotConfig.nt = getInputIntValueCropped(currentObj.toolPanel.$html.find(".inputNTB"), currentObj.phPlot.plotConfig.nt, currentObj.phPlot.ph_opts.nt.min, currentObj.phPlot.ph_opts.nt.max);
+      if (currentObj.phPlot.plotConfig.nt < currentObj.phPlot.plotConfig.nph * 2) {
+        currentObj.phPlot.plotConfig.nph = Math.floor(currentObj.phPlot.plotConfig.nt / 2);
+        currentObj.toolPanel.$html.find(".inputNPH").val(currentObj.phPlot.plotConfig.nph);
+      }
+    }
     currentObj.getPhaseogramFromServer();
   }
 
