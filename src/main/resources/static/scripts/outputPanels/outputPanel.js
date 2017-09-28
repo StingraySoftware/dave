@@ -12,7 +12,6 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   this.$html.show();
   this.$body =  this.$html.find(".outputPanelBody");
   this.plots = [];
-  this.infoPanel = null;
 
   //METHODS AND EVENTS
   this.resize = function() {
@@ -84,8 +83,9 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       this.plots.push(plot);
     }
 
-    if (this.$body.find(".infoPanel").length > 0) {
-      plot.$html.insertBefore(this.$body.find(".infoPanel"));
+    var infoPanels = this.$body.find(".infoPanel");
+    if (infoPanels.length > 0) {
+      plot.$html.insertBefore(infoPanels.first());
     } else {
       this.$body.append(plot.$html);
     }

@@ -58,13 +58,6 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     // Adds plots
     this.initPlots(projectConfig);
 
-    // Adds FITS info if found
-    if (projectConfig.schema.isEventsFile()) {
-      this.addInfoPanel( "EVENTS", projectConfig.schema.contents );
-    } else if (projectConfig.schema.isLightCurveFile()) {
-      this.addInfoPanel( "RATE", projectConfig.schema.contents );
-    }
-
     this.onDatasetValuesChanged();
   }
 
@@ -108,14 +101,17 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     }
   }
 
-  this.addInfoPanel = function ( tableName, schema ) {
-    if (!isNull(schema[tableName]["HEADER"])) {
-      this.infoPanel = new InfoPanel(this.generatePlotId("infoPanel"),
-                                    "Header File Information",
-                                    schema[tableName]["HEADER"],
-                                    schema[tableName]["HEADER_COMMENTS"],
-                                    getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"));
-      this.$body.append(this.infoPanel.$html);
+  this.addInfoPanel = function (filename, schema ) {
+    var table = schema.getTable();
+    if (!isNull(table) && !isNull(table["HEADER"])) {
+      var infoPanel = new InfoPanel(this.generatePlotId("infoPanel"),
+                                    filename,
+                                    table["HEADER"],
+                                    table["HEADER_COMMENTS"],
+                                    getTabForSelector(this.id).$html.find(".HdrFileInfo").find(".sectionContainer"));
+      this.$body.append(infoPanel.$html);
+    } else {
+      logWarn("addInfoPanel: Schema no valid tables or headers");
     }
   }
 

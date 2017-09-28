@@ -241,6 +241,10 @@ ul#right-navbar li {
   float:right;
 }
 
+.plotTools .btnWarn {
+  max-width: 58%;
+}
+
 .plotContainer .settings
 {
   padding: 24px;

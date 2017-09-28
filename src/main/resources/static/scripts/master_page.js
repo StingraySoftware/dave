@@ -170,6 +170,7 @@ function showError(errorMsg, exception, options) {
   }, 2500);
 
   logError(errorMsg + ((!isNull(exception))? " -> " + exception : ""));
+  Logger.open();
 }
 
 
