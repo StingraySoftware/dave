@@ -815,10 +815,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.showAddAnnotationDialog = function (x, y){
    //Shows a dialog that allows user to add a text label to a given point
    var addLabelDialog = $('<div id="dialog_' + currentObj.id +  '" title="Add annotation to (' + x + ', ' + y + ')">' +
-                            '<form action="" method="post"><fieldset>' +
+                            '<fieldset>' +
                               '<label for="labelText">Annotation text:</label>' +
                               '<input type="text" style="width: 95%; text-align: left" name="labelText" value="(' + x + ', ' + y + ')">' +
-                            '</fieldset></form>' +
+                            '</fieldset>' +
                           '</div>');
    currentObj.$html.append(addLabelDialog);
    addLabelDialog.dialog({
