@@ -330,3 +330,17 @@ function getAgnPlotTraceWithXErrorData(yaxis, xData, yData, xErrorData, yErrorDa
   plotTrace.error_x = getErrorConfig(xErrorData);
   return plotTrace;
 }
+
+function getAnnotation(text, x, y) {
+  return {
+      x: x,
+      y: y,
+      xref: 'x',
+      yref: 'y',
+      text: text,
+      showarrow: true,
+      arrowhead: 7,
+      ax: 0,
+      ay: -40
+    };
+}

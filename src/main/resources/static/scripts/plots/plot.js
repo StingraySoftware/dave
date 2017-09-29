@@ -20,6 +20,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.switchable = (!isNull(switchable)) ? switchable : false;
   this.data = null;
   this.extraData = null;
+  this.annotations = [];
   this.tracesCount = 0;
   this.addedTraces = 0;
   this.minX = 0;
@@ -383,6 +384,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.prepareAxis = function (plotlyConfig) {
+
+   //Set the annotations
+   plotlyConfig = currentObj.prepareAnnotations(plotlyConfig);
+
+   //Set axis types
    if (currentObj.plotConfig.xAxisType == "log") {
      plotlyConfig.layout.xaxis.type = 'log';
      plotlyConfig.layout.xaxis.autorange = true;
@@ -396,15 +402,52 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return plotlyConfig;
  }
 
+ this.prepareAnnotations = function (plotlyConfig) {
+
+   //Adds only visible annotations in X and Y range
+   if (currentObj.annotations.length > 0){
+    var annotations = $.extend(true, [], currentObj.annotations);
+    var isXY = !isNull(currentObj.plotConfig.plotType) && currentObj.plotConfig.plotType == "X*Y";
+    if (currentObj.isSwitched || isXY) {
+      //Switch annotations axes or calculates X*Y
+      for (i in annotations){
+         if (isXY) { annotations[i].y = annotations[i].y * annotations[i].x };
+         if (currentObj.isSwitched) { annotations[i] = currentObj.getSwitchedCoords(annotations[i]) };
+       };
+    }
+    var visibleAnnotations = annotations.filter(function(annotation) {
+        return (annotation.x >= currentObj.minX)
+             && (annotation.x <= currentObj.maxX)
+             && (annotation.y >= currentObj.minY)
+             && (annotation.y <= currentObj.maxY);
+      });
+    if (visibleAnnotations.length > 0){
+      plotlyConfig.layout.annotations = $.extend(true, [], visibleAnnotations);
+      //Fixes plotly.js annotations position bug with Log axis
+      var xLog = currentObj.plotConfig.xAxisType == "log";
+      var yLog = currentObj.plotConfig.yAxisType == "log";
+
+      for (i in plotlyConfig.layout.annotations){
+         var annotation = plotlyConfig.layout.annotations[i];
+         if (xLog) { annotation.x = Math.log(annotation.x)/ Math.log(10); };
+         if (yLog) { annotation.y = Math.log(annotation.y)/ Math.log(10); };
+       };
+    };
+   }
+
+   return plotlyConfig;
+ }
+
  this.addExtraDataConfig = function (plotlyConfig) {
    if (!isNull(this.extraData)
        && this.extraData.length > 1
        && plotlyConfig.data.length > 0){
      //If plot config has data, clones first trace and changes its axis data and color
      var extraTrace = $.extend(true, {}, plotlyConfig.data[0]);
-     extraTrace.x = this.extraData[0];
-     extraTrace.y = this.extraData[1];
-     extraTrace.line = { color : EXTRA_DATA_COLOR };
+     var coords = this.getSwitchedCoords( { x: this.extraData[0], y: this.extraData[1]} );
+     extraTrace.x = coords.x;
+     extraTrace.y = coords.y;
+     extraTrace.line = $.extend(true, extraTrace.line, { color : EXTRA_DATA_COLOR });;
      plotlyConfig.data.splice(0, 0, extraTrace);
    }
    return plotlyConfig;
@@ -486,66 +529,75 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.registerPlotEvents = function () {
 
-   if ((this.plotConfig.styles.type == "2d")
-        || (this.plotConfig.styles.type == "ligthcurve")
-        || (this.plotConfig.styles.type == "colors_ligthcurve")) {
+    if ((this.plotConfig.styles.type == "2d")
+         || (this.plotConfig.styles.type == "ligthcurve")
+         || (this.plotConfig.styles.type == "colors_ligthcurve")) {
 
-     if (!isNull(currentObj.onFiltersChanged)) {
-       this.plotElem.on('plotly_selected', (eventData) => {
+       if (!isNull(currentObj.onFiltersChanged)) {
+         this.plotElem.on('plotly_selected', (eventData) => {
 
-           if (eventData){
-             var xRange = eventData.range.x;
-             var yRange = eventData.range.y;
-             var filters = [];
+             if (eventData){
+               var xRange = eventData.range.x;
+               var yRange = eventData.range.y;
+               var filters = [];
 
-             //If plot data for label[0] is the same as axis[0] data,
-             // else label data is calculated/derived with some process
-             if (this.mustPropagateAxisFilter(0)){
-              filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
-                                      this.getAxisForPropagation(0)));
-             }
+               //If plot data for label[0] is the same as axis[0] data,
+               // else label data is calculated/derived with some process
+               if (this.mustPropagateAxisFilter(0)){
+                filters.push($.extend({ from: fixedPrecision(xRange[0], 3), to: fixedPrecision(xRange[1], 3) },
+                                        this.getAxisForPropagation(0)));
+               }
 
-             //Same here but for other axis
-             if (this.mustPropagateAxisFilter(1)){
-                filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
-                                      this.getAxisForPropagation(1)));
-             }
+               //Same here but for other axis
+               if (this.mustPropagateAxisFilter(1)){
+                  filters.push($.extend({ from: fixedPrecision(yRange[0], 3), to: fixedPrecision(yRange[1], 3) },
+                                        this.getAxisForPropagation(1)));
+               }
 
-             if (filters.length > 0){
-               currentObj.onFiltersChanged (filters);
-             }
+               if (filters.length > 0){
+                 currentObj.onFiltersChanged (filters);
+               }
+            }
+
+          })
+        }
+
+        this.plotElem.on('plotly_hover', function(data){
+
+          if (currentObj.hoverEnabled){
+            currentObj.clearTimeouts();
+            var hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
+
+            if (!isNull(hoverCoords)){
+
+              currentObj.hoverCoords = hoverCoords;
+
+              currentObj.onHoverTimeout = setTimeout(function(){
+                if (!isNull(currentObj.hoverCoords)){
+                  currentObj.onHover(currentObj.hoverCoords);
+
+                  var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
+                  evt_data.labels = currentObj.plotConfig.styles.labels;
+                  currentObj.sendPlotEvent('on_hover', evt_data);
+                }
+              }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
+            }
           }
 
-        })
+        }).on('plotly_unhover', function(data){
+          if (currentObj.hoverEnabled){
+            currentObj.onUnHoverEvent();
+          }
+        });
       }
 
-      this.plotElem.on('plotly_hover', function(data){
-
-        if (currentObj.hoverEnabled){
-          currentObj.clearTimeouts();
-          var hoverCoords = currentObj.getCoordsFromPlotlyHoverEvent(data);
-
-          if (!isNull(hoverCoords)){
-
-            currentObj.hoverCoords = hoverCoords;
-
-            currentObj.onHoverTimeout = setTimeout(function(){
-              if (!isNull(currentObj.hoverCoords)){
-                currentObj.onHover(currentObj.hoverCoords);
-
-                var evt_data = currentObj.getSwitchedCoords({ x: currentObj.hoverCoords.x, y: currentObj.hoverCoords.y });
-                evt_data.labels = currentObj.plotConfig.styles.labels;
-                currentObj.sendPlotEvent('on_hover', evt_data);
-              }
-            }, CONFIG.PLOT_TRIGGER_HOVER_TIMEOUT);
-          }
-        }
-
-      }).on('plotly_unhover', function(data){
-        if (currentObj.hoverEnabled){
-          currentObj.onUnHoverEvent();
-        }
-      });
+      if (this.plotConfig.styles.type != "3d") {
+        this.plotElem.on('plotly_click', function(data){
+            if (data.points.length > 0){
+              currentObj.showAddAnnotationDialog(data.points[0].x, data.points[0].y);
+            }
+        });
+      }
 
       if (isNull(this.plotEventsRegistered)){
         this.plotEventsRegistered = true;
@@ -586,7 +638,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         });
       }
 
-    }
   }
 
   this.setHoverEventsEnabled = function (enabled) {
@@ -761,6 +812,49 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    Plotly.restyle(this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
   }
 
+  this.showAddAnnotationDialog = function (x, y){
+   //Shows a dialog that allows user to add a text label to a given point
+   var addLabelDialog = $('<div id="dialog_' + currentObj.id +  '" title="Add annotation to (' + x + ', ' + y + ')">' +
+                            '<form action="" method="post"><fieldset>' +
+                              '<label for="labelText">Annotation text:</label>' +
+                              '<input type="text" style="width: 95%; text-align: left" name="labelText" value="(' + x + ', ' + y + ')">' +
+                            '</fieldset></form>' +
+                          '</div>');
+   currentObj.$html.append(addLabelDialog);
+   addLabelDialog.dialog({
+      width: '300px',
+      buttons: {
+        'Add label': function() {
+           var labelText = $('#dialog_' + currentObj.id).find('input[name="labelText"]').val();
+           currentObj.addAnnotation(labelText, x, y);
+           $(this).dialog('close');
+        },
+        'Clear all': function() {
+           currentObj.annotations = [];
+           currentObj.redrawDiffered();
+           $(this).dialog('close');
+        },
+        'Cancel': function() {
+           $(this).dialog('close');
+        }
+      },
+      close: function() {
+        addLabelDialog.remove();
+      }
+    });
+    addLabelDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+
+  }
+
+  this.addAnnotation = function (text, x, y){
+    if (text != ""){
+      if (!isNull(currentObj.plotConfig.plotType) && currentObj.plotConfig.plotType == "X*Y") { y = y / x; }
+      log("addAnnotation: " + text + " to (" + x + "," + y + "), Plot.id: " + this.id);
+      this.annotations.push(getAnnotation(text, x, y));
+      this.redrawDiffered();
+    }
+  }
+
   this.sendPlotEvent = function (evt_name, evt_data) {
     //Sends event to all plots inside the tab, uses setTimeout for avoid blocking calls
     setTimeout(function(){
@@ -816,6 +910,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     var data = currentObj.data;
     if (!isNull(data)){
       var csvContent = "data:text/csv;charset=utf-8,";
+
+      //Prepares annotations for export, gets the closest index for each annotation
+      var annotations = [];
+      if (currentObj.annotations.length > 0){
+        for (i in currentObj.annotations){
+          var annotation = currentObj.annotations[i];
+          var x = closest(currentObj.data[0].values, annotation.x);
+          var idx = this.data[0].values.indexOf(x);
+          annotations[idx] = annotation;
+        }
+      }
+
+      //Saves points as CSV lines
       data[0].values.forEach(function(values, index){
          var infoArray = [data[0].values[index], data[1].values[index]];
          if (!isNull(data[1].error_values)) {
@@ -824,14 +931,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
          if (data.length > 2 && (data[1].values.length == data[2].values.length)) {
            infoArray.push(data[2].values[index]); //Adds errors or extra data if available
          }
+         //Adds the annotation text if exists as last column
+         infoArray.push(!isNull(annotations[index]) ? annotations[index].text.replace(/\,/g,';') : "");
          dataString = Array.prototype.join.call(infoArray, ",");
          csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
       });
-      var encodedUri = encodeURI(csvContent);
-      var link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
-      link.click();
+
+      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", csvContent);
     }
   }
 
@@ -842,6 +948,18 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
           var externalData = extractDatafromCSVContents(e.target.result);
           if (externalData.length > 0){
             currentObj.extraData = transposeArray(externalData);
+
+            //Add annotations
+            if (currentObj.extraData.length > 2) {
+              var annotationsArr = currentObj.extraData[currentObj.extraData.length - 1];
+              for (i in annotationsArr){
+                var text = annotationsArr[i];
+                if (text != ""){
+                  currentObj.annotations.push(getAnnotation(text, currentObj.extraData[0][i], currentObj.extraData[1][i]));
+                }
+              }
+            }
+
             currentObj.redrawDiffered();
           } else {
             showError("File: " + file.name + ", data can't be extracted.");

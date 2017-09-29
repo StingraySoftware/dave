@@ -4,6 +4,7 @@ import utils.filters_helper as FltHelper
 import utils.dave_logger as logging
 from random import randint
 import numpy as np
+from config import CONFIG
 
 
 class DataSet:
@@ -52,7 +53,7 @@ class DataSet:
 
         for filter in filters:
             table_id = filter["table"]
-            if table_id not in ["EVENTS", "RATE"] or filter["column"] != "TIME":  # Exclude time filter
+            if table_id not in ["EVENTS", "RATE"] or filter["column"] != CONFIG.TIME_COLUMN:  # Exclude time filter
                 if table_id in filtered_dataset.tables:
                     filtered_dataset.tables[table_id] = filtered_dataset.tables[table_id].apply_filter(filter)
                 else:
@@ -70,7 +71,7 @@ class DataSet:
 
         return joined_dataset
 
-    def apply_time_filter(self, filter, hduname='EVENTS', column='TIME'):
+    def apply_time_filter(self, filter, hduname='EVENTS', column=CONFIG.TIME_COLUMN):
 
         if "GTI" not in self.tables:
             logging.warn("dataset.apply_time_filter: Dataset GTIs missed")
@@ -129,7 +130,7 @@ def get_hdu_type_dataset(dsId, columns, hduname="EVENTS"):
 # Returns a new dataset with EVENTS and GTIs tables
 def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ds_columns_errors, ev_list, ev_list_err,
                             gti_start, gti_end, filter_start=None, filter_end=None,
-                            hduname="EVENTS", column='TIME'):
+                            hduname="EVENTS", column=CONFIG.TIME_COLUMN):
 
     # Prepares additional_columns
     columns = [column]
@@ -165,7 +166,7 @@ def get_gti_dataset_from_stingray_gti(st_gtis):
 
 # Returns a new dataset with LIGHTCURVE table from Stingray lcurve
 def get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments,
-                                                hduname='RATE', column='TIME'):
+                                                hduname='RATE', column=CONFIG.TIME_COLUMN):
     lc_columns = [column, hduname]
 
     dataset = get_hdu_type_dataset("LIGHTCURVE", lc_columns, hduname)
@@ -184,7 +185,7 @@ def get_lightcurve_dataset_from_stingray_lcurve(lcurve, header, header_comments,
 def get_lightcurve_dataset_from_stingray_Lightcurve(lcurve, header=None,
                                                     header_comments=None,
                                                     hduname='RATE',
-                                                    column='TIME'):
+                                                    column=CONFIG.TIME_COLUMN):
     from astropy.io.fits import Header
 
     dataset = get_hdu_type_dataset("LIGHTCURVE", [column, hduname], hduname)
@@ -215,7 +216,7 @@ def get_lightcurve_dataset_from_stingray_Lightcurve(lcurve, header=None,
 def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
                                                   header_comments=None,
                                                   hduname='EVENTS',
-                                                  column='TIME'):
+                                                  column=CONFIG.TIME_COLUMN):
     from astropy.io.fits import Header
 
     evt_columns = [column, "PI"]

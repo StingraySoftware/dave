@@ -102,18 +102,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     } else {
       log("onDatasetChanged " + selectorKey + ": No selected files..");
 
-      if (currentObj.projectConfig.getFile(selectorKey) != ""){
-        //If previous file was setted
-
-        if (selectorKey == "SRC") {
-          //Reset this tab
-          removeTab(currentObj.id);
-        } else {
-          //Update projectConfig files
-          currentObj.projectConfig.setFiles(selectorKey, [], "");
-          currentObj.projectConfig.updateFile(selectorKey);
-          currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
-        }
+      if ((currentObj.projectConfig.getFile(selectorKey) != "")
+          && (selectorKey != "SRC")){
+        //If previous file was setted and is not the SRC file then update projectConfig files
+        currentObj.projectConfig.setFiles(selectorKey, [], "");
+        currentObj.projectConfig.updateFile(selectorKey);
+        currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
       }
 
       if (!isNull(callback)) { callback(); }
@@ -205,6 +199,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }
     }
 
+    //Add infopanel for this file
+    currentObj.addInfoPanel(currentObj.projectConfig.getFile(selectorKey));
+
     //Add the new plots for this selectorKey
     if (currentObj.projectConfig.getFile(selectorKey) != ""){
       currentObj.outputPanel.addLightcurveAndPdsPlots(selectorKey,
@@ -275,31 +272,34 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         currentObj.toolPanel.$html.find(".covarianceBtn").remove();
         currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
+        //Adds infoPanel for this file
+        currentObj.addInfoPanel(currentObj.projectConfig.getFile("RMF"));
+
         waitingDialog.hide();
         if (!isNull(callback)) { callback(); }
 
       }, currentObj.onSchemaError, null);
     } else {
-      log("onRmfApplied error:" + JSON.stringify(result));
+      logErr("onRmfApplied error:" + JSON.stringify(result));
       showError("Wrong RMF file!");
       if (!isNull(callback)) { callback(); }
     }
   }
 
-  this.onSchemaChangedWithKey = function (selectorKey, schema, params) {
+  this.onSchemaChangedWithKey = function (selectorKey, jsonSchema, params) {
     if (!isNull(params) && !isNull(params.filename)){
       currentObj.projectConfig.setFiles(selectorKey, params.filenames, params.filename);
     }
 
-    var jsonSchema = JSON.parse(schema);
-    if (!isNull(jsonSchema) && isNull(jsonSchema.error)){
+    var schema = JSON.parse(jsonSchema);
+    if (!isNull(schema) && isNull(schema.error)){
 
       currentObj.projectConfig.updateFile(selectorKey);
 
       if (selectorKey == "SRC"){
 
         //Update projectConfig schema and tabPanel info
-        currentObj.projectConfig.setSchema(jsonSchema);
+        currentObj.projectConfig.setSchema(schema);
         currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
 
         //Prepare sections
@@ -333,16 +333,56 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         waitingDialog.hide();
       }
 
+      //Adds infoPanel for this file
+      if (!isNull(params) && !isNull(params.filename)){
+        for (i in params.filenames){
+          currentObj.addInfoPanel(params.filenames[i]);
+        }
+      } else {
+        currentObj.addInfoPanel(currentObj.projectConfig.getFile(selectorKey), schema);
+      }
+
     } else {
-      log("onSchemaChangedWithKey error:" + schema);
+      logErr("onSchemaChangedWithKey error:" + schema);
       showError();
     }
 
     if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
   }
 
+  this.addInfoPanel = function ( filepath, schema ) {
+    if (filepath != ""){
+      if (isNull(schema)) {
+        log("addInfoPanel.get_dataset_schema: filepath: " + filepath);
+        currentObj.service.get_dataset_schema(filepath, function( jsonSchema ){
+
+          //Calls this function again with the schema obj
+          log("addInfoPanel.get_dataset_schema: Success!");
+          currentObj.addInfoPanel(filepath, JSON.parse(jsonSchema));
+
+        }, function ( error ) {
+          logErr("onSchemaError filename:" + filepath + " error:" + JSON.stringify(error));
+        }, null);
+
+      } else {
+
+        //Adds infoPanel for this file
+        currentObj.outputPanel.addInfoPanel(getFilename(filepath), new Schema(schema));
+      }
+    }
+  }
+
   this.getAnalysisSections = function (){
     //Returns the analisys tab sections and their buttons
+
+    var pdsPlotsButtons = [];
+    pdsPlotsButtons = currentObj.addButtonToArray("Lomb-Scargle Periodogram",
+                                                  "periodogramBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Lomb-Scargle Periodogram:",
+                                                                                     onPeriodogramPlotSelected);
+                                                  },
+                                                  pdsPlotsButtons);
 
     var timingPlotsButtons = [];
     timingPlotsButtons = currentObj.addButtonToArray("Cross Spectrum",
@@ -387,19 +427,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                   },
                                                   variancePlotsButtons);
 
-    variancePlotsButtons = currentObj.addButtonToArray("Intrinsic variance estimator",
+    variancePlotsButtons = currentObj.addButtonToArray("Long-term Variability",
                                                   "intVarBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Longterm variability of AGN:",
+                                                    currentObj.showLcSelectionDialog("Long-term Variability:",
                                                                                      onAGNPlotSelected);
-                                                  },
-                                                  variancePlotsButtons);
-
-    variancePlotsButtons = currentObj.addButtonToArray("Periodic signals search",
-                                                  "periodogramBtn",
-                                                  function () {
-                                                    currentObj.showLcSelectionDialog("Periodic signals search:",
-                                                                                     onPeriodogramPlotSelected);
                                                   },
                                                   variancePlotsButtons);
 
@@ -414,10 +446,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     return [
               { cssClass: "LcPlot", title:"Light Curves and Colors" },
-              { cssClass: "PDSPlot", title:"Power Density Spectra" },
+              { cssClass: "PDSPlot", title:"Power Density Spectra", extraButtons: pdsPlotsButtons},
               { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-              { cssClass: "VariancePlot", title:"Longterm Variability Analysis", extraButtons: variancePlotsButtons },
-              { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons }
+              { cssClass: "VariancePlot", title:"Long-term Variability Analysis", extraButtons: variancePlotsButtons },
+              { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons },
+              { cssClass: "HdrFileInfo", title:"Header File Information" }
           ];
   }
 
@@ -439,11 +472,19 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onSchemaChangedMultipleFiles = function ( result, params ) {
 
     if (result != null) {
-      params.filename = JSON.parse(result);
-      if (params.filename == ""){
-        log("onSchemaChangedMultipleFiles: server returned false!");
-        waitingDialog.hide();
-        return;
+      res = JSON.parse(result);
+      if (!isNull(res)){
+        if (!isNull(res.error)) {
+          //Error while server tried to read params.filename
+          showError("Can't read file: " + params.filename);
+          return;
+        } else if (res == "") {
+          showError("Can't concatenate files");
+          return;
+        } else {
+          //Read success
+          params.filename = res;
+        }
       }
     }
 
@@ -454,6 +495,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       var nextfile = params.filenames[params.currentFile];
       waitingDialog.show('Appending to dataset: ' + getFilename(nextfile));
       currentObj.service.append_file_to_dataset(params.filename, nextfile, currentObj.onSchemaChangedMultipleFiles, currentObj.onSchemaError, params);
+
       params.currentFile++;
 
     } else {
@@ -465,7 +507,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onSchemaError = function ( error ) {
-    log("onSchemaError error:" + JSON.stringify(error));
+    logErr("onSchemaError error:" + JSON.stringify(error));
     waitingDialog.hide();
     showError();
   }
@@ -697,7 +739,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         }
     ], function (err, result) {
         if (!isNull(err)){
-          log("setConfig on tab " + currentObj.id + " error: " + err);
+          logErr("setConfig on tab " + currentObj.id + " error: " + err);
         } else {
           log("setConfig success for tab " + currentObj.id);
         }
@@ -723,7 +765,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       delete this.id;
     } catch (ex) {
-      log("Destroy tab " + this.id + " error: " + ex);
+      logErr("Destroy tab " + this.id + " error: " + ex);
     }
   }
 

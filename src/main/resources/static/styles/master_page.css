@@ -241,6 +241,10 @@ ul#right-navbar li {
   float:right;
 }
 
+.plotTools .btnWarn {
+  max-width: 58%;
+}
+
 .plotContainer .settings
 {
   padding: 24px;
@@ -613,7 +617,7 @@ input.wrongValue {
 
 .TabPanel.Settings h3
 {
-  color: #d0d0d0;
+  color: #e68f4d;
 }
 
 .floatRight {
@@ -681,4 +685,23 @@ input.wrongValue {
 
 .LogError, .LogServerError {
   color: #FF0000;
+}
+
+.settingsContainer {
+  padding-left: 12px;
+}
+
+.inputGTI_STRING {
+  width: 80%;
+}
+
+.serverLogLevel h3 {
+  color: #9d9d9d !important;
+  font-size: 0.95em;
+}
+
+.booleanBox {
+  float: left;
+  margin-right: 4px;
+  top: 0px;
 }

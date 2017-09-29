@@ -1,5 +1,7 @@
 import math
 import copy
+from config import CONFIG
+
 
 def createFilter(table, column, from_val, to_val, source=None):
     filter = dict()
@@ -14,12 +16,12 @@ def createFilter(table, column, from_val, to_val, source=None):
 
 # Creates a filter from-to in EVENTS.TIME axis
 def createTimeFilter(from_val, to_val):
-    return createFilter ("EVENTS", "TIME", from_val, to_val)
+    return createFilter ("EVENTS", CONFIG.TIME_COLUMN, from_val, to_val)
 
 
 # Returns the filter refered to TIME from a list of filters
 def get_time_filter(filters):
-    return get_named_filter(filters, "TIME")
+    return get_named_filter(filters, CONFIG.TIME_COLUMN)
 
 
 # Returns the filter refered to RATE from a list of filters

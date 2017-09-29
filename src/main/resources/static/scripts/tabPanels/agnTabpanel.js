@@ -1,5 +1,5 @@
 
-//Adds new Long term variability of AGN Tab Panel
+//Adds new Long-term variability Tab Panel
 function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
   return new AGNTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
@@ -9,7 +9,7 @@ function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, i
 
 //Subscribes the load workspace AGNTabPanel function
 tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
-  //Creates new Long term variability of AGN Tab Panel
+  //Creates new Long-term variability Tab Panel
   return addAGNTabPanel($("#navbar").find("ul").first(),
                       $(".daveContainer"),
                       tabConfig.plotConfig,
@@ -18,7 +18,7 @@ tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
                       tabConfig.navItemClass);
 }
 
-//Long term variability of AGN Tab Panel
+//Long-term variability Tab Panel
 function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
 
   var currentObj = this;
@@ -117,7 +117,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.createPlots = function () {
-    //Adds Long-term variability of AGN Plot to outputPanel
+    //Adds Long-term variability Plot to outputPanel
     this.agnPlot = new AgnPlot(
                               this.id + "_agn_" + (new Date()).getTime(),
                               $.extend(true, {}, plotConfig),
@@ -208,7 +208,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.getVarianceSelector = function () {
-    //Long-term AGN Variability controls set
+    //Long-term Variability controls set
     var $variance = $('<div class="variance">' +
                         '<h3>' +
                           'Long-term variability parammeters:' +
@@ -239,10 +239,10 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.variance_opts.min_bins = { default:20, min:10, max: 10000}; //Minimum number of time bins on excess variance
   this.variance_opts.mean_count = { default:10, min:1, max: 10000}; //Number of elements to calculate the means
 
-  this.setTitle("AGN Variability");
+  this.setTitle("Long-term Variability");
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
 
-  //Preapares AGN toolpanel data
+  //Preapares Long-term Variability toolpanel data
   this.toolPanel.clearFileSelectors();
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));

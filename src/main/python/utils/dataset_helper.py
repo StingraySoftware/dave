@@ -6,6 +6,7 @@ from stingray.gti import join_gtis, gti_len
 from model.table import Table
 import bisect
 import utils.dave_logger as logging
+from config import CONFIG
 
 
 # Returns an Stingray EventList from a given events dataset
@@ -26,12 +27,12 @@ def get_eventlist_from_evt_dataset(dataset):
             logging.warn("Using PI instead of PHA")
         except:
             dataset.tables["EVENTS"].columns["PHA"].values = \
-                np.zeros(len(dataset.tables["EVENTS"].columns["TIME"].values),
+                np.zeros(len(dataset.tables["EVENTS"].columns[CONFIG.TIME_COLUMN].values),
                          dtype=int)
             logging.warn("PHA column will be empty")
 
     # Extract axis values
-    time_data = np.array(dataset.tables["EVENTS"].columns["TIME"].values)
+    time_data = np.array(dataset.tables["EVENTS"].columns[CONFIG.TIME_COLUMN].values)
     pha_data = np.array(dataset.tables["EVENTS"].columns["PHA"].values)
 
     # Extract GTIs
@@ -52,7 +53,7 @@ def get_lightcurve_from_lc_dataset(dataset, gti=None):
         return None
 
     # Extract axis values
-    time_data = np.array(dataset.tables["RATE"].columns["TIME"].values)
+    time_data = np.array(dataset.tables["RATE"].columns[CONFIG.TIME_COLUMN].values)
     counts = np.array(dataset.tables["RATE"].columns["RATE"].values)
     err_counts = np.array(dataset.tables["RATE"].columns["RATE"].error_values)
 
@@ -114,7 +115,7 @@ def is_lightcurve_dataset(dataset):
 def is_hdu_dataset(dataset, hduname):
     if dataset:
         if hduname in dataset.tables:
-            if "TIME" in dataset.tables[hduname].columns:
+            if CONFIG.TIME_COLUMN in dataset.tables[hduname].columns:
                 if "GTI" in dataset.tables:
                     return True
     return False
@@ -154,7 +155,7 @@ def get_hdutable_from_dataset(dataset):
 def get_dataset_start_time(dataset):
     hdutable = get_hdutable_from_dataset(dataset)
     if hdutable:
-        return get_column_start_time(hdutable.columns["TIME"])
+        return get_column_start_time(hdutable.columns[CONFIG.TIME_COLUMN])
     else:
         logging.warn("get_dataset_start_time: hdutable is None")
         return 0
@@ -287,7 +288,7 @@ def get_columns_errors_as_dict(columns, column):
 
 
 # Returns a new dataset filtered by a GTI_Dataset
-def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS", column='TIME'):
+def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS", column=CONFIG.TIME_COLUMN):
 
     if not is_events_dataset(src_dataset):
         logging.warn("get_dataset_applying_gti_dataset: src_dataset is not a events dataset instance")
@@ -324,7 +325,7 @@ def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS",
 
 # Returns a Dataset filtered by Gtis
 def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, ds_columns, ds_columns_errors,
-                                    gti_start, gti_end, additional_columns, column='TIME',
+                                    gti_start, gti_end, additional_columns, column=CONFIG.TIME_COLUMN,
                                     filter_start=None, filter_end=None, must_filter=False):
     start_event_idx = 0
     end_event_idx = 0
@@ -416,6 +417,6 @@ def add_time_offset_to_dataset(dataset, time_offset):
 
         hdutable = get_hdutable_from_dataset(dataset)
         if hdutable:
-            hdutable.columns["TIME"].values = hdutable.columns["TIME"].values + time_offset
+            hdutable.columns[CONFIG.TIME_COLUMN].values = hdutable.columns[CONFIG.TIME_COLUMN].values + time_offset
 
     return dataset

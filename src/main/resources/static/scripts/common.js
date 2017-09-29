@@ -156,6 +156,14 @@ function saveToFile (filename, contents) {
   a.click();
 }
 
+function saveRawToFile(filename, text) {
+  var encodedUri = encodeURI(text);
+  var link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", filename);
+  link.click();
+}
+
 function showLoadFile(onLoadFn, fileExtension) {
   var input = $('<input type="file" id="load-input" />');
   input.on('change', function (e) {

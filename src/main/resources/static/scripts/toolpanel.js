@@ -154,11 +154,10 @@ function ToolPanel (id,
     var btnSupportedFormats = $('<a href="#" class="btnSupportedFormats floatRight InfoText" style="margin-top: 23px;">Supported formats <i class="fa fa-info-circle" aria-hidden="true"></i></a>');
     btnSupportedFormats.click(function () {
       showMsg("DAVE Supported Formats",
-              "<p><strong>FITS Files:</strong> FITS, Zipped FITS, Evt FITS, Lc Fits.</p>" +
-              "<p><strong>Text Files:</strong> CSV or TEXT files.</p>" +
-              "<p><strong>Stingray / Hendrics Files:</strong> Pickle files (*.p) and netCDF4 files (*.nc).</p>" +
-              "<p><strong>Bulk Files:</strong> Text files with the absolute paths of each file per line.</p>" +
-              "<hr><p><strong>Other DAVE formats, not for data analisys:</strong></p>" +
+              "<p><strong>Data types:</strong> Light curves and event files</p>" +
+              "<p><strong>File formats:</strong> FITS, gzipped FITS, CSV</p>" +
+              "<p><strong>Bulk files:</strong> Text files with the absolute paths of each file per line.</p>" +
+              "<hr><p><strong>Other DAVE formats, not for data analysis:</strong></p>" +
               "<p><strong>*.wsp:</strong> Workspace file format.</p>" +
               "<p><strong>*.flt:</strong> Filters file format.</p>" +
               "<p><strong>*.mdl:</strong> Fit models file format.</p>");
@@ -288,7 +287,7 @@ function ToolPanel (id,
             var multiplier = 1.0;
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
-            if (columnName == "TIME") {
+            if (columnName == CONFIG.TIME_COLUMN) {
                columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
             } else if ((columnName == "RATE") && projectConfig.schema.isLightCurveFile()){
                //This multiplier its only intended to calculate CountRate from counts when BinSize != 1
@@ -302,7 +301,7 @@ function ToolPanel (id,
                                               filterData,
                                               Math.floor(column.min_value / multiplier),
                                               Math.ceil(column.max_value / multiplier),
-                                              (columnName != "TIME") ?
+                                              (columnName != CONFIG.TIME_COLUMN) ?
                                                 this.onSelectorValuesChanged :
                                                 function (selector) {
                                                 //Notifies that time range has changed
@@ -316,7 +315,7 @@ function ToolPanel (id,
             selector.multiplier = multiplier;
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if (columnName == "TIME"){
+            if (columnName == CONFIG.TIME_COLUMN){
 
               //Stores this selector
               this.timeSelector = selector;

@@ -14,9 +14,8 @@ from hendrics.lcurve import lcurve_from_fits
 from hendrics.io import load_data
 
 import utils.dataset_cache as DsCache
+from config import CONFIG
 
-timecolumn='TIME'
-gtistring='GTI,STDGTI,STDGTI04'
 
 def get_cache_key_for_destination (destination, time_offset):
     if os.path.isfile(destination):
@@ -24,6 +23,14 @@ def get_cache_key_for_destination (destination, time_offset):
         return DsCache.get_key(destination + "|" + str(time_offset), True)
     else:
         return destination # If destination is a cache key
+
+
+def get_gti_string_from_hdulist (gtistring, hdulist):
+    supported_gtis = gtistring.split(",")
+    for hdu in hdulist:
+        if hdu.name in supported_gtis:
+            return hdu.name
+    return ""
 
 
 def get_file_dataset(destination, time_offset=0):
@@ -49,12 +56,12 @@ def get_file_dataset(destination, time_offset=0):
             if file_extension.find("ASCII") == 0:
 
                 table_id = "EVENTS"
-                header_names = ["TIME", "PHA", "Color1", "Color2"]
+                header_names = [CONFIG.TIME_COLUMN, "PHA", "Color1", "Color2"]
                 dataset = get_txt_dataset(destination, table_id, header_names)
 
                 table = dataset.tables[table_id]
                 table.add_columns(["AMPLITUDE"])
-                numValues = len(table.columns["TIME"].values)
+                numValues = len(table.columns[CONFIG.TIME_COLUMN].values)
                 random_values = np.random.uniform(-1, 1, size=numValues)
                 table.columns["AMPLITUDE"].values = random_values
 
@@ -67,24 +74,24 @@ def get_file_dataset(destination, time_offset=0):
                 if 'EVENTS' in hdulist:
                     # If EVENTS extension found, consider the Fits as EVENTS Fits
                     dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
-                                                       hduname='EVENTS', column=timecolumn,
-                                                       gtistring=gtistring, extra_colums=['PI', "PHA"], time_offset=time_offset)
+                                                       hduname='EVENTS', column=CONFIG.TIME_COLUMN,
+                                                       gtistring=CONFIG.GTI_STRING, extra_colums=['PI', "PHA"], time_offset=time_offset)
 
                 elif 'RATE' in hdulist:
                     # If RATE extension found, consider the Fits as LIGHTCURVE Fits
                     dataset = get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
-                                                                column=timecolumn, gtistring=gtistring, time_offset=time_offset)
+                                                                column=CONFIG.TIME_COLUMN, gtistring=CONFIG.GTI_STRING, time_offset=time_offset)
 
                 elif 'EBOUNDS' in hdulist:
                     # If EBOUNDS extension found, consider the Fits as RMF Fits
                     dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
 
-                elif len(set(gtistring.split(",")).intersection(set(hdulist))):
+                elif len(set(CONFIG.GTI_STRING.split(",")).intersection(set(hdulist))):
                     # If not EVENTS or RATE extension found, check if is GTI Fits
-                    dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=gtistring, time_offset=time_offset)
+                    dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=CONFIG.GTI_STRING, time_offset=time_offset)
 
                 else:
-                    logging.error("Unsupported FITS type!")
+                    logging.error("Unsupported FITS type! Any table found: EVENTS, RATE, EBOUNDS or " + CONFIG.GTI_STRING)
 
             elif file_extension == "data" and (file_extension_from_file in [".p", ".nc"]):
 
@@ -169,8 +176,8 @@ def get_fits_table_column_names(hdulist, table_id):
 # Returns a dataset containin HDU table and GTI table
 # with the Fits data using Stingray library
 def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
-                                   hduname='EVENTS', column=timecolumn,
-                                   gtistring='GTI,STDGTI', extra_colums=[], time_offset=0):
+                                   hduname='EVENTS', column=CONFIG.TIME_COLUMN,
+                                   gtistring=CONFIG.GTI_STRING, extra_colums=[], time_offset=0):
 
     # Gets columns from fits hdu table
     logging.debug("Reading Events Fits columns")
@@ -218,7 +225,7 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
 
 
 # Returns a dataset containing GTI table using Stingray library
-def get_gti_fits_dataset_with_stingray(hdulist, gtistring='GTI,STDGTI', time_offset=0):
+def get_gti_fits_dataset_with_stingray(hdulist, gtistring=CONFIG.GTI_STRING, time_offset=0):
     st_gtis = _get_gti_from_extension(hdulist, gtistring)
     if time_offset != 0:
         st_gtis[:, 0] = st_gtis[:, 0] - time_offset
@@ -229,7 +236,7 @@ def get_gti_fits_dataset_with_stingray(hdulist, gtistring='GTI,STDGTI', time_off
 # Returns a dataset containin LIGHTCURVE table and GTI table
 # with the Fits data using Stingray library
 def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
-                                            column=timecolumn, gtistring='GTI,STDGTI', time_offset=0):
+                                            column=CONFIG.TIME_COLUMN, gtistring=CONFIG.GTI_STRING, time_offset=0):
 
     #Check if HDUCLAS1 = LIGHTCURVE column exists
     logging.debug("Reading Lightcurve Fits columns")
@@ -244,9 +251,9 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
     header, header_comments = get_header(hdulist, hduname)
 
     # Reads the lightcurve with HENDRICS
-    outfile = lcurve_from_fits(destination, gtistring=gtistring,
+    outfile = lcurve_from_fits(destination, gtistring=get_gti_string_from_hdulist(gtistring, hdulist),
                              timecolumn=column, ratecolumn=None, ratehdu=1,
-                             fracexp_limit=0.9)[0]
+                             fracexp_limit=CONFIG.FRACEXP_LIMIT)[0]
 
     lcurve, events_start_time = substract_tstart_from_lcurve(load_data(outfile), time_offset)
 
@@ -256,7 +263,7 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
     # Stores the events_start_time in time column extra
     dataset.tables[hduname].columns[column].set_extra("TSTART", events_start_time)
 
-    logging.debug("Read Lightcurve fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time))
+    logging.debug("Read Lightcurve fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time) + ", rate: " + str(lcurve["counts"]))
 
     return dataset
 
@@ -327,16 +334,16 @@ def get_stingray_object(destination, time_offset=0):
             # If EVENTS extension found, consider the Fits as EVENTS Fits
             fits_data = load_events_and_gtis(destination,
                                              additional_columns=['PI', "PHA"],
-                                             gtistring=gtistring,
-                                             hduname='EVENTS', column=timecolumn)
+                                             gtistring=CONFIG.GTI_STRING,
+                                             hduname='EVENTS', column=CONFIG.TIME_COLUMN)
             return substract_tstart_from_events(fits_data, time_offset)
 
         elif 'RATE' in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
             # Reads the lightcurve with hendrics
-            outfile = lcurve_from_fits(destination, gtistring=gtistring,
-                                     timecolumn=timecolumn, ratecolumn=None, ratehdu=1,
-                                     fracexp_limit=0.9)[0]
+            outfile = lcurve_from_fits(destination, gtistring=get_gti_string_from_hdulist(CONFIG.GTI_STRING, hdulist),
+                                     timecolumn=CONFIG.TIME_COLUMN, ratecolumn=None, ratehdu=1,
+                                     fracexp_limit=CONFIG.FRACEXP_LIMIT)[0]
             return substract_tstart_from_lcurve(load_lcurve(outfile), time_offset)
 
         else:

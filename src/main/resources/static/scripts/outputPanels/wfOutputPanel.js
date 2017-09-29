@@ -58,13 +58,6 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     // Adds plots
     this.initPlots(projectConfig);
 
-    // Adds FITS info if found
-    if (projectConfig.schema.isEventsFile()) {
-      this.addInfoPanel( "EVENTS", projectConfig.schema.contents );
-    } else if (projectConfig.schema.isLightCurveFile()) {
-      this.addInfoPanel( "RATE", projectConfig.schema.contents );
-    }
-
     this.onDatasetValuesChanged();
   }
 
@@ -108,14 +101,17 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     }
   }
 
-  this.addInfoPanel = function ( tableName, schema ) {
-    if (!isNull(schema[tableName]["HEADER"])) {
-      this.infoPanel = new InfoPanel(this.generatePlotId("infoPanel"),
-                                    "Header File Information",
-                                    schema[tableName]["HEADER"],
-                                    schema[tableName]["HEADER_COMMENTS"],
-                                    getTabForSelector(this.id).$html.find(".LcPlot").find(".sectionContainer"));
-      this.$body.append(this.infoPanel.$html);
+  this.addInfoPanel = function (filename, schema ) {
+    var table = schema.getTable();
+    if (!isNull(table) && !isNull(table["HEADER"])) {
+      var infoPanel = new InfoPanel(this.generatePlotId("infoPanel"),
+                                    filename,
+                                    table["HEADER"],
+                                    table["HEADER_COMMENTS"],
+                                    getTabForSelector(this.id).$html.find(".HdrFileInfo").find(".sectionContainer"));
+      this.$body.append(infoPanel.$html);
+    } else {
+      logWarn("addInfoPanel: Schema no valid tables or headers");
     }
   }
 
@@ -138,7 +134,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                   title: title,
                                   selectable: selectable
                                 },
-                        axis: [ { table: tableName, column:"TIME" },
+                        axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:"PHA" } ],
                         mandatoryFilters: mandatoryFilters,
                       },
@@ -166,7 +162,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                   labels: ["Frequency (Hz)", "Power"],
                                   title: title,
                                   showFitBtn: true },
-                        axis: [ { table: tableName, column:"TIME" },
+                        axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
                       },
@@ -197,7 +193,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                   title: title,
                                   showPdsType: false
                                 },
-                        axis: [ { table: tableName, column:"TIME" },
+                        axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
                       },
@@ -225,8 +221,8 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         lc1_filename: lc1_filename,
                         lc0_bck_filename: lc0_bck_filename,
                         lc1_bck_filename: lc1_bck_filename,
-                        styles: { type: "scatter", labels: labels, title: title },
-                        axis: [ { table: "RATE", column:"TIME" },
+                        styles: { type: "scatter_with_errors", labels: labels, title: title },
+                        axis: [ { table: "RATE", column:CONFIG.TIME_COLUMN },
                                 { table: "RATE", column:"PHA" } ]
                       },
                       this.service.request_joined_lightcurves,
@@ -557,8 +553,8 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
-                        styles: { type: "scatter", labels: labels, title: title },
-                        axis: [ { table: tableName, column:"TIME" },
+                        styles: { type: "scatter_with_errors", labels: labels, title: title },
+                        axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:"PHA" } ],
                         mandatoryFilters: mandatoryFilters,
                         linkedPlotId: (isNull(linkedPlot)) ? null : linkedPlot.id
@@ -655,7 +651,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         styles: { type: "ligthcurve",
                                   labels: ["Energy(keV)", "Phase lag"],
                                   title: title },
-                        axis: [ { table: tableName, column:"TIME" },
+                        axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
                       },
@@ -683,7 +679,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         styles: { type: "ligthcurve",
                                   labels: ["Energy(keV)", "RMS"],
                                   title: title },
-                        axis: [ { table: tableName, column:"TIME" },
+                        axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
                       },
@@ -707,8 +703,8 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         filename: projectConfig.filename,
                         bck_filename: "",
                         gti_filename: "",
-                        styles: { type: "2d", labels: ["TIME", "PI"], title: "EVENTS" },
-                        axis: [ { table: "EVENTS", column:"TIME" },
+                        styles: { type: "2d", labels: [CONFIG.TIME_COLUMN, "PI"], title: "EVENTS" },
+                        axis: [ { table: "EVENTS", column:CONFIG.TIME_COLUMN },
                                 { table: "EVENTS", column:"PI" } ]
                       },
                       this.service.request_plot_data,

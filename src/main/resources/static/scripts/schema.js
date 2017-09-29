@@ -11,6 +11,16 @@ function Schema(schema){
     return !isNull(this.contents["RATE"]);
   }
 
+  this.isGTIFile = function () {
+    return !isNull(this.contents["GTI"])
+          || !isNull(this.contents["STDGTI"])
+          || !isNull(this.contents["STDGTI04"]);
+  }
+
+  this.isRMFFile = function () {
+    return !isNull(this.contents["EBOUNDS"]);
+  }
+
   this.hasTable = function () {
     return this.isEventsFile() || this.isLightCurveFile();
   }
@@ -24,6 +34,10 @@ function Schema(schema){
         return this.contents["EVENTS"];
     } else if (this.isLightCurveFile()) {
         return this.contents["RATE"];
+    } else if (this.isRMFFile()) {
+        return this.contents["EBOUNDS"];
+    } else if (this.isGTIFile()) {
+        return this.contents[0];
     }
 
     return null;
@@ -118,9 +132,9 @@ function Schema(schema){
         start = parseInt(tableHeader["TSTARTI"]) + parseFloat(tableHeader["TSTARTF"]);
         stop = parseInt(tableHeader["TSTOPI"]) + parseFloat(tableHeader["TSTOPF"]);
 
-      } else if (this.hasTable() && this.hasColumn("TIME")){
+      } else if (this.hasTable() && this.hasColumn(CONFIG.TIME_COLUMN)){
 
-        var timeColumn = this.getTable()["TIME"];
+        var timeColumn = this.getTable()[CONFIG.TIME_COLUMN];
         start = timeColumn.min_value;
         stop = timeColumn.max_value;
       }
@@ -130,8 +144,8 @@ function Schema(schema){
   }
 
   this.getEventsCount = function () {
-    if (this.hasTable() && this.hasColumn("TIME")){
-      return this.getTable()["TIME"].count;
+    if (this.hasTable() && this.hasColumn(CONFIG.TIME_COLUMN)){
+      return this.getTable()[CONFIG.TIME_COLUMN].count;
     }
 
     return 0;

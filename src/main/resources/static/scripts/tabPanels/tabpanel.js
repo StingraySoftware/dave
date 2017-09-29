@@ -6,7 +6,7 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
   var currentObj = this;
 
   //TAB_PANEL ATTRIBUTES
-  this.id = id;
+  this.id = id + "_" + (new Date()).getTime();
   this.classSelector = classSelector;
   this.navItemClass = navItemClass;
   this.$html = cloneHtmlElement(id, classSelector);

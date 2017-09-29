@@ -58,27 +58,27 @@ function getBootstrapRow() {
   return $('<div class="row"></div>');
 }
 
-function getCheckBox(cssClass, checked, onCheckChangedFn) {
+function getCheckBox(cssClass, checked, onCheckChangedFn, cssClassesCheck) {
   var checkBoxWrp = $('<div class="switch-wrapper">' +
                         '<div class="switch-btn fa ' + cssClass + '" aria-hidden="true"></div>' +
                       '</div>');
   var checkBox = checkBoxWrp.find(".switch-btn");
   checkBox.click( function ( event ) {
-    var checked = !$(this).hasClass("fa-minus-square");
-    setCheckBoxState ($(this), checked);
+    var checked = !$(this).hasClass(isNull(cssClassesCheck) ? "fa-minus-square" : cssClassesCheck.checked);
+    setCheckBoxState ($(this), checked, cssClassesCheck);
     onCheckChangedFn(checked);
   });
-  setCheckBoxState (checkBox, checked);
+  setCheckBoxState (checkBox, checked, cssClassesCheck);
   return checkBoxWrp;
 }
 
-function setCheckBoxState (checkBox, checked) {
-  checkBox.removeClass("fa-plus-square");
-  checkBox.removeClass("fa-minus-square");
+function setCheckBoxState (checkBox, checked, cssClasses) {
+  checkBox.removeClass(isNull(cssClasses) ? "fa-minus-square" : cssClasses.checked);
+  checkBox.removeClass(isNull(cssClasses) ? "fa-plus-square" : cssClasses.unchecked);
   if (checked) {
-    checkBox.addClass("fa-minus-square");
+    checkBox.addClass(isNull(cssClasses) ? "fa-minus-square" : cssClasses.checked);
   } else {
-    checkBox.addClass("fa-plus-square");
+    checkBox.addClass(isNull(cssClasses) ? "fa-plus-square" : cssClasses.unchecked);
   }
 }
 
@@ -94,10 +94,35 @@ function getRangeBoxCfg (name, cssClass, title, config, onChangeFn) {
 function getRangeBox (name, cssClass, title, defaultValue, minValue, maxValue, onChangeFn) {
   var $rangeBox = $('<p>' + title + ':</br><input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" /> <span class="rangeBoxSpan">' + minValue + '-' + maxValue + '</span></p>');
   $rangeBox.find("input").on('change', function() {
-    var value = getInputIntValueCropped($(this), defaultValue, minValue, maxValue);
+    var value = (!$(this).hasClass("float")) ? getInputIntValueCropped($(this), defaultValue, minValue, maxValue)
+                                             : getInputFloatValueCropped($(this), defaultValue, minValue, maxValue);
     onChangeFn(value, $(this));
   });
   return $rangeBox;
+}
+
+function getTextBox (name, cssClass, title, defaultValue, onChangeFn) {
+  var $textBox = $('<p>' + title + ':</br><input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" /></p>');
+  $textBox.find("input").on('change', function() {
+    if ($(this).val() != ""){
+      onChangeFn($(this).val(), $(this));
+    } else {
+      $(this).val(defaultValue);
+    }
+  });
+  return $textBox;
+}
+
+function getBooleanBox (title, cssClass, checked, onCheckChangedFn){
+  var $box = $('<div class="' + cssClass +'">' +
+                      '<p>' + title + ':</p>' +
+                    '</div>');
+  var boxSwitchBox = getCheckBox(cssClass + "_switch", checked, function ( enabled ) {
+     if (!isNull(onCheckChangedFn)) { onCheckChangedFn(enabled); }
+  }, { checked: "fa-check-square-o", unchecked: "fa-square-o" });
+  boxSwitchBox.addClass("booleanBox");
+  $box.find("p").append(boxSwitchBox);
+  return $box;
 }
 
 function getSection (title, cssClass, checked, onCheckChangedFn, extraCssClasses){
