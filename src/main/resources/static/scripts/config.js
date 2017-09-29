@@ -14,13 +14,16 @@ CONFIG = {
   PLOT_TRIGGER_HOVER_TIMEOUT: 250,
   INMEDIATE_TIMEOUT: 5,
   EXCLUDED_FILTERS: [ "HEADER", "HEADER_COMMENTS", "E", "PI" ],
-  ENERGY_FILTER_STEP: 0.005,
+  ENERGY_FILTER_STEP: 0.005, // Stepping value for energy filters in keV (default: 5eV)
   BULK_ANALYSIS_ENABLED: false,
   LOG_TO_SERVER_ENABLED: true, //If true, python server logs will be visible from GUI Log tab
   LOG_LEVEL: -1, // PYTHON SERVER LOG LEVEL -> ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
   DENY_BCK_IF_SUBS: true, //Avoid set background file if lightcurve bck data is allready substracted
   MAX_TIME_RESOLUTION_DECIMALS: 5, //Defines the maximun time resolution of DAVE GUI, default 100ns
-  DEFAULT_NUMBER_DECIMALS: 3, //The defaul number precision on selectors and textboxes
+  DEFAULT_NUMBER_DECIMALS: 3, //The default number precision on selectors and textboxes
   BIN_SELECTOR_LOG_SCALE_STEPS: 1000,
-  BIN_SELECTOR_LOG_SCALE_POWER: 4
+  BIN_SELECTOR_LOG_SCALE_POWER: 4,
+  TIME_COLUMN: 'TIME', //Represents the Time column name
+  GTI_STRING: 'GTI,STDGTI,STDGTI04,STDGTI04-1,SRC_GTIS,BKG_GTIS', //Supported GTI HDU names
+  FRACEXP_LIMIT: 0.5 // Minimum exposure fraction allowed
 }

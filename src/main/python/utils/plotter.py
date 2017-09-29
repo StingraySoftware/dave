@@ -1,5 +1,7 @@
 import numpy as np
 import utils.dave_logger as logging
+from config import CONFIG
+
 
 def get_plotdiv_xy(dataset, axis):
     data = build_data_list(dataset, axis)
@@ -53,7 +55,7 @@ def build_data_list(dataset, axis):
 def get_axis_with_gtis (axis):
     for i in range(len(axis)):
         # If TIME in axis append GTIs
-        if axis[i]["table"] in ["EVENTS", "RATE"] and axis[i]["column"] == "TIME":
+        if axis[i]["table"] in ["EVENTS", "RATE"] and axis[i]["column"] == CONFIG.TIME_COLUMN:
             axis = np.append(axis, [{"table":"GTI", "column":"START"}])
             axis = np.append(axis, [{"table":"GTI", "column":"STOP"}])
     return axis

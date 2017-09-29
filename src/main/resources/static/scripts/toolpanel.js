@@ -287,7 +287,7 @@ function ToolPanel (id,
             var multiplier = 1.0;
             var filterData = { table:tableName, column:columnName };
             var columnTitle = columnName + ":";
-            if (columnName == "TIME") {
+            if (columnName == CONFIG.TIME_COLUMN) {
                columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
             } else if ((columnName == "RATE") && projectConfig.schema.isLightCurveFile()){
                //This multiplier its only intended to calculate CountRate from counts when BinSize != 1
@@ -301,7 +301,7 @@ function ToolPanel (id,
                                               filterData,
                                               Math.floor(column.min_value / multiplier),
                                               Math.ceil(column.max_value / multiplier),
-                                              (columnName != "TIME") ?
+                                              (columnName != CONFIG.TIME_COLUMN) ?
                                                 this.onSelectorValuesChanged :
                                                 function (selector) {
                                                 //Notifies that time range has changed
@@ -315,7 +315,7 @@ function ToolPanel (id,
             selector.multiplier = multiplier;
             this.$html.find(".selectorsContainer").append(selector.$html);
 
-            if (columnName == "TIME"){
+            if (columnName == CONFIG.TIME_COLUMN){
 
               //Stores this selector
               this.timeSelector = selector;

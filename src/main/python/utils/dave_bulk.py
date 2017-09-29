@@ -6,6 +6,7 @@ import utils.exception_helper as ExHelper
 from hendrics.lcurve import main as MPlcurve
 from hendrics.fspec import main as MPfspec
 from hendrics.io import HEN_FILE_EXTENSION
+from config import CONFIG
 
 
 # get_intermediate_file: Returns the filename of the intermediate file
@@ -51,7 +52,7 @@ def bulk_analisys(filenames, plot_configs, outdir):
                     args = ['--outdir', plot_config_outdir]
                     args.extend(['--bintime', str(dt)])
 
-                    args = add_filter_to_args(args, filters, "TIME", '--safe-interval')
+                    args = add_filter_to_args(args, filters, CONFIG.TIME_COLUMN, '--safe-interval')
                     args = add_filter_to_args(args, filters, "PI", '--pi-interval')
                     args = add_filter_to_args(args, filters, "E", '--e-interval')
                     #args = add_filter_to_args(args, filters, "PHA", '--pha-interval')

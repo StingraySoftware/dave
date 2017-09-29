@@ -874,7 +874,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
             if "E" in events_table.columns:
 
-                event_list = np.column_stack((events_table.columns["TIME"].values,
+                event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
                                              events_table.columns["E"].values))
 
                 band_width = energy_range[1] - energy_range[0]
@@ -968,8 +968,8 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 
         if DsHelper.is_events_dataset(filtered_ds):
             events_table = filtered_ds.tables["EVENTS"]
-            min_time = events_table.columns["TIME"].values[0]
-            max_time = events_table.columns["TIME"].values[len(events_table.columns["TIME"].values) - 1]
+            min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
+            max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
             duration = [(max_time - min_time)]
 
             if "E" in events_table.columns:
@@ -980,7 +980,7 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 
                     #Preapares the eventlist with energies and gtis
                     event_list = EventList()
-                    event_list.time = np.array(events_table.columns["TIME"].values)
+                    event_list.time = np.array(events_table.columns[CONFIG.TIME_COLUMN].values)
                     event_list.ncounts = len(event_list.time)
                     event_list.gti = gti
                     event_list.energy = np.array(events_table.columns["E"].values)
@@ -1105,13 +1105,13 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
         if DsHelper.is_events_dataset(filtered_ds):
             events_table = filtered_ds.tables["EVENTS"]
-            min_time = events_table.columns["TIME"].values[0]
-            max_time = events_table.columns["TIME"].values[len(events_table.columns["TIME"].values) - 1]
+            min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
+            max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
             duration = [(max_time - min_time)]
 
             if "E" in events_table.columns:
 
-                event_list = np.column_stack((events_table.columns["TIME"].values,
+                event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
                                              events_table.columns["E"].values))
 
                 if energy_range[0] < 0:
@@ -1808,7 +1808,7 @@ def nan_and_inf_to_num (obj):
 def get_color_axis_for_ds():
     color_axis = [dict() for i in range(2)]
     color_axis[0]["table"] = "EVENTS"
-    color_axis[0]["column"] = "TIME"
+    color_axis[0]["column"] = CONFIG.TIME_COLUMN
     color_axis[1]["table"] = "EVENTS"
     color_axis[1]["column"] = "PHA"
     return color_axis

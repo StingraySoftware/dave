@@ -132,9 +132,9 @@ function Schema(schema){
         start = parseInt(tableHeader["TSTARTI"]) + parseFloat(tableHeader["TSTARTF"]);
         stop = parseInt(tableHeader["TSTOPI"]) + parseFloat(tableHeader["TSTOPF"]);
 
-      } else if (this.hasTable() && this.hasColumn("TIME")){
+      } else if (this.hasTable() && this.hasColumn(CONFIG.TIME_COLUMN)){
 
-        var timeColumn = this.getTable()["TIME"];
+        var timeColumn = this.getTable()[CONFIG.TIME_COLUMN];
         start = timeColumn.min_value;
         stop = timeColumn.max_value;
       }
@@ -144,8 +144,8 @@ function Schema(schema){
   }
 
   this.getEventsCount = function () {
-    if (this.hasTable() && this.hasColumn("TIME")){
-      return this.getTable()["TIME"].count;
+    if (this.hasTable() && this.hasColumn(CONFIG.TIME_COLUMN)){
+      return this.getTable()[CONFIG.TIME_COLUMN].count;
     }
 
     return 0;
