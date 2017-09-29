@@ -155,9 +155,9 @@ function ToolPanel (id,
     btnSupportedFormats.click(function () {
       showMsg("DAVE Supported Formats",
               "<p><strong>Data types:</strong> Light curves and event files</p>" +
-              "<p><strong>FITS Files:</strong> FITS, gzipped FITS, CSV</p>" +
-              "<p><strong>Bulk Files:</strong> Text files with the absolute paths of each file per line.</p>" +
-              "<hr><p><strong>Other DAVE formats, not for data analisys:</strong></p>" +
+              "<p><strong>File formats:</strong> FITS, gzipped FITS, CSV</p>" +
+              "<p><strong>Bulk files:</strong> Text files with the absolute paths of each file per line.</p>" +
+              "<hr><p><strong>Other DAVE formats, not for data analysis:</strong></p>" +
               "<p><strong>*.wsp:</strong> Workspace file format.</p>" +
               "<p><strong>*.flt:</strong> Filters file format.</p>" +
               "<p><strong>*.mdl:</strong> Fit models file format.</p>");
