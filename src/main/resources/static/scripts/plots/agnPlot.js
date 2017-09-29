@@ -124,16 +124,16 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         dataString = Array.prototype.join.call(infoArray, ",");
         csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
       });
-      var encodedUri = encodeURI(csvContent);
-      var link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
-      link.click();
+      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", encodeURI(csvContent));
     }
   }
 
   this.getCoordsFromPlotlyHoverEvent = function (){
     return null;
+  }
+
+  this.showAddAnnotationDialog = function (x, y){
+    log ("Annotations not supported!, AgnPlot id: " + this.id);
   }
 
   log ("new AgnPlot id: " + this.id);

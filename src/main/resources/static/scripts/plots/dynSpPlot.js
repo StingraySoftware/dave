@@ -175,6 +175,8 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
         plotlyConfig.layout.scene.zaxis.autorange = true;
       }
 
+      currentObj.setHoverEventsEnabled(true);
+
     }
 
     return plotlyConfig;
@@ -345,11 +347,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
           csvContent += time_idx < data[2].values.length ? dataString + "\n" : dataString;
         }
       }
-      var encodedUri = encodeURI(csvContent);
-      var link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", currentObj.plotConfig.styles.title + ".csv");
-      link.click();
+      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", encodeURI(csvContent));
     }
   }
 

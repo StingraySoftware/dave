@@ -52,6 +52,10 @@ function PhPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     return null;
   }
 
+  this.showAddAnnotationDialog = function (x, y){
+    log ("Annotations not supported!, PhPlot id: " + this.id);
+  }
+
   log ("new PhPlot id: " + this.id);
 
   return this;

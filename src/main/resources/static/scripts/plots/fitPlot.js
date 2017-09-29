@@ -20,7 +20,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   this.btnFullScreen.remove();
   this.btnSettings.remove();
   this.btnLoad.remove();
-  
+
   this.onPlotDataReceived = function ( data ) {
 
     if (!isNull(data.abort)){
@@ -241,6 +241,10 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
     }
 
     return plotlyConfig;
+  }
+
+  this.showAddAnnotationDialog = function (x, y){
+    log ("Annotations not supported!, FitPlot id: " + this.id);
   }
 
   log ("new FitPlot id: " + this.id);
