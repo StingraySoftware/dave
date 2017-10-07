@@ -7,8 +7,12 @@ var DEFAULT_TITLE_FONT = {
 
 var DEFAULT_MARGINS = { b : 38, r : 12, l: 64, t: 30 }
 
-var ERROR_BAR_OPACITY = 0.2;
+var DEFAULT_LINE_WIDTH = 2;
+
+var DEFAULT_PLOT_COLOR = '#1f77b4';
 var EXTRA_DATA_COLOR = '#888888';
+var ERROR_BAR_OPACITY = 0.2;
+var ERROR_BAR_COLOR = 'rgba(30, 117, 179, ' + ERROR_BAR_OPACITY + ')';
 
 function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
     return {
@@ -49,7 +53,8 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                   error_y : getErrorConfig(y_error_values),
                   line : {
                           shape	:	'hvh',
-                          color : '#1f77b4'
+                          color : DEFAULT_PLOT_COLOR,
+                          width : DEFAULT_LINE_WIDTH
                         }
                 }
               ],
@@ -107,6 +112,7 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
                 mode : "markers",
                 marker : {
                       size : 6,
+                      color : DEFAULT_PLOT_COLOR,
                       opacity : 0.8
                     }
               }
@@ -278,7 +284,8 @@ function getLine (xdata, ydata, color){
           x : xdata,
           y : ydata,
           line : {
-                  color : color
+                  color : color,
+                  width : DEFAULT_LINE_WIDTH
                 }
         };
 }
@@ -303,7 +310,7 @@ function getErrorConfig(error_data) {
            type : 'data',
            array : error_data,
            visible : true,
-           opacity: ERROR_BAR_OPACITY
+           color : ERROR_BAR_COLOR
         };
 }
 
@@ -343,4 +350,25 @@ function getAnnotation(text, x, y) {
       ax: 0,
       ay: -40
     };
+}
+
+function getEmptyPlotStyle (plotlyConfig) {
+  var plotStyle = { data: [], layout: {} };
+  if (!isNull(plotlyConfig)) {
+    for (traceIdx in plotlyConfig.data){
+      var traceStyle = getTracePlotStyle(plotlyConfig.data[traceIdx]);
+      plotStyle.data.push(traceStyle);
+    }
+  }
+  return plotStyle;
+}
+
+function getTracePlotStyle (trace) {
+  var traceStyle = {};
+  if (!isNull(trace.line)){ traceStyle.line = {}; }
+  if (!isNull(trace.marker)){ traceStyle.marker = {}; }
+  if (!isNull(trace.error_x)){ traceStyle.error_x = {}; }
+  if (!isNull(trace.error_y)){ traceStyle.error_y = {}; }
+  if (!isNull(trace.comesFromExtra)){ traceStyle.comesFromExtra = trace.comesFromExtra; }
+  return traceStyle;
 }

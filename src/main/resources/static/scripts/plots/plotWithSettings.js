@@ -103,6 +103,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.$html.find(".plot").show();
       this.$html.find(".plotTools").children().show();
       this.btnBack.hide();
+      this.sendPlotEvent('on_plot_styles_changed', {});
     }
   }
 

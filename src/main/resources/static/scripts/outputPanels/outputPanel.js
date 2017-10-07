@@ -72,7 +72,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     return (this.id + "_" + id + "_" + (new Date()).getTime()).replace(/\./g,'').replace(/\//g,'');
   }
 
-  this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
+  this.broadcastEvent = function (evt_name, evt_data, senderId) {
     for (i in this.plots) {
       this.plots[i].receivePlotEvent(evt_name, evt_data, senderId);
     }

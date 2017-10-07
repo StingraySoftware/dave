@@ -71,14 +71,20 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
         if (timeLagPlot.isVisible) {
           //Lightcurve Params req: freq, time_lag, error_values, gti_start, gti_stop
-          timeLagPlot.setData($.extend(true, [], [ data[0], { values: data[2].values[0] }, { values: data[2].values[1] }, [], [] ]));
+          timeLagPlot.setData($.extend(true, [], [ data[0],
+                                                  { values: (data[2].values.length > 0) ? data[2].values[0] : [] },
+                                                  { values: (data[2].values.length > 1) ? data[2].values[1] : [] },
+                                                  [], [] ]));
         }
 
         //Prepares Coherence Plot data and sends it to coherencePlot
         var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
         if (coherencePlot.isVisible) {
           //ColorLc Params req: freq, color_A, color_B, gti_start, gti_stop
-          coherencePlot.setData($.extend(true, [], [ data[0], { values: data[3].values[0] }, { values: data[3].values[1] }, [], [] ]));
+          coherencePlot.setData($.extend(true, [], [ data[0],
+                                                    { values: (data[3].values.length > 0) ? data[3].values[0] : [] },
+                                                    { values: (data[3].values.length > 1) ? data[3].values[1] : [] },
+                                                    [], [] ]));
         }
 
       }

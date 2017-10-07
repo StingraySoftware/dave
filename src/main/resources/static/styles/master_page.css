@@ -618,6 +618,7 @@ input.wrongValue {
 .TabPanel.Settings h3
 {
   color: #e68f4d;
+  clear: both;
 }
 
 .floatRight {
@@ -691,13 +692,13 @@ input.wrongValue {
   padding-left: 12px;
 }
 
-.inputGTI_STRING {
-  width: 80%;
-}
-
 .serverLogLevel h3 {
   color: #9d9d9d !important;
-  font-size: 0.95em;
+}
+
+.smallTextRadio h3 {
+  font-size: 1em;
+  font-weight: 400;
 }
 
 .booleanBox {
@@ -705,3 +706,40 @@ input.wrongValue {
   margin-right: 4px;
   top: 0px;
 }
+
+.colorPicker {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background: url(external/images/select.png);
+}
+
+.colorPicker div {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 30px;
+  height: 30px;
+  background: url(external/images/select.png) center;
+}
+
+.rangeBoxInline {
+    float: left;
+    width: 60%;
+}
+
+.plotStyle .rangeBoxInline {
+    margin-top: -30px;
+    margin-left: 50px;
+}
+
+.rangeBoxInline input {
+  width: 45px;
+}
+
+.width100 { width: 95%; }
+.width80 { width: 80%; }
+
+.marginTop { margin-top: 12px; }
+
+.clear { clear: both; }

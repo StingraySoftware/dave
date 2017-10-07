@@ -12,6 +12,8 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
   this.plotConfig.colorScale = { x0: 0.5, y0: 0.5, m: 1.0 };
   this.plotConfig.freq_range = [this.plotConfig.freqMin, this.plotConfig.freqMax];
 
+  this.XYLabelAxis = 2;
+
   this.btnFullScreen.unbind("click").click(function( event ) {
     if (currentObj.$html.hasClass("fullScreen")) {
       currentObj.btnFullScreen.find("i").switchClass( "fa-compress", "fa-arrows-alt");
@@ -91,23 +93,6 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     }
 
     return data;
-  }
-
-  this.getLabel = function (axis) {
-    if (axis == 2){
-      var zLabel = currentObj.plotConfig.styles.labels[2];
-      if (currentObj.plotConfig.plotType == "X*Y") {
-        if (currentObj.plotConfig.styles.labels[0].startsWith("Freq")
-            && currentObj.plotConfig.styles.labels[2].startsWith("Pow")) {
-              zLabel = "Power x Frequency (rms/mean)^2";
-          } else {
-            zLabel += " x " + currentObj.plotConfig.styles.labels[0];
-          }
-      }
-      return zLabel;
-    } else {
-      return this.plotConfig.styles.labels[axis];
-    }
   }
 
   this.getPlotlyConfig = function (data) {

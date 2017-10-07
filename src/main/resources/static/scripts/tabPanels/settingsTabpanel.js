@@ -31,24 +31,13 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                               'Main settings:' +
                             '</h3>' +
                             '<div class="settingsContainer mainSettings">' +
-                              /*'<div class="autoFilterType" style="display: inline-flex;">' +
-                                '<p>Auto Filtering:' +
-                                '<fieldset style="margin-left: 8px;">' +
-                                  '<label for="' + this.id + '_Time">Time range</label>' +
-                                  '<input type="radio" name="' + this.id + '_AutoFilter" id="' + this.id + '_Time" value="Time" ' + getCheckedState(!CONFIG.AUTO_BINSIZE) + '>' +
-                                  '<label for="' + this.id + '_BinSize">Bin size</label>' +
-                                  '<input type="radio" name="' + this.id + '_AutoFilter" id="' + this.id + '_BinSize" value="BinSize" ' + getCheckedState(CONFIG.AUTO_BINSIZE) + '>' +
-                                '</fieldset><p>' +
-                              '</div>' +*/
                             '</div>' +
                           '</div>' +
                           '<div class="col-xs-6">' +
                             '<h3>' +
                               'Power density spectrum settings:' +
                             '</h3>' +
-                            '<div class="settingsContainer">' +
-                              '<p>Minimum segment size: BinSize *<input id="MIN_SEGMENT_MULTIPLIER_' + this.id + '" class="inputMIN_SEGMENT_MULTIPLIER" type="text" name="MIN_SEGMENT_MULTIPLIER_' + this.id + '" placeholder="' + CONFIG.MIN_SEGMENT_MULTIPLIER + '" value="' + CONFIG.MIN_SEGMENT_MULTIPLIER + '" /></p>' +
-                              '<p>Default segment size: TotalTime /<input id="DEFAULT_SEGMENT_DIVIDER_' + this.id + '" class="inputDEFAULT_SEGMENT_DIVIDER" type="text" name="DEFAULT_SEGMENT_DIVIDER_' + this.id + '" placeholder="' + CONFIG.DEFAULT_SEGMENT_DIVIDER + '" value="' + CONFIG.DEFAULT_SEGMENT_DIVIDER + '" /></p>' +
+                            '<div class="settingsContainer segmSettings">' +
                             '</div>' +
                             '<h3>' +
                               'Advanced settings:' +
@@ -61,41 +50,64 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                     '</br></br></br>');
 
   var $mainSettings = this.$container.find(".mainSettings");
+  var $segmSettings = this.$container.find(".segmSettings");
   var $advSettingss = this.$container.find(".advSettings");
 
-  $mainSettings.append(getRangeBox ("MIN_PLOT_POINTS_" + this.id, "inputMIN_PLOT_POINTS",
+  /* Shows the auto BinSize or time filtering choice
+    $mainSettings.append(getRadioControl(currentObj.id,
+                                    "Auto Filtering",
+                                    "autoFilterType",
+                                    [
+                                      { id:"Time", label:"Time range", value:"Time" },
+                                      { id:"BinSize", label:"Bin size", value:"BinSize" }
+                                    ],
+                                    (CONFIG.AUTO_BINSIZE) ? "BinSize" : "Time",
+                                    function(value, id) {
+                                      CONFIG.AUTO_BINSIZE = (value == "BinSize");
+                                      updateServerConfig();
+                                    }));*/
+
+  $mainSettings.append(getInlineRangeBox ("MIN_PLOT_POINTS_" + this.id, "inputMIN_PLOT_POINTS",
                                     "Minimum points to plot", CONFIG.MIN_PLOT_POINTS, 2, CONFIG.MAX_PLOT_POINTS,
                                     function(value, input) { CONFIG.MIN_PLOT_POINTS = value; updateServerConfig(); }));
 
-  $mainSettings.append(getRangeBox ("MAX_PLOT_POINTS_" + this.id, "inputMAX_PLOT_POINTS",
+  $mainSettings.append(getInlineRangeBox ("MAX_PLOT_POINTS_" + this.id, "inputMAX_PLOT_POINTS",
                                     "Maximum points to plot", CONFIG.MAX_PLOT_POINTS, CONFIG.MIN_PLOT_POINTS, 9999999,
                                     function(value, input) { CONFIG.MAX_PLOT_POINTS = value; updateServerConfig(); }));
 
-  $mainSettings.append(getRangeBox ("MAX_TIME_RESOLUTION_DECIMALS_" + this.id, "inputMAX_TIME_RESOLUTION_DECIMALS",
+  $mainSettings.append(getInlineRangeBox ("MAX_TIME_RESOLUTION_DECIMALS_" + this.id, "inputMAX_TIME_RESOLUTION_DECIMALS",
                                     "Maximun time resolution", CONFIG.MAX_TIME_RESOLUTION_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.MAX_TIME_RESOLUTION_DECIMALS = value; updateServerConfig(); }));
 
-  $mainSettings.append(getRangeBox ("MAX_TIME_RESOLUTION_DECIMALS_" + this.id, "inputMAX_TIME_RESOLUTION_DECIMALS",
+  $mainSettings.append(getInlineRangeBox ("MAX_TIME_RESOLUTION_DECIMALS_" + this.id, "inputMAX_TIME_RESOLUTION_DECIMALS",
                                     "Time numbers decimals", CONFIG.MAX_TIME_RESOLUTION_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.MAX_TIME_RESOLUTION_DECIMALS = value; updateServerConfig(); }));
 
-  $mainSettings.append(getRangeBox ("DEFAULT_NUMBER_DECIMALS_" + this.id, "inputDEFAULT_NUMBER_DECIMALS",
+  $mainSettings.append(getInlineRangeBox ("DEFAULT_NUMBER_DECIMALS_" + this.id, "inputDEFAULT_NUMBER_DECIMALS",
                                     "Default numbers decimals", CONFIG.DEFAULT_NUMBER_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.DEFAULT_NUMBER_DECIMALS = value; updateServerConfig(); }));
 
-  $mainSettings.append(getRangeBox ("FRACEXP_LIMIT_" + this.id, "inputFRACEXP_LIMIT float",
+  $mainSettings.append(getInlineRangeBox ("FRACEXP_LIMIT_" + this.id, "inputFRACEXP_LIMIT float",
                                     "Minimum exposure fraction allowed", CONFIG.FRACEXP_LIMIT, 0.0, 1.0,
                                     function(value, input) { CONFIG.FRACEXP_LIMIT = value; updateServerConfig(); }));
 
-  $mainSettings.append(getRangeBox ("ENERGY_FILTER_STEP_" + this.id, "inputENERGY_FILTER_STEP float",
+  $mainSettings.append(getInlineRangeBox ("ENERGY_FILTER_STEP_" + this.id, "inputENERGY_FILTER_STEP float",
                                     "Stepping value for energy filters in keV (default: 5eV)", CONFIG.ENERGY_FILTER_STEP, 0.0001, 0.1,
                                     function(value, input) { CONFIG.ENERGY_FILTER_STEP = value; updateServerConfig(); }));
+
+  $segmSettings.append(getInlineRangeBox ("MIN_SEGMENT_MULTIPLIER_" + this.id, "inputMIN_SEGMENT_MULTIPLIER",
+                                    "Minimum segment size: BinSize *", CONFIG.MIN_SEGMENT_MULTIPLIER, 1, 100,
+                                    function(value, input) { CONFIG.MIN_SEGMENT_MULTIPLIER = value; updateServerConfig(); }));
+
+  $segmSettings.append(getInlineRangeBox ("DEFAULT_SEGMENT_DIVIDER_" + this.id, "inputDEFAULT_SEGMENT_DIVIDER",
+                                    "Default segment size: TotalTime /", CONFIG.DEFAULT_SEGMENT_DIVIDER, 1, 100,
+                                    function(value, input) { CONFIG.DEFAULT_SEGMENT_DIVIDER = value; updateServerConfig(); }));
 
   $advSettingss.append(getTextBox ("TIME_COLUMN_" + this.id, "inputTIME_COLUMN",
                                     "Time column name on HDU", CONFIG.TIME_COLUMN,
                                     function(value, input) { CONFIG.TIME_COLUMN = value; updateServerConfig(); }));
 
-  $advSettingss.append(getTextBox ("GTI_STRING_" + this.id, "inputGTI_STRING",
+  $advSettingss.append(getTextBox ("GTI_STRING_" + this.id, "inputGTI_STRING width80",
                                     "HDU names supported as GTI tables (separated by commas without spaces)", CONFIG.GTI_STRING,
                                     function(value, input) { CONFIG.GTI_STRING = value; updateServerConfig(); }));
 
@@ -113,33 +125,19 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     "Server logging level",
                                     "serverLogLevel",
                                     [
-                                      { id:"All", label:"All", value:"-1"},
-                                      { id:"Debug", label:"Debug", value:"0"},
-                                      { id:"Info", label:"Info", value:"1"},
-                                      { id:"Warn", label:"Warn", value:"2"},
-                                      { id:"Error", label:"Error", value:"3"},
-                                      { id:"None", label:"None", value:"4"},
+                                      { id:"All", label:"All", value:"-1" },
+                                      { id:"Debug", label:"Debug", value:"0" },
+                                      { id:"Info", label:"Info", value:"1" },
+                                      { id:"Warn", label:"Warn", value:"2" },
+                                      { id:"Error", label:"Error", value:"3" },
+                                      { id:"None", label:"None", value:"4" }
                                     ],
                                     CONFIG.LOG_LEVEL + "",
                                     function(value, id) {
                                       CONFIG.LOG_LEVEL = parseInt(value);
                                       updateServerConfig();
-                                    }));
-
-  /*var $autoFilterRadios = this.$container.find(".autoFilterType").find("input[type=radio][name=" + this.id + "_AutoFilter]");
-  $autoFilterRadios.checkboxradio();
-  this.$container.find(".autoFilterType").find("fieldset").controlgroup();
-  $autoFilterRadios.change(function() {
-    CONFIG.AUTO_BINSIZE = this.value == "BinSize";
-  });*/
-
-  this.$container.find(".inputMIN_SEGMENT_MULTIPLIER").on('change', function(){
-    CONFIG.MIN_SEGMENT_MULTIPLIER = getInputIntValueCropped(currentObj.$container.find(".inputMIN_SEGMENT_MULTIPLIER"), CONFIG.MIN_SEGMENT_MULTIPLIER, 1, 100);
-  });
-
-  this.$container.find(".inputDEFAULT_SEGMENT_DIVIDER").on('change', function(){
-    CONFIG.DEFAULT_SEGMENT_DIVIDER = getInputIntValueCropped(currentObj.$container.find(".inputDEFAULT_SEGMENT_DIVIDER"), CONFIG.DEFAULT_SEGMENT_DIVIDER, 1, 100);
-  });
+                                    },
+                                    "smallTextRadio"));
 
   this.$container.find(".btnAboutDave").click(function () {
 

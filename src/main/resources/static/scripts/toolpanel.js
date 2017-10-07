@@ -7,7 +7,8 @@ function ToolPanel (id,
                     onLcDatasetChangedFn,
                     onFiltersChangedFn,
                     historyManager,
-                    onDragDropChangedFn)
+                    onDragDropChangedFn,
+                    tabPanel)
 {
 
   var currentObj = this;
@@ -44,6 +45,8 @@ function ToolPanel (id,
   this.file_selectors_array = [];
   this.selectors_array = [];
   this.replaceColumn = "PHA";
+
+  this.tabPanel = isNull(tabPanel) ? null : tabPanel;
 
   this.addFileSelector = function (selector, container) {
     if (isNull(container)){
@@ -127,6 +130,10 @@ function ToolPanel (id,
   this.showPanel = function ( panel ) {
     this.$html.find(".panelContainer").hide();
     this.$html.find("." + panel).show();
+
+    if (panel == "stylePanel"){
+      this.refreshPlotStylingControls();
+    }
   }
 
   this.createSngOrMultiFileSelector = function () {
@@ -172,10 +179,9 @@ function ToolPanel (id,
 
   /*this.onTimeRangeChanged = function (timeRange) {
     if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
-      var tab = getTabForSelector(this.id);
-      if (!isNull(tab)){
-        var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, tab.projectConfig.minBinSize);
-        var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, tab.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
+      if (!isNull(this.tabPanel)){
+        var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, this.tabPanel.projectConfig.minBinSize);
+        var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, this.tabPanel.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
         this.binSelector.setMinMaxValues(minValue, maxValue);
       }
     }
@@ -183,12 +189,11 @@ function ToolPanel (id,
 
   this.onBinSizeChanged = function () {
     currentObj.onSelectorValuesChanged();
-    var tab = getTabForSelector(currentObj.id);
-    if (!isNull(tab)){
+    if (!isNull(currentObj.tabPanel)){
       if (!isNull(currentObj.timeSelector)) {
-        currentObj.timeSelector.setFixedStep(tab.projectConfig.binSize, false);
+        currentObj.timeSelector.setFixedStep(currentObj.tabPanel.projectConfig.binSize, false);
       }
-      currentObj.onNumPointsChanged(tab.projectConfig.getNumPoints());
+      currentObj.onNumPointsChanged(currentObj.tabPanel.projectConfig.getNumPoints());
     }
   }
 
@@ -305,9 +310,8 @@ function ToolPanel (id,
                                                 this.onSelectorValuesChanged :
                                                 function (selector) {
                                                 //Notifies that time range has changed
-                                                var tabPanel = getTabForSelector(selector.id);
-                                                if (!isNull(tabPanel)){
-                                                  tabPanel.onTimeRangeChanged(Math.max ((selector.toValue - selector.fromValue) * 0.95, selector.step));
+                                                if (!isNull(currentObj.tabPanel)){
+                                                  currentObj.tabPanel.onTimeRangeChanged(Math.max ((selector.toValue - selector.fromValue) * 0.95, selector.step));
                                                 }
                                               },
                                               this.selectors_array,
@@ -474,9 +478,8 @@ function ToolPanel (id,
         && !isNull(filters[f].replaceColumn)
         && filters[f].source == 'ColorSelector') {
         //Sets Energy or Channels filters visible
-        var tab = getTabForSelector(currentObj.id);
         var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
-        var showPHA = (tab.projectConfig.rmfFilename == "") || (filters[f].replaceColumn == "PHA");
+        var showPHA = (currentObj.tabPanel.projectConfig.rmfFilename == "") || (filters[f].replaceColumn == "PHA");
         setVisibility(selectorsContainer.find(".colorSelectors_PHA"), showPHA);
         setVisibility(selectorsContainer.find(".colorSelectors_E"), !showPHA);
         if (showPHA) {
@@ -504,12 +507,11 @@ function ToolPanel (id,
   }
 
   this.onColorFilterTypeChanged = function (columnName) {
-    var tab = getTabForSelector(currentObj.id);
     var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
     selectorsContainer.children().hide();
 
     if (columnName == "E") {
-      if (tab.projectConfig.rmfFilename == "") {
+      if (currentObj.tabPanel.projectConfig.rmfFilename == "") {
 
         //Show upload RMF file
         var rmfFileDiv = $('<div class="rmfFileDiv"></div>');
@@ -536,8 +538,8 @@ function ToolPanel (id,
           for (i in e_Selectors) {
             var eSelector = e_Selectors[i];
             if (eSelector.filterData.column == phaSelector.filterData.column){
-              var eFromValue = tab.projectConfig.getEnergyForChannel(phaSelector.fromValue);
-              var eToValue = tab.projectConfig.getEnergyForChannel(phaSelector.toValue);
+              var eFromValue = currentObj.tabPanel.projectConfig.getEnergyForChannel(phaSelector.fromValue);
+              var eToValue = currentObj.tabPanel.projectConfig.getEnergyForChannel(phaSelector.toValue);
               if (eFromValue > -1 && eToValue > -1){
                 eSelector.setValues(eFromValue, eToValue);
               }
@@ -562,8 +564,8 @@ function ToolPanel (id,
         for (i in e_Selectors) {
           var eSelector = e_Selectors[i];
           if (eSelector.filterData.column == phaSelector.filterData.column){
-            var phaFromValue = tab.projectConfig.getChannelFromEnergy(eSelector.fromValue);
-            var phaToValue = tab.projectConfig.getChannelFromEnergy(eSelector.toValue);
+            var phaFromValue = currentObj.tabPanel.projectConfig.getChannelFromEnergy(eSelector.fromValue);
+            var phaToValue = currentObj.tabPanel.projectConfig.getChannelFromEnergy(eSelector.toValue);
             if (phaFromValue > -1 && phaToValue > -1){
               phaSelector.setValues(phaFromValue, phaToValue);
             }
@@ -745,9 +747,8 @@ function ToolPanel (id,
                       '<div class="sectionContainer"></div>' +
                     '</div>');
     $section.find("h3").click( function ( event ) {
-      var tab = getTabForSelector(currentObj.id);
-      if (!isNull(tab)){
-        showBulkAnalisysDialog(tab);
+      if (!isNull(currentObj.tabPanel)){
+        showBulkAnalisysDialog(currentObj.tabPanel);
       }
     });
     this.$html.find(".analyzeContainer").append($section);
@@ -757,22 +758,22 @@ function ToolPanel (id,
     this.$html.find(".BulkAnalisysSection").find(".sectionContainer").html("");
   }
 
-  this.addBulkAnalisysPlotResults = function (plot_id, plot_title) {
+  this.addBulkAnalisysPlotResults = function (plotId, plotTitle) {
 
     //Adds a plotBulkResults section for this plot bulk data
     var $sectionContainer = this.$html.find(".BulkAnalisysSection").find(".sectionContainer");
-    var $plotBulkResults = $('<div class="plotBulkResults ' + plot_id + ' ">' +
+    var $plotBulkResults = $('<div class="plotBulkResults ' + plotId + ' ">' +
                               '<div class="switch-wrapper">' +
-                              '  <div id="switch_' + plot_id + '" plot_id="' + plot_id + '" class="switch-btn fa fa-check-square-o" aria-hidden="true"></div>' +
+                              '  <div id="switch_' + plotId + '" plotId="' + plotId + '" class="switch-btn fa fa-check-square-o" aria-hidden="true"></div>' +
                               '</div>' +
-                              '<h4>' + plot_title + '</h4>' +
+                              '<h4>' + plotTitle + '</h4>' +
                               '<div class="plotFilenames"></div>' +
                             '</div>');
     $sectionContainer.append($plotBulkResults);
 
     //Show and hide plot filenames
     $plotBulkResults.find(".switch-btn").click(function ( event ) {
-      var plotId = $(this).attr("plot_id");
+      var plotId = $(this).attr("plotId");
       var $plotsection = currentObj.$html.find(".BulkAnalisysSection").find("." + plotId);
       var $switchBtn = $plotsection.find(".switch-btn");
       this.setEnabledSectionCore($plotsection,
@@ -812,6 +813,107 @@ function ToolPanel (id,
       $section.addClass("Disabled");
     }
   }
+
+  this.setEnabledSectionCore = function ($section, $sectionContainer, $switchBtn, enabled){
+    setVisibility($sectionContainer, enabled);
+    if (enabled) {
+      $switchBtn.switchClass("fa-square-o", "fa-check-square-o");
+      $section.removeClass("Disabled");
+    } else {
+      $switchBtn.switchClass("fa-check-square-o", "fa-square-o");
+      $section.addClass("Disabled");
+    }
+  }
+
+  this.onPlotShown = function (plotId) {
+    if (!isNull(this.tabPanel)) {
+      var btnShow = this.tabPanel.$html.find(".sectionContainer").find("button[plotId='" + plotId + "']");
+      btnShow.removeClass("plotHidden");
+      btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
+    }
+  }
+
+  this.onPlotHidden = function (plotId) {
+    if (!isNull(this.tabPanel)) {
+      var btnShow = this.tabPanel.$html.find(".sectionContainer").find("button[plotId='" + plotId + "']");
+      btnShow.addClass("plotHidden");
+      btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
+      this.refreshPlotStylingControls();
+    }
+  }
+
+  this.onPlotStyleClicked = function (plotId) {
+    if (!isNull(this.tabPanel)) {
+      this.tabPanel.setCurrentPanel("stylePanel");
+      this.$html.find(".plotSelector").val(plotId);
+      this.onPlotStyleSelected(plotId);
+    }
+  }
+
+  this.onPlotStylesChanged = function (plotId) {
+    if (!isNull(this.tabPanel)
+        && (this.tabPanel.getCurrentPanel() == "stylePanel")
+        && (this.$html.find(".plotSelector").val() == plotId)) {
+      setTimeout(function (){currentObj.onPlotStyleSelected(plotId);}, 1000);
+    }
+  }
+
+  this.onPlotStyleSelected = function (plotId) {
+    var $plotStyleContainer = this.$html.find(".plotStyleContainer");
+    $plotStyleContainer.html("");
+    if (plotId != "") {
+      if (plotId != "all") {
+
+        if (!isNull(this.tabPanel)) {
+          var plot = this.tabPanel.outputPanel.getPlotById(plotId);
+          if (!isNull(plot)) {
+            $plotStyleContainer.append(plot.getStyleJQElem());
+          } else {
+            logErr("Can't find plot for PlotId: " + plotId);
+          }
+        } else {
+          logErr("Can't find tabPanel for ToolPanel: " + currentObj.id);
+        }
+
+      } else {
+         //Show all/generic plot style controls
+         $plotStyleContainer.html("ALL");
+      }
+    }
+  }
+
+  this.refreshPlotStylingControls = function () {
+    var $mainPlotStyleContainer = this.$html.find(".mainPlotStyleContainer");
+    var $analyzeContainer = this.$html.find(".analyzeContainer")
+    $mainPlotStyleContainer.html("");
+
+    var $plotSelectorContainer = $('<div class="ui-widget plotSelectorContainer marginTop">' +
+                                      '<label>Select a plot: </label>' +
+                                      '<select class="plotSelector width100">' +
+                                        '<option value="">Select one...</option>' +
+                                        /*'<option value="all">All plots</option>' +*/
+                                      '</select>' +
+                                    '</div>');
+
+    var $plotStyleContainer = $('<div class="plotStyleContainer"></div>');
+
+    var $plotSelector = $plotSelectorContainer.find(".plotSelector");
+    $analyzeContainer.find("button[plotId]").each(function( index ) {
+       if (!$( this ).hasClass("plotHidden")){
+         $plotSelector.append($('<option value="' + $( this ).attr("plotId") + '">' +
+                                    $( this ).text() +
+                                '</option>'));
+       }
+     });
+
+    $plotSelector.on('change', function() {
+       currentObj.onPlotStyleSelected($(this).val());
+     });
+
+     $mainPlotStyleContainer.append($plotSelectorContainer);
+     $mainPlotStyleContainer.append($plotStyleContainer);
+  }
+
 
   //Normal file selectors, SRC is valid on both events files and lightcurves
 

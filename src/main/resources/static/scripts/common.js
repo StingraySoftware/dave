@@ -140,6 +140,38 @@ function extractDatafromCSVContents(contents) {
   return data;
 }
 
+function RGBToHex (rgb) {
+  var hex = [
+    rgb.r.toString(16),
+    rgb.g.toString(16),
+    rgb.b.toString(16)
+  ];
+  $.each(hex, function (nr, val) {
+    if (val.length == 1) {
+      hex[nr] = '0' + val;
+    }
+  });
+  return hex.join('');
+}
+
+function HexToRGB (hex) {
+  var hex = parseInt(((hex.indexOf('#') > -1) ? hex.substring(1) : hex), 16);
+  return {r: hex >> 16, g: (hex & 0x00FF00) >> 8, b: (hex & 0x0000FF)};
+}
+
+function HexAndAlphaToRGBAStr (hex, alpha) {
+  var rgb = HexToRGB(hex);
+  return "rgba(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ", " + alpha + ")";
+}
+
+function RGBAStrToRGBA (rgbaStr) {
+  var rgba = rgbaStr.replace("rgba(", "").replace(")", "").replace(/\ /g,'').split(",");
+  return {r: parseInt(rgba[0]), g: parseInt(rgba[1]), b: parseInt(rgba[2]), a: parseFloat(rgba[3])};
+}
+
+function RGBAStrToHex (rgbaStr) {
+  return RGBToHex(RGBAStrToRGBA(rgbaStr));
+}
 
 // ------- CLIPBOARD AND FILE MEHTODS -------
 function copyToClipboard(text) {
