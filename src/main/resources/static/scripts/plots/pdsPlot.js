@@ -20,6 +20,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.freqMax = this.plotConfig.maxSupportedFreq;
   this.plotConfig.freqMin = 0.0;
 
+  this.XYLabelAxis = 1;
+
   if (!isNull(projectConfig)) {
     // Prepare PDS Plot attributes from projectConfig
     this.plotConfig.duration = projectConfig.totalDuration;
@@ -316,11 +318,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   }
 
   this.getLabel = function (axis) {
-    if (axis == 1){
-      var yLabel = this.plotConfig.styles.labels[1];
-      if (this.plotConfig.plotType == "X*Y") {
+    if (axis == this.XYLabelAxis){
+      var yLabel = this.plotConfig.styles.labels[this.XYLabelAxis];
+      if (this.plotConfig.plotType == "X*Y" &&
+          (isNull(this.plotConfig.styles.XYLabelIsCustom)
+              || !this.plotConfig.styles.XYLabelIsCustom)) {
         if (this.plotConfig.styles.labels[0].startsWith("Freq")
-            && this.plotConfig.styles.labels[1].startsWith("Pow")) {
+            && this.plotConfig.styles.labels[this.XYLabelAxis].startsWith("Pow")) {
               yLabel = "Power x Frequency (rms/mean)^2";
           } else {
             yLabel += " x " + this.plotConfig.styles.labels[0];
@@ -330,6 +334,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     } else {
       return this.plotConfig.styles.labels[axis];
     }
+  }
+
+  this.setLabel = function (axis, value) {
+    if (axis == this.XYLabelAxis) {
+      this.plotConfig.styles.XYLabelIsCustom = (this.plotConfig.plotType == "X*Y");
+    }
+    this.plotConfig.styles.labels[axis] = value;
   }
 
   this.getPlotlyConfig = function (data) {

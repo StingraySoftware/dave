@@ -42,16 +42,20 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     return false;
   }
 
-  this.prepareButton = function ( buttonElem, panel ) {
+  this.prepareTabButton = function ( buttonElem ) {
     buttonElem.button().click(function () {
-      currentObj.wfSelector.find("li").removeClass('active');
-      $(this).parent().addClass("active");
-      currentObj.setCurrentPanel(panel);
+      currentObj.setCurrentPanel($(this).attr("panel"));
     });
   }
 
   this.setCurrentPanel = function ( panel ) {
+    this.wfSelector.find("li").removeClass('active');
+    this.wfSelector.find("[panel='" + panel + "']").parent().addClass("active");
     this.toolPanel.showPanel(panel);
+  }
+
+  this.getCurrentPanel = function ( panel ) {
+    return this.wfSelector.find("li.active").find("a").attr("panel");
   }
 
   this.onDatasetChanged = function ( filenames, selectorKey, callback) {
@@ -526,8 +530,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onFiltersChangedFromPlot = function (filters) {
     log("onFiltersChangedFromPlot: filters: " + JSON.stringify(filters));
+    currentObj.setCurrentPanel("filterPanel");
     currentObj.toolPanel.applyFilters(filters);
-    currentObj.toolPanel.showPanel("filterPanel");
   }
 
   this.onTimeRangeChanged = function (timeRange) {
@@ -539,8 +543,24 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     return currentObj.toolPanel.getReplaceColumn();
   }
 
-  this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
-    currentObj.outputPanel.broadcastEventToPlots(evt_name, evt_data, senderId);
+  this.broadcastEvent = function (evt_name, evt_data, senderId) {
+    switch (evt_name) {
+         case 'on_show':
+             currentObj.toolPanel.onPlotShown(senderId)
+             break;
+         case 'on_hide':
+             currentObj.toolPanel.onPlotHidden(senderId)
+             break;
+         case 'on_style_click':
+             currentObj.toolPanel.onPlotStyleClicked(senderId)
+             break;
+         case 'on_plot_styles_changed':
+             currentObj.toolPanel.onPlotStylesChanged(senderId)
+             break;
+         default:
+             //Broadcast event to all plots
+             currentObj.outputPanel.broadcastEvent(evt_name, evt_data, senderId);
+     }
   }
 
   this.addToHistory = function (actionType, actionData){
@@ -588,9 +608,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.enableWfSelector = function () {
-    this.prepareButton(this.wfSelector.find(".filterBtn"), "filterPanel");
-    this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
-    this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
+    this.prepareTabButton(this.wfSelector.find(".filterBtn"));
+    this.prepareTabButton(this.wfSelector.find(".analyzeBtn"));
+    this.prepareTabButton(this.wfSelector.find(".styleBtn"));
     this.wfSelector.find(".wfSelectorDisableable").fadeIn();
   }
 
@@ -782,7 +802,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                   this.onLcDatasetChanged,
                                   this.onFiltersChanged,
                                   this.historyManager,
-                                  this.enableDragDrop);
+                                  this.enableDragDrop,
+                                  this);
 
   this.outputPanel = new WfOutputPanel (this.id + "_wfOutputPanel",
                                       "OutputPanelTemplate",
@@ -793,7 +814,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   $(window).resize(function () { if (!isNull(currentObj.outputPanel)){currentObj.outputPanel.resize();} });
 
-  this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");
+  this.prepareTabButton(this.wfSelector.find(".loadBtn"));
 
   this.setCurrentPanel("loadPanel");
   this.wfSelector.find(".loadBtn").parent().addClass('active');

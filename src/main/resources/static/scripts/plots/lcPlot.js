@@ -109,7 +109,23 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.addExtraDataConfig = function (plotlyConfig) {
     if (!isNull(this.extraData) && this.extraData.length > 1){
       //Inserts extra data as line in plot
-      plotlyConfig.data.splice(0, 0, getLine (this.extraData[0], this.extraData[1], EXTRA_DATA_COLOR));
+      var extraTrace = getLine (this.extraData[0], this.extraData[1], EXTRA_DATA_COLOR);
+      if (this.extraData.length > 2
+          && this.extraData[2].length > 0
+          && jQuery.isNumeric(this.extraData[2][0])) {
+            //If third extra data column is numeric set is as y_error
+            extraTrace.error_y = getErrorConfig(this.extraData[2]);
+      }
+      extraTrace.comesFromExtra = true;
+      plotlyConfig.data.splice(0, 0, extraTrace);
+
+      if (!isNull(this.plotStyle)){
+        var extraTraceStyle = this.plotStyle.data.filter(function(trace) { return !isNull(trace.comesFromExtra) && trace.comesFromExtra; });
+        if (isNull(extraTraceStyle) || extraTraceStyle.length == 0) {
+          this.plotStyle.data.splice(0, 0, getTracePlotStyle(extraTrace));
+          this.sendPlotEvent('on_plot_styles_changed', {});
+        }
+      }
     }
     return plotlyConfig;
   }
@@ -123,6 +139,16 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.minY = minMaxY.min;
       this.maxX = minMaxX.max;
       this.maxY = minMaxY.max;
+
+      if (!isNull(this.extraData)
+          && this.extraData.length > 1) {
+          var extraMinMaxX = minMax2DArray(this.extraData[coords.x]);
+          var extraMinMaxY = minMax2DArray(this.extraData[coords.y]);
+          this.minX = Math.min(minMaxX.min, extraMinMaxX.min);
+          this.minY = Math.min(minMaxY.min, extraMinMaxY.min);
+          this.maxX = Math.max(minMaxX.max, extraMinMaxX.max);
+          this.maxY = Math.max(minMaxY.max, extraMinMaxY.max);
+      }
 
       var tab = getTabForSelector(this.id);
       if (!isNull(tab) && (0 <= this.minY) && (this.minY < this.maxY)){
