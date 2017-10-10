@@ -187,7 +187,6 @@ function showBulkAnalisysStep2Dialog (tabPanel) {
                                             bck_filename: "",
                                             gti_filename: "",
                                             styles: { title: filename + " " + newPlotConfig.styles.title,
-                                                      selectable: false,
                                                       bulkPlot: true },
                                             axis: plotAxis
                                           });

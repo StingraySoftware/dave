@@ -38,6 +38,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     for (i in currentObj.plots) { if (currentObj.plots[i].isVisible && !currentObj.plots[i].isReady) return; };
   }
 
+  this.redrawAllDiffered = function () {
+    for (i in currentObj.plots) { if (currentObj.plots[i].isVisible) currentObj.plots[i].redrawDiffered(); };
+  }
+
   this.enableDragDrop = function (enabled) {
     if (isNull(this.dragDropEnabled)) {
       currentObj.$body.sortable({ revert: true });

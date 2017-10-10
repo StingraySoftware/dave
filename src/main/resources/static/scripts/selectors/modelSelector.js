@@ -59,19 +59,19 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   });
 
   this.$html.find(".btnGaussian").click(function () {
-    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Gaussian", color:currentObj.getRandomColor() }));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Gaussian", color:getRandomColor() }));
   });
 
   this.$html.find(".btnLorentz").click(function () {
-    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Lorentz", color:currentObj.getRandomColor() }));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Lorentz", color:getRandomColor() }));
   });
 
   this.$html.find(".btnPowerLaw").click(function () {
-    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"PowerLaw", color:currentObj.getRandomColor() }));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"PowerLaw", color:getRandomColor() }));
   });
 
   this.$html.find(".btnBrokenPowerLaw").click(function () {
-    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"BrokenPowerLaw", color:currentObj.getRandomColor() }));
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"BrokenPowerLaw", color:getRandomColor() }));
   });
 
   this.$html.find(".fitBtn").click(function () {
@@ -90,10 +90,6 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.$html.find(".bootstrapBtn").click(function () {
     currentObj.applyBootstrapFn();
   }).hide();
-
-  this.getRandomColor = function () {
-    return '#'+ fillWithZeros(Math.floor(Math.random()*16777215).toString(16), 6);
-  }
 
   this.getModelFromDaveModel = function (daveModel) {
     var model = null;
@@ -123,7 +119,13 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
 
   this.addModel = function (model, refresh){
     if (this.$html.find(".modelsContainer").find(".combinedLbl").length == 0) {
-      this.$html.find(".modelsContainer").append('<h3 class="combinedLbl" style="color: ' + CombinedModelColor + '">- Combined Model</h3>');
+      var combinedModelColor = getTabForSelector(this.id).getDefaultPlotlyConfig().COMBINED_MDL_COLOR;
+      this.$html.find(".modelsContainer").append('<h3 class="combinedLbl" style="color: ' + combinedModelColor + '"><div class="color-wrapper"></div>Combined Model</h3>');
+      this.$html.find(".color-wrapper").append(getColorPicker("colorPickerMdl_" + this.id, combinedModelColor, function (color, id) {
+        getTabForSelector(currentObj.id).getDefaultPlotlyConfig().COMBINED_MDL_COLOR = color;
+        currentObj.$html.find(".combinedLbl").attr("style", "color:" + color);
+        currentObj.onModelsChanged(false);
+      }));
     }
     this.models.push(model);
     this.$html.find(".modelsContainer").append(model.$html);
@@ -225,6 +227,19 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
     }, ".mdl");
   }
 
+  this.containsId = function (id) {
+    if (this.id != id) {
+      for (i in this.models){
+        if (this.models[i].id == id) {
+          return true;
+        }
+      }
+    } else {
+      return true;
+    }
+    return false;
+  }
+
   this.modelsToLaTeX = function() {
     var laTeX = "\\begin{tabular}{ l | c | c } \n \\hline \n";
     for (i in this.models){
@@ -301,6 +316,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
 
   this.$html = $('<div class="model ' + this.type + ' ' + this.id + '">' +
                   '<h3 style="color: ' + this.color + '">' +
+                    '<div class="color-wrapper"></div>' +
                     this.title +
                     '<div class="switch-wrapper">' +
                       '<div id="switch_' + this.id + '" class="switch-btn fa fa-minus-square" aria-hidden="true"></div>' +
@@ -322,6 +338,12 @@ function Model(idx, title, type, color, onModelsChangedFn) {
       currentObj.$html.find(".paramContainer").fadeOut();
     }
   });
+
+  this.$html.find(".color-wrapper").append(getColorPicker("colorPickerMdl_" + this.id, this.color, function (color, id) {
+    currentObj.color = color;
+    currentObj.$html.find("h3").attr("style", "color:" + color);
+    currentObj.onModelsChangedFn(false);
+  }));
 
   this.setInputs = function () {
     var modelParams = this.getParammeters();
@@ -553,7 +575,7 @@ function GaussianModel(idx, color, onModelsChangedFn) {
 
   Model.call(this,
             idx,
-            '- Gaussian ' + idx + ':',
+            'Gaussian ' + idx + ':',
             'Gaussian',
             color, onModelsChangedFn);
 
@@ -583,7 +605,7 @@ function LorentzModel(idx, color, onModelsChangedFn) {
 
   Model.call(this,
             idx,
-            '- Lorentz ' + idx + ':',
+            'Lorentz ' + idx + ':',
             'Lorentz',
             color, onModelsChangedFn);
 
@@ -612,7 +634,7 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
 
   Model.call(this,
             idx,
-            '- PowerLaw ' + idx + ':',
+            'PowerLaw ' + idx + ':',
             'PowerLaw',
             color, onModelsChangedFn);
 
@@ -643,7 +665,7 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
 
   Model.call(this,
             idx,
-            '- BrokenPowerLaw ' + idx + ':',
+            'BrokenPowerLaw ' + idx + ':',
             'BrokenPowerLaw',
             color, onModelsChangedFn);
 

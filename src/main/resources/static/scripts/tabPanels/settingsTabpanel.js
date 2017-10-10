@@ -137,7 +137,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                       CONFIG.LOG_LEVEL = parseInt(value);
                                       updateServerConfig();
                                     },
-                                    "smallTextRadio"));
+                                    "smallTextStyle"));
 
   this.$container.find(".btnAboutDave").click(function () {
 

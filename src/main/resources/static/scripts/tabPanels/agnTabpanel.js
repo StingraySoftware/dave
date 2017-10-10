@@ -1,10 +1,10 @@
 
 //Adds new Long-term variability Tab Panel
-function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new AGNTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
-                        theService, navBarList, panelContainer, plotConfig, projectConfig);
+                        theService, navBarList, panelContainer, plotConfig, projectConfig, plotStyle);
 }
 
 //Subscribes the load workspace AGNTabPanel function
@@ -14,12 +14,13 @@ tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
                       $(".daveContainer"),
                       tabConfig.plotConfig,
                       null,
+                      tabConfig.plotConfig.plotStyle,
                       tabConfig.id,
                       tabConfig.navItemClass);
 }
 
 //Long-term variability Tab Panel
-function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -41,7 +42,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, AGNTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
+        if (jsdata.statusText == "error"){
           //If abort cause is because python server died
           currentObj.outputPanel.setPlotsReadyState(true);
         }
@@ -102,13 +103,17 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              navItemClass: this.navItemClass,
              plotConfig: this.plotConfig,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
@@ -116,7 +121,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     callback();
   }
 
-  this.createPlots = function () {
+  this.createPlots = function (plotStyle) {
     //Adds Long-term variability Plot to outputPanel
     this.agnPlot = new AgnPlot(
                               this.id + "_agn_" + (new Date()).getTime(),
@@ -127,8 +132,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               null,
                               "fullScreen",
                               false,
-                              this.projectConfig
-                            );
+                              !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null);
     this.addPlot(this.agnPlot, false);
 
     //Adds Excess Variance Confidence Intervals Plot to outputPanel
@@ -145,8 +149,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.exVarConfPlot, false);
 
     //Adds Fvar Confidence Intervals Plot to outputPanel
@@ -163,8 +166,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.fvarConfPlot, false);
 
     //Adds Avg. Absolute RMS: S2 Vs Count Rate plot to outputPanel
@@ -181,8 +183,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.absRMSPlot, false);
 
     //Adds Avg. Fractional RMS: Fvar Vs Count Rate plot to outputPanel
@@ -199,8 +200,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.fracRMSPlot, false);
 
     //Request plot data after all plots were added
@@ -239,11 +239,14 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.variance_opts.min_bins = { default:20, min:10, max: 10000}; //Minimum number of time bins on excess variance
   this.variance_opts.mean_count = { default:10, min:1, max: 10000}; //Number of elements to calculate the means
 
+  //Preapares Long-term Variability toolpanel data
   this.setTitle("Long-term Variability");
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
-
-  //Preapares Long-term Variability toolpanel data
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
+
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
   this.toolPanel.$html.find(".fileSelectorsContainer").append(this.getVarianceSelector());
@@ -254,7 +257,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
   if (!isNull(projectConfig)){
     this.projectConfig.updateFromProjectConfigs([projectConfig]);
-    this.createPlots();
+    this.createPlots(plotStyle);
   }
 
   log("AGNTabPanel ready! id: " + this.id);

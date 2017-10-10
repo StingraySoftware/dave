@@ -127,7 +127,7 @@ function prepareNewTab(plot, addTabFn, clearSelectedPlots) {
   waitingDialog.show('Preparing new tab ...');
   var tab = getTabForSelector(plot.id);
   if (!isNull(tab)) {
-    addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
+    addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig, plot.plotStyle);
     hideWaitingDialogDelayed(850, clearSelectedPlots);
   } else {
     showError(null, "Can't find tab for plot: " + plot.id);

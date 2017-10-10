@@ -1,6 +1,6 @@
 
 //Adds new Fit Tab Panel
-function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new FitTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
@@ -8,7 +8,8 @@ function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, i
                         navBarList,
                         panelContainer,
                         plotConfig,
-                        projectConfig);
+                        projectConfig,
+                        plotStyle);
 }
 
 //Subscribes the load workspace FitTabPanel function
@@ -18,12 +19,13 @@ tabPanelsLoadFns["FitTabPanel"] = function (tabConfig) {
                        $(".daveContainer"),
                        tabConfig.plotConfig,
                        null,
+                       tabConfig.plotConfig.plotStyle,
                        tabConfig.id,
                        tabConfig.navItemClass);
 }
 
 //Fit Tab Panel
-function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -33,7 +35,13 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   //FitTabPanel METHODS:
   this.onModelsChanged = function (){
     if (!isNull(currentObj.plot)){
-      currentObj.plot.refreshModelsData(false);
+      if (!isNull(currentObj.onModelsChangedTimeout)) {
+        clearTimeout(currentObj.onModelsChangedTimeout);
+        currentObj.onModelsChangedTimeout = null;
+      }
+      currentObj.onModelsChangedTimeout = setTimeout(function(){
+        currentObj.plot.refreshModelsData(false);
+      }, CONFIG.INMEDIATE_TIMEOUT);
     } else {
       log("Plot not created yet, FitTabPanel: " + currentObj.id);
     }
@@ -467,13 +475,17 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              projectConfig: this.projectConfig.getConfig(),
              modelsConfig: this.modelSelector.getConfig(),
              infoPanelData: this.infoPanelData,
-             infoPanelSampleData: this.infoPanelSampleData
+             infoPanelSampleData: this.infoPanelSampleData,
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.modelSelector.setConfig( tabConfig.modelsConfig );
     this.createFitPlot();
@@ -509,7 +521,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                              null,
                              "fullWidth",
                              false,
-                             this.projectConfig);
+                             this.projectConfig,
+                             !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null);
 
     this.setTitle("Fit " + this.plot.plotConfig.styles.title);
 
@@ -518,6 +531,13 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.modelSelector.$html);
 
     this.addPlot(this.plot);
+  }
+
+  this.containsId = function (id) {
+    return (this.id == id)
+            || (this.toolPanel.containsId(id))
+            || (this.outputPanel.containsId(id))
+            || (this.modelSelector.containsId(id));
   }
 
   //FitTabPanel Initialzation:
@@ -541,7 +561,9 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.sampleParams.nsamples = this.sampleOpts.nsamples.default;
 
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Models');
-
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
 
   this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(),
@@ -549,7 +571,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                                         this.onFitClicked,
                                         this.applyBootstrap,
                                         this.showBayesianParEst,
-                                        isNull(plotConfig.styles.title) ? plotConfig.filename : plotConfig.styles.title);
+                                        isNull(plotConfig.styles.title) ? getFilename(plotConfig.filename) : plotConfig.styles.title);
 
   this.outputPanel.getFilters = function () {
     return currentObj.plot.plotConfig.filters;

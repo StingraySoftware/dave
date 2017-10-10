@@ -877,7 +877,7 @@ function ToolPanel (id,
 
       } else {
          //Show all/generic plot style controls
-         $plotStyleContainer.html("ALL");
+         $plotStyleContainer.append(currentObj.getAllPlotsStyleJQElem());
       }
     }
   }
@@ -890,28 +890,223 @@ function ToolPanel (id,
     var $plotSelectorContainer = $('<div class="ui-widget plotSelectorContainer marginTop">' +
                                       '<label>Select a plot: </label>' +
                                       '<select class="plotSelector width100">' +
-                                        '<option value="">Select one...</option>' +
-                                        /*'<option value="all">All plots</option>' +*/
+                                        '<option value="all">All plots</option>' +
                                       '</select>' +
                                     '</div>');
 
     var $plotStyleContainer = $('<div class="plotStyleContainer"></div>');
 
     var $plotSelector = $plotSelectorContainer.find(".plotSelector");
-    $analyzeContainer.find("button[plotId]").each(function( index ) {
-       if (!$( this ).hasClass("plotHidden")){
-         $plotSelector.append($('<option value="' + $( this ).attr("plotId") + '">' +
-                                    $( this ).text() +
-                                '</option>'));
-       }
-     });
+    if (!isNull(this.tabPanel)){
+      for (var i = 0; i < this.tabPanel.outputPanel.plots.length; i++){
+        var plot = this.tabPanel.outputPanel.plots[i];
+        if (plot.isVisible){
+          $plotSelector.append($('<option value="' + plot.id + '">' +
+                                     plot.plotConfig.styles.title +
+                                 '</option>'));
+        }
+      }
+    }
 
     $plotSelector.on('change', function() {
        currentObj.onPlotStyleSelected($(this).val());
      });
 
-     $mainPlotStyleContainer.append($plotSelectorContainer);
-     $mainPlotStyleContainer.append($plotStyleContainer);
+    $mainPlotStyleContainer.append($plotSelectorContainer);
+    $mainPlotStyleContainer.append($plotStyleContainer);
+    this.onPlotStyleSelected("all");
+  }
+
+  this.getAllPlotsStyleJQElem = function () {
+      var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+      var $style = $('<div class="plotStyle marginTop">' +
+                      '<div class="floatingContainer">' +
+                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnLoad" data-toggle="tooltip" title="Load style"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnSave" data-toggle="tooltip" title="Save style"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                      '</div>' +
+                    '</div>');
+
+      $style.find(".btnClear").click(function () {
+        if (!isNull(currentObj.tabPanel)){
+            currentObj.tabPanel.plotDefaultConfig = null;
+            currentObj.onPlotStyleSelected("all");
+            currentObj.redrawPlots();
+        }
+      });
+
+      $style.find(".btnLoad").click(function () {
+        if (!isNull(currentObj.tabPanel)){
+            currentObj.tabPanel.loadDefaultPlotlyConfig(function () {
+              currentObj.onPlotStyleSelected("all");
+              currentObj.redrawPlots();
+            });
+        }
+      });
+
+      $style.find(".btnSave").click(function () {
+        if (!isNull(currentObj.tabPanel)){
+            currentObj.tabPanel.saveDefaultPlotlyConfig();
+        }
+      });
+
+      //Add font selector
+      var $fontSelectorContainer = $('<div class="ui-widget fontSelectorContainer marginTop">' +
+                                        '<label style="font-weight: 400;">Title and axis font: </label>' +
+                                        '<select class="fontSelector width100"></select>' +
+                                      '</div>');
+      var $fontSelector = $fontSelectorContainer.find(".fontSelector");
+      for (i = 0; i < plotDefaultConfig.SUPPORTED_FONTS.length; i++) {
+        var font = plotDefaultConfig.SUPPORTED_FONTS[i];
+        $fontSelector.append($('<option value="' + font + '">' +  font + '</option>'));
+       };
+      $fontSelector.val(plotDefaultConfig.DEFAULT_TITLE_FONT.family);
+      $fontSelector.on('change', function() {
+        currentObj.getDefaultPlotlyConfig().DEFAULT_TITLE_FONT.family = $(this).val();
+        currentObj.redrawPlots();
+      });
+      $style.append($fontSelectorContainer);
+      $style.append($('<label class="clear marginTop" style="font-weight: 400;">Default colors:</label>'));
+      $style.append(getColorPicker("colorPickerFontColor_" + this.id, plotDefaultConfig.DEFAULT_TITLE_FONT.color, function (color, id) {
+        var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+        plotDefaultConfig.DEFAULT_TITLE_FONT.color = color;
+        currentObj.redrawPlots();
+      }));
+      var fontSize = getInlineRangeBox ("fontSize_" + this.id, "inputFontSize float",
+                                  "Font color & size", plotDefaultConfig.DEFAULT_TITLE_FONT.size, 5, 25,
+                                  function(value, input) {
+                                    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+                                    plotDefaultConfig.DEFAULT_TITLE_FONT.size = value;
+                                    currentObj.redrawPlots();
+                                  });
+      fontSize.addClass("width100");
+      $style.append(fontSize);
+
+      //Adds the default plot color selector
+      $style.append($('<p class="clear allPlots marginTop">Data color</p>'));
+      $style.append(getColorPicker("colorPickerDC_" + this.id, plotDefaultConfig.DEFAULT_PLOT_COLOR, function (color, id) {
+        currentObj.getDefaultPlotlyConfig().DEFAULT_PLOT_COLOR = color;
+        currentObj.redrawPlots();
+      }));
+
+      //Adds the error color selector
+      $style.append(getColorPicker("colorPickerE_" + this.id, "#" + RGBAStrToHex(plotDefaultConfig.ERROR_BAR_COLOR), function (color, id) {
+        var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+        var rgba = RGBAStrToRGBA(plotDefaultConfig.ERROR_BAR_COLOR);
+        plotDefaultConfig.ERROR_BAR_COLOR = HexAndAlphaToRGBAStr (color, rgba.a);
+        currentObj.redrawPlots();
+      }));
+
+      //Adds the error opacity
+      var errorOpacity = getInlineRangeBox ("EOpacity_" + this.id, "inputErrorOpacity float",
+                                  "Error color & opacity", RGBAStrToRGBA(plotDefaultConfig.ERROR_BAR_COLOR).a, 0, 1,
+                                  function(value, input) {
+                                    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+                                    var rgba = RGBAStrToRGBA(plotDefaultConfig.ERROR_BAR_COLOR);
+                                    plotDefaultConfig.ERROR_BAR_COLOR = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
+                                    currentObj.redrawPlots();
+                                  });
+      errorOpacity.addClass("width100");
+      $style.append(errorOpacity);
+
+      //Adds the error color selector
+      $style.append(getColorPicker("colorPickerWTI_" + this.id, plotDefaultConfig.WTI_FILLCOLOR, function (color, id) {
+        var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+        plotDefaultConfig.WTI_FILLCOLOR = color;
+        currentObj.redrawPlots();
+      }));
+
+      //Adds the error opacity
+      var errorOpacity = getInlineRangeBox ("WTIOpacity_" + this.id, "inputWtiOpacity float",
+                                  "WTI color & opacity", plotDefaultConfig.WTI_OPACITY, 0, 1,
+                                  function(value, input) {
+                                    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+                                    plotDefaultConfig.WTI_OPACITY = value;
+                                    currentObj.redrawPlots();
+                                  });
+      errorOpacity.addClass("width100");
+      $style.append(errorOpacity);
+
+      //Adds the default plot extra data color selector
+      $style.append($('<p class="clear allPlots">External data color</p>'));
+      $style.append(getColorPicker("colorPickerEDC_" + this.id, plotDefaultConfig.EXTRA_DATA_COLOR, function (color, id) {
+        plotDefaultConfig.EXTRA_DATA_COLOR = color;
+        currentObj.redrawPlots();
+      }));
+
+      //Adds the line width
+      $style.append($('<label class="clear marginTop" style="font-weight: 400;">Default lines and markers:</label>'));
+      var lineWidth = getInlineRangeBox ("lineWidth_" + this.id, "inputLineWidth",
+                                  "Line width",
+                                  plotDefaultConfig.DEFAULT_LINE_WIDTH.default,
+                                  plotDefaultConfig.DEFAULT_LINE_WIDTH.min,
+                                  plotDefaultConfig.DEFAULT_LINE_WIDTH.max,
+                                  function(value, input) {
+                                    plotDefaultConfig.DEFAULT_LINE_WIDTH.default = value;
+                                    currentObj.redrawPlots();
+                                  });
+      lineWidth.addClass("allPlots");
+      $style.append(lineWidth);
+
+      //Adds the marker size
+      var markerSize = getInlineRangeBox ("markerSize_" + this.id, "inputMarkerSize",
+                                  "Marker size",
+                                  plotDefaultConfig.DEFAULT_MARKER_SIZE.default,
+                                  plotDefaultConfig.DEFAULT_MARKER_SIZE.min,
+                                  plotDefaultConfig.DEFAULT_MARKER_SIZE.max,
+                                  function(value, input) {
+                                    plotDefaultConfig.DEFAULT_MARKER_SIZE.default = value;
+                                    currentObj.redrawPlots();
+                                  });
+      markerSize.addClass("allPlots");
+      $style.append(markerSize);
+
+      //Adds the marker opacity
+      var markerOpacity = getInlineRangeBox ("markerOpacity_" + this.id, "inputMarkerOpacity float",
+                                  "Marker opacity", plotDefaultConfig.DEFAULT_MARKER_OPACITY, 0, 1,
+                                  function(value, input) {
+                                    plotDefaultConfig.DEFAULT_MARKER_OPACITY = value;
+                                    currentObj.redrawPlots();
+                                  });
+      markerOpacity.addClass("allPlots");
+      $style.append(markerOpacity);
+
+      //Adds the marker type selector
+      $style.append(getRadioControl("markerType_" + this.id,
+                                    "Marker type",
+                                    "markerType",
+                                    [
+                                      { id:"circle", label:"circle", value:"circle" },
+                                      { id:"circle-open", label:"circle-open", value:"circle-open" },
+                                      { id:"square", label:"square", value:"square" },
+                                      { id:"square-open", label:"square-open", value:"square-open" },
+                                      { id:"diamond", label:"diamond", value:"diamond" },
+                                      { id:"diamond-open", label:"diamond-open", value:"diamond-open" },
+                                      { id:"cross", label:"cross", value:"cross" },
+                                      { id:"x", label:"x", value:"x" }
+                                    ],
+                                    plotDefaultConfig.DEFAULT_MARKER_TYPE,
+                                    function(value, id) {
+                                      plotDefaultConfig.DEFAULT_MARKER_TYPE = value;
+                                      currentObj.redrawPlots();
+                                    },
+                                    "smallTextStyle"));
+
+      return $style;
+  }
+
+  this.redrawPlots = function (){
+    if (!isNull(this.tabPanel)){
+      this.tabPanel.outputPanel.redrawAllDiffered();
+    }
+  }
+
+  this.getDefaultPlotlyConfig = function (){
+    if (!isNull(this.tabPanel)){
+      return this.tabPanel.getDefaultPlotlyConfig();
+    } else {
+      return $.extend(true, {}, CONFIG.PLOT_CONFIG);
+    }
   }
 
 

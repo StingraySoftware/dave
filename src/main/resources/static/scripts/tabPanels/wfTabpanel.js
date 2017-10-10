@@ -23,6 +23,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   var currentObj = this;
 
+  //Adds random number to Id
+  id = id + "_" + (new Date()).getTime();
+
   TabPanel.call(this, id, classSelector, navItemClass, navBarList, panelContainer);
 
   //WORKFLOW TAB_PANEL ATTRIBUTES
@@ -31,15 +34,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
   this.containsId = function (id) {
-    if (this.id == id) {
-        return true;
-    } else if (this.toolPanel.containsId(id)) {
-        return true;
-    } else if (this.outputPanel.containsId(id)) {
-        return true;
-    }
-
-    return false;
+    return (this.id == id)
+            || (this.toolPanel.containsId(id))
+            || (this.outputPanel.containsId(id));
   }
 
   this.prepareTabButton = function ( buttonElem ) {
@@ -630,7 +627,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
          btn.toggleClass("plotSelected");
          var plotId = btn.attr("plotId");
          var plot = currentObj.outputPanel.getPlotById(plotId);
-         plot.btnSelect.click();
+         plot.onSelected();
          if ($(this).parent().find(".plotSelected").length > 1) {
               $xSpectraDialog.dialog('close');
               $xSpectraDialog.remove();
@@ -732,13 +729,42 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
      $dialogElement.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
+  this.getDefaultPlotlyConfig = function () {
+    if (isNull(this.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, CONFIG.PLOT_CONFIG);
+    }
+    return this.plotDefaultConfig;
+  }
+
+  this.saveDefaultPlotlyConfig = function () {
+    if (!isNull(this.plotDefaultConfig)){
+      saveToFile (getFilename(currentObj.projectConfig.filename) + "_style.stl", JSON.stringify(currentObj.plotDefaultConfig));
+    }
+  }
+
+  this.loadDefaultPlotlyConfig = function (onLoadedFn) {
+    showLoadFile (function(e, file) {
+      try {
+        if (!isNull(e)) {
+          currentObj.plotDefaultConfig = JSON.parse(e.target.result);
+          onLoadedFn();
+        } else {
+          showError("File: " + file.name + " is not supported as style");
+        }
+     } catch (e) {
+       showError("File: " + file.name + " is not supported as style", e);
+     }
+    }, ".stl");
+  }
+
   this.getConfig = function () {
     return { type: "WfTabPanel",
              id: this.id,
              navItemClass: this.navItemClass,
              projectConfig: this.projectConfig.getConfig(),
              toolPanelConfig: this.toolPanel.getConfig(this.projectConfig),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
@@ -746,6 +772,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     log("setConfig for tab " + this.id);
 
     async.waterfall([
+        function(callback) {
+            if (!isNull(tabConfig.plotDefaultConfig)){
+              currentObj.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+            }
+            callback();
+        },
         function(callback) {
             currentObj.toolPanel.setConfig(tabConfig.projectConfig, callback);
         },
@@ -782,6 +814,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       delete this.outputPanel;
       delete this.historyManager;
       delete this.projectConfig;
+      delete this.plotDefaultConfig
 
       delete this.id;
     } catch (ex) {

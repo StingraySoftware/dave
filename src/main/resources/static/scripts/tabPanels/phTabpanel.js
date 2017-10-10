@@ -1,10 +1,10 @@
 
 //Adds new Phaseogram Tab Panel
-function addPHTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+function addPHTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new PHTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
-                        theService, navBarList, panelContainer, plotConfig, projectConfig);
+                        theService, navBarList, panelContainer, plotConfig, projectConfig, plotStyle);
 }
 
 //Subscribes the load workspace PHTabPanel function
@@ -14,12 +14,13 @@ tabPanelsLoadFns["PHTabPanel"] = function (tabConfig) {
                       $(".daveContainer"),
                       tabConfig.plotConfig,
                       null,
+                      tabConfig.plotConfig.plotStyle,
                       tabConfig.id,
                       tabConfig.navItemClass);
 }
 
 //Phaseogram Tab Panel
-function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -34,13 +35,17 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
              navItemClass: this.navItemClass,
              plotConfig: this.plotConfig,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
@@ -81,7 +86,8 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       null,
                       "fullWidth",
                       false,
-                      this.projectConfig
+                      this.projectConfig,
+                      !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null
                     );
     this.addPlot(this.pgPlot, false);
 
@@ -99,7 +105,9 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                         //On ZSearchPlot Plot Ready
                         waitingDialog.hide();
                         currentObj.outputPanel.onPlotReady();
-                        currentObj.onCandidateFrequenciesFound();
+                        if (!isNull(currentObj.freqRangeSelector)){
+                          currentObj.onCandidateFrequenciesFound();
+                        }
                       },
                       null,
                       "fullWidth",
@@ -365,7 +373,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, PhTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
+        if (jsdata.statusText == "error"){
           //If abort cause is because python server died
           currentObj.outputPanel.setPlotsReadyState(true);
         }
@@ -405,10 +413,14 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.phaseogramAdvEnabled = false;
 
   this.setTitle("Phaseogram");
-  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
 
   //Preapares PG toolpanel data
+  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
+
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
 

@@ -19,6 +19,13 @@ function fillWithZeros(num, length) {
   return num;
 }
 
+function truncateText(string, maxLength){
+   if (string.length > maxLength)
+      return string.substring(0,maxLength)+'...';
+   else
+      return string;
+};
+
 function closest(arr, closestTo){
     var closest = minMax2DArray(arr).max;
     for(var i = 0; i < arr.length; i++){
@@ -140,6 +147,7 @@ function extractDatafromCSVContents(contents) {
   return data;
 }
 
+// ------- COLOR FUNCTIONS ---------
 function RGBToHex (rgb) {
   var hex = [
     rgb.r.toString(16),
@@ -159,6 +167,10 @@ function HexToRGB (hex) {
   return {r: hex >> 16, g: (hex & 0x00FF00) >> 8, b: (hex & 0x0000FF)};
 }
 
+function RGBToRGBStr (rgb) {
+  return "rgb(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ")";
+}
+
 function HexAndAlphaToRGBAStr (hex, alpha) {
   var rgb = HexToRGB(hex);
   return "rgba(" + rgb.r + ", " + rgb.g + ", " + rgb.b + ", " + alpha + ")";
@@ -171,6 +183,35 @@ function RGBAStrToRGBA (rgbaStr) {
 
 function RGBAStrToHex (rgbaStr) {
   return RGBToHex(RGBAStrToRGBA(rgbaStr));
+}
+
+function getRandomColor () {
+  return '#'+ fillWithZeros(Math.floor(Math.random()*16777215).toString(16), 6);
+}
+
+function getColorScale (colorScaleConfig) {
+  var colorscale = [];
+  var numColors = colorScaleConfig.numColors;
+  var x0 = colorScaleConfig.x0;
+  var y0 = colorScaleConfig.y0;
+  var m = Math.pow(colorScaleConfig.m * 4, 3);
+  var color1 = HexToRGB(colorScaleConfig.color1);
+  var color2 = HexToRGB(colorScaleConfig.color2);
+  var colorDiff = {r: 0, g: 0, b: 0};
+  colorDiff.r = color1.r - color2.r;
+  colorDiff.g = color1.g - color2.g;
+  colorDiff.b = color1.b - color2.b;
+
+  for (i = 0; i <= 1.0; i+=(1.0/numColors)) {
+    var c_ratio = Math.max(Math.min(((i - y0)*m + x0), 1.0), 0.0);
+    var color = HexToRGB("#000000");
+    color.r = color1.r - Math.floor(colorDiff.r * c_ratio);
+    color.g = color1.g - Math.floor(colorDiff.g * c_ratio);
+    color.b = color1.b - Math.floor(colorDiff.b * c_ratio);
+    var ratio = "" + fixedPrecision(i, 2);
+    colorscale.push([((ratio.length == 1) ? ratio + ".0" : ratio), RGBToRGBStr(color)]);
+  }
+  return colorscale;
 }
 
 // ------- CLIPBOARD AND FILE MEHTODS -------

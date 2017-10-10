@@ -345,18 +345,21 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.getPlotlyConfig = function (data) {
 
+    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], isNull(data[1].error_values) ? [] : data[1].error_values, [],
                                         this.getLabel(0),
                                         this.getLabel(1),
-                                        this.plotConfig.styles.title);
+                                        this.plotConfig.styles.title,
+                                        plotDefaultConfig);
 
-    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
     plotlyConfig = this.prepareAxis(plotlyConfig);
 
     if (this.plotConfig.plotType == "X*Y") {
       plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots
-      plotlyConfig.layout.yaxis.titlefont.size = 12;
+      plotlyConfig.layout.yaxis.titlefont.size *= 0.75;
     }
 
     return plotlyConfig;

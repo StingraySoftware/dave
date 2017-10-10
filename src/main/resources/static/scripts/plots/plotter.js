@@ -1,20 +1,5 @@
 
-var DEFAULT_TITLE_FONT = {
-            family : 'Courier New, monospace',
-            size : 18,
-            color : '#7f7f7f'
-          };
-
-var DEFAULT_MARGINS = { b : 38, r : 12, l: 64, t: 30 }
-
-var DEFAULT_LINE_WIDTH = 2;
-
-var DEFAULT_PLOT_COLOR = '#1f77b4';
-var EXTRA_DATA_COLOR = '#888888';
-var ERROR_BAR_OPACITY = 0.2;
-var ERROR_BAR_COLOR = 'rgba(30, 117, 179, ' + ERROR_BAR_OPACITY + ')';
-
-function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
+function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title, plotDefaultConfig){
     return {
         data: [
                 {
@@ -23,23 +8,28 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_
                   hoverinfo : 'none',
                   x : x_values,
                   y : y_values,
-                  error_x : getErrorConfig(x_error_values),
-                  error_y : getErrorConfig(y_error_values)
+                  error_x : !isNull(x_error_values) ? getErrorConfig(x_error_values, plotDefaultConfig) : null,
+                  error_y : !isNull(y_error_values) ? getErrorConfig(y_error_values, plotDefaultConfig) : null,
+                  line : {
+                          color : plotDefaultConfig.DEFAULT_PLOT_COLOR,
+                          width : plotDefaultConfig.DEFAULT_LINE_WIDTH.default
+                        }
                 }
               ],
         layout : {
                    title: !isNull(title) ? title : '',
+                   font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    hovermode: 'closest',
-                   xaxis: getLabelConfig(x_label),
-                   yaxis: getLabelConfig(y_label),
+                   xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+                   yaxis: getLabelConfig(y_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
                    dragmode:'select',
-                   margin: DEFAULT_MARGINS,
-                   shapes: getShapesFromWti (wti_x_ranges)
+                   margin: plotDefaultConfig.DEFAULT_MARGINS,
+                   shapes: getShapesFromWti (wti_x_ranges, plotDefaultConfig.WTI_FILLCOLOR, plotDefaultConfig.WTI_OPACITY)
                 }
       }
 }
 
-function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title){
+function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_values, wti_x_ranges, x_label, y_label, title, plotDefaultConfig){
     return {
         data: [
                 {
@@ -49,28 +39,29 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                   connectgaps : false,
                   x : x_values,
                   y : y_values,
-                  error_x : getErrorConfig(x_error_values),
-                  error_y : getErrorConfig(y_error_values),
+                  error_x : getErrorConfig(x_error_values, plotDefaultConfig),
+                  error_y : getErrorConfig(y_error_values, plotDefaultConfig),
                   line : {
                           shape	:	'hvh',
-                          color : DEFAULT_PLOT_COLOR,
-                          width : DEFAULT_LINE_WIDTH
+                          color : plotDefaultConfig.DEFAULT_PLOT_COLOR,
+                          width : plotDefaultConfig.DEFAULT_LINE_WIDTH.default
                         }
                 }
               ],
         layout : {
                    title: !isNull(title) ? title : '',
+                   font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    hovermode: 'closest',
-                   xaxis: getLabelConfig(x_label),
-                   yaxis: getLabelConfig(y_label),
+                   xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+                   yaxis: getLabelConfig(y_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
                    dragmode:'select',
-                   margin: DEFAULT_MARGINS,
-                   shapes: getShapesFromWti (wti_x_ranges)
+                   margin: plotDefaultConfig.DEFAULT_MARGINS,
+                   shapes: getShapesFromWti (wti_x_ranges, plotDefaultConfig.WTI_FILLCOLOR, plotDefaultConfig.WTI_OPACITY)
                  }
       }
 }
 
-function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_values, z_error_values, title, color_label, color_array){
+function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_values, z_error_values, title, color_label, color_array, plotDefaultConfig){
     return {
         data: [
                 {
@@ -78,30 +69,33 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                   x : x_values,
                   y : y_values,
                   z : z_values,
-                  error_x : getErrorConfig(x_error_values),
-                  error_y : getErrorConfig(y_error_values),
-                  error_z : getErrorConfig(z_error_values),
+                  error_x : getErrorConfig(x_error_values, plotDefaultConfig),
+                  error_y : getErrorConfig(y_error_values, plotDefaultConfig),
+                  error_z : getErrorConfig(z_error_values, plotDefaultConfig),
                   marker : {
-                            size : 5,
+                            symbol : plotDefaultConfig.DEFAULT_MARKER_TYPE,
+                            size : plotDefaultConfig.DEFAULT_MARKER_SIZE.default,
                             color : color_array,  // set color to an array/list of desired values
                             colorscale : 'Viridis', // choose a colorscale
                             colorbar : {
                                       title : color_label,
+                                      font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                                       thickness : 20,
                                       len : 1
                                     },
-                            opacity : 0.8
+                            opacity : plotDefaultConfig.DEFAULT_MARKER_OPACITY
                           }
                 }
               ],
         layout : {
                    title: !isNull(title) ? title : '',
-                   margin: DEFAULT_MARGINS
+                   font: plotDefaultConfig.DEFAULT_TITLE_FONT,
+                   margin: plotDefaultConfig.DEFAULT_MARGINS
                 }
       }
 }
 
-function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
+function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title, plotDefaultConfig) {
   return {
       data: [
               {
@@ -111,24 +105,25 @@ function get_plotdiv_scatter(x_values, y_values, x_label, y_label, title) {
                 y : y_values,
                 mode : "markers",
                 marker : {
-                      size : 6,
-                      color : DEFAULT_PLOT_COLOR,
-                      opacity : 0.8
+                      symbol : plotDefaultConfig.DEFAULT_MARKER_TYPE,
+                      size : plotDefaultConfig.DEFAULT_MARKER_SIZE.default,
+                      color : plotDefaultConfig.DEFAULT_PLOT_COLOR,
+                      opacity : plotDefaultConfig.DEFAULT_MARKER_OPACITY
                     }
               }
             ],
-      layout : getDefaultLayout (title, x_label, y_label)
+      layout : getDefaultLayout (title, x_label, y_label, plotDefaultConfig)
     }
 }
 
-function get_plotdiv_scatter_with_errors(x_values, y_values, x_error_values, y_error_values, x_label, y_label, title) {
-  var plotdiv = get_plotdiv_scatter(x_values, y_values, x_label, y_label, title);
-  plotdiv.data[0].error_x = getErrorConfig(x_error_values);
-  plotdiv.data[0].error_y = getErrorConfig(y_error_values);
+function get_plotdiv_scatter_with_errors(x_values, y_values, x_error_values, y_error_values, x_label, y_label, title, plotDefaultConfig) {
+  var plotdiv = get_plotdiv_scatter(x_values, y_values, x_label, y_label, title, plotDefaultConfig);
+  plotdiv.data[0].error_x = getErrorConfig(x_error_values, plotDefaultConfig);
+  plotdiv.data[0].error_y = getErrorConfig(y_error_values, plotDefaultConfig);
   return plotdiv;
 }
 
-function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label, title) {
+function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y_label, color_label, title, plotDefaultConfig) {
   return {
       data: [
               {
@@ -137,23 +132,25 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
                 y : y_values,
                 mode : "markers",
                 marker : {
-                      size : 6,
+                      symbol : plotDefaultConfig.DEFAULT_MARKER_TYPE,
+                      size : plotDefaultConfig.DEFAULT_MARKER_SIZE.default,
                       color : color_array,  // set color to an array/list of desired values
                       colorscale : 'Viridis', // choose a colorscale
                       colorbar : {
                                 title : color_label,
+                                font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                                 thickness : 20,
                                 len : 1
                               },
-                      opacity : 0.8
+                      opacity : plotDefaultConfig.DEFAULT_MARKER_OPACITY
                     }
               }
             ],
-      layout : getDefaultLayout (title, x_label, y_label)
+      layout : getDefaultLayout (title, x_label, y_label, plotDefaultConfig)
     }
 }
 
-function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y_label, z_label, colorscale, title) {
+function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y_label, z_label, colorscale, title, plotDefaultConfig) {
   return {
       data: [
               {
@@ -166,22 +163,23 @@ function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y
             ],
       layout : {
                  title: !isNull(title) ? title : '',
+                 font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                  hovermode: 'closest',
-                 xaxis: getLabelConfig(x_label),
-                 yaxis: getLabelConfig(y_label),
+                 xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+                 yaxis: getLabelConfig(y_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
                  scene: {
-                   xaxis: getLabelConfig(x_label),
-                   yaxis: getLabelConfig(y_label),
-                   zaxis: getLabelConfig(z_label)
+                   xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+                   yaxis: getLabelConfig(y_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+                   zaxis: getLabelConfig(z_label, plotDefaultConfig.DEFAULT_TITLE_FONT)
               		},
-                 margin: DEFAULT_MARGINS
+                 margin: plotDefaultConfig.DEFAULT_MARGINS
               }
       }
 }
 
 function get_plotdiv_xyy(x_values, y0_values, y1_values,
                           x_error_values, y0_error_values, y1_error_values,
-                          wti_x_ranges, x_label, y0_label, y1_label, title){
+                          wti_x_ranges, x_label, y0_label, y1_label, title, plotDefaultConfig){
     return {
         data: [
                 {
@@ -190,8 +188,8 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                   hoverinfo : 'none',
                   x : x_values,
                   y : y0_values,
-                  error_x : getErrorConfig(x_error_values),
-                  error_y : getErrorConfig(y0_error_values),
+                  error_x : getErrorConfig(x_error_values, plotDefaultConfig),
+                  error_y : getErrorConfig(y0_error_values, plotDefaultConfig),
                   name: y0_label
                 },
                 {
@@ -200,24 +198,25 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                   showlegend : false,
                   x : x_values,
                   y : y1_values,
-                  error_x : getErrorConfig(x_error_values),
-                  error_y : getErrorConfig(y1_error_values),
+                  error_x : getErrorConfig(x_error_values, plotDefaultConfig),
+                  error_y : getErrorConfig(y1_error_values, plotDefaultConfig),
                   name: y1_label
                 }
               ],
         layout : {
                    title: !isNull(title) ? title : '',
+                   font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    hovermode: 'closest',
-                   xaxis: getLabelConfig(x_label),
+                   xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
                    dragmode:'select',
-                   margin: DEFAULT_MARGINS,
-                   shapes: getShapesFromWti (wti_x_ranges)
+                   margin: plotDefaultConfig.DEFAULT_MARGINS,
+                   shapes: getShapesFromWti (wti_x_ranges, plotDefaultConfig.WTI_FILLCOLOR, plotDefaultConfig.WTI_OPACITY)
                 }
         }
 }
 
 //Return the ploty shapes for higlight the WRONG TIME INTERVALS
-function getShapesFromWti (wti_x_ranges) {
+function getShapesFromWti (wti_x_ranges, fillcolor, opacity) {
   var wti_shapes = [];
 
   for (i in wti_x_ranges) {
@@ -232,8 +231,8 @@ function getShapesFromWti (wti_x_ranges) {
                       y0: 0,
                       x1: wti_range[1],
                       y1: 1,
-                      fillcolor: '#dd4814',
-                      opacity: 0.1,
+                      fillcolor: fillcolor,
+                      opacity: opacity,
                       line: {
                           width: 0
                       }
@@ -244,7 +243,7 @@ function getShapesFromWti (wti_x_ranges) {
   return wti_shapes;
 }
 
-function getConfidenceShape (y_range) {
+function getConfidenceShape (y_range, fillcolor, opacity) {
   return {
           type: 'rect',
           xref: 'paper',
@@ -253,29 +252,30 @@ function getConfidenceShape (y_range) {
           y0: y_range[0],
           x1: 1,
           y1: y_range[1],
-          fillcolor: '#265a88',
-          opacity: 0.2,
+          fillcolor: fillcolor,
+          opacity: opacity,
           line: {
               width: 0
           }
       };
 }
 
-function getDefaultLayout (title, x_label, y_label) {
+function getDefaultLayout (title, x_label, y_label, plotDefaultConfig) {
   return {
              title: !isNull(title) ? title : '',
+             font: plotDefaultConfig.DEFAULT_TITLE_FONT,
              hovermode: 'closest',
-             xaxis: getLabelConfig(x_label),
-             yaxis: getLabelConfig(y_label),
-             margin: DEFAULT_MARGINS
+             xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+             yaxis: getLabelConfig(y_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
+             margin: plotDefaultConfig.DEFAULT_MARGINS
           };
 }
 
-function getLabelConfig (label){
-  return { title : label, titlefont : DEFAULT_TITLE_FONT };
+function getLabelConfig (label, titlefont){
+  return { title : label, titlefont : titlefont };
 }
 
-function getLine (xdata, ydata, color){
+function getLine (xdata, ydata, color, width){
   return {
           type : 'scatter',
           showlegend : false,
@@ -285,7 +285,7 @@ function getLine (xdata, ydata, color){
           y : ydata,
           line : {
                   color : color,
-                  width : DEFAULT_LINE_WIDTH
+                  width : width
                 }
         };
 }
@@ -299,22 +299,23 @@ function getCrossLine (xrange, yrange, color, width, style, opacity){
            line: {
                   dash: isNull(style) ? 'solid' : style,
                   width: isNull(width) ? 1 : width,
-                  color: isNull(color) ? '#dd4814' : color,
-                  width: isNull(opacity) ? 1 : opacity
+                  color: isNull(color) ? '#dd4814' : color
                 },
-           hoverinfo: "none" };
+           opacity: isNull(opacity) ? 1 : opacity,
+           hoverinfo: "none"
+         };
 }
 
-function getErrorConfig(error_data) {
+function getErrorConfig(error_data, plotDefaultConfig) {
   return {
            type : 'data',
            array : error_data,
            visible : true,
-           color : ERROR_BAR_COLOR
+           color : plotDefaultConfig.ERROR_BAR_COLOR
         };
 }
 
-function getAgnPlotTrace(yaxis, xData, yData, yErrorData) {
+function getAgnPlotTrace(yaxis, xData, yData, yErrorData, plotDefaultConfig, color) {
   var plotTrace = {
           type : 'scatter',
           mode : "markers",
@@ -322,7 +323,13 @@ function getAgnPlotTrace(yaxis, xData, yData, yErrorData) {
           hoverinfo : 'x+y',
           x : xData,
           y : yData,
-          error_y : getErrorConfig(yErrorData)
+          error_y : !isNull(yErrorData) ? getErrorConfig(yErrorData, plotDefaultConfig) : null,
+          marker : {
+                symbol : plotDefaultConfig.DEFAULT_MARKER_TYPE,
+                size : plotDefaultConfig.DEFAULT_MARKER_SIZE.default,
+                color : isNull(color) ? plotDefaultConfig.DEFAULT_PLOT_COLOR : color,
+                opacity : plotDefaultConfig.DEFAULT_MARKER_OPACITY
+              }
         };
 
   if (!isNull(yaxis)) {
@@ -332,13 +339,13 @@ function getAgnPlotTrace(yaxis, xData, yData, yErrorData) {
   return plotTrace;
 }
 
-function getAgnPlotTraceWithXErrorData(yaxis, xData, yData, xErrorData, yErrorData) {
-  var plotTrace = getAgnPlotTrace(yaxis, xData, yData, yErrorData);
-  plotTrace.error_x = getErrorConfig(xErrorData);
+function getAgnPlotTraceWithXErrorData(yaxis, xData, yData, xErrorData, yErrorData, plotDefaultConfig, color) {
+  var plotTrace = getAgnPlotTrace(yaxis, xData, yData, yErrorData, plotDefaultConfig, color);
+  plotTrace.error_x = getErrorConfig(xErrorData, plotDefaultConfig);
   return plotTrace;
 }
 
-function getAnnotation(text, x, y) {
+function getAnnotation(text, x, y, arrowhead) {
   return {
       x: x,
       y: y,

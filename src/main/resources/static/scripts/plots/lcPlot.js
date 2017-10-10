@@ -81,6 +81,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.getPlotlyConfig = function (data) {
 
     var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
 
     var dataWithGaps = this.addGapsToData(data[0].values, data[1].values, data[2].values, this.plotConfig.dt * 5);
 
@@ -89,32 +90,35 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                                         (data.length > 4) ? this.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                         this.plotConfig.styles.labels[coords.x],
                                         this.plotConfig.styles.labels[coords.y],
-                                        this.plotConfig.styles.title);
+                                        this.plotConfig.styles.title,
+                                        plotDefaultConfig);
 
     if (data.length > 5) {
       if (data[5].values.length > 0) {
         //Lightcurve has baseline values
-        plotlyConfig.data.push(getLine (data[0].values, data[5].values, '#DD3333'));
+        plotlyConfig.data.push(getLine (data[0].values, data[5].values, plotDefaultConfig.BASELINE_COLOR, plotDefaultConfig.DEFAULT_LINE_WIDTH.default));
       }
     } else {
       this.btnSettings.hide();
     }
 
-    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
     plotlyConfig = this.prepareAxis(plotlyConfig);
 
     return plotlyConfig;
   }
 
-  this.addExtraDataConfig = function (plotlyConfig) {
+  this.addExtraDataConfig = function (plotlyConfig, plotDefaultConfig) {
     if (!isNull(this.extraData) && this.extraData.length > 1){
+
       //Inserts extra data as line in plot
-      var extraTrace = getLine (this.extraData[0], this.extraData[1], EXTRA_DATA_COLOR);
+      var extraTrace = getLine (this.extraData[0], this.extraData[1],
+                                plotDefaultConfig.EXTRA_DATA_COLOR, plotDefaultConfig.DEFAULT_LINE_WIDTH.default);
       if (this.extraData.length > 2
           && this.extraData[2].length > 0
           && jQuery.isNumeric(this.extraData[2][0])) {
             //If third extra data column is numeric set is as y_error
-            extraTrace.error_y = getErrorConfig(this.extraData[2]);
+            extraTrace.error_y = getErrorConfig(this.extraData[2], plotDefaultConfig);
       }
       extraTrace.comesFromExtra = true;
       plotlyConfig.data.splice(0, 0, extraTrace);
