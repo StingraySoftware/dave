@@ -1,10 +1,10 @@
 
 //Adds new Periodogram Tab Panel
-function addPGTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+function addPGTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new PGTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
-                        theService, navBarList, panelContainer, plotConfig, projectConfig);
+                        theService, navBarList, panelContainer, plotConfig, projectConfig, plotStyle);
 }
 
 //Subscribes the load workspace PGTabPanel function
@@ -14,12 +14,13 @@ tabPanelsLoadFns["PGTabPanel"] = function (tabConfig) {
                       $(".daveContainer"),
                       tabConfig.plotConfig,
                       null,
+                      tabConfig.plotConfig.plotStyle,
                       tabConfig.id,
                       tabConfig.navItemClass);
 }
 
 //Periodogram Tab Panel
-function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -34,13 +35,17 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
              navItemClass: this.navItemClass,
              plotConfig: this.plotConfig,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
@@ -78,8 +83,8 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       null,
                       "fullWidth",
                       false,
-                      this.projectConfig
-                    );
+                      this.projectConfig,
+                      !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null);
     this.addPlot(this.pgPlot, true);
   }
 
@@ -142,11 +147,14 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   //Set the selected plot configs
   this.plotConfig = plotConfig;
 
+  //Preapares PG toolpanel data
   this.setTitle("Periodogram");
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
-
-  //Preapares PG toolpanel data
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
+  
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
 

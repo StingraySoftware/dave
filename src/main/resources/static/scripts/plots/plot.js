@@ -1,3 +1,4 @@
+//Base plot class
 
 function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable) {
 
@@ -102,7 +103,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.btnFullScreen.click(function( event ) {
-   if (currentObj.$html.hasClass("fullWidth")) {
+   if (currentObj.isExpanded()) {
      currentObj.btnFullScreen.find("i").switchClass( "fa-compress", "fa-arrows-alt");
    } else {
      currentObj.btnFullScreen.find("i").switchClass( "fa-arrows-alt", "fa-compress");
@@ -159,7 +160,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     currentObj.$html.append(loadDialog);
  });
 
- this.btnStyle .click(function( event ) {
+ this.btnStyle.click(function( event ) {
    currentObj.sendPlotEvent('on_style_click', {});
  });
 
@@ -173,14 +174,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    });
  }
 
- if (!isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable) {
-   //If plot is lightcurve adds Select button to plot
-   this.btnSelect = $('<button class="btn btn-default btnSelect" data-toggle="tooltip" title="Select plot"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
-   this.$html.find(".plotTools").append(this.btnSelect);
-   this.btnSelect.click(function(event){
-     currentObj.$html.toggleClass("plotSelected");
-     OnPlotSelected();
-   });
+ this.isExpanded = function () {
+   return this.$html.hasClass("fullWidth");
+ }
+
+ this.onSelected = function (){
+   this.$html.toggleClass("plotSelected");
+   OnPlotSelected();
  }
 
  this.isSelectable = function(){
@@ -321,9 +321,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return data; //This method is just for being overriden if necessary
  }
 
+ this.getDefaultPlotlyConfig = function () {
+   var plotDefaultConfig = $.extend(true, {}, CONFIG.PLOT_CONFIG);
+   var tab = getTabForSelector(this.id);
+   if (!isNull(tab)){
+     plotDefaultConfig = tab.getDefaultPlotlyConfig();
+   }
+   return plotDefaultConfig;
+ }
+
  this.getPlotlyConfig = function (data) {
    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
    var plotlyConfig = null;
+   var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
 
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
@@ -331,32 +341,39 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.getLabel(coords.x),
                                     currentObj.getLabel(coords.y),
-                                    currentObj.plotConfig.styles.title)
+                                    currentObj.plotConfig.styles.title,
+                                    plotDefaultConfig)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
       plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
                                     currentObj.getLabel(coords.x),
                                     currentObj.getLabel(coords.y),
-                                    data[3].values);
+                                    data[3].values,
+                                    plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
-                                        currentObj.plotConfig.styles.title);
+                                        currentObj.plotConfig.styles.title,
+                                        plotDefaultConfig);
+
    } else if (currentObj.plotConfig.styles.type == "scatter_with_errors") {
       plotlyConfig = get_plotdiv_scatter_with_errors(data[coords.x].values, data[coords.y].values,
                                                      data[coords.x].error_values, data[coords.y].error_values,
                                                      currentObj.getLabel(coords.x),
                                                      currentObj.getLabel(coords.y),
-                                                     currentObj.plotConfig.styles.title);
+                                                     currentObj.plotConfig.styles.title,
+                                                     plotDefaultConfig);
+
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
                                         'Amplitude<br>Map',
-                                        currentObj.plotConfig.styles.title);
+                                        currentObj.plotConfig.styles.title,
+                                        plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
@@ -365,10 +382,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.getLabel(coords.x),
                                    currentObj.getLabel(coords.y),
                                    currentObj.getLabel(2),
-                                   currentObj.plotConfig.styles.title);
+                                   currentObj.plotConfig.styles.title,
+                                   plotDefaultConfig);
    }
 
-   plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+   plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
    plotlyConfig = this.prepareAxis(plotlyConfig);
 
    return plotlyConfig;
@@ -434,7 +452,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return plotlyConfig;
  }
 
- this.addExtraDataConfig = function (plotlyConfig) {
+ this.addExtraDataConfig = function (plotlyConfig, plotDefaultConfig) {
    if (!isNull(this.extraData)
        && this.extraData.length > 1
        && plotlyConfig.data.length > 0){
@@ -444,10 +462,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      extraTrace.x = coords.x;
      extraTrace.y = coords.y;
      if (!isNull(extraTrace.line)) {
-       extraTrace.line = $.extend(true, extraTrace.line, { color : EXTRA_DATA_COLOR });;
+       extraTrace.line = $.extend(true, extraTrace.line, { color : plotDefaultConfig.EXTRA_DATA_COLOR });
      }
      if (!isNull(extraTrace.marker)) {
-       extraTrace.marker = $.extend(true, extraTrace.marker, { color : EXTRA_DATA_COLOR });;
+       extraTrace.marker = $.extend(true, extraTrace.marker, { color : plotDefaultConfig.EXTRA_DATA_COLOR });
      }
      if (this.extraData.length > 2
          && this.extraData[2].length > 0
@@ -458,14 +476,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                && jQuery.isNumeric(this.extraData[3][0])) {
                  //If fourth extra data column is numeric also, consider both columns as errors
                  var error_coords = this.getSwitchedCoords( { x: this.extraData[2], y: this.extraData[3]} );
-                 extraTrace.error_x = getErrorConfig(error_coords.x);
-                 extraTrace.error_y = getErrorConfig(error_coords.y);
+                 extraTrace.error_x = getErrorConfig(error_coords.x, plotDefaultConfig);
+                 extraTrace.error_y = getErrorConfig(error_coords.y, plotDefaultConfig);
            } else if (!this.isSwitched){
              //Consider third column as y_error
-             extraTrace.error_y = getErrorConfig(this.extraData[2]);
+             extraTrace.error_y = getErrorConfig(this.extraData[2], plotDefaultConfig);
            } else {
              //Consider third column as x_error
-             extraTrace.error_x = getErrorConfig(this.extraData[2]);
+             extraTrace.error_x = getErrorConfig(this.extraData[2], plotDefaultConfig);
            }
      }
      extraTrace.comesFromExtra = true;
@@ -511,7 +529,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.redrawDiffered = function () {
-   setTimeout(function(){
+   currentObj.clearTimeouts();
+
+   currentObj.redrawTimeout = setTimeout(function(){
      //Runs redraw plot on differed execution
      if (!isNull(currentObj.data)) {
        var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
@@ -692,6 +712,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.clearTimeouts = function () {
+    if (!isNull(currentObj.redrawTimeout)) { clearTimeout(currentObj.redrawTimeout); currentObj.redrawTimeout = null; }
     if (!isNull(currentObj.resizeTimeout)) { clearTimeout(currentObj.resizeTimeout); currentObj.resizeTimeout = null; }
     if (!isNull(currentObj.onMouseEnterTimeout)) { clearTimeout(currentObj.onMouseEnterTimeout); currentObj.onMouseEnterTimeout = null; }
     if (!isNull(currentObj.onHoverTimeout)) { clearTimeout(currentObj.onHoverTimeout); currentObj.onHoverTimeout = null; }
@@ -808,9 +829,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     try {
        if (coords == null) { return ""; }
        var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
+       var maxLabelLength = (this.isExpanded()) ? 60 : 20;
        var labelY = !isNull(coords.label) ? coords.label : this.getLabel(swcoords.y);
-       var infotextforx = this.getLabel(swcoords.x) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
-       var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
+       var infotextforx = truncateText(this.getLabel(swcoords.x), maxLabelLength) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
+       var infotextfory = truncateText(labelY, maxLabelLength) + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
        var error_x_string = "";
        var error_y_string = "";
        if (!isNull(coords.error_x)) {
@@ -891,9 +913,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
   this.addAnnotation = function (text, x, y){
     if (text != ""){
-      if (!isNull(currentObj.plotConfig.plotType) && currentObj.plotConfig.plotType == "X*Y") { y = y / x; }
+      if (!isNull(this.plotConfig.plotType) && this.plotConfig.plotType == "X*Y") { y = y / x; }
       log("addAnnotation: " + text + " to (" + x + "," + y + "), Plot.id: " + this.id);
-      this.annotations.push(getAnnotation(text, x, y));
+      this.annotations.push(getAnnotation(text, x, y, this.getDefaultPlotlyConfig().ANNOTATION_ARROWHEAD));
       this.redrawDiffered();
       this.sendPlotEvent('on_plot_styles_changed', {});
     }
@@ -1013,11 +1035,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     if (!isNull(this.extraData)
         && (this.extraData.length > 2)) {
       var annotationsArr = this.extraData[this.extraData.length - 1];
+      var plotDefaultConfig = this.getDefaultPlotlyConfig();
+
       for (i in annotationsArr){
         var text = annotationsArr[i];
         if (text != "" && !jQuery.isNumeric(text)){
           //Add annotations from extraData
-          var annotation = getAnnotation(text.replace(/\'/g,''), this.extraData[0][i], this.extraData[1][i]);
+          var annotation = getAnnotation(text.replace(/\'/g,''),
+                                         this.extraData[0][i],
+                                         this.extraData[1][i],
+                                         plotDefaultConfig.ANNOTATION_ARROWHEAD);
           annotation.comesFromExtra = true;
           this.annotations.push(annotation);
         }
@@ -1123,7 +1150,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     plotConfig.id = this.id;
     plotConfig.class = this.constructor.name;
     plotConfig.isVisible = this.isVisible;
-    plotConfig.fullWidth = this.$html.hasClass("fullWidth");
+    plotConfig.fullWidth = this.isExpanded();
     plotConfig.annotations = this.annotations;
     plotConfig.plotStyle = this.plotStyle;
 
@@ -1141,7 +1168,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         tab.setSectionVisibility(section, true);
       }
 
-      if (this.$html.hasClass("fullWidth") != plotConfig.fullWidth){
+      if (this.isExpanded() != plotConfig.fullWidth){
         this.btnFullScreen.click();
       }
 
@@ -1171,243 +1198,288 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.getStyleJQElem = function () {
-      var $style = $('<div class="plotStyle marginTop"></div>');
+      var $style = $('<div class="plotStyle marginTop">' +
+                      '<div class="floatingContainer">' +
+                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                      '</div>' +
+                    '</div>');
 
-      if (!isNull(this.plotConfig.styles.title)) {
-        $style.append(getTextBox ("TITLE" + this.id, "inputTITLE width100",
-                                  "Title", this.plotConfig.styles.title,
-                                  function(value, input) {
-                                    currentObj.plotConfig.styles.title = value;
-                                    currentObj.redrawDiffered();
-                                  }));
+      $style.find(".btnClear").click(function () {
+        currentObj.plotStyle = null;
+        currentObj.sendPlotEvent('on_style_click', {});
+        currentObj.redrawDiffered();
+      });
+
+      $style = this.addTitleAndAxisLabelsToStyleJQElem($style);
+      $style = this.addPlotConfigStyleJQElem($style);
+      return $style;
+  }
+
+  this.addTitleAndAxisLabelsToStyleJQElem = function ($style) {
+
+    //Adds the title style controls
+    $style.append(getTextBox ("TITLE" + this.id, "inputTITLE width100",
+                              "Title", !isNull(this.plotConfig.styles.title) ? this.plotConfig.styles.title : "",
+                              function(value, input) {
+                                currentObj.plotConfig.styles.title = value;
+                                currentObj.redrawDiffered();
+                              }));
+
+    //Adds the axis labels style controls
+    for (axis in this.plotConfig.styles.labels){
+      $style.append(getTextBox ("LABEL_" + axis + "_" + this.id, "inputLABEL" + axis + " width100",
+                                "Label " + axis, this.getLabel(axis),
+                                function(value, input) {
+                                  var axis = input.attr("name").split("_")[1];
+                                  currentObj.setLabel(axis, value);
+                                  currentObj.redrawDiffered();
+                                }));
+    }
+
+    return $style;
+  }
+
+  this.addPlotConfigStyleJQElem = function ($style) {
+
+    if (!isNull(this.data)) {
+      var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
+      var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+
+      //Prepares or updates plot style object
+      if (isNull(currentObj.plotStyle)
+          || currentObj.plotStyle.data.length != plotlyConfig.data.length){
+        currentObj.plotStyle = getEmptyPlotStyle(plotlyConfig);
       }
 
-      for (axis in this.plotConfig.styles.labels){
-        $style.append(getTextBox ("LABEL_" + axis + "_" + this.id, "inputLABEL" + axis + " width100",
-                                  "Label " + axis, this.getLabel(axis),
-                                  function(value, input) {
-                                    var axis = input.attr("name").split("_")[1];
-                                    currentObj.setLabel(axis, value);
-                                    currentObj.redrawDiffered();
-                                  }));
-      }
+      if (!isNull(plotlyConfig)) {
 
-      if (!isNull(this.data)) {
-        var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
+        //For each trace in the plot
+        for (traceIdx in plotlyConfig.data){
+          var trace = plotlyConfig.data[traceIdx];
+          if ((trace.type != "surface")
+              && (trace.type != "heatmap")
+              && !isNull(trace.x)) {
+            //If not is 3d or heatmap type plot and has data
+            $style.append($('<h3 class="clear">Trace ' + traceIdx + ':</h3>'));
 
-        //Prepares or updates plot style object
-        if (isNull(currentObj.plotStyle)
-            || currentObj.plotStyle.data.length != plotlyConfig.data.length){
-          currentObj.plotStyle = getEmptyPlotStyle(plotlyConfig);
-        }
+            if (!isNull(trace.line)){
+              $style.append($('<p class="clear">Line style:</p>'));
 
-        if (!isNull(plotlyConfig)) {
-
-          //For each trace in the plot
-          for (traceIdx in plotlyConfig.data){
-            var trace = plotlyConfig.data[traceIdx];
-            if ((trace.type != "surface")
-                && (trace.type != "heatmap")
-                && !isNull(trace.x)) {
-              //If not is 3d or heatmap type plot and has data
-              $style.append($('<h3>Trace ' + traceIdx + ':</h3>'));
-
-              if (!isNull(trace.line)){
-                $style.append($('<p class="clear">Line style:</p>'));
-
-                //Adds the line color selector
-                var colorPickerId = "colorPickerLn_" + traceIdx + "_" + this.id;
-                $style.append(getColorPicker(colorPickerId, trace.line.color, function (color, id) {
-                  var traceIdx = id.split("_")[1];
-                  currentObj.plotStyle.data[traceIdx].line.color = color;
-                  currentObj.redrawDiffered();
-                }));
-
-                //Adds the line width
-                $style.append(getInlineRangeBox ("lineWidth_" + traceIdx + "_" + this.id, "inputLineWidth",
-                                            "Line width", trace.line.width, 1, 9,
-                                            function(value, input) {
-                                              var traceIdx = input.attr("name").split("_")[1];
-                                              currentObj.plotStyle.data[traceIdx].line.width = value;
-                                              currentObj.redrawDiffered();
-                                            }));
-              }
-
-              if (!isNull(trace.marker)){
-
-                //Adds the marker type selector
-                $style.append(getRadioControl("markerType_" + traceIdx + "_" + this.id,
-                                              "Marker type",
-                                              "markerType",
-                                              [
-                                                { id:"circle", label:"circle", value:"circle" },
-                                                { id:"circle-open", label:"circle-open", value:"circle-open" },
-                                                { id:"square", label:"square", value:"square" },
-                                                { id:"square-open", label:"square-open", value:"square-open" },
-                                                { id:"diamond", label:"diamond", value:"diamond" },
-                                                { id:"diamond-open", label:"diamond-open", value:"diamond-open" },
-                                                { id:"cross", label:"cross", value:"cross" },
-                                                { id:"x", label:"x", value:"x" }
-                                              ],
-                                              !isNull(trace.marker.symbol) ? trace.marker.symbol : "circle",
-                                              function(value, id) {
-                                                var traceIdx = id.split("_")[1];
-                                                currentObj.plotStyle.data[traceIdx].marker.symbol = value;
-                                                currentObj.redrawDiffered();
-                                              },
-                                              "smallTextRadio"));
-
-                //Adds the marker style
-                $style.append($('<p class="clear marginTop">Markers style:</p>'));
-
-                //Adds the marker color selector
-                var colorPickerId = "colorPickerMk_" + traceIdx + "_" + this.id;
-                $style.append(getColorPicker(colorPickerId, trace.marker.color, function (color, id) {
-                  var traceIdx = id.split("_")[1];
-                  currentObj.plotStyle.data[traceIdx].marker.color = color;
-                  currentObj.redrawDiffered();
-                }));
-
-                //Adds the marker size
-                $style.append(getInlineRangeBox ("markerSize_" + traceIdx + "_" + this.id, "inputMarkerSize",
-                                            "Marker size", trace.marker.size, 1, 20,
-                                            function(value, input) {
-                                              var traceIdx = input.attr("name").split("_")[1];
-                                              currentObj.plotStyle.data[traceIdx].marker.size = value;
-                                              currentObj.redrawDiffered();
-                                            }));
-              }
-
-              if (!isNull(trace.error_x)
-                    && !isNull(trace.error_x.array)
-                    && trace.error_x.array.length > 0){
-                $style.append($('<p class="clear">Error X style:</p>'));
-
-                //Adds the error_x color selector
-                var colorPickerId = "colorPickerEx_" + traceIdx + "_" + this.id;
-                $style.append(getColorPicker(colorPickerId, "#" + RGBAStrToHex(trace.error_x.color), function (color, id) {
-                  var traceIdx = id.split("_")[1];
-                  var alpha = ERROR_BAR_OPACITY;
-                  if (!isNull(currentObj.plotStyle.data[traceIdx].error_x.color)) {
-                    alpha = RGBAStrToRGBA(currentObj.plotStyle.data[traceIdx].error_x.color).a;
-                  }
-                  currentObj.plotStyle.data[traceIdx].error_x.color = HexAndAlphaToRGBAStr (color, alpha);
-                  currentObj.redrawDiffered();
-                }));
-
-                //Adds the error_x opacity
-                $style.append(getInlineRangeBox ("errorXOpacity_" + traceIdx + "_" + this.id, "inputErrorXOpacity float",
-                                            "Opacity", RGBAStrToRGBA(trace.error_x.color).a, 0, 1,
-                                            function(value, input) {
-                                              var traceIdx = input.attr("name").split("_")[1];
-                                              var rgba = RGBAStrToRGBA(currentObj.plotStyle.data[traceIdx].error_x.color);
-                                              currentObj.plotStyle.data[traceIdx].error_x.color = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
-                                              currentObj.redrawDiffered();
-                                            }));
-              }
-
-              if (!isNull(trace.error_y)
-                  && !isNull(trace.error_y.array)
-                  && trace.error_y.array.length > 0){
-                $style.append($('<p class="clear">Error Y style:</p>'));
-
-                //Adds the error_y color selector
-                var colorPickerId = "colorPickerEy_" + traceIdx + this.id;
-                $style.append(getColorPicker(colorPickerId, "#" + RGBAStrToHex(trace.error_y.color), function (color, id) {
-                  var traceIdx = id.replace("colorPickerEy_","").replace(currentObj.id, "");
-                  var alpha = ERROR_BAR_OPACITY;
-                  if (!isNull(currentObj.plotStyle.data[traceIdx].error_y.color)) {
-                    alpha = RGBAStrToRGBA(currentObj.plotStyle.data[traceIdx].error_y.color).a;
-                  }
-                  currentObj.plotStyle.data[traceIdx].error_y.color = HexAndAlphaToRGBAStr (color, alpha);
-                  currentObj.redrawDiffered();
-                }));
-
-                //Adds the error_y opacity
-                $style.append(getInlineRangeBox ("errorYOpacity_" + traceIdx + "_" + this.id, "inputErrorYOpacity float",
-                                            "Opacity", RGBAStrToRGBA(trace.error_y.color).a, 0, 1,
-                                            function(value, input) {
-                                              var traceIdx = input.attr("name").split("_")[1];
-                                              var rgba = RGBAStrToRGBA(currentObj.plotStyle.data[traceIdx].error_y.color);
-                                              currentObj.plotStyle.data[traceIdx].error_y.color = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
-                                              currentObj.redrawDiffered();
-                                            }));
-              }
-            }
-          }
-
-          //If there are annotations:
-          if (!isNull(currentObj.annotations)
-              && currentObj.annotations.length > 0){
-
-            $style.append($('<h3>Annotations:</h3>'));
-
-            //For each annotation in the plot
-            for (annotationIdx in currentObj.annotations){
-
-              var annotation = currentObj.annotations[annotationIdx];
-
-              if (annotationIdx > 0) { $style.append("</br></br></br>"); }
-
-              var deleteBtnWrp = $('<div class="switch-wrapper">' +
-                                      '<div class="delete-btn fa fa-trash-o" annId="' + annotationIdx + '" aria-hidden="true"></div>' +
-                                    '</div>');
-              var deleteBtn = deleteBtnWrp.find(".delete-btn");
-              deleteBtn.click( function ( event ) {
-                var annIdx = $(this).attr("annId");
-                currentObj.annotations.splice(annIdx,1);
-                currentObj.redrawDiffered();
-                currentObj.sendPlotEvent('on_plot_styles_changed', {});
-              });
-              $style.append(deleteBtnWrp);
-
-              $style.append(getTextBox ("ANNTEXT_" + annotationIdx + "_" + this.id, "inputANNTEXT",
-                                                "Annotation", annotation.text,
-                                                function(value, input) {
-                                                  var annIdx = input.attr("name").split("_")[1];
-                                                  currentObj.annotations[annIdx].text = value;
-                                                  currentObj.redrawDiffered();
-                                                }));
-
-              $style.append(getBooleanBox ("Show arrow",
-                                          "chkShowArrow_" + annotationIdx, annotation.showarrow,
-                                          function(enabled, cssClass) {
-                                            var annIdx = cssClass.split("_")[1];
-                                            currentObj.annotations[annIdx].showarrow = enabled;
-                                            currentObj.redrawDiffered();
-                                          }));
-
-              var colorPickerId = "colorPickerAnn_" + annotationIdx + "_" + this.id;
-              $style.append(getColorPicker(colorPickerId, annotation.arrowcolor , function (color, id) {
-                var annIdx = id.split("_")[1];
-                currentObj.annotations[annIdx].arrowcolor = color;
-                currentObj.annotations[annIdx].font = { color: color };
+              //Adds the line color selector
+              var colorPickerId = "colorPickerLn_" + traceIdx + "_" + this.id;
+              $style.append(getColorPicker(colorPickerId, trace.line.color, function (color, id) {
+                var traceIdx = id.split("_")[1];
+                currentObj.plotStyle.data[traceIdx].line.color = color;
                 currentObj.redrawDiffered();
               }));
 
-              $style.append(getInlineRangeBox ("arrowHead_" + annotationIdx + "_" + this.id, "inputArrowHead",
-                                          "Arrow head", annotation.arrowhead, 0, 7,
+              //Adds the line width
+              $style.append(getInlineRangeBox ("lineWidth_" + traceIdx + "_" + this.id, "inputLineWidth",
+                                          "Line width", trace.line.width, plotDefaultConfig.DEFAULT_LINE_WIDTH.min, plotDefaultConfig.DEFAULT_LINE_WIDTH.max,
                                           function(value, input) {
-                                            var annIdx = input.attr("name").split("_")[1];
-                                            currentObj.annotations[annIdx].arrowhead = value;
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].line.width = value;
                                             currentObj.redrawDiffered();
                                           }));
 
-              var opacityBox = getInlineRangeBox ("annOpacity_" + annotationIdx + "_" + this.id, "inputAnnOpacity float",
-                                          "Opacity", (!isNull(annotation.opacity) ? annotation.opacity : 1), 0, 1,
+              var $lineOpacity = getInlineRangeBox ("lineOpacity_" + traceIdx + "_" + this.id, "inputLineOpacity float",
+                                          "Opacity", !isNull(trace.opacity) ? trace.opacity : 1, 0, 1,
                                           function(value, input) {
-                                            var annIdx = input.attr("name").split("_")[1];
-                                            currentObj.annotations[annIdx].opacity = value;
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].opacity = value;
                                             currentObj.redrawDiffered();
                                           });
-              opacityBox.attr("style", "margin-top: 0px;")
-              $style.append(opacityBox);
+              $lineOpacity.attr("style", "margin-top: -4px;");
+              $style.append($lineOpacity);
+            }
+
+            if (!isNull(trace.marker)){
+
+              //Adds the marker type selector
+              $style.append(getRadioControl("markerType_" + traceIdx + "_" + this.id,
+                                            "Marker type",
+                                            "markerType",
+                                            [
+                                              { id:"circle", label:"circle", value:"circle" },
+                                              { id:"circle-open", label:"circle-open", value:"circle-open" },
+                                              { id:"square", label:"square", value:"square" },
+                                              { id:"square-open", label:"square-open", value:"square-open" },
+                                              { id:"diamond", label:"diamond", value:"diamond" },
+                                              { id:"diamond-open", label:"diamond-open", value:"diamond-open" },
+                                              { id:"cross", label:"cross", value:"cross" },
+                                              { id:"x", label:"x", value:"x" }
+                                            ],
+                                            !isNull(trace.marker.symbol) ? trace.marker.symbol : "circle",
+                                            function(value, id) {
+                                              var traceIdx = id.split("_")[1];
+                                              currentObj.plotStyle.data[traceIdx].marker.symbol = value;
+                                              currentObj.redrawDiffered();
+                                            },
+                                            "smallTextStyle"));
+
+              //Adds the marker style
+              $style.append($('<p class="clear marginTop">Markers style:</p>'));
+
+              //Adds the marker color selector
+              var colorPickerId = "colorPickerMk_" + traceIdx + "_" + this.id;
+              $style.append(getColorPicker(colorPickerId, trace.marker.color, function (color, id) {
+                var traceIdx = id.split("_")[1];
+                currentObj.plotStyle.data[traceIdx].marker.color = color;
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the marker size
+              $style.append(getInlineRangeBox ("markerSize_" + traceIdx + "_" + this.id, "inputMarkerSize",
+                                          "Marker size", trace.marker.size, plotDefaultConfig.DEFAULT_MARKER_SIZE.min, plotDefaultConfig.DEFAULT_MARKER_SIZE.max,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].marker.size = value;
+                                            currentObj.redrawDiffered();
+                                          }));
+
+              var $markerOpacity = getInlineRangeBox ("markerOpacity_" + traceIdx + "_" + this.id, "inputMarkerOpacity float",
+                                          "Opacity", trace.marker.opacity, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].marker.opacity = value;
+                                            currentObj.redrawDiffered();
+                                          });
+              $markerOpacity.attr("style", "margin-top: -4px;");
+              $style.append($markerOpacity);
+            }
+
+            if (!isNull(trace.error_x)
+                && !isNull(trace.error_x.array)
+                && trace.error_x.array.length > 0){
+              $style.append($('<p class="clear">Error X style:</p>'));
+
+              //Adds the error_x color selector
+              var colorPickerId = "colorPickerEx_" + traceIdx + "_" + this.id;
+              $style.append(getColorPicker(colorPickerId, "#" + RGBAStrToHex(trace.error_x.color), function (color, id) {
+                var traceIdx = id.split("_")[1];
+                var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_x.color) ?
+                                                  currentObj.plotStyle.data[traceIdx].error_x.color :
+                                                  currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                currentObj.plotStyle.data[traceIdx].error_x.color = HexAndAlphaToRGBAStr (color, rgba.a);
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the error_x opacity
+              $style.append(getInlineRangeBox ("errorXOpacity_" + traceIdx + "_" + this.id, "inputErrorXOpacity float",
+                                          "Opacity", RGBAStrToRGBA(trace.error_x.color).a, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_x.color) ?
+                                                                              currentObj.plotStyle.data[traceIdx].error_x.color :
+                                                                              currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                                            currentObj.plotStyle.data[traceIdx].error_x.color = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
+                                            currentObj.redrawDiffered();
+                                          }));
+            }
+
+            if (!isNull(trace.error_y)
+                && !isNull(trace.error_y.array)
+                && trace.error_y.array.length > 0){
+              $style.append($('<p class="clear">Error Y style:</p>'));
+
+              //Adds the error_y color selector
+              var colorPickerId = "colorPickerEy_" + traceIdx + this.id;
+              $style.append(getColorPicker(colorPickerId, "#" + RGBAStrToHex(trace.error_y.color), function (color, id) {
+                var traceIdx = id.replace("colorPickerEy_","").replace(currentObj.id, "");
+                var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_y.color) ?
+                                                  currentObj.plotStyle.data[traceIdx].error_y.color :
+                                                  currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                currentObj.plotStyle.data[traceIdx].error_y.color = HexAndAlphaToRGBAStr (color, rgba.a);
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the error_y opacity
+              $style.append(getInlineRangeBox ("errorYOpacity_" + traceIdx + "_" + this.id, "inputErrorYOpacity float",
+                                          "Opacity", RGBAStrToRGBA(trace.error_y.color).a, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_y.color) ?
+                                                                        currentObj.plotStyle.data[traceIdx].error_y.color :
+                                                                        currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                                            currentObj.plotStyle.data[traceIdx].error_y.color = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
+                                            currentObj.redrawDiffered();
+                                          }));
             }
           }
         }
-      }
 
-      return $style;
+        //If there are annotations:
+        if (!isNull(currentObj.annotations)
+            && currentObj.annotations.length > 0){
+
+          $style.append($('<h3>Annotations:</h3>'));
+
+          //For each annotation in the plot
+          for (annotationIdx in currentObj.annotations){
+
+            var annotation = currentObj.annotations[annotationIdx];
+
+            if (annotationIdx > 0) { $style.append("</br></br></br>"); }
+
+            var deleteBtnWrp = $('<div class="switch-wrapper">' +
+                                    '<div class="delete-btn fa fa-trash-o" annId="' + annotationIdx + '" aria-hidden="true"></div>' +
+                                  '</div>');
+            var deleteBtn = deleteBtnWrp.find(".delete-btn");
+            deleteBtn.click( function ( event ) {
+              var annIdx = $(this).attr("annId");
+              currentObj.annotations.splice(annIdx,1);
+              currentObj.redrawDiffered();
+              currentObj.sendPlotEvent('on_plot_styles_changed', {});
+            });
+            $style.append(deleteBtnWrp);
+
+            $style.append(getTextBox ("ANNTEXT_" + annotationIdx + "_" + this.id, "inputANNTEXT",
+                                              "Annotation", annotation.text,
+                                              function(value, input) {
+                                                var annIdx = input.attr("name").split("_")[1];
+                                                currentObj.annotations[annIdx].text = value;
+                                                currentObj.redrawDiffered();
+                                              }));
+
+            $style.append(getBooleanBox ("Show arrow",
+                                        "chkShowArrow_" + annotationIdx, annotation.showarrow,
+                                        function(enabled, cssClass) {
+                                          var annIdx = cssClass.split("_")[1];
+                                          currentObj.annotations[annIdx].showarrow = enabled;
+                                          currentObj.redrawDiffered();
+                                        }));
+
+            var colorPickerId = "colorPickerAnn_" + annotationIdx + "_" + this.id;
+            $style.append(getColorPicker(colorPickerId, annotation.arrowcolor , function (color, id) {
+              var annIdx = id.split("_")[1];
+              currentObj.annotations[annIdx].arrowcolor = color;
+              currentObj.annotations[annIdx].font = { color: color };
+              currentObj.redrawDiffered();
+            }));
+
+            $style.append(getInlineRangeBox ("arrowHead_" + annotationIdx + "_" + this.id, "inputArrowHead",
+                                        "Arrow head", annotation.arrowhead, 0, 7,
+                                        function(value, input) {
+                                          var annIdx = input.attr("name").split("_")[1];
+                                          currentObj.annotations[annIdx].arrowhead = value;
+                                          currentObj.redrawDiffered();
+                                        }));
+
+            var opacityBox = getInlineRangeBox ("annOpacity_" + annotationIdx + "_" + this.id, "inputAnnOpacity float",
+                                        "Opacity", (!isNull(annotation.opacity) ? annotation.opacity : 1), 0, 1,
+                                        function(value, input) {
+                                          var annIdx = input.attr("name").split("_")[1];
+                                          currentObj.annotations[annIdx].opacity = value;
+                                          currentObj.redrawDiffered();
+                                        });
+            opacityBox.attr("style", "margin-top: 0px;")
+            $style.append(opacityBox);
+          }
+        }
+      }
+    }
+
+    return $style;
   }
 
   log ("new plot id: " + this.id);

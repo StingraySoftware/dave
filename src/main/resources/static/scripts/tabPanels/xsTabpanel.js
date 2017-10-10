@@ -42,7 +42,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, XSTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
+        if (jsdata.statusText == "error"){
           //If abort cause is because python server died
           currentObj.outputPanel.setPlotsReadyState(true);
         }
@@ -98,13 +98,17 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
              navItemClass: this.navItemClass,
              plotConfigs: this.plotConfigs,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
@@ -200,6 +204,10 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.setTitle("XSpectrum");
 
   //Preapares XS toolpanel data
+  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
   for (i in this.plotConfigs){
     var plotConfig = this.plotConfigs[i];
