@@ -180,7 +180,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.onSelected = function (){
    this.$html.toggleClass("plotSelected");
-   OnPlotSelected();
  }
 
  this.isSelectable = function(){
@@ -1497,13 +1496,10 @@ function cleanPlotConfig (plotConfig) {
   return plotConfig;
 }
 
-function OnPlotSelected () {
-
+function getSelectedPlots () {
+  var selectedPlots = [];
   var $selectedPlots = $(".plotSelected");
   if ($selectedPlots.length > 1){
-
-    log("OnPlotSelected: Multiple plots selected!");
-    var selectedPlots = [];
 
     //For each plot element find its plot object in all tabs outputpanels
     $selectedPlots.each(function(){
@@ -1511,18 +1507,14 @@ function OnPlotSelected () {
       if (tab != null) {
         var plot = tab.outputPanel.getPlotById(this.id);
         if (plot != null) {
-          log("OnPlotSelected: Got plot id: " + this.id);
           selectedPlots.push(plot);
         }
       }
-    })
-
-    if (selectedPlots.length > 1) {
-      onMultiplePlotsSelected(selectedPlots); // master_page.js method
-    }
+    });
   }
+  return selectedPlots;
 }
 
-function ClearSelectedPlots () {
+function clearSelectedPlots () {
   $(".plotSelected").removeClass("plotSelected");
 }
