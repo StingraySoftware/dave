@@ -1273,9 +1273,9 @@ def get_plot_data_from_models(models, x_values):
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: df: If not 0 is the frequency rebining value
-# @param: models: array of models, dave_model definition with the starting parammeters
-# @param: priors: array of priors, dave_priors defined for each model parammeters
-# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
+# @param: models: array of models, dave_model definition with the starting parameters
+# @param: priors: array of priors, dave_priors defined for each model parameters
+# @param: sampling_params: dict with the parameter values for do the MCMC sampling
 #
 def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
                                 filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
@@ -1317,7 +1317,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: df: If not 0 is the frequency rebining value
-# @param: models: array of models, dave_model definition with the optimal parammeters
+# @param: models: array of models, dave_model definition with the optimal parameters
 # @param: n_iter: Number of bootstrap iterations
 # @param: mean: Mean value of the simulated light curve
 # @param: red_noise: The red noise value
@@ -1401,13 +1401,13 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 
                 if len(models_params) > 0 and len(powers) == len(models_params):
 
-                    # Histogram all the recorded model parammeters
+                    # Histogram all the recorded model parameters
                     param_errors = []
                     for i in range(models_params.shape[1]):
                         param_values = models_params[:, i]
                         counts, values = DsHelper.get_histogram(param_values, 0.1)
 
-                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        # Fit the histogram with a Gaussian an get the optimized parameters
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
@@ -1426,7 +1426,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         power_values = powers[:, i]
                         counts, values = DsHelper.get_histogram(power_values, 0.1)
 
-                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        # Fit the histogram with a Gaussian an get the optimized parameters
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
@@ -1525,9 +1525,9 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
 # @param: nyquist_factor: Average Nyquist frequency factor
 # @param: ls_norm: Periodogram normalization ["standard", "model", "log", "psd"]
 # @param: samples_per_peak: Points across each significant periodogram peak
-# @param: models: array of models, dave_model definition with the starting parammeters
-# @param: priors: array of priors, dave_priors defined for each model parammeters
-# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
+# @param: models: array of models, dave_model definition with the starting parameters
+# @param: priors: array of priors, dave_priors defined for each model parameters
+# @param: sampling_params: dict with the parameter values for do the MCMC sampling
 #
 def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destination,
                                 filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak,
@@ -2021,7 +2021,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
         fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
         if fit_model:
 
-            # Default fit parammeters
+            # Default fit parameters
             max_post=False
             fitmethod="L-BFGS-B"
             as_priors=None
@@ -2030,7 +2030,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
                 # Creates the priors from dave_priors
                 as_priors = ModelHelper.get_astropy_priors(priors)
                 if len(as_priors.keys()) > 0:
-                    # If there are priors then is a Bayesian Parammeters Estimation
+                    # If there are priors then is a Bayesian Parameters Estimation
                     max_post=True
                     fitmethod="BFGS"
 
@@ -2045,13 +2045,13 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
                 # Creates the Maximum Likelihood object for fitting
                 lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
 
-            # Creates the PSD Parammeters Estimation object and runs the fitting
+            # Creates the PSD Parameters Estimation object and runs the fitting
             parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
             res = parest.fit(lpost, starting_pars, neg=True)
 
             sample = None
             if as_priors and sampling_params is not None:
-                # If is a Bayesian Par. Est. and has sampling parammeters
+                # If is a Bayesian Par. Est. and has sampling parameters
                 # then sample the posterior distribution defined in `lpost` using MCMC
                 sample = parest.sample(lpost, res.p_opt, cov=res.cov,
                                          nwalkers=sampling_params["nwalkers"],
@@ -2065,7 +2065,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
             parnames = [n for n, f in zip(fit_model.param_names, fixed) \
                         if f is False]
 
-            # Add to results the estimated parammeters
+            # Add to results the estimated parameters
             params = []
             for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
                 param = dict()

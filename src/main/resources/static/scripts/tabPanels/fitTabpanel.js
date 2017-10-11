@@ -176,14 +176,14 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       currentObj.toolPanel.showPanel("loadPanel");
     });
 
-    //For each model add its parammeters controls
-    $container.append($('<h2>Prior parammeters:</h2>'));
+    //For each model add its parameters controls
+    $container.append($('<h2>Prior parameters:</h2>'));
     var $priorsContainer = $('<div class="priorsContainer"></div>');
     $container.append($priorsContainer);
 
     for (var i = 0; i < models.length; i++) {
       var model = models[i];
-      var modelParams = ModelParammeters[model["type"]];
+      var modelParams = ModelParameters[model["type"]];
       var firstParam = true;
       for (p in modelParams){
         var paramName = modelParams[p];
@@ -199,7 +199,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
           var name = paramName + "-" + i;
 
-          //Add the prior type selector for this parammeter
+          //Add the prior type selector for this parameter
           var $priorTypeRadioCont = getRadioControl(currentObj.id,
                                             paramName + " (" + model[paramName].toFixed(3)  + ")",
                                             "priorType_" + name,
