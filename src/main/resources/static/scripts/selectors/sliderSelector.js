@@ -18,7 +18,7 @@ function sliderSelector(id, title, filterData, fromValue, toValue, onSelectorVal
   this.maxRange = this.initToValue - this.initFromValue;
   this.precision = thePrecision;
   this.fixed_step = !isNull(fixed_step) ? fixed_step : null; // Sets the value step for snaping, fixed_step = 0.5 -> values: ... -1.0, -0.5, 0.0, 0.5, 1.0 ...
-  this.step = !isNull(fixed_step) ? fixed_step : 1.0;
+  this.step = !isNull(fixed_step) ? fixed_step : ((precision > 0) ? (this.maxRange / Math.pow(10, precision)) : 1.0);
   this.onSelectorValuesChanged = onSelectorValuesChangedFn;
   this.enabled = false;
   this.disableable = isNull(this.filterData.source);
