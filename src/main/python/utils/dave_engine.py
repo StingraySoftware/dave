@@ -2216,8 +2216,10 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
         divided_values = nan_and_inf_to_num(values_0 / values_1)
         if error_0.shape == error_1.shape == values_0.shape:
             divided_error = nan_and_inf_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
-    divided_values[divided_values > CONFIG.BIG_NUMBER]=0
-    divided_error[divided_error > CONFIG.BIG_NUMBER]=0
+    divided_values[divided_values >= CONFIG.BIG_NUMBER]=0
+    divided_values[divided_values <= -CONFIG.BIG_NUMBER]=0
+    divided_error[divided_error >= CONFIG.BIG_NUMBER]=0
+    divided_error[divided_error <= -CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error
 
 
