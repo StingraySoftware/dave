@@ -624,14 +624,19 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     currentObj.service.request_divided_lightcurves_from_colors(paramsData, function( jsdata ) {
       data = JSON.parse(jsdata);
 
+
       var joinedLcPlot = currentObj.getPlotById(paramsData.id);
-      joinedLcPlot.setData((!isNull(data)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
+      joinedLcPlot.setData((!isNull(data) && (data.length > 2)) ? $.extend(true, [], [ data[0], data[1] ]) : null);
 
       if (!isNull(paramsData.linkedPlotId)) {
         var joinedLcTimePlot = currentObj.getPlotById(paramsData.linkedPlotId);
-        var dataValues = { values: data[1].values };
-        var dataErrors = { values: data[1].error_values };
-        joinedLcTimePlot.setData((!isNull(data)) ? $.extend(true, [], [ data[2], dataValues, dataErrors, data[3], data[4] ]) : null);
+        if (!isNull(joinedLcTimePlot)){
+          joinedLcTimePlot.setData((!isNull(data) && (data.length > 4)) ? $.extend(true, [], [ data[2],
+                                                                        { values: data[1].values },
+                                                                        { values: data[1].error_values },
+                                                                        data[3],
+                                                                        data[4] ]) : null);
+        }
       }
     });
 
