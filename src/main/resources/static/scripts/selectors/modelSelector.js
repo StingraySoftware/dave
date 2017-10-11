@@ -1,5 +1,5 @@
 
-ModelParammeters = [] //Array with the parammeters names of each type of model
+ModelParameters = [] //Array with the parameters names of each type of model
 
 //Model Selector: Container with all supported models
 function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, applyBayesianParEstFn, filename) {
@@ -346,7 +346,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   }));
 
   this.setInputs = function () {
-    var modelParams = this.getParammeters();
+    var modelParams = this.getParameters();
     var $paramContainer = this.$html.find(".paramContainer");
     $paramContainer.html("");
 
@@ -412,7 +412,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
     var modelChanged = false;
 
     try {
-      var modelParams = currentObj.getParammeters();
+      var modelParams = currentObj.getParameters();
       var paramContainer = currentObj.$html.find(".paramContainer");
 
       for (p in modelParams){
@@ -438,7 +438,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   this.getModel = function (estimated) {
     if (this.visible) {
       var daveModel = { type: this.type, color: this.color };
-      var modelParams = this.getParammeters();
+      var modelParams = this.getParameters();
 
       for (p in modelParams){
         var paramName = modelParams[p];
@@ -466,7 +466,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   }
 
   this.setEstimation = function (params, modelIdx) {
-    var modelParams = this.getParammeters();
+    var modelParams = this.getParameters();
 
     for (p in modelParams){
       var paramName = modelParams[p] + ((modelIdx != -1) ? "_" + modelIdx : "");
@@ -492,7 +492,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   this.applyEstimations = function (paramName) {
     if (this.visible) {
       var daveModel = { type: this.type, color: this.color };
-      var modelParams = this.getParammeters();
+      var modelParams = this.getParameters();
       for (p in modelParams){
         this.applyEstimation(modelParams[p]);
       }
@@ -508,7 +508,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
   }
 
   this.clearEstimationsAndErrors = function () {
-    var modelParams = this.getParammeters();
+    var modelParams = this.getParameters();
     for (p in modelParams){
       this[modelParams[p] + "Est"] = null;
       this[modelParams[p] + "Err"] = null;
@@ -530,7 +530,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
 
   this.toLaTeXRows = function() {
     var laTexRows = "";
-    var modelParams = this.getParammeters();
+    var modelParams = this.getParameters();
 
     for (p in modelParams){
       var paramName = modelParams[p];
@@ -569,8 +569,8 @@ function GaussianModel(idx, color, onModelsChangedFn) {
   this.mean = 1.0;
   this.stddev = 0.5;
 
-  this.getParammeters = function () {
-    return ModelParammeters["Gaussian"];
+  this.getParameters = function () {
+    return ModelParameters["Gaussian"];
   }
 
   Model.call(this,
@@ -586,7 +586,7 @@ function GaussianModel(idx, color, onModelsChangedFn) {
 
   return this;
 };
-ModelParammeters["Gaussian"] = ["amplitude", "mean", "stddev"];
+ModelParameters["Gaussian"] = ["amplitude", "mean", "stddev"];
 
 
 //Model: Lorentz specific model inherited from Model class
@@ -599,8 +599,8 @@ function LorentzModel(idx, color, onModelsChangedFn) {
   this.x_0 = 1.0;
   this.fwhm = 0.5;
 
-  this.getParammeters = function () {
-    return ModelParammeters["Lorentz"];
+  this.getParameters = function () {
+    return ModelParameters["Lorentz"];
   }
 
   Model.call(this,
@@ -616,7 +616,7 @@ function LorentzModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
-ModelParammeters["Lorentz"] = ["amplitude", "x_0", "fwhm"];
+ModelParameters["Lorentz"] = ["amplitude", "x_0", "fwhm"];
 
 //Model: PowerLaw specific model inherited from Model class
 function PowerLawModel(idx, color, onModelsChangedFn) {
@@ -628,8 +628,8 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
   this.x_0 = 1.0;
   this.alpha = 0.5;
 
-  this.getParammeters = function () {
-    return ModelParammeters["PowerLaw"];
+  this.getParameters = function () {
+    return ModelParameters["PowerLaw"];
   }
 
   Model.call(this,
@@ -645,7 +645,7 @@ function PowerLawModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
-ModelParammeters["PowerLaw"] = ["amplitude", "x_0", "alpha"];
+ModelParameters["PowerLaw"] = ["amplitude", "x_0", "alpha"];
 
 
 //Model: BrokenPowerLaw specific model inherited from Model class
@@ -659,8 +659,8 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
   this.alpha_1 = 0.5;
   this.alpha_2 = 0.5;
 
-  this.getParammeters = function () {
-    return ModelParammeters["BrokenPowerLaw"];
+  this.getParameters = function () {
+    return ModelParameters["BrokenPowerLaw"];
   }
 
   Model.call(this,
@@ -676,4 +676,4 @@ function BrokenPowerLawModel(idx, color, onModelsChangedFn) {
 
   return this;
 }
-ModelParammeters["BrokenPowerLaw"] = ["amplitude", "x_break", "alpha_1", "alpha_2"];
+ModelParameters["BrokenPowerLaw"] = ["amplitude", "x_break", "alpha_1", "alpha_2"];

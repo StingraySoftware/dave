@@ -211,13 +211,13 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     //Long-term Variability controls set
     var $variance = $('<div class="variance">' +
                         '<h3>' +
-                          'Long-term variability parammeters:' +
+                          'Long-term variability parameters:' +
                         '</h3>' +
                         '<div class="varianceContainer">' +
                           '<p>Min counts for each chunk:</br><input id="mc_' + this.id + '" class="inputMinPhotons" type="text" name="mp_' + this.id + '" placeholder="' + this.variance_opts.min_counts.default + '" value="' + this.variance_opts.min_counts.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_counts.min + '-' + this.variance_opts.min_counts.max + '</span></p>' +
                           '<p>Min. time bins:</br><input id="mb_' + this.id + '" class="inputMinBins" type="text" name="mb_' + this.id + '" placeholder="' + this.variance_opts.min_bins.default + '" value="' + this.variance_opts.min_bins.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_bins.min + '-' + this.variance_opts.min_bins.max + '</span></p>' +
                           '<p>Mean count:</br><input id="mc_' + this.id + '" class="inputMeanCount" type="text" name="mc_' + this.id + '" placeholder="' + this.variance_opts.mean_count.default + '" value="' + this.variance_opts.mean_count.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.mean_count.min + '-' + this.variance_opts.mean_count.max + '</span></p>' +
-                          '<p style="font-size:0.8em; color:#777777;">Algorithm: Vaughan et al. 2003</p>' +
+                          '<a target="_blank" href="http://articles.adsabs.harvard.edu/cgi-bin/nph-iarticle_query?bibcode=2003MNRAS.345.1271V&db_key=AST&page_ind=0&data_type=GIF&type=SCREEN_VIEW&classic=YES" class="InfoText">Algorithm: Vaughan et al. 2003</a>' +
                         '</div>' +
                       '</div>');
     $variance.find("input").on('change', this.onVarianceValuesChanged);
