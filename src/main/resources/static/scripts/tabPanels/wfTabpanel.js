@@ -380,7 +380,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     pdsPlotsButtons = currentObj.addButtonToArray("Lomb-Scargle Periodogram",
                                                   "periodogramBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Lomb-Scargle Periodogram:",
+                                                    currentObj.showLcSelectionDialog("Lomb-Scargle Periodogram",
                                                                                      onPeriodogramPlotSelected);
                                                   },
                                                   pdsPlotsButtons);
@@ -423,7 +423,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     variancePlotsButtons = currentObj.addButtonToArray("Mean flux estimator",
                                                   "baselineBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Mean flux estimator (baseline):",
+                                                    currentObj.showLcSelectionDialog("Mean flux estimator (baseline)",
                                                                                      onBaselinePlotSelected);
                                                   },
                                                   variancePlotsButtons);
@@ -431,7 +431,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     variancePlotsButtons = currentObj.addButtonToArray("Long-term Variability",
                                                   "intVarBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Long-term Variability:",
+                                                    currentObj.showLcSelectionDialog("Long-term Variability",
                                                                                      onAGNPlotSelected);
                                                   },
                                                   variancePlotsButtons);
@@ -440,7 +440,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     pulsarPlotsButtons = currentObj.addButtonToArray("Phaseogram",
                                                   "phaseogramBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Phaseogram:",
+                                                    currentObj.showLcSelectionDialog("Phaseogram",
                                                                                      onPhaseogramPlotSelected);
                                                   },
                                                   pulsarPlotsButtons);
@@ -628,14 +628,32 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
          var plotId = btn.attr("plotId");
          var plot = currentObj.outputPanel.getPlotById(plotId);
          plot.onSelected();
-         if ($(this).parent().find(".plotSelected").length > 1) {
-              $xSpectraDialog.dialog('close');
-              $xSpectraDialog.remove();
-         }
+         $("#run_" + currentObj.id).prop("disabled", ($(this).parent().find(".plotSelected").length != 2));
       });
 
       currentObj.$html.append($xSpectraDialog);
-      currentObj.createCustomDialog($xSpectraDialog);
+      currentObj.createCustomDialog($xSpectraDialog, [
+            {
+             id: "run_" + currentObj.id,
+             text: "Run Cross Spectra",
+             click:function() {
+               onCrossSpectraClicked(getSelectedPlots());
+               $xSpectraDialog.dialog('close');
+               $xSpectraDialog.remove();
+             }
+           },
+           {
+            id: "cancel_" + currentObj.id,
+            text: "Cancel",
+            click:function() {
+              $xSpectraDialog.dialog('close');
+              $xSpectraDialog.remove();
+            }
+          }
+        ]);
+
+      $("#run_" + currentObj.id).prop("disabled", true);
+      $xSpectraDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 
     } else {
       var lcPlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() });
@@ -687,18 +705,47 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                         '</div>');
 
       $lcDialog.find("button").click(function(event){
-         var plotId = $(this).attr("plotId");
-         var plot = currentObj.outputPanel.getPlotById(plotId);
-         onPlotSelectedFn(plot);
-         $lcDialog.dialog('close');
-         $lcDialog.remove();
+        var btn = $(this);
+        if (!btn.hasClass("plotSelected")){
+          clearSelectedPlots();
+          btn.parent().find(".plotSelected").removeClass("plotSelected");
+          btn.addClass("plotSelected");
+          var plotId = btn.attr("plotId");
+          var plot = currentObj.outputPanel.getPlotById(plotId);
+          plot.onSelected();
+        }
+        $("#run_" + currentObj.id).prop("disabled", ($(this).parent().find(".plotSelected").length != 1));
       });
 
       currentObj.$html.append($lcDialog);
-      currentObj.createCustomDialog($lcDialog);
+      currentObj.createCustomDialog($lcDialog, [
+            {
+             id: "run_" + currentObj.id,
+             text: "Run " + title,
+             click:function() {
+               var selectedPlots = getSelectedPlots();
+               if (selectedPlots.length == 1){
+                 onPlotSelectedFn(selectedPlots[0]);
+                 $lcDialog.dialog('close');
+                 $lcDialog.remove();
+               }
+             }
+           },
+           {
+            id: "cancel_" + currentObj.id,
+            text: "Cancel",
+            click:function() {
+              $lcDialog.dialog('close');
+              $lcDialog.remove();
+            }
+          }
+        ]);
+
+        $("#run_" + currentObj.id).prop("disabled", true);
+        $lcDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 
     } else {
-      showMsg(title, "At least one plot of type Light Curve must be visible/enabled to continue. " +
+      showMsg(title + ":", "At least one plot of type Light Curve must be visible/enabled to continue. " +
                      "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots.");
     }
   }
@@ -715,15 +762,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
      return { Html: lcPlotButtons, Count: selectablePlots.length };
   }
 
-  this.createCustomDialog = function ($dialogElement) {
+  this.createCustomDialog = function ($dialogElement, buttons) {
     $dialogElement.dialog({
        width: 450,
        modal: true,
-       buttons: {
-         'Cancel': function() {
-            $(this).dialog('close');
-            $dialogElement.remove();
-         }
+       buttons: buttons,
+       close: function( event, ui ) {
+         clearSelectedPlots();
+         $dialogElement.remove();
        }
      });
      $dialogElement.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');

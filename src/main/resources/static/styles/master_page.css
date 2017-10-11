@@ -216,6 +216,11 @@ ul#right-navbar li {
   border: 1px solid #ff0000 !important;
 }
 
+.btnSelect.plotSelected {
+    background-color: rgba(253, 0, 0, 0.08) !important;
+    color: #8a4f01 !important;
+}
+
 .plotHover
 {
   border: 1px solid #222222 !important;
@@ -547,6 +552,10 @@ ul#right-navbar li {
 
 .dialogContainer {
   padding: 20px;
+}
+
+.ui-dialog-buttonset button:disabled, .ui-dialog-buttonset button[disabled] {
+  opacity: 0.4;
 }
 
 input.wrongValue {
