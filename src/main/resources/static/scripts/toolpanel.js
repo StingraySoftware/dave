@@ -301,6 +301,15 @@ function ToolPanel (id,
                multiplier = projectConfig.binSize;
             }
 
+            //Sets the slider precision
+            var precision = CONFIG.DEFAULT_NUMBER_DECIMALS;
+            if (tableName == "EVENTS" && columnName == "PHA") {
+              pha_column = column;
+              precision = 0;
+            } else if (columnName == CONFIG.TIME_COLUMN){
+              precision = CONFIG.MAX_TIME_RESOLUTION_DECIMALS;
+            }
+
             var selector = new sliderSelector(this.id + "_" + columnName,
                                               columnTitle,
                                               filterData,
@@ -315,7 +324,7 @@ function ToolPanel (id,
                                                 }
                                               },
                                               this.selectors_array,
-                                              null, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+                                              null, precision);
             selector.multiplier = multiplier;
             this.$html.find(".selectorsContainer").append(selector.$html);
 
@@ -332,11 +341,6 @@ function ToolPanel (id,
                     selector.setValues( selector.initFromValue, selector.initFromValue + projectConfig.getMaxTimeRange() );
                     selector.setEnabled (true);
               }
-            }
-
-            if (tableName == "EVENTS" && columnName == "PHA") {
-              pha_column = column;
-              selector.precision = 0;
             }
           }
         }
@@ -440,7 +444,8 @@ function ToolPanel (id,
                                             { table:"EVENTS", column:"RATE" },
                                             minRate, maxRate,
                                             this.onSelectorValuesChanged,
-                                            this.selectors_array);
+                                            this.selectors_array,
+                                            null, CONFIG.DEFAULT_NUMBER_DECIMALS);
       rateSelector.$html.insertAfter("." + this.id + "_TIME");
 
     } else {
