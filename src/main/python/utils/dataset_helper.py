@@ -21,6 +21,7 @@ def get_eventlist_from_evt_dataset(dataset):
     if not "PHA" in dataset.tables["EVENTS"].columns:
         logging.warn("get_eventlist_from_evt_dataset: PHA column not found in dataset")
         dataset.tables["EVENTS"].add_columns(["PHA"])
+        dataset.tables["EVENTS"].columns["PHA"].set_extra("FAKE_COLUMN", True);
         try:
             dataset.tables["EVENTS"].columns["PHA"].values = \
                 dataset.tables["EVENTS"].columns["PI"].values

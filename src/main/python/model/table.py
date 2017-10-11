@@ -29,7 +29,9 @@ class Table:
         schema["HEADER"] = self.header
         schema["HEADER_COMMENTS"] = self.header_comments
         for column_name in self.columns:
-            schema[column_name] = self.columns[column_name].get_schema()
+            column_shema = self.columns[column_name].get_schema()
+            if not (column_shema is None):
+                schema[column_name] = column_shema
         return schema
 
     def clone(self, with_values=True):
