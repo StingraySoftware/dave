@@ -48,7 +48,6 @@ WORKDIR=$HOME/.dave
 if [ ! -e $WORKDIR ]; then
 	echo "Creating Python Environment folder: $WORKDIR"
 	mkdir $WORKDIR
-	\cp -r $DIR/resources/version.txt $WORKDIR
 fi
 
 # normalize dir
@@ -103,3 +102,7 @@ export PATH=${PATH}:${INSTALL_DIR}/bin
 # Install Python dependencies
 echo "Creating Python environment"
 conda env create -f $DIR/environment.yml
+
+# Marks the environment as success installation
+\cp -r $DIR/resources/version.txt $WORKDIR
+echo "Python environment ready!"
