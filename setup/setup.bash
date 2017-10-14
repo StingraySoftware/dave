@@ -134,6 +134,37 @@ fi
 echo "Using npm $(npm --version)"
 
 
+# Install LibMagic, HDF5 and netCDF
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Mac OSX
+    # This is for MagicFile but only applies to macosx
+    if [ ! -f /usr/local/bin/brew ]; then
+        if hash /opt/local/bin/port 2>/dev/null; then
+            echo "Installing LibMagic, HDF5 and netCDF with MacPorts"
+            yes | sudo /opt/local/bin/port install libmagic
+						yes | sudo /opt/local/bin/port install hdf5
+						yes | sudo /opt/local/bin/port install netcdf
+        else
+            echo "Please install HomeBrew or MacPorts before continue."
+            echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
+            echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+            echo "Or install MacPorts with this guide:"
+            echo 'https://www.macports.org/install.php'
+            exit 1
+       fi
+		else
+	 		echo "Installing LibMagic, HDF5 and netCDF with HomeBrew"
+	 		/usr/local/bin/brew install libmagic hdf5 netcdf
+	 	fi
+
+elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+	# Linux
+
+	echo "Installing HDF5 with apt-get"
+	sudo apt-get install libhdf5-serial-dev
+fi
+
+
 # Install Python dependencies
 if conda env list | grep -q "^dave[ ]\+"; then
   echo "dave virtual Python environment already exists"
@@ -276,28 +307,6 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 		# Copy built libraries to python project
 		\cp -r $HENDRICS_FOLDER/build/$DARWIN_COMPILATION/hendrics src/main/python
 	fi
-fi
-
-
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # Mac OSX
-    # This is for MagicFile but only applies to macosx
-    if [ ! -f /usr/local/bin/brew ]; then
-        if hash /opt/local/bin/port 2>/dev/null; then
-            echo "Installing LibMagic with MacPorts"
-            yes | sudo /opt/local/bin/port install libmagic
-        else
-            echo "Please install HomeBrew or MacPorts before continue."
-            echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-            echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-            echo "Or install MacPorts with this guide:"
-            echo 'https://www.macports.org/install.php'
-            exit 1
-       fi
-   else
-       echo "Installing LibMagic with HomeBrew"
-       /usr/local/bin/brew install libmagic
-   fi
 fi
 
 

@@ -8,7 +8,7 @@ else
     exit 10
 fi
 
-#Check for LibMagic on Mac first for avoid user to wait all downloads if this crash
+#Check for LibMagic, HDF5 and netCDF on Mac first for avoid user to wait all downloads if this crash
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac OSX
 
@@ -19,14 +19,16 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 				# Make sure only root can run our script
 				if [ "$(id -u)" != "0" ]; then
 				 echo "You need Administrator privileges to continue with the installation."
-				 echo "LibMagic will be installed with MacPorts, try relanching the application as root"
+				 echo "LibMagic, HDF5 and netCDF will be installed with MacPorts, try relanching the application as root"
 				 echo "or run this HomeBrew installation command on a terminal and relanch DAVE:"
  				 echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
 				 exit 10
 				fi
 
-				echo "Installing LibMagic with MacPorts"
+				echo "Installing LibMagic, HDF5 and netCDF with MacPorts"
         su /opt/local/bin/port install file
+				su /opt/local/bin/port install hdf5
+				su /opt/local/bin/port install netcdf
     else
 				echo "Please install HomeBrew or MacPorts before continue."
 				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
@@ -35,10 +37,17 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 				echo 'https://www.macports.org/install.php'
 				exit 10
     fi
+
 	else
-		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
+		echo "Installing LibMagic, HDF5 and netCDF with HomeBrew"
+		/usr/local/bin/brew install libmagic hdf5 netcdf
 	fi
+
+elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+	# Linux
+
+	echo "Installing HDF5 with apt-get"
+	sudo apt-get install libhdf5-serial-dev
 fi
 
 # install in directory work in the top-level dir in the project
