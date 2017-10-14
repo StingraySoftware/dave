@@ -169,8 +169,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Sep 16th, 2017 -> https://github.com/StingraySoftware/stingray/commit/a7bca309c304ffae1244f7eb1dee902d62eaf6a7
-STINGRAY_COMMIT_HASH=a7bca309c304ffae1244f7eb1dee902d62eaf6a7
+# Oct 4th, 2017 -> https://github.com/StingraySoftware/stingray/commit/2b1ad67964218e68011a21a11ba8eaf9bddee9a8
+STINGRAY_COMMIT_HASH=2b1ad67964218e68011a21a11ba8eaf9bddee9a8
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
@@ -236,8 +236,8 @@ fi
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Sep 18th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/524ac5f9824b09c57101e108c20d0983fb886956
-HENDRICS_COMMIT_HASH=524ac5f9824b09c57101e108c20d0983fb886956
+# Oct 6th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/da59300f9a4eb97cef69b0534eafb78f22237388
+HENDRICS_COMMIT_HASH=da59300f9a4eb97cef69b0534eafb78f22237388
 
 if [ ! -e $HENDRICS_FOLDER ]; then
 
