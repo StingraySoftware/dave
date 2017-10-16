@@ -24,6 +24,8 @@ cd -
 \cp -r work/stingray/requirements.txt $BUILD_FOLDER/resources/python
 rm -f $BUILD_FOLDER/resources/python/*.log
 rm -f $BUILD_FOLDER/resources/python/uploadeddataset/*
+find $BUILD_FOLDER/resources/python -name tests -exec rm -rf '{}' \;
+find $BUILD_FOLDER/resources/python -name __pycache__ -exec rm -rf '{}' \;
 \cp -r setup/environment.yml $BUILD_FOLDER/resources
 echo "$BUILD_DATE" > $BUILD_FOLDER/resources/resources/version.txt
 echo "BUILD_VERSION='$BUILD_VERSION';" > $BUILD_FOLDER/resources/resources/static/scripts/version.js
