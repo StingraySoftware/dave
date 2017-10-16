@@ -29,13 +29,13 @@ if [ ! -e $ENVDIR ]; then
 	exit 1
 fi
 
-echo Activating Python environment
+echo "Activating Python environment"
 ACTIVATE_CMD="$DIR/work/miniconda/bin/activate dave"
 . $ACTIVATE_CMD
 
 #Installing Stingray
 STINGRAY_FOLDER=$DIR/work/stingray
-echo Installing Stingray
+echo "Installing Stingray"
 cd $STINGRAY_FOLDER
 pip install -r requirements.txt
 cd -

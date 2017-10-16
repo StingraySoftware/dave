@@ -8,6 +8,9 @@ else
     exit 10
 fi
 
+# Activate environment progress notification
+echo "@PROGRESS@|10|Installing LibMagic|"
+
 #Check for LibMagic on Mac first for avoid user to wait all downloads if this crash
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac OSX
@@ -41,7 +44,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	fi
 fi
 
-# install in directory work in the top-level dir in the project
+# Install in directory work in the top-level dir in the project
+echo "@PROGRESS@|15|Creating Python Environment folder|"
 DIR=$_SCRIPT_FOLDER/../..
 WORKDIR=$HOME/.dave
 
@@ -56,7 +60,8 @@ cd $DIR
 DIR=$(pwd)
 cd -
 
-echo Installing in $WORKDIR
+echo "Installing in $WORKDIR"
+echo "@PROGRESS@|20|Downloading miniconda|"
 
 # Install miniconda
 MINICONDA=$WORKDIR/miniconda.sh
@@ -91,6 +96,7 @@ fi
 chmod u+x $MINICONDA
 
 #Install Miniconda
+echo "@PROGRESS@|35|Installing miniconda|"
 INSTALL_DIR=$WORKDIR/miniconda
 if [ ! -e $INSTALL_DIR ]; then
   echo "Installing miniconda"
@@ -100,9 +106,11 @@ export PATH=${PATH}:${INSTALL_DIR}/bin
 
 
 # Install Python dependencies
+echo "@PROGRESS@|50|Creating Python environment|"
 echo "Creating Python environment"
 conda env create -f $DIR/environment.yml
 
 # Marks the environment as success installation
 \cp -r $DIR/resources/version.txt $WORKDIR
+echo "@PROGRESS@|60|Python environment ready|"
 echo "Python environment ready!"

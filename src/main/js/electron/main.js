@@ -106,7 +106,13 @@ function launchProcess(process, argument, processName) {
     processRunning = true;
 
     subpy.stdout.on('data', (data) => {
-      log(processName + ': ' + data);
+      data = "" + data;
+      if (data.startsWith("@PROGRESS@")) {
+        var strArr = data.split("|");
+        sendProgress(strArr[2], parseInt(strArr[1]));
+      } else {
+        log(processName + ': ' + data);
+      }
     });
 
     subpy.stderr.on('data', (data) => {
@@ -214,7 +220,7 @@ function logToWindow (msg, mode){
     var logCmd = "logError";
     if (!isNull(mode)) {
       //Supported modes: Debug, Info, Warn, Err
-      logCmd = "log" + mode;"logWarn";
+      logCmd = "log" + mode;
     }
     mainWindow.webContents.executeJavaScript(logCmd + "('" + escapeSpecialChars(msg) + "');");
   }
@@ -223,6 +229,12 @@ function logToWindow (msg, mode){
 function sendErrorToWindow (msg){
   if (mainWindow != null) {
     mainWindow.webContents.executeJavaScript("showError('" + escapeSpecialChars(msg) + "');");
+  }
+}
+
+function sendProgress (msg, progress){
+  if (mainWindow != null) {
+    mainWindow.webContents.executeJavaScript("setProgress('" + escapeSpecialChars(msg) + "', " + progress + ");");
   }
 }
 
@@ -245,6 +257,7 @@ function getTailFromLogFile (logFilePath) {
 }
 
 function escapeSpecialChars (text) {
+  if (!isNull(text.replace)){
     return text.replace(/\r?\n/g, "#")
                  .replace(/\\n/g, "#")
                  .replace(/\\'/g, "")
@@ -254,6 +267,9 @@ function escapeSpecialChars (text) {
                  .replace(/\\t/g, "")
                  .replace(/\\b/g, "")
                  .replace(/\\f/g, "");
+   } else {
+     return text;
+   }
 };
 
 app.on('window-all-closed', function() {

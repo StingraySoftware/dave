@@ -7,6 +7,9 @@ function stopServer {
 	exit 0
 }
 
+# Activate environment progress notification
+echo "@PROGRESS@|5|Checking previous version|"
+
 # Determine the directory containing this script
 if [[ -n $BASH_VERSION ]]; then
 		_SCRIPT_FOLDER=$(dirname "${BASH_SOURCE[0]}")
@@ -47,23 +50,27 @@ if [ ! -e $ENVDIR ]; then
 	. $SETUP_CMD
 fi
 
+echo "@PROGRESS@|70|Activating Python environment|"
 echo "Activating Python environment"
 ACTIVATE_CMD="$ENVDIR/miniconda/bin/activate"
 source $ACTIVATE_CMD dave
 
 #Installing Stingray
 PYTHON_FOLDER=$RES_DIR/python
-echo Installing Python dependencies
+echo "@PROGRESS@|80|Installing Python dependencies|"
+echo "Installing Python dependencies"
 cd $PYTHON_FOLDER
 pip install -r requirements.txt
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
+echo "@PROGRESS@|90|Launching Python Server|"
 python server.py $ENVDIR . 5000 $VERSION & >> $ENVDIR/flaskserver.log 2>&1
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 cd -
 
+echo "@PROGRESS@|100|Python Server ready|"
 wait $python_pid
 
 exit $?
