@@ -446,6 +446,7 @@ function Model(idx, title, type, color, onModelsChangedFn) {
           daveModel[paramName] = this[paramName];
         } else if (!isNull(this[paramName + "Est"])){
           daveModel[paramName] = this[paramName + "Est"].value;
+          daveModel[paramName + "Err"] = this[paramName + "Est"].err;
         } else {
           return null;
         }
