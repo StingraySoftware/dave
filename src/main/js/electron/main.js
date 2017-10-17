@@ -21,6 +21,7 @@ var subpy = null;
 var processRunning = false;
 var logEnabled = true;
 var logDebugMode = false;
+var errorShown = false;
 var mainConfig = null;
 var LOGS_PATH = "";
 var PYTHON_URL = "";
@@ -107,11 +108,20 @@ function launchProcess(process, argument, processName) {
 
     subpy.stdout.on('data', (data) => {
       data = "" + data;
-      if (data.startsWith("@PROGRESS@")) {
-        var strArr = data.split("|");
-        sendProgress(strArr[2], parseInt(strArr[1]));
-      } else {
-        log(processName + ': ' + data);
+      var logMsgs = data.replace(/\r?\n/g, "#")
+                        .replace(/\\n/g, "#").split("#");
+      for (i in logMsgs) {
+        if (logMsgs[i] != "") {
+          if (logMsgs[i].startsWith("@PROGRESS@")) {
+            var strArr = logMsgs[i].split("|");
+            sendProgress(strArr[2], parseInt(strArr[1]));
+          } else if (logMsgs[i].startsWith("@ERROR@")) {
+            var strArr = logMsgs[i].split("|");
+            sendErrorToWindow(strArr[1] + "|");
+          } else {
+            log(processName + ': ' + logMsgs[i]);
+          }
+        }
       }
     });
 
@@ -228,7 +238,12 @@ function logToWindow (msg, mode){
 
 function sendErrorToWindow (msg){
   if (mainWindow != null) {
-    mainWindow.webContents.executeJavaScript("showError('" + escapeSpecialChars(msg) + "');");
+    if (!errorShown) {
+      errorShown = true;
+      mainWindow.webContents.executeJavaScript("showError('" + escapeSpecialChars(msg) + "');");
+    } else {
+      log(msg);
+    }
   }
 }
 

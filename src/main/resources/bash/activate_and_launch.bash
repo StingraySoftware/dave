@@ -7,6 +7,29 @@ function stopServer {
 	exit 0
 }
 
+sendError()
+{
+	#Notifies Node.js that create_env script crashed
+	if [ "$#" -gt "0" ];then
+		echo "$1"
+		echo "@ERROR@|$1|"
+		if [ "$#" -gt "1" ];then
+			if [[ ! -z "$2" ]];then
+				rm -rf $2
+			fi
+		fi
+	fi
+	exit 10
+}
+
+checkReturnCode()
+{
+	#Checks if return code is an error code and sends error to Node.js
+	if [[ $1 -ne 0 ]] ; then
+		sendError "$2" "$3"
+	fi
+}
+
 # Activate environment progress notification
 echo "@PROGRESS@|5|Checking previous version|"
 
@@ -14,8 +37,7 @@ echo "@PROGRESS@|5|Checking previous version|"
 if [[ -n $BASH_VERSION ]]; then
 		_SCRIPT_FOLDER=$(dirname "${BASH_SOURCE[0]}")
 else
-    echo "Only bash supported."
-    exit 10
+		sendError "Only bash supported"
 fi
 
 RES_DIR=$_SCRIPT_FOLDER/../..
@@ -54,6 +76,7 @@ echo "@PROGRESS@|70|Activating Python environment|"
 echo "Activating Python environment"
 ACTIVATE_CMD="$ENVDIR/miniconda/bin/activate"
 source $ACTIVATE_CMD dave
+checkReturnCode $? "Can´t activate Python environment, error $?"
 
 #Installing Stingray
 PYTHON_FOLDER=$RES_DIR/python
@@ -61,6 +84,7 @@ echo "@PROGRESS@|80|Installing Python dependencies|"
 echo "Installing Python dependencies"
 cd $PYTHON_FOLDER
 pip install -r requirements.txt
+checkReturnCode $? "Can´t install Python dependencies, error $?"
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
