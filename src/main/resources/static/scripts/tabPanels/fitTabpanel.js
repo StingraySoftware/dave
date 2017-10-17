@@ -266,18 +266,19 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     var nameArr = paramName.split("-");
 
     if (nameArr.length == 2) {
-      var models = currentObj.modelSelector.getModels(false);
-      var paramValue = models[parseInt(nameArr[1])][nameArr[0]];
-      var paramDelta = paramValue * 0.5;
+      var estModels = currentObj.modelSelector.getModels(true);
+      var paramValue = estModels[parseInt(nameArr[1])][nameArr[0]];
+      var paramError = estModels[parseInt(nameArr[1])][nameArr[0] + "Err"];
 
       var $container = currentObj.toolPanel.$html.find("." + currentObj.id + "_prior_" + paramName);
       $container.html("");
       if (priorType == "uniform") {
+        var paramDelta = paramValue * 0.5;
         currentObj.addUniformPrior (paramName, (paramValue - paramDelta), (paramValue + paramDelta), $container);
       } else if (priorType == "normal") {
-        currentObj.addNormPrior (paramName, paramValue, paramDelta, $container);
+        currentObj.addNormPrior (paramName, paramValue, paramError, $container);
       } else if (priorType == "lognormal") {
-        currentObj.addLognormPrior (paramName, paramValue, paramDelta, $container);
+        currentObj.addLognormPrior (paramName, paramValue, paramError, $container);
       }
     }
   }
@@ -547,11 +548,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.sampleEnabled = false;
 
   this.sampleOpts = {}; //Default, min and max values for sample params
-  this.sampleOpts.nwalkers = { default:500, min:1, max: 25000}; //The number of walkers (chains) to use during the MCMC
-  this.sampleOpts.niter = { default:100, min:1, max: 5000}; //The number of iterations to run the MCMC chains
-  this.sampleOpts.burnin = { default:100, min:1, max: 5000}; //The number of iterations to run the walkers before convergence is assumed to have occurred.
+  this.sampleOpts.nwalkers = { default:250, min:1, max: 2500}; //The number of walkers (chains) to use during the MCMC
+  this.sampleOpts.niter = { default:50, min:1, max: 500}; //The number of iterations to run the MCMC chains
+  this.sampleOpts.burnin = { default:50, min:1, max: 500}; //The number of iterations to run the walkers before convergence is assumed to have occurred.
   this.sampleOpts.threads = { default:1, min:1, max: 100}; //The number of threads for parallelization. FIXED TO 1 for avoid Flask context loss
-  this.sampleOpts.nsamples = { default:1000, min:1, max: 10000}; //The number of threads for parallelization.
+  this.sampleOpts.nsamples = { default:500, min:1, max: 5000}; //The number of threads for parallelization.
 
   this.sampleParams = {}; //Sample params values to be sent, initialized to default values
   this.sampleParams.nwalkers = this.sampleOpts.nwalkers.default;
