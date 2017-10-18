@@ -87,6 +87,10 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     "Default decimals", CONFIG.DEFAULT_NUMBER_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.DEFAULT_NUMBER_DECIMALS = value; updateServerConfig(); }));
 
+  $mainSettings.append(getInlineRangeBox ("SERVER_DATA_PRECISION_" + this.id, "inputSERVER_DATA_PRECISION",
+                                    "Decimals of the data given by server", CONFIG.SERVER_DATA_PRECISION, 1, 12,
+                                    function(value, input) { CONFIG.SERVER_DATA_PRECISION = value; updateServerConfig(); }));
+
   $mainSettings.append(getInlineRangeBox ("FRACEXP_LIMIT_" + this.id, "inputFRACEXP_LIMIT float",
                                     "Minimum exposure fraction allowed", CONFIG.FRACEXP_LIMIT, 0.0, 1.0,
                                     function(value, input) { CONFIG.FRACEXP_LIMIT = value; updateServerConfig(); }));

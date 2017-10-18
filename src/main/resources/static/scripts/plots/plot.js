@@ -830,15 +830,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
        var maxLabelLength = (this.isExpanded()) ? 60 : 20;
        var labelY = !isNull(coords.label) ? coords.label : this.getLabel(swcoords.y);
-       var infotextforx = truncateText(this.getLabel(swcoords.x), maxLabelLength) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
-       var infotextfory = truncateText(labelY, maxLabelLength) + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
+       var infotextforx = truncateText(this.getLabel(swcoords.x), maxLabelLength) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(CONFIG.SERVER_DATA_PRECISION));
+       var infotextfory = truncateText(labelY, maxLabelLength) + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(CONFIG.SERVER_DATA_PRECISION));
        var error_x_string = "";
        var error_y_string = "";
        if (!isNull(coords.error_x)) {
-         error_x_string= " +/-" + coords.error_x.toFixed(3);
+         error_x_string= " +/-" + coords.error_x.toFixed(CONFIG.SERVER_DATA_PRECISION);
        }
        if (!isNull(coords.error_y)){
-         error_y_string= " +/-" + coords.error_y.toFixed(3);
+         error_y_string= " +/-" + coords.error_y.toFixed(CONFIG.SERVER_DATA_PRECISION);
        }
        return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
      } catch (ex) {
