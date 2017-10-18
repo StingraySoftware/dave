@@ -36,5 +36,4 @@ class CONFIG:
                 + ", TIME_COLUMN: " + str(CONFIG.TIME_COLUMN) \
                 + ", GTI_STRING: " + str(CONFIG.GTI_STRING) \
                 + ", FRACEXP_LIMIT: " + str(CONFIG.FRACEXP_LIMIT) \
-                + ", SERVER_DATA_PRECISION: " + str(CONFIG.SERVER_DATA_PRECISION) \
                 + ", USE_JAVASCRIPT_CACHE: " + str(CONFIG.USE_JAVASCRIPT_CACHE)

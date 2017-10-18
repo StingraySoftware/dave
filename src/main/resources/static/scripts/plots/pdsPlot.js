@@ -14,7 +14,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.norm = "leahy";
   this.plotConfig.xAxisType = "linear";
   this.plotConfig.yAxisType = "log";
-  this.plotConfig.plotType = "X*Y";
+  this.plotConfig.plotType = "X"; //This can be X or X*Y
   this.plotConfig.df = 0;
   this.plotConfig.maxSupportedFreq = 0.6 / Math.pow(10, -CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
   this.plotConfig.freqMax = this.plotConfig.maxSupportedFreq;
@@ -328,18 +328,26 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         if (this.plotConfig.styles.labels[0].startsWith("Freq")
             && this.plotConfig.styles.labels[this.XYLabelAxis].startsWith("Pow")) {
               if (this.plotConfig.norm == "leahy") {
-                yLabel = "Leahy Power x Frequency";
-              } else {
-                yLabel = "Power x Frequency (rms/mean)^2";
+                yLabel = "Power (Leahy) \\times \\nu";
+              } else if (this.plotConfig.norm == "frac") {
+                yLabel = "(rms/mean)^2";
+              } else if (this.plotConfig.norm == "abs") {
+                yLabel = "rms^2";
+              } else if (this.plotConfig.norm == "none") {
+                yLabel = "Variance (unnormalized powers) \\times \\nu";
               }
           } else {
             yLabel += " x " + this.plotConfig.styles.labels[0];
           }
 
       } else if (this.plotConfig.norm == "leahy") {
-        yLabel = "Leahy Power";
+        yLabel = "Power (Leahy)";
       } else if (this.plotConfig.norm == "frac") {
-        yLabel = "Power (rms/mean^2) Hz^-1";
+        yLabel = "(rms/mean)^2\\nu{-1}";
+      } else if (this.plotConfig.norm == "abs") {
+        yLabel = "rms^2 \\nu^{-1}";
+      } else if (this.plotConfig.norm == "none") {
+        yLabel = "Variance (unnormalized powers)";
       }
 
       return yLabel;
