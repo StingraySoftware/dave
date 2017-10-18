@@ -98,6 +98,7 @@ function ToolPanel (id,
   }
 
   this.showEventsSelectors = function () {
+    this.srcFileSelector.$html.find("h3").text("Event file:");
     this.bckFileSelector.show();
     this.gtiFileSelector.show();
     this.rmfFileSelector.show();
@@ -113,6 +114,7 @@ function ToolPanel (id,
   }
 
   this.showLcSelectors = function () {
+    this.srcFileSelector.$html.find("h3").text("Total light curve:");
     this.gtiFileSelector.hide();
     this.rmfFileSelector.hide();
     this.bckFileSelector.hide();
@@ -139,7 +141,7 @@ function ToolPanel (id,
   this.createSngOrMultiFileSelector = function () {
     // Creates Single file or Multifile selection radio buttons
     this.sngOrMultiFileSelector = getRadioControl(this.id,
-                                      "Choose single or multiple files load",
+                                      "Choose single or multiple files to load",
                                       "SngOrMultiFile",
                                       [
                                         { id:"SngFile", label:"Single file", value:"Single"},
@@ -160,11 +162,11 @@ function ToolPanel (id,
     //Adds supported formats link button
     var btnSupportedFormats = $('<a href="#" class="btnSupportedFormats floatRight InfoText" style="margin-top: 23px;">Supported formats <i class="fa fa-info-circle" aria-hidden="true"></i></a>');
     btnSupportedFormats.click(function () {
-      showMsg("DAVE Supported Formats",
-              "<p><strong>Data types:</strong> Light curves and event files</p>" +
-              "<p><strong>FITS Files:</strong> FITS, gzipped FITS, CSV</p>" +
-              "<p><strong>Bulk Files:</strong> Text files with the absolute paths of each file per line.</p>" +
-              "<hr><p><strong>Other DAVE formats, not for data analisys:</strong></p>" +
+      showMsg("DAVE supported file formats",
+              "<p><strong>Data types:</strong> Light curves and event files.</p>" +
+              "<p><strong>Data formats:</strong> FITS, gzipped FITS, CSV.</p>" +
+              "<p><strong>Multiple data files:</strong> Metafiles with one file per line with absolute path.</p>" +
+              "<hr><p><strong>Other DAVE file formats:</strong></p>" +
               "<p><strong>*.wsp:</strong> Workspace file format.</p>" +
               "<p><strong>*.flt:</strong> Filters file format.</p>" +
               "<p><strong>*.mdl:</strong> Fit models file format.</p>");
@@ -255,7 +257,7 @@ function ToolPanel (id,
       projectConfig.binSize = binSelectorConfig.binSize;
 
       this.binSelector = new BinSelector(this.id + "_binSelector",
-                                        "BIN SIZE (" + projectConfig.timeUnit  + "):",
+                                        "Bin Size (" + projectConfig.timeUnit  + "):",
                                         binSelectorConfig.minBinSize,
                                         binSelectorConfig.maxBinSize,
                                         binSelectorConfig.step,
@@ -269,11 +271,12 @@ function ToolPanel (id,
 
       //Prepares file selectors for lightcurve
       this.showLcSelectors();
+      this.srcFileSelector.showInfoText(extractEnergyRangeTextFromSchema(projectConfig.schema));
       this.lcBckFileSelector.showInfoText((projectConfig.backgroundSubstracted ? "Background already substracted" : ""), CONFIG.DENY_BCK_IF_SUBS);
 
       //Sets fixed binSize panel
       var binDiv = $('<div class="sliderSelector binLabel">' +
-                      '<h3>BIN SIZE (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
+                      '<h3>Bin Size (' + projectConfig.timeUnit  + '): ' + projectConfig.binSize + '</h3>' +
                     '</div>');
       this.$html.find(".selectorsContainer").append(binDiv);
     }
@@ -291,9 +294,9 @@ function ToolPanel (id,
 
             var multiplier = 1.0;
             var filterData = { table:tableName, column:columnName };
-            var columnTitle = columnName + ":";
+            var columnTitle = toProperCase(columnName + ":");
             if (columnName == CONFIG.TIME_COLUMN) {
-               columnTitle = "TIME (" + projectConfig.timeUnit  + "):";
+               columnTitle = "Time (" + projectConfig.timeUnit  + "):";
             } else if ((columnName == "RATE") && projectConfig.schema.isLightCurveFile()){
                //This multiplier its only intended to calculate CountRate from counts when BinSize != 1
                //The RATE values that comes from schema means counts, but filters and LCs shows countrate
@@ -440,7 +443,7 @@ function ToolPanel (id,
 
       //Creates the rate slider if not created yet:
       var rateSelector = new sliderSelector(rateSliderId,
-                                            "COUNT RATE (c/s):",
+                                            "Count Rate (c/s):",
                                             { table:"EVENTS", column:"RATE" },
                                             minRate, maxRate,
                                             this.onSelectorValuesChanged,
@@ -1119,10 +1122,10 @@ function ToolPanel (id,
 
   this.createSngOrMultiFileSelector();
 
-  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Source File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
+  this.srcFileSelector = new fileSelector("theSrcFileSelector_" + this.id, "Load File:", "SRC", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.srcFileSelector);
 
-  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Background File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
+  this.bckFileSelector = new fileSelector("theBckFileSelector_" + this.id, "Background Event File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
   this.addFileSelector(this.bckFileSelector);
   this.bckFileSelector.hide();
 
@@ -1135,40 +1138,40 @@ function ToolPanel (id,
   this.rmfFileSelector.hide();
 
   //Lightcurve file selectors
-  this.lcAFileSelector = new fileSelector("lcAFileSelector_" + this.id, "Lc A File:", "LCA", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcAFileSelector = new fileSelector("lcAFileSelector_" + this.id, "Light curve in energy range A:", "LCA", service.upload_form_data, this.onLcDatasetChangedFn);
   this.addFileSelector(this.lcAFileSelector);
   this.lcAFileSelector.hide();
 
-  this.lcBFileSelector = new fileSelector("lcBFileSelector_" + this.id, "Lc B File:", "LCB", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcBFileSelector = new fileSelector("lcBFileSelector_" + this.id, "Light curve in energy range B:", "LCB", service.upload_form_data, this.onLcDatasetChangedFn);
   this.addFileSelector(this.lcBFileSelector);
   this.lcBFileSelector.hide();
 
-  this.lcCFileSelector = new fileSelector("lcCFileSelector_" + this.id, "Lc C File:", "LCC", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcCFileSelector = new fileSelector("lcCFileSelector_" + this.id, "Light curve in energy range C:", "LCC", service.upload_form_data, this.onLcDatasetChangedFn);
   this.addFileSelector(this.lcCFileSelector);
   this.lcCFileSelector.hide();
 
-  this.lcDFileSelector = new fileSelector("lcDFileSelector_" + this.id, "Lc D File:", "LCD", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcDFileSelector = new fileSelector("lcDFileSelector_" + this.id, "Light curve in energy range D:", "LCD", service.upload_form_data, this.onLcDatasetChangedFn);
   this.addFileSelector(this.lcDFileSelector);
   this.lcDFileSelector.hide();
 
   //Adds lightcurves background selectors
-  this.lcBckFileSelector = new fileSelector("lcBckFileSelector_" + this.id, "Source Background File:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
+  this.lcBckFileSelector = new fileSelector("lcBckFileSelector_" + this.id, "Total background light curve:", "BCK", service.upload_form_data, this.onDatasetChangedFn);
   this.lcBckFileSelector.hide();
   this.addFileSelector(this.lcBckFileSelector);
 
-  this.lcABckFileSelector = new fileSelector("lcABckFileSelector_" + this.id, "Lc A Background File:", "LCA_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcABckFileSelector = new fileSelector("lcABckFileSelector_" + this.id, "Background LC energy range A:", "LCA_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
   this.lcABckFileSelector.hide();
   this.addFileSelector(this.lcABckFileSelector);
 
-  this.lcBBckFileSelector = new fileSelector("lcBBckFileSelector_" + this.id, "Lc B Background File:", "LCB_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcBBckFileSelector = new fileSelector("lcBBckFileSelector_" + this.id, "Background LC energy range B:", "LCB_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
   this.lcBBckFileSelector.hide();
   this.addFileSelector(this.lcBBckFileSelector);
 
-  this.lcCBckFileSelector = new fileSelector("lcCBckFileSelector_" + this.id, "Lc C Background File:", "LCC_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcCBckFileSelector = new fileSelector("lcCBckFileSelector_" + this.id, "Background LC energy range C:", "LCC_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
   this.lcCBckFileSelector.hide();
   this.addFileSelector(this.lcCBckFileSelector);
 
-  this.lcDBckFileSelector = new fileSelector("lcDBckFileSelector_" + this.id, "Lc D Background File:", "LCD_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
+  this.lcDBckFileSelector = new fileSelector("lcDBckFileSelector_" + this.id, "Background LC energy range D:", "LCD_BCK", service.upload_form_data, this.onLcDatasetChangedFn);
   this.lcDBckFileSelector.hide();
   this.addFileSelector(this.lcDBckFileSelector);
 

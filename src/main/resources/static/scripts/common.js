@@ -24,7 +24,11 @@ function truncateText(string, maxLength){
       return string.substring(0,maxLength)+'...';
    else
       return string;
-};
+}
+
+function toProperCase (text) {
+    return text.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
 
 function closest(arr, closestTo){
     var closest = minMax2DArray(arr).max;

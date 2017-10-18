@@ -93,7 +93,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Adds frequency range selector
     var freqRange = this.pgPlot.getDefaultFreqRange();
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
-                                      "Frequency range (Hz):",
+                                      "Frequency Range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,

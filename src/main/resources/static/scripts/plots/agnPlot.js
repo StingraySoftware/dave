@@ -1,11 +1,11 @@
-//Long-term Variability plot
+//Long-Term Variability plot
 
 function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, plotStyle) {
 
   var currentObj = this;
 
   plotConfig.styles.selectable = false;
-  plotConfig.styles.title += " Long-term Variability";
+  plotConfig.styles.title += " Long-Term Variability";
 
   LcPlot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
@@ -58,7 +58,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
       if (data[6].values.length > 0) {
 
-        //Lightcurve has Long-term Variability values
+        //Lightcurve has Long-Term Variability values
         plotlyConfig.data.push(getAgnPlotTrace("y5", data[6].values, data[8].values, data[9].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[0]));
         plotlyConfig.data.push(getAgnPlotTrace("y4", data[6].values, data[10].values, data[11].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[1]));
         plotlyConfig.data.push(getAgnPlotTraceWithXErrorData("y3", data[18].values, data[12].values, data[19].values, data[13].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[2]));

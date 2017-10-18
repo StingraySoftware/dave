@@ -87,15 +87,16 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
 
       for (id in plotIds) {
         var plot = this.getPlotById(plotIds[id]);
+        if (!isNull(plot)){
+          if (!isNull(plot.plotConfig.lc0_bck_filename)) {
+            plot.plotConfig.lc0_bck_filename = projectConfig.bckFilename;
+            plot.onDatasetValuesChanged(filters);
 
-        if (!isNull(plot.plotConfig.lc0_bck_filename)) {
-          plot.plotConfig.lc0_bck_filename = projectConfig.bckFilename;
-          plot.onDatasetValuesChanged(filters);
+          } else if (!isNull(plot.plotConfig.bck_filename)) {
+            plot.plotConfig.bck_filename = projectConfig.bckFilename;
+            plot.onDatasetValuesChanged(filters);
 
-        } else if (!isNull(plot.plotConfig.bck_filename)) {
-          plot.plotConfig.bck_filename = projectConfig.bckFilename;
-          plot.onDatasetValuesChanged(filters);
-
+          }
         }
       }
     }
@@ -340,9 +341,9 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
 
       var title = titlePrefix + " PDS";
       if (titlePrefix == "SRC") {
-        title = "Total Power Density Spectrum (PDS)";
+        title = "Total Power Density Spectrum";
       } else if (titlePrefix.startsWith("LC")) {
-        title = "Power Density Spectrum Range=" + titlePrefix.replace("LC", "");
+        title = "Power Density Spectrum Range " + titlePrefix.replace("LC", "");
       }
 
       pds_plot = this.getPDSPlot ( projectConfig, filename, bck_filename, gti_filename,
@@ -393,7 +394,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                             "SRC",
                                             "EVENTS",
                                             ["TIME (" + timeUnit + ")", "A Count Rate(c/s)"],
-                                            "Light Curve Range=A",
+                                            "Light Curve Range A",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ],
                                             "", false, true );
 
@@ -403,7 +404,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                             "SRC",
                                             "EVENTS",
                                             ["TIME (" + timeUnit + ")", "B Count Rate(c/s)"],
-                                            "Light Curve Range=B",
+                                            "Light Curve Range B",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ],
                                             "", false, true );
 
@@ -413,7 +414,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                             "SRC",
                                             "EVENTS",
                                             ["TIME (" + timeUnit + ")", "C Count Rate(c/s)"],
-                                            "Light Curve Range=C",
+                                            "Light Curve Range C",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ],
                                             "", false, true );
 
@@ -423,7 +424,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                             "SRC",
                                             "EVENTS",
                                             ["TIME (" + timeUnit + ")", "D Count Rate(c/s)"],
-                                            "Light Curve Range=D",
+                                            "Light Curve Range D",
                                             [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ],
                                             "", false, true );
 
@@ -498,34 +499,34 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "SRC", "EVENTS", "PHA", "fullWidth", "Total Power Density Spectrum (PDS)" ),
+                                  "SRC", "EVENTS", "PHA", "fullWidth", "Total Power Density Spectrum" ),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range=A",
+                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range A",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_A", replaceColumnInPlot: true } ]),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range=B",
+                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range B",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_B", replaceColumnInPlot: true } ]),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range=C",
+                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range C",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_C", replaceColumnInPlot: true } ]),
 
               this.getPDSPlot ( projectConfig,
                                   filename,
                                   bck_filename,
                                   gti_filename,
-                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range=D",
+                                  "SRC", "EVENTS", "PHA", "", "Power Density Spectrum Range D",
                                   [ { source: "ColorSelector", table:"EVENTS", column:"Color_D", replaceColumnInPlot: true } ]),
 
               this.getDynamicalSpectrumPlot ( projectConfig,

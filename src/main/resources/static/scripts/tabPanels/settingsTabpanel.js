@@ -46,7 +46,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                             '</div>' +
                         '</div>' +
                       '</div>' +
-                      '<p class="InfoText">Settings changed here only applies to new tabs. You can save the workspace for reusing this settings later, or edit config.js file for updating the default settings.</p>' +
+                      '<p class="InfoText">Settings changed here only applies to new tabs. You can save the workspace for reusing this settings later, or edit config.js file to update the default settings.</p>' +
                     '</br></br></br>');
 
   var $mainSettings = this.$container.find(".mainSettings");
@@ -76,15 +76,15 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     function(value, input) { CONFIG.MAX_PLOT_POINTS = value; updateServerConfig(); }));
 
   $mainSettings.append(getInlineRangeBox ("MAX_TIME_RESOLUTION_DECIMALS_" + this.id, "inputMAX_TIME_RESOLUTION_DECIMALS",
-                                    "Maximun time resolution", CONFIG.MAX_TIME_RESOLUTION_DECIMALS, 1, 9,
+                                    "Maximum time resolution", CONFIG.MAX_TIME_RESOLUTION_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.MAX_TIME_RESOLUTION_DECIMALS = value; updateServerConfig(); }));
 
   $mainSettings.append(getInlineRangeBox ("MAX_TIME_RESOLUTION_DECIMALS_" + this.id, "inputMAX_TIME_RESOLUTION_DECIMALS",
-                                    "Time numbers decimals", CONFIG.MAX_TIME_RESOLUTION_DECIMALS, 1, 9,
+                                    "Time decimals", CONFIG.MAX_TIME_RESOLUTION_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.MAX_TIME_RESOLUTION_DECIMALS = value; updateServerConfig(); }));
 
   $mainSettings.append(getInlineRangeBox ("DEFAULT_NUMBER_DECIMALS_" + this.id, "inputDEFAULT_NUMBER_DECIMALS",
-                                    "Default numbers decimals", CONFIG.DEFAULT_NUMBER_DECIMALS, 1, 9,
+                                    "Default decimals", CONFIG.DEFAULT_NUMBER_DECIMALS, 1, 9,
                                     function(value, input) { CONFIG.DEFAULT_NUMBER_DECIMALS = value; updateServerConfig(); }));
 
   $mainSettings.append(getInlineRangeBox ("FRACEXP_LIMIT_" + this.id, "inputFRACEXP_LIMIT float",
@@ -92,7 +92,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     function(value, input) { CONFIG.FRACEXP_LIMIT = value; updateServerConfig(); }));
 
   $mainSettings.append(getInlineRangeBox ("ENERGY_FILTER_STEP_" + this.id, "inputENERGY_FILTER_STEP float",
-                                    "Stepping value for energy filters in keV (default: 5eV)", CONFIG.ENERGY_FILTER_STEP, 0.0001, 0.1,
+                                    "Step value for energy filters in keV (default: 5eV)", CONFIG.ENERGY_FILTER_STEP, 0.0001, 0.1,
                                     function(value, input) { CONFIG.ENERGY_FILTER_STEP = value; updateServerConfig(); }));
 
   $segmSettings.append(getInlineRangeBox ("MIN_SEGMENT_MULTIPLIER_" + this.id, "inputMIN_SEGMENT_MULTIPLIER",
@@ -111,7 +111,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     "HDU names supported as GTI tables (separated by commas without spaces)", CONFIG.GTI_STRING,
                                     function(value, input) { CONFIG.GTI_STRING = value; updateServerConfig(); }));
 
-  $advSettingss.append(getBooleanBox ("Avoid set background file if lightcurve bck data is allready substracted",
+  $advSettingss.append(getBooleanBox ("Avoid set background light curve if it is already subtracted",
                                     "chkDENY_BCK_IF_SUBS", CONFIG.DENY_BCK_IF_SUBS,
                                     function(enabled) { CONFIG.DENY_BCK_IF_SUBS = enabled; updateServerConfig(); }));
 

@@ -275,7 +275,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             niter = baseline_opts["niter"]  # 10
             baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
 
-        # Gets the Long-term variability values
+        # Gets the Long-Term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
             logging.debug("Preparing lightcurve excess variance");
             chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
@@ -1775,8 +1775,8 @@ def push_to_results_array (result, values):
 
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
-    column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
-    column["error_values"] = np.around(errors, decimals=CONFIG.PRECISSION)
+    column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISSION)
+    column["error_values"] = np.around(nan_and_inf_to_num(errors), decimals=CONFIG.PRECISSION)
     result.append(column)
     return result
 
@@ -2223,7 +2223,7 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
     return divided_values, divided_error
 
 
-# ----- Long-term variability FUNCTIONS.. NOT EXPOSED  -------------
+# ----- Long-Term variability FUNCTIONS.. NOT EXPOSED  -------------
 
 def lightcurve_meancount(lc):
     return lc.meancounts, np.std(lc.counts)
