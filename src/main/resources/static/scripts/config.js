@@ -21,6 +21,7 @@ CONFIG = {
   DENY_BCK_IF_SUBS: true, //Avoid set background file if lightcurve bck data is already substracted
   MAX_TIME_RESOLUTION_DECIMALS: 5, //Defines the maximun time resolution of DAVE GUI, default 100ns
   DEFAULT_NUMBER_DECIMALS: 3, //The default number precision on selectors and textboxes
+  SERVER_DATA_PRECISION: 6, //The default number precision for data given from server
   BIN_SELECTOR_LOG_SCALE_STEPS: 1000,
   BIN_SELECTOR_LOG_SCALE_POWER: 4,
   TIME_COLUMN: 'TIME', //Represents the Time column name

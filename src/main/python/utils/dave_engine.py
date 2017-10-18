@@ -1766,7 +1766,7 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 def push_to_results_array (result, values):
     column = dict()
     try:
-        column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
+        column["values"] = np.around(values, decimals=CONFIG.PRECISION)
     except:
         column["values"] = values
     result.append(column)
@@ -1775,8 +1775,8 @@ def push_to_results_array (result, values):
 
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
-    column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISSION)
-    column["error_values"] = np.around(nan_and_inf_to_num(errors), decimals=CONFIG.PRECISSION)
+    column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISION)
+    column["error_values"] = np.around(nan_and_inf_to_num(errors), decimals=CONFIG.PRECISION)
     result.append(column)
     return result
 
