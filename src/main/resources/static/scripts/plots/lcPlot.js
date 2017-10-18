@@ -30,7 +30,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                             '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + this.baseline_opts.lam.default + '" value="' + this.baseline_opts.lam.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.lam.min + '-' + this.baseline_opts.lam.max + '</span></p>' +
                             '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + this.baseline_opts.p.default + '" value="' + this.baseline_opts.p.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.p.min + '-' + this.baseline_opts.p.max + '</span></p>' +
                             '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + this.baseline_opts.niter.default + '" value="' + this.baseline_opts.niter.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.niter.min + '-' + this.baseline_opts.niter.max + '</span></p>' +
-                            '<p style="font-size:0.8em; color:#777777;">Algorithm: Asymmetric Least Squares Smoothing (P. Eilers and H. Boelens, 2005)</p>' +
+                            '<a target="_blank" href="https://zanran_storage.s3.amazonaws.com/www.science.uva.nl/ContentPages/443199618.pdf" class="InfoText">Algorithm: Eilers, Paul H. C. and Boelens, Hans F.M. Baseline Correction with Asymmetric Least Squares Smoothing. 2005 [Last query: 18/10/2017] <i class="fa fa-external-link" aria-hidden="true"></i></a>' +
                           '</div>' +
                         '</div>');
 

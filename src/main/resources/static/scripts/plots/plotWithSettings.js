@@ -246,7 +246,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
         var binSelectorConfig = getBinSelectorConfig(tab.projectConfig);
 
         this.binSelector = new BinSelector(this.id + "_binSelector",
-                                          "BIN SIZE (" + tab.projectConfig.timeUnit  + "):",
+                                          "Bin Size (" + tab.projectConfig.timeUnit  + "):",
                                           tab.projectConfig.minBinSize,
                                           tab.projectConfig.maxBinSize,
                                           binSelectorConfig.step,

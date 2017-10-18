@@ -236,7 +236,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.segmSelector.setMinMaxValues(segmConfig.minValue, segmConfig.maxValue, segmConfig.step);
     currentObj.updateSegmSelector();
 
-    //Updates Rebin selector and Frequency range selector
+    //Updates Rebin selector and Frequency Range selector
     currentObj.updateMaxMinFreq(true);
     if (!isNull(currentObj.rebinSelector)) {
       currentObj.rebinSelector.setMinMaxValues (currentObj.plotConfig.freqMin,
@@ -319,17 +319,29 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.getLabel = function (axis) {
     if (axis == this.XYLabelAxis){
+
       var yLabel = this.plotConfig.styles.labels[this.XYLabelAxis];
+
       if (this.plotConfig.plotType == "X*Y" &&
           (isNull(this.plotConfig.styles.XYLabelIsCustom)
               || !this.plotConfig.styles.XYLabelIsCustom)) {
         if (this.plotConfig.styles.labels[0].startsWith("Freq")
             && this.plotConfig.styles.labels[this.XYLabelAxis].startsWith("Pow")) {
-              yLabel = "Power x Frequency (rms/mean)^2";
+              if (this.plotConfig.norm == "leahy") {
+                yLabel = "Leahy Power x Frequency";
+              } else {
+                yLabel = "Power x Frequency (rms/mean)^2";
+              }
           } else {
             yLabel += " x " + this.plotConfig.styles.labels[0];
           }
+
+      } else if (this.plotConfig.norm == "leahy") {
+        yLabel = "Leahy Power";
+      } else if (this.plotConfig.norm == "frac") {
+        yLabel = "Power (rms/mean^2) Hz^-1";
       }
+
       return yLabel;
     } else {
       return this.plotConfig.styles.labels[axis];

@@ -55,7 +55,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.createPlots = function () {
 
-    //Adds Long-term variability Plot to outputPanel
+    //Adds Long-Term variability Plot to outputPanel
     this.pgPlot = new PgPlot(
                       this.id + "_pg_" + (new Date()).getTime(),
                       $.extend(true, $.extend(true, {}, plotConfig), {
@@ -76,7 +76,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                             && currentObj.pgPlot.data[0].values.length > 0){
                               currentObj.outputPanel.onPlotReady();
                               if (isNull(currentObj.freqRangeSelector)){
-                                //We allready know the freq range, so create controls
+                                //We already know the freq range, so create controls
                                 currentObj.addControls();
                               }
                         } else {
@@ -165,7 +165,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Adds frequency range selector
     var freqRange = this.pgPlot.getDefaultFreqRange();
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
-                                      "Frequency range (Hz):",
+                                      "Frequency Range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
@@ -228,7 +228,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     //Candidate frequency slider
     this.freqSelector = new BinSelector(this.id + "_freqSelector",
-                                      "Frequency tunning:",
+                                      "Frequency Tuning:",
                                       freqRange[0], freqRange[1], this.freqRangeSelector.step, (freqRange[1] - freqRange[0])/2,
                                       this.onFreqSelectorValuesChanged,
                                       function( event, ui ) {

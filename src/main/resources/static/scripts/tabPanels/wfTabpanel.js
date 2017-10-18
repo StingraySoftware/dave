@@ -420,18 +420,18 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
 
     var variancePlotsButtons = [];
-    variancePlotsButtons = currentObj.addButtonToArray("Mean flux estimator",
+    variancePlotsButtons = currentObj.addButtonToArray("Mean Flux Estimator",
                                                   "baselineBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Mean flux estimator (baseline)",
+                                                    currentObj.showLcSelectionDialog("Mean Flux Estimator (baseline)",
                                                                                      onBaselinePlotSelected);
                                                   },
                                                   variancePlotsButtons);
 
-    variancePlotsButtons = currentObj.addButtonToArray("Long-term Variability",
+    variancePlotsButtons = currentObj.addButtonToArray("Long-Term Variability",
                                                   "intVarBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Long-term Variability",
+                                                    currentObj.showLcSelectionDialog("Long-Term Variability",
                                                                                      onAGNPlotSelected);
                                                   },
                                                   variancePlotsButtons);
@@ -449,8 +449,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
               { cssClass: "LcPlot", title:"Light Curves and Colors" },
               { cssClass: "PDSPlot", title:"Power Density Spectra", extraButtons: pdsPlotsButtons},
               { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-              { cssClass: "VariancePlot", title:"Long-term Variability Analysis", extraButtons: variancePlotsButtons },
-              { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons },
+              { cssClass: "VariancePlot", title:"Long-Term Variability Analysis", extraButtons: variancePlotsButtons },
+              { cssClass: "PulsarPlot", title:"X-ray Pulsars", extraButtons: pulsarPlotsButtons },
               { cssClass: "HdrFileInfo", title:"Header File Information" }
           ];
   }
@@ -659,9 +659,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       var lcPlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() });
       showMsg("Spectral Timing:", "At least two plots of type Light Curve must be visible/enabled to continue. " +
                                   "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots" +
-                                  ((lcPlots.length > 4) ? "." : " or use the Load section to upload more Light Curve's files." +
-                                  "</br> Also you can use the <i class='fa fa-thumb-tack' aria-hidden='true'></i> button to select two Ligth Curve's plots" +
-                                  " of the same Tab or from different Tabs to create a Cross Spectrum Tab."));
+                                  ((lcPlots.length > 4) ? "." : " or use the Load section to upload more Light Curve's files."));
     }
   }
 

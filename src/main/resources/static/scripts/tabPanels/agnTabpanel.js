@@ -1,5 +1,5 @@
 
-//Adds new Long-term variability Tab Panel
+//Adds new Long-Term variability Tab Panel
 function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new AGNTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
@@ -9,7 +9,7 @@ function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, p
 
 //Subscribes the load workspace AGNTabPanel function
 tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
-  //Creates new Long-term variability Tab Panel
+  //Creates new Long-Term variability Tab Panel
   return addAGNTabPanel($("#navbar").find("ul").first(),
                       $(".daveContainer"),
                       tabConfig.plotConfig,
@@ -19,7 +19,7 @@ tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
                       tabConfig.navItemClass);
 }
 
-//Long-term variability Tab Panel
+//Long-Term variability Tab Panel
 function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
@@ -122,7 +122,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.createPlots = function (plotStyle) {
-    //Adds Long-term variability Plot to outputPanel
+    //Adds Long-Term variability Plot to outputPanel
     this.agnPlot = new AgnPlot(
                               this.id + "_agn_" + (new Date()).getTime(),
                               $.extend(true, {}, plotConfig),
@@ -208,16 +208,16 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.getVarianceSelector = function () {
-    //Long-term Variability controls set
+    //Long-Term Variability controls set
     var $variance = $('<div class="variance">' +
                         '<h3>' +
-                          'Long-term variability parameters:' +
+                          'Long-Term variability parameters:' +
                         '</h3>' +
                         '<div class="varianceContainer">' +
-                          '<p>Min counts for each chunk:</br><input id="mc_' + this.id + '" class="inputMinPhotons" type="text" name="mp_' + this.id + '" placeholder="' + this.variance_opts.min_counts.default + '" value="' + this.variance_opts.min_counts.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_counts.min + '-' + this.variance_opts.min_counts.max + '</span></p>' +
-                          '<p>Min. time bins:</br><input id="mb_' + this.id + '" class="inputMinBins" type="text" name="mb_' + this.id + '" placeholder="' + this.variance_opts.min_bins.default + '" value="' + this.variance_opts.min_bins.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_bins.min + '-' + this.variance_opts.min_bins.max + '</span></p>' +
+                          '<p>Minimum counts per segment:</br><input id="mc_' + this.id + '" class="inputMinPhotons" type="text" name="mp_' + this.id + '" placeholder="' + this.variance_opts.min_counts.default + '" value="' + this.variance_opts.min_counts.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_counts.min + '-' + this.variance_opts.min_counts.max + '</span></p>' +
+                          '<p>Minimum number of time segment:</br><input id="mb_' + this.id + '" class="inputMinBins" type="text" name="mb_' + this.id + '" placeholder="' + this.variance_opts.min_bins.default + '" value="' + this.variance_opts.min_bins.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_bins.min + '-' + this.variance_opts.min_bins.max + '</span></p>' +
                           '<p>Mean count:</br><input id="mc_' + this.id + '" class="inputMeanCount" type="text" name="mc_' + this.id + '" placeholder="' + this.variance_opts.mean_count.default + '" value="' + this.variance_opts.mean_count.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.mean_count.min + '-' + this.variance_opts.mean_count.max + '</span></p>' +
-                          '<a target="_blank" href="http://articles.adsabs.harvard.edu/cgi-bin/nph-iarticle_query?bibcode=2003MNRAS.345.1271V&db_key=AST&page_ind=0&data_type=GIF&type=SCREEN_VIEW&classic=YES" class="InfoText">Algorithm: Vaughan et al. 2003</a>' +
+                          '<a target="_blank" href="http://articles.adsabs.harvard.edu/cgi-bin/nph-iarticle_query?bibcode=2003MNRAS.345.1271V&db_key=AST&page_ind=0&data_type=GIF&type=SCREEN_VIEW&classic=YES" class="InfoText">Algorithm: Vaughan et al, Mon. Not. R. Astron. Soc. 345, 1271-1284 (2003) <i class="fa fa-external-link" aria-hidden="true"></a>' +
                         '</div>' +
                       '</div>');
     $variance.find("input").on('change', this.onVarianceValuesChanged);
@@ -239,8 +239,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.variance_opts.min_bins = { default:20, min:10, max: 10000}; //Minimum number of time bins on excess variance
   this.variance_opts.mean_count = { default:10, min:1, max: 10000}; //Number of elements to calculate the means
 
-  //Preapares Long-term Variability toolpanel data
-  this.setTitle("Long-term Variability");
+  //Preapares Long-Term Variability toolpanel data
+  this.setTitle("Long-Term Variability");
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
   this.prepareTabButton(this.wfSelector.find(".styleBtn"));
   this.wfSelector.find(".styleBtn").show();
