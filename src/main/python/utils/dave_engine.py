@@ -12,7 +12,7 @@ import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray.events import EventList
 from stingray.lightcurve import Lightcurve
-from stingray import Powerspectrum, AveragedPowerspectrum
+from stingray import Powerspectrum, AveragedPowerspectrum, DynamicalPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
@@ -594,10 +594,12 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency
 # @param: df: If not 0 is the frequency rebining value
 #
 def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                            filters, axis, dt, nsegm, segm_size, norm, df=0):
+                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df=0):
 
     freq = []
     power_all = []
@@ -645,22 +647,22 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         # Creates the power density spectrum
         logging.debug("Create dynamical spectrum")
 
-        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+        pds = DynamicalPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
         if pds:
 
             if df > 0:
-                pds = pds.rebin(df=df)
+                pds.rebin_frequency(df)
 
-            #pds = rebin_spectrum_if_necessary(pds)
+            filtered_indexes = np.where((pds.freq >= freq_range[0]) & (pds.freq <= freq_range[1]))[0]
+            freq = pds.freq[filtered_indexes]
+            time = pds.time
+            logging.debug("freq: " + str(freq.shape))
+            logging.debug("time: " + str(time.shape))
+            logging.debug("dyn_ps: " + str(pds.dyn_ps.shape))
+            for tmp_pds in np.transpose(pds.dyn_ps):
+                power_all = push_to_results_array(power_all, tmp_pds[filtered_indexes])
 
-            freq = pds.freq
-
-            pds_array, nphots_all = pds._make_segment_spectrum(lc, segm_size)
-            for tmp_pds in pds_array:
-                power_all = push_to_results_array(power_all, tmp_pds.power)
-
-            time = gti[:, 0]
             duration = [lc.tseg]
 
             if gti is not None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):

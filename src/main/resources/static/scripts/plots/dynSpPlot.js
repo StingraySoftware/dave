@@ -51,36 +51,6 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
 
       this.updateMaxMinFreq();
 
-      if (this.plotConfig.freq_range[1] < this.plotConfig.maxSupportedFreq
-          || this.plotConfig.freq_range[0] > 0.0){
-
-          //Filter data with frequency range
-          var freqArray = { values:[] };
-          var zArray = { values:[] };
-          for (freq_idx in data[0].values) {
-            var freq = data[0].values[freq_idx];
-            if (freq >= this.plotConfig.freq_range[0] && freq <= this.plotConfig.freq_range[1]){
-              //Good frequency, add data
-              freqArray.values.push(freq);
-              for (time_idx in data[2].values) {
-                if (!isNull(data[1].values)
-                    && (data[1].values.length > time_idx)
-                    && !isNull(data[1].values[time_idx].values)
-                    && (data[1].values[time_idx].values.length > freq_idx)){
-                      if (isNull(zArray.values[time_idx])) {
-                        zArray.values[time_idx] = { values:[] };
-                      }
-                      zArray.values[time_idx].values.push(data[1].values[time_idx].values[freq_idx]);
-                    }
-              }
-            }
-          }
-
-          //Assigns filtered data
-          data[0] = freqArray;
-          data[1] = zArray;
-      }
-
       if (currentObj.plotConfig.plotType == "X*Y") {
         for (pds_idx in data[1].values) {
           for (i in data[0].values) {
