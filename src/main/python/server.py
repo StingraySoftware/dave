@@ -153,7 +153,7 @@ def get_dynamical_spectrum():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], float(request.json['df']))
+            request.json['norm'], request.json['freq_range'], float(request.json['df']))
 
 
 @app.route('/get_cross_spectrum', methods=['POST'])

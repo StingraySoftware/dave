@@ -351,7 +351,7 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
 
 
 def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
-                            filters, axis, dt, nsegm, segm_size, norm, df):
+                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -377,10 +377,11 @@ def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_dynamical_spectrum: nsegm %f" % nsegm)
     logging.debug("get_dynamical_spectrum: segm_size %f" % segm_size)
     logging.debug("get_dynamical_spectrum: norm %s" % norm)
+    logging.debug("get_dynamical_spectrum: freq_range %s" % freq_range)
     logging.debug("get_dynamical_spectrum: df %s" % df)
 
     data = DaveEngine.get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, df)
+                                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df)
 
     logging.debug("get_dynamical_spectrum: Finish!")
 
