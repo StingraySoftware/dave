@@ -5,8 +5,9 @@ the [Stingray library](https://github.com/StingraySoftware/stingray). It is
 intended to be used by astronomers for time-series analysis in general, and
 analysis of variable sources in particular.
 
-The goal is to enable scientific exploration and flexible analysis flows where
-users can insert their own algorithms to compare the effects of such changes.
+The goal is to enable scientific exploration of astronomical X-Ray
+observations and to analyse this data in a graphical environment.
+
 
 ## Get Started
 
