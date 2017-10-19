@@ -252,6 +252,14 @@ ul#right-navbar li {
   max-width: 58%;
 }
 
+.PDSPlot .plotTools .btnWarn {
+  max-width: 51%;
+}
+
+.fullWidth .plotTools .btnWarn, .fullScreen .plotTools .btnWarn {
+  max-width: 100%;
+}
+
 .plotContainer .settings
 {
   padding: 24px;

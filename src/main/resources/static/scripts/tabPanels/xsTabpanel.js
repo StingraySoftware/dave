@@ -53,7 +53,13 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       data = JSON.parse(jsdata);
 
       if (isNull(data)) {
-        log("onPlotReceived wrong data!, XSTabPanel: " + currentObj.id);
+        log("onPlotDataReceived wrong data!, XSTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
+        return;
+
+      } else if (!isNull(data.error)) {
+        currentObj.xsPlot.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", XSTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
 

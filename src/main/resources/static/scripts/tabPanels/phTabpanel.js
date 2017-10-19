@@ -383,8 +383,14 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("PHData received!, PhTabPanel: " + currentObj.id);
       data = JSON.parse(jsdata);
 
-      if (isNull(data) || data.length != 6) {
+      if (isNull(data)) {
         log("onPlotReceived wrong data!, PhTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
+        return;
+
+      } else if (!isNull(data.error)) {
+        currentObj.phPlot.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", PhTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
 

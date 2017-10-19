@@ -851,10 +851,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.showWarn = function (warnmsg) {
+    var isWarnLevel = warnmsg.startsWith("@WARN@");
     this.$html.find(".plotTools").find(".btnWarn").remove();
     if (warnmsg != ""){
-      this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><div>' +
-                         '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg +
+      this.btnWarn = $('<button class="btn ' + ((isWarnLevel) ? 'btn-warning' : 'btn-danger') + ' btnWarn ' + this.id + '"><div>' +
+                         '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + ((isWarnLevel) ? warnmsg.replace("@WARN@", "") : warnmsg) +
                         '</div></button>');
       if (warnmsg.length > 50) {
         this.btnWarn.addClass("bigWarnBtn");

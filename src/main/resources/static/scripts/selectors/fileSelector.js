@@ -59,7 +59,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
          var formData = new FormData(currentObj.$html.find('form')[0]);
          currentObj.uploadFn(function (response) {
                                          var jsonRes = JSON.parse(response);
-                                         if (jsonRes.error != undefined) {
+                                         if (!isNull(jsonRes.error)) {
                                            currentObj.onUploadError(jsonRes.error);
                                          } else {
                                            currentObj.onUploadSuccess(jsonRes);
