@@ -53,7 +53,13 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       data = JSON.parse(jsdata);
 
       if (isNull(data)) {
-        log("onPlotReceived wrong data!, AGNTabPanel: " + currentObj.id);
+        log("onPlotDataReceived wrong data!, AGNTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
+        return;
+
+      } else if (!isNull(data.error)) {
+        currentObj.agnPlot.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", AGNTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
 

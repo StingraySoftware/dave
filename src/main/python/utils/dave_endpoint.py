@@ -96,7 +96,7 @@ def append_file_to_dataset(filename, nextfile, target):
         return common_error("Invalid file or cache key")
 
     if not nextfile:
-        return common_error(error="No nextfile setted")
+        return common_error("No nextfile setted")
 
     if not SessionHelper.is_file_uploaded(nextfile):
         if not FileUtils.file_exist(target, nextfile):
@@ -128,7 +128,7 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
         return common_error("Invalid file or cache key")
 
     if not rmf_filename:
-        return common_error(error="No rmf_filename setted")
+        return common_error("No rmf_filename setted")
 
     rmf_destination = FileUtils.get_destination(target, rmf_filename)
     if not FileUtils.is_valid_file(rmf_destination):

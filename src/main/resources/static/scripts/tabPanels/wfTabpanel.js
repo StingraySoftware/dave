@@ -132,19 +132,22 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.service.get_dataset_header(filenames[0], function( jsonHeader ){
 
         if (!isNull(jsonHeader.abort)){
-          //Comes from error returned request.
-          showError("Wrong lightcurve file!");
-          return;
+          log("Current request aborted, WfTabPanel: " + currentObj.id);
+          if (jsdata.statusText != "error"){
+            //If abort cause is not because python server died
+            showError("Wrong lightcurve file!");
+          }
+          return; //Comes from request abort call.
         }
 
         var header = JSON.parse(jsonHeader);
-        if (!isNull(header)) {
+        if (!isNull(header) && isNull(header.error)) {
 
           log("onLcDatasetChanged - get_dataset_header: " + selectorKey + ": " + filenames[0]);
           currentObj.onLcHeaderReceived(selectorKey, filenames[0], header);
 
         } else {
-          showError("Wrong lightcurve file!");
+          showError((!isNull(header.error)) ? header.error : "Wrong lightcurve file!");
         }
 
         if (!isNull(callback)) { callback(); }
@@ -248,7 +251,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onRmfApplied = function ( result, callback ) {
     result = JSON.parse(result);
-    if (!isNull(result) && result.length > 0){
+    if (!isNull(result) && isNull(result.error) && result.length > 0){
       log("onRmfApplied: Getting new shema..");
 
       currentObj.projectConfig.setRmfData(result);
@@ -257,32 +260,38 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         log("onRmfApplied: Success!");
         var schema = JSON.parse(jsonSchema);
-        currentObj.projectConfig.updateFile("RMF");
-        currentObj.projectConfig.updateSchema(schema);
-        currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
+        if (!isNull(schema) && isNull(schema.error)){
 
-        //Cleans previous plots for RMF key
-        currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
-        currentObj.projectConfig.cleanPlotsIdsKey("RMF");
+          currentObj.projectConfig.updateFile("RMF");
+          currentObj.projectConfig.updateSchema(schema);
+          currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
-        //Add RMF plots
-        currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+          //Cleans previous plots for RMF key
+          currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
+          currentObj.projectConfig.cleanPlotsIdsKey("RMF");
 
-        //Hides upload RMF buttons from Analyze tab
-        currentObj.toolPanel.$html.find(".rmsBtn").remove();
-        currentObj.toolPanel.$html.find(".covarianceBtn").remove();
-        currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
+          //Add RMF plots
+          currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
-        //Adds infoPanel for this file
-        currentObj.addInfoPanel(currentObj.projectConfig.getFile("RMF"));
+          //Hides upload RMF buttons from Analyze tab
+          currentObj.toolPanel.$html.find(".rmsBtn").remove();
+          currentObj.toolPanel.$html.find(".covarianceBtn").remove();
+          currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
+          //Adds infoPanel for this file
+          currentObj.addInfoPanel(currentObj.projectConfig.getFile("RMF"));
+
+        } else {
+          showError((!isNull(schema) && !isNull(schema.error)) ? schema.error : "Wrong RMF file!");
+        }
         waitingDialog.hide();
         if (!isNull(callback)) { callback(); }
 
       }, currentObj.onSchemaError, null);
+
     } else {
       logErr("onRmfApplied error:" + JSON.stringify(result));
-      showError("Wrong RMF file!");
+      showError((!isNull(result.error)) ? result.error : "Wrong RMF file!");
       if (!isNull(callback)) { callback(); }
     }
   }
@@ -344,8 +353,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }
 
     } else {
-      logErr("onSchemaChangedWithKey error:" + schema);
-      showError();
+      logErr("onSchemaChangedWithKey error:" + jsonSchema);
+      showError((!isNull(schema) && !isNull(schema.error)) ? schema.error : "Wrong file");
     }
 
     if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
@@ -359,7 +368,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
           //Calls this function again with the schema obj
           log("addInfoPanel.get_dataset_schema: Success!");
-          currentObj.addInfoPanel(filepath, JSON.parse(jsonSchema));
+          var schema = JSON.parse(jsonSchema);
+          if (!isNull(schema) && isNull(schema.error)){
+            currentObj.addInfoPanel(filepath, schema);
+          } else {
+            logErr("addInfoPanel.get_dataset_schema filename:" + filepath + " error:" + JSON.stringify(jsonSchema));
+          }
 
         }, function ( error ) {
           logErr("onSchemaError filename:" + filepath + " error:" + JSON.stringify(error));
@@ -477,7 +491,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       if (!isNull(res)){
         if (!isNull(res.error)) {
           //Error while server tried to read params.filename
-          showError("Can't read file: " + params.filename);
+          showError("Can't read file: " + params.filename + ", error: " + res.error);
           return;
         } else if (res == "") {
           showError("Can't concatenate files");
@@ -510,7 +524,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onSchemaError = function ( error ) {
     logErr("onSchemaError error:" + JSON.stringify(error));
     waitingDialog.hide();
-    showError();
+    showError((!isNull(error.error)) ? error.error : "Can't get schema from file");
   }
 
   this.updateMinMaxCountRate = function (minRate, maxRate) {
