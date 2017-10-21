@@ -60,7 +60,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       this.id + "_pg_" + (new Date()).getTime(),
                       $.extend(true, $.extend(true, {}, plotConfig), {
                         styles: { type: "ligthcurve",
-                                  title: "Power Density Spectrum (PDS)",
+                                  title: "Power Density Spectrum",
                                   labels: ["Frequency (Hz)", "Power"],
                                   selectable: false,
                                   showFitBtn: true }

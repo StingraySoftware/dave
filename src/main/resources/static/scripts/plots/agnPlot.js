@@ -5,7 +5,18 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   var currentObj = this;
 
   plotConfig.styles.selectable = false;
-  plotConfig.styles.title += " Long-Term Variability";
+
+  if (!plotConfig.styles.title.startsWith("$")){
+    //If X axis label is not LaTeX set it to LaTeX
+    plotConfig.styles.title = "$\\text{" + plotConfig.styles.title + " Long-Term Variability}$";
+  } else {
+    plotConfig.styles.title = "$\\text{Long-Term Variability}$";
+  }
+
+  if (!plotConfig.styles.labels[0].startsWith("$")){
+    //If X axis label is not LaTeX set it to LaTeX
+    plotConfig.styles.labels[0] = "$\\text{" + plotConfig.styles.labels[0] + "}$";
+  }
 
   LcPlot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
@@ -17,7 +28,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.variance_opts.min_bins = { default:100, min:1, max: 100000}; //Minimum number of time bins on excess variance
   this.plotConfig.variance_opts = {};
 
-  this.axisLabels = ["<Fvar>", "Fvar", "<S2>", "S2", "<x>", "x"];
+  this.axisLabels = ["$<F _{var}>$", "$F _{var}$", "$<{\\sigma _{XS}}^{2}>$", "${\\sigma _{XS}}^{2}$", "$<\\chi>$", "$\\chi$"];
 
   this.btnFullScreen.remove();
   this.btnLoad.remove();

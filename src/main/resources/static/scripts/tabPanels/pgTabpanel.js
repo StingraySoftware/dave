@@ -60,7 +60,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       $.extend(true, $.extend(true, {}, plotConfig), {
                         styles: { type: "ligthcurve",
                                   title: "Lomb-Scargle Periodogram",
-                                  labels: ["Frequency (Hz)", "Power"],
+                                  labels: ["Frequency (Hz)", "Lomb-Scargle Power"],
                                   selectable: false,
                                   showFitBtn: true }
                       }),
@@ -154,7 +154,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.wfSelector.find(".styleBtn").show();
   this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
-  
+
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
 

@@ -331,6 +331,46 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     return $style;
   }
 
+  this.getLabel = function (axis) {
+    //LaTeX not supported on 3D Plots -> https://github.com/plotly/plotly.js/issues/608
+    if (axis == this.XYLabelAxis){
+
+      var yLabel = this.plotConfig.styles.labels[this.XYLabelAxis];
+
+      if (this.plotConfig.plotType == "X*Y" &&
+          (isNull(this.plotConfig.styles.XYLabelIsCustom)
+              || !this.plotConfig.styles.XYLabelIsCustom)) {
+        if (this.plotConfig.styles.labels[0].startsWith("Freq")
+            && this.plotConfig.styles.labels[this.XYLabelAxis].startsWith("Pow")) {
+              if (this.plotConfig.norm == "leahy") {
+                yLabel = "Power (Leahy) x Freq";
+              } else if (this.plotConfig.norm == "frac") {
+                yLabel = "(rms/mean)^2";
+              } else if (this.plotConfig.norm == "abs") {
+                yLabel = "rms^2";
+              } else if (this.plotConfig.norm == "none") {
+                yLabel = "Variance (unnormalized powers) x Freq";
+              }
+          } else {
+            yLabel += " x " + this.plotConfig.styles.labels[0];
+          }
+
+      } else if (this.plotConfig.norm == "leahy") {
+        yLabel = "Power (Leahy)";
+      } else if (this.plotConfig.norm == "frac") {
+        yLabel = "(rms/mean)^2 x Freq^-1";
+      } else if (this.plotConfig.norm == "abs") {
+        yLabel = "rms^2 x Freq^-1";
+      } else if (this.plotConfig.norm == "none") {
+        yLabel = "Variance (unnormalized powers)";
+      }
+
+      return yLabel;
+    } else {
+      return this.plotConfig.styles.labels[axis];
+    }
+  }
+
   log ("new DynSpPlot id: " + this.id);
 
   return this;
