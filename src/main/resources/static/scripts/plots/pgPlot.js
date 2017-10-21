@@ -15,7 +15,7 @@ function PgPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   this.plotConfig.xAxisType = "linear";
   this.plotConfig.yAxisType = "log";
-  this.plotConfig.plotType = "X*Y";
+  this.plotConfig.plotType = "X";
   this.plotConfig.ls_norm = "standard";
   this.plotConfig.samples_per_peak = this.ls_opts.samples_per_peak.default;
   this.plotConfig.nyquist_factor = this.ls_opts.nyquist_factor.default;
@@ -35,6 +35,20 @@ function PgPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   this.mustPropagateAxisFilter = function (axis) {
     return axis == 0;
+  }
+
+  this.getLabel = function (axis) {
+    if (axis == this.XYLabelAxis){
+      var yLabel = this.plotConfig.styles.labels[this.XYLabelAxis];
+      if (this.plotConfig.plotType == "X*Y" &&
+          (isNull(this.plotConfig.styles.XYLabelIsCustom)
+              || !this.plotConfig.styles.XYLabelIsCustom)) {
+        yLabel += " x " + this.plotConfig.styles.labels[0];
+      }
+      return yLabel;
+    } else {
+      return this.plotConfig.styles.labels[axis];
+    }
   }
 
   log ("new PgPlot id: " + this.id);

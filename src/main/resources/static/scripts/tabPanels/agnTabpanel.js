@@ -146,8 +146,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_exVarConf_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter",
-                                          labels: ["TIME (" + this.projectConfig.timeUnit  + ")", "S2"],
-                                          title: "S2 Confidence Intervals",
+                                          labels: ["$\\text{TIME (" + this.projectConfig.timeUnit  + ")}$", "${\\sigma _{XS}}^{2}$"],
+                                          title: "${\\sigma _{XS}}^{2}\\text{ Confidence Intervals}$",
                                           selectable: false }
                               }),
                               null,
@@ -163,8 +163,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_FvarConf_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter",
-                                          labels: ["TIME (" + this.projectConfig.timeUnit  + ")", "Fvar"],
-                                          title: "Fvar Confidence Intervals",
+                                          labels: ["$\\text{TIME (" + this.projectConfig.timeUnit  + ")}$", "$F _{var}$"],
+                                          title: "$F _{var}\\text{ Confidence Intervals}$",
                                           selectable: false }
                               }),
                               null,
@@ -180,8 +180,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_absRms_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter_with_errors",
-                                          labels: ["<x>", "S2"],
-                                          title: "Avg. Absolute RMS",
+                                          labels: ["$<\\chi>$", "${\\sigma _{XS}}^{2}$"],
+                                          title: "$\\text{Avg. Absolute RMS}$",
                                           selectable: false }
                               }),
                               null,
@@ -197,8 +197,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_fracRms_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter_with_errors",
-                                          labels: ["<x>", "Fvar"],
-                                          title: "Avg. Fractional RMS",
+                                          labels: ["$<\\chi>$", "$F _{var}$"],
+                                          title: "$\\text{Avg. Fractional RMS}$",
                                           selectable: false }
                               }),
                               null,

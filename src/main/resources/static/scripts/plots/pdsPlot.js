@@ -328,13 +328,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         if (this.plotConfig.styles.labels[0].startsWith("Freq")
             && this.plotConfig.styles.labels[this.XYLabelAxis].startsWith("Pow")) {
               if (this.plotConfig.norm == "leahy") {
-                yLabel = "Power (Leahy) \\times \\nu";
+                yLabel = "$Power (Leahy) \\times \\nu$";
               } else if (this.plotConfig.norm == "frac") {
-                yLabel = "(rms/mean)^2";
+                yLabel = "$(rms/mean)^{2}$";
               } else if (this.plotConfig.norm == "abs") {
-                yLabel = "rms^2";
+                yLabel = "$rms^{2}$";
               } else if (this.plotConfig.norm == "none") {
-                yLabel = "Variance (unnormalized powers) \\times \\nu";
+                yLabel = "$Variance (unnormalized powers) \\times \\nu$";
               }
           } else {
             yLabel += " x " + this.plotConfig.styles.labels[0];
@@ -343,9 +343,9 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       } else if (this.plotConfig.norm == "leahy") {
         yLabel = "Power (Leahy)";
       } else if (this.plotConfig.norm == "frac") {
-        yLabel = "(rms/mean)^2\\nu{-1}";
+        yLabel = "$(rms/mean)^{2}\\nu ^{-1}$";
       } else if (this.plotConfig.norm == "abs") {
-        yLabel = "rms^2 \\nu^{-1}";
+        yLabel = "$rms^{2}\\nu ^{-1}$";
       } else if (this.plotConfig.norm == "none") {
         yLabel = "Variance (unnormalized powers)";
       }

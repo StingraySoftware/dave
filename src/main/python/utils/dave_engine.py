@@ -289,18 +289,24 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             excessvar = nan_and_inf_to_num(res[0])
             excessvar_err = nan_and_inf_to_num(res[1])
 
-            excessvarmean = get_means_from_array(excessvar, variance_opts["mean_count"])
-            excessvarmean_err = get_means_from_array(excessvar_err, variance_opts["mean_count"])
+            mean_count = variance_opts["mean_count"]
+            len_excessvar = len(excessvar)
+            if mean_count > len_excessvar:
+                logging.warn("mean_count fixed to " + str(len_excessvar));
+                mean_count = len_excessvar
+
+            excessvarmean = get_means_from_array(excessvar, mean_count)
+            excessvarmean_err = get_means_from_array(excessvar_err, mean_count)
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_fractional_rms)
             fvar = nan_and_inf_to_num(res[0])
             fvar_err = nan_and_inf_to_num(res[1])
 
-            fvarmean = get_means_from_array(fvar, variance_opts["mean_count"])
-            fvarmean_err = get_means_from_array(fvar_err, variance_opts["mean_count"])
+            fvarmean = get_means_from_array(fvar, mean_count)
+            fvarmean_err = get_means_from_array(fvar_err, mean_count)
 
-            chunk_mean_times = get_means_from_array(chunk_times, variance_opts["mean_count"])
-            chunk_mean_lengths = np.array([l * variance_opts["mean_count"] for l in chunk_lengths])
+            chunk_mean_times = get_means_from_array(chunk_times, mean_count)
+            chunk_mean_lengths = np.array([l * mean_count for l in chunk_lengths])
 
             confidences += (mean_confidence_interval(excessvar, confidence=0.90))
             confidences += (mean_confidence_interval(excessvar, confidence=0.99))
@@ -856,7 +862,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
             if len(time_vals) > 0:
                 if "E" in events_table.columns:
-                    
+
                     if (time_vals[len(time_vals) - 1] - time_vals[0]) >= dt:
 
                         event_list = np.column_stack((time_vals, events_table.columns["E"].values))
