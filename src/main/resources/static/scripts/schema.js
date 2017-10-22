@@ -221,10 +221,14 @@ function extractEnergyRangeTextRateTable (rateTable) {
 
       if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
         var rangeVals = range.split(":");
-        if (unit.toLowerCase() == "ev") {
-          return fixedPrecision(rangeVals[0]/1000, 3) + " - " + fixedPrecision(rangeVals[1]/1000, 3) + " keV";
-        } else {
-          return rangeVals[0] + " - " + rangeVals[1] + " " + unit;
+        var rangeStart = rangeVals[0].replace(/[^\d.-]/g, '');
+        var rangeEnd = rangeVals[1].replace(/[^\d.-]/g, '');
+        if (jQuery.isNumeric(rangeStart) && jQuery.isNumeric(rangeEnd)){
+          if (unit.toLowerCase() == "ev") {
+            return fixedPrecision(rangeStart/1000, 3) + " - " + fixedPrecision(rangeEnd/1000, 3) + " keV";
+          } else {
+            return rangeStart + " - " + rangeEnd + " " + unit;
+          }
         }
       }
     }
