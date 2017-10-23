@@ -56,7 +56,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         currentObj.axisLabels[5],
                                         currentObj.plotConfig.styles.title,
                                         plotDefaultConfig);
-    if (data.length == 21) {
+    if (data.length == 22) {
 
       lcPlotlyConfig.data[0].yaxis = 'y6';
 
@@ -68,17 +68,24 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       }
 
       if (data[6].values.length > 0) {
+        //Lightcurve has meanflux values
+        var meanfluxTrace = getLine (data[0].values, data[6].values, plotDefaultConfig.MEANFLUX_COLOR, plotDefaultConfig.DEFAULT_LINE_WIDTH.default);
+        meanfluxTrace.yaxis = 'y6';
+        lcPlotlyConfig.data.push(meanfluxTrace);
+      }
+
+      if (data[7].values.length > 0) {
 
         //Lightcurve has Long-Term Variability values
-        plotlyConfig.data.push(getAgnPlotTrace("y5", data[6].values, data[8].values, data[9].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[0]));
-        plotlyConfig.data.push(getAgnPlotTrace("y4", data[6].values, data[10].values, data[11].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[1]));
-        plotlyConfig.data.push(getAgnPlotTraceWithXErrorData("y3", data[18].values, data[12].values, data[19].values, data[13].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[2]));
-        plotlyConfig.data.push(getAgnPlotTrace("y2", data[6].values, data[14].values, data[15].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[3]));
-        plotlyConfig.data.push(getAgnPlotTraceWithXErrorData(null, data[18].values, data[16].values, data[19].values, data[17].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[4]));
+        plotlyConfig.data.push(getAgnPlotTrace("y5", data[7].values, data[9].values, data[10].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[0]));
+        plotlyConfig.data.push(getAgnPlotTrace("y4", data[7].values, data[11].values, data[12].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[1]));
+        plotlyConfig.data.push(getAgnPlotTraceWithXErrorData("y3", data[19].values, data[13].values, data[20].values, data[14].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[2]));
+        plotlyConfig.data.push(getAgnPlotTrace("y2", data[7].values, data[15].values, data[16].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[3]));
+        plotlyConfig.data.push(getAgnPlotTraceWithXErrorData(null, data[19].values, data[17].values, data[20].values, data[18].values, plotDefaultConfig, plotDefaultConfig.AGN_COLORS[4]));
 
         plotlyConfig.data.push($.extend(lcPlotlyConfig.data[0], { hoverinfo : 'x+y' }));
-        if (lcPlotlyConfig.data.length > 1) {
-          plotlyConfig.data.push(lcPlotlyConfig.data[1]);
+        for (var i = 1; i < lcPlotlyConfig.data.length; i++){
+          plotlyConfig.data.push(lcPlotlyConfig.data[i]);
         }
 
         plotlyConfig.layout = $.extend({}, lcPlotlyConfig.layout);

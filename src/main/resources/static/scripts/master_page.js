@@ -110,6 +110,14 @@ function onBaselinePlotSelected(plot) {
   plot.btnBack.click();
 }
 
+function onMeanFluxPlotSelected(plot) {
+  logInfo("onMeanFluxPlotSelected, PlotId: " + plot.id);
+  plot.btnSettings.click();
+  plot.setMeanFluxEnabled(true);
+  plot.btnBack.click();
+}
+
+
 function onAGNPlotSelected(plot) {
   logInfo("onAGNPlotSelected, PlotId: " + plot.id);
   prepareNewTab(plot, addAGNTabPanel);

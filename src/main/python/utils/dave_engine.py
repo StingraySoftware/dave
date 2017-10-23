@@ -17,7 +17,7 @@ from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
-from stingray.utils import baseline_als, excess_variance
+from stingray.utils import excess_variance
 from stingray.modeling import PSDLogLikelihood, PSDPosterior, PSDParEst
 from stingray.simulator import simulator
 from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
@@ -220,10 +220,12 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 # @param: baseline_opts: Object with the baseline parameters.
+# @param: meanflux_opts: Object with the meanflux parameters.
 # @param: variance_opts: Object with the excess variance parameters.
 #
 def get_lightcurve(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, baseline_opts, variance_opts):
+                    filters, axis, dt, baseline_opts, meanflux_opts,
+                    variance_opts):
 
     time_vals = []
     count_rate = []
@@ -231,6 +233,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     gti_start_values = []
     gti_stop_values = []
     baseline = []
+    meanflux = []
     chunk_times = []
     chunk_lengths = []
     mean = []
@@ -271,7 +274,15 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             lam = baseline_opts["lam"]  # 1000
             p = baseline_opts["p"]  # 0.01
             niter = baseline_opts["niter"]  # 10
-            baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
+            baseline = lc.baseline(lam, p, niter, offset_correction=False) / dt  # Baseline from count, divide by dt to get countrate
+
+        # Gets the meanflux values
+        if meanflux_opts["niter"] > 0:
+            logging.debug("Preparing lightcurve meanflux");
+            lam = meanflux_opts["lam"]  # 1000
+            p = meanflux_opts["p"]  # 0.01
+            niter = meanflux_opts["niter"]  # 10
+            meanflux = lc.baseline(lam, p, niter, offset_correction=True) / dt  # Baseline from count, divide by dt to get countrate
 
         # Gets the Long-Term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
@@ -328,21 +339,22 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     result = push_to_results_array(result, gti_start_values) #3
     result = push_to_results_array(result, gti_stop_values) #4
     result = push_to_results_array(result, baseline) #5
-    result = push_to_results_array(result, chunk_times) #6
-    result = push_to_results_array(result, chunk_lengths) #7
-    result = push_to_results_array(result, mean) #8
-    result = push_to_results_array(result, mean_err) #9
-    result = push_to_results_array(result, excessvar) #10
-    result = push_to_results_array(result, excessvar_err) #11
-    result = push_to_results_array(result, excessvarmean) #12
-    result = push_to_results_array(result, excessvarmean_err) #13
-    result = push_to_results_array(result, fvar) #14
-    result = push_to_results_array(result, fvar_err) #15
-    result = push_to_results_array(result, fvarmean) #16
-    result = push_to_results_array(result, fvarmean_err) #17
-    result = push_to_results_array(result, chunk_mean_times) #18
-    result = push_to_results_array(result, chunk_mean_lengths) #19
-    result = push_to_results_array(result, confidences) #20
+    result = push_to_results_array(result, meanflux) #6
+    result = push_to_results_array(result, chunk_times) #7
+    result = push_to_results_array(result, chunk_lengths) #8
+    result = push_to_results_array(result, mean) #9
+    result = push_to_results_array(result, mean_err) #10
+    result = push_to_results_array(result, excessvar) #11
+    result = push_to_results_array(result, excessvar_err) #12
+    result = push_to_results_array(result, excessvarmean) #13
+    result = push_to_results_array(result, excessvarmean_err) #14
+    result = push_to_results_array(result, fvar) #15
+    result = push_to_results_array(result, fvar_err) #16
+    result = push_to_results_array(result, fvarmean) #17
+    result = push_to_results_array(result, fvarmean_err) #18
+    result = push_to_results_array(result, chunk_mean_times) #19
+    result = push_to_results_array(result, chunk_mean_lengths) #20
+    result = push_to_results_array(result, confidences) #21
 
     return result
 

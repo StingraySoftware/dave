@@ -174,7 +174,7 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
 
 
 def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt,
-                    baseline_opts, variance_opts):
+                    baseline_opts, meanflux_opts, variance_opts):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -198,10 +198,11 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     logging.debug("get_lightcurve: axis %s" % axis)
     logging.debug("get_lightcurve: dt %s" % dt)
     logging.debug("get_lightcurve: baseline_opts %s" % baseline_opts)
+    logging.debug("get_lightcurve: meanflux_opts %s" % meanflux_opts)
     logging.debug("get_lightcurve: variance_opts %s" % variance_opts)
 
     data = DaveEngine.get_lightcurve(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, baseline_opts, variance_opts)
+                                    filters, axis, dt, baseline_opts, meanflux_opts, variance_opts)
 
     logging.debug("get_lightcurve: Finish!")
 

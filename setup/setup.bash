@@ -169,8 +169,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Oct 4th, 2017 -> https://github.com/StingraySoftware/stingray/commit/2b1ad67964218e68011a21a11ba8eaf9bddee9a8
-STINGRAY_COMMIT_HASH=2b1ad67964218e68011a21a11ba8eaf9bddee9a8
+# Oct 22th, 2017 -> https://github.com/StingraySoftware/stingray/commit/b64aceb3197062ffd65bfd735ebff190a34e1066
+STINGRAY_COMMIT_HASH=b64aceb3197062ffd65bfd735ebff190a34e1066
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
@@ -189,13 +189,15 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	#Install stingray libraries
 	echo statsmodels >> requirements.txt
 	pip install -r requirements.txt
+	retVal=$?
+	if [[ retVal -ne 0 ]] ; then
+	 	echo "Failed to install Stingray dependencies"
+	 	return 1
+	fi
 
-       retVal=$?
-       if [[ retVal -ne 0 ]] ; then
-           echo "Failed to install Stingray dependencies"
-           return 1
-       fi
-
+	#Removes previous version of Stingray and Astropy_Helpers
+	rm -rf src/main/python/stingray
+	rm -rf src/main/python/astropy_helpers
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
@@ -233,12 +235,12 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	fi
 fi
 
-#Installing hendrics
+#Installing Hendrics
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Oct 6th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/da59300f9a4eb97cef69b0534eafb78f22237388
-HENDRICS_COMMIT_HASH=da59300f9a4eb97cef69b0534eafb78f22237388
+# Oct 20th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/9c4f95ec30837bc0bc8077b369e4957bcccefb16
+HENDRICS_COMMIT_HASH=9c4f95ec30837bc0bc8077b369e4957bcccefb16
 
 if [ ! -e $HENDRICS_FOLDER ]; then
 
@@ -253,6 +255,9 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 
 	#Install HENDRICS libraries
 	pip install -r requirements.txt
+
+	#Removes previous version of Hendrics
+	rm -rf src/main/python/hendrics
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
