@@ -111,6 +111,10 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     "Time column name on HDU", CONFIG.TIME_COLUMN,
                                     function(value, input) { CONFIG.TIME_COLUMN = value; updateServerConfig(); }));
 
+  $advSettingss.append(getTextBox ("EVENTS_STRING_" + this.id, "inputEVENTS_STRING width80",
+                                    "HDU names supported as EVENT tables (separated by commas without spaces)", CONFIG.EVENTS_STRING,
+                                    function(value, input) { CONFIG.EVENTS_STRING = value; updateServerConfig(); }));
+
   $advSettingss.append(getTextBox ("GTI_STRING_" + this.id, "inputGTI_STRING width80",
                                     "HDU names supported as GTI tables (separated by commas without spaces)", CONFIG.GTI_STRING,
                                     function(value, input) { CONFIG.GTI_STRING = value; updateServerConfig(); }));

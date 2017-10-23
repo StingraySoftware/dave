@@ -4,7 +4,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
   var currentObj = this;
 
-  this.id = id.replace(/\./g,'');
+  this.id = id.replace(/\./g,'').replace(/\(/g,'').replace(/\)/g,'');
   this.plotId = "plot_" + this.id;
   this.plotConfig = plotConfig;
   this.getDataFromServerFn = getDataFromServerFn;

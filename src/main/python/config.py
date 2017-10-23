@@ -12,6 +12,7 @@ class CONFIG:
     PYTHON_CACHE_SIZE = 32  # The maximun number of items to store in the LRU cache
     MAX_PLOT_POINTS = 1000  # The maximun number of elements to return in a JSON NDARRAY
     TIME_COLUMN='TIME'  # Represents the Time column name
+    EVENTS_STRING='EVENTS,XTE_SE,XTE_SA'  # Supported EVENTS HDU names
     GTI_STRING='GTI,STDGTI,STDGTI04,SRC_GTIS,BKG_GTIS'  # Supported GTI HDU names
     FRACEXP_LIMIT=0.5  # Minimum exposure fraction allowed
 
@@ -22,6 +23,7 @@ class CONFIG:
         CONFIG.LOG_LEVEL = int(config['LOG_LEVEL'])
         CONFIG.MAX_PLOT_POINTS = int(config['MAX_PLOT_POINTS'])
         CONFIG.TIME_COLUMN = config['TIME_COLUMN']
+        CONFIG.EVENTS_STRING = config['EVENTS_STRING']
         CONFIG.GTI_STRING = config['GTI_STRING']
         CONFIG.FRACEXP_LIMIT = float(config['FRACEXP_LIMIT'])
         CONFIG.PRECISION = int(config['SERVER_DATA_PRECISION'])
@@ -34,6 +36,7 @@ class CONFIG:
                 + ", MAX_PLOT_POINTS: " + str(CONFIG.MAX_PLOT_POINTS) \
                 + ", PRECISION: " + str(CONFIG.PRECISION) \
                 + ", TIME_COLUMN: " + str(CONFIG.TIME_COLUMN) \
+                + ", EVENTS_STRING: " + str(CONFIG.EVENTS_STRING) \
                 + ", GTI_STRING: " + str(CONFIG.GTI_STRING) \
                 + ", FRACEXP_LIMIT: " + str(CONFIG.FRACEXP_LIMIT) \
                 + ", USE_JAVASCRIPT_CACHE: " + str(CONFIG.USE_JAVASCRIPT_CACHE)

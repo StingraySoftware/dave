@@ -308,6 +308,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (selectorKey == "SRC"){
 
+        if (!isValidSrcSchema(schema)){
+          logErr("onSchemaChangedWithKey error: Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE");
+          showError("Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE");
+          return;
+        }
+
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(schema);
         currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
