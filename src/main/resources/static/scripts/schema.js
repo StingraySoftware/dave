@@ -236,3 +236,7 @@ function extractEnergyRangeTextRateTable (rateTable) {
 
   return "";
 }
+
+function isValidSrcSchema(schema) {
+  return !isNull(schema["EVENTS"]) || !isNull(schema["RATE"]);
+}

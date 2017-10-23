@@ -25,6 +25,7 @@ CONFIG = {
   BIN_SELECTOR_LOG_SCALE_STEPS: 1000,
   BIN_SELECTOR_LOG_SCALE_POWER: 4,
   TIME_COLUMN: 'TIME', //Represents the Time column name
+  EVENTS_STRING: 'EVENTS,XTE_SE,XTE_SA', //Supported EVENTS HDU names
   GTI_STRING: 'GTI,STDGTI,STDGTI04,STDGTI04-1,SRC_GTIS,BKG_GTIS', //Supported GTI HDU names
   FRACEXP_LIMIT: 0.5, // Minimum exposure fraction allowed
 

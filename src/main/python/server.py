@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('TkAgg')  # Changes the matplotlib framework
 
 import utils.dave_endpoint as DaveEndpoint
+import utils.dataset_cache as DsCache
 import utils.gevent_helper as GeHelper
 import random
 from utils.np_encoder import NPEncoder
@@ -74,6 +75,7 @@ def upload():
 
 @app.route('/set_config', methods=['POST'])
 def set_config():
+    DsCache.clear()
     return CONFIG.set_config(request.json['CONFIG'])
 
 
