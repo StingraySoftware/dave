@@ -121,6 +121,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
     }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
+    this.updateDefaultsFromProjectConfig(this.projectConfig);
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
 
@@ -237,6 +238,13 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     currentObj.agnPlot.onDatasetValuesChanged(currentObj.outputPanel.getFilters());
   }
 
+  this.updateDefaultsFromProjectConfig = function (projectConfig){
+    var val = Math.floor(Math.sqrt((projectConfig.totalDuration / projectConfig.binSize) / 10));
+    this.toolPanel.$html.find(".inputMinPhotons").val(val);
+    this.toolPanel.$html.find(".inputMinBins").val(val);
+    this.toolPanel.$html.find(".inputMeanCount").val(val);
+  }
+
   //Set the selected plot configs
   this.plotConfig = plotConfig;
 
@@ -263,6 +271,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
   if (!isNull(projectConfig)){
     this.projectConfig.updateFromProjectConfigs([projectConfig]);
+    this.updateDefaultsFromProjectConfig(this.projectConfig);
     this.createPlots(plotStyle);
   }
 
