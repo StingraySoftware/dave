@@ -72,30 +72,30 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
         //Prepares Excess Variance Confidence interval Plot data and sends it to plot
         if (currentObj.exVarConfPlot.isVisible) {
-          currentObj.exVarConfPlot.setData([ data[6],
-                                             data[10],
-                                            { values: [ data[20].values[0], data[20].values[1], data[20].values[2] ] },
-                                            { values: [ data[20].values[3], data[20].values[4], data[20].values[5] ] } ]);
+          currentObj.exVarConfPlot.setData([ data[7],
+                                             data[11],
+                                            { values: [ data[21].values[0], data[21].values[1], data[21].values[2] ] },
+                                            { values: [ data[21].values[3], data[21].values[4], data[21].values[5] ] } ]);
         }
 
         //Prepares Fvar Confidence interval Plot data and sends it to plot
         if (currentObj.fvarConfPlot.isVisible) {
-          currentObj.fvarConfPlot.setData([ data[6],
-                                            data[14],
-                                            { values: [ data[20].values[6], data[20].values[7], data[20].values[8] ] },
-                                            { values: [ data[20].values[9], data[20].values[10], data[20].values[11] ] } ]);
+          currentObj.fvarConfPlot.setData([ data[7],
+                                            data[15],
+                                            { values: [ data[21].values[6], data[21].values[7], data[21].values[8] ] },
+                                            { values: [ data[21].values[9], data[21].values[10], data[21].values[11] ] } ]);
         }
 
         //Prepares Absolute RMS Plot data and sends it to plot
         if (currentObj.absRMSPlot.isVisible) {
-          currentObj.absRMSPlot.setData([ { values: data[8].values, error_values: data[9].values },
-                                          { values: data[10].values, error_values: data[11].values } ]);
+          currentObj.absRMSPlot.setData([ { values: data[9].values, error_values: data[10].values },
+                                          { values: data[11].values, error_values: data[12].values } ]);
         }
 
         //Prepares Fractional RMS Plot data and sends it to plot
         if (currentObj.fracRMSPlot.isVisible) {
-          currentObj.fracRMSPlot.setData([ { values: data[8].values, error_values: data[9].values },
-                                          { values: data[14].values, error_values: data[15].values } ]);
+          currentObj.fracRMSPlot.setData([ { values: data[9].values, error_values: data[10].values },
+                                          { values: data[15].values, error_values: data[16].values } ]);
         }
 
       }
@@ -249,8 +249,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.plotConfig = plotConfig;
 
   this.variance_opts = {};
-  this.variance_opts.min_counts = { default:20, min:10, max: 10000}; //Minimum number of counts for each chunk on excess variance
-  this.variance_opts.min_bins = { default:20, min:10, max: 10000}; //Minimum number of time bins on excess variance
+  this.variance_opts.min_counts = { default:20, min:1, max: 10000}; //Minimum number of counts for each chunk on excess variance
+  this.variance_opts.min_bins = { default:20, min:1, max: 10000}; //Minimum number of time bins on excess variance
   this.variance_opts.mean_count = { default:10, min:1, max: 10000}; //Number of elements to calculate the means
 
   //Preapares Long-Term Variability toolpanel data

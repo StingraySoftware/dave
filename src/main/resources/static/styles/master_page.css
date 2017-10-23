@@ -780,7 +780,7 @@ input.wrongValue {
 
 .rangeBoxInline {
   float: left;
-  width: 60%;
+  width: 100%;
 }
 
 .plotStyle .rangeBoxInline {
@@ -791,8 +791,11 @@ input.wrongValue {
 .rangeBoxInline.allPlots {
   margin-top: 10px;
   float: none;
-  width: 100%;
   margin-left: 0px;
+}
+
+.settingsCol .rangeBoxInline {
+  float: none;
 }
 
 p.allPlots {

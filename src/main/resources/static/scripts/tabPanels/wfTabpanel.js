@@ -434,11 +434,19 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
 
     var variancePlotsButtons = [];
-    variancePlotsButtons = currentObj.addButtonToArray("Mean Flux Estimator",
+    variancePlotsButtons = currentObj.addButtonToArray("Baseline Estimator",
                                                   "baselineBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Mean Flux Estimator (baseline)",
+                                                    currentObj.showLcSelectionDialog("Baseline Estimator",
                                                                                      onBaselinePlotSelected);
+                                                  },
+                                                  variancePlotsButtons);
+
+    variancePlotsButtons = currentObj.addButtonToArray("Mean Flux Estimator",
+                                                  "meanfluxBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Mean Flux Estimator",
+                                                                                     onMeanFluxPlotSelected);
                                                   },
                                                   variancePlotsButtons);
 

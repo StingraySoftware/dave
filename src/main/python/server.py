@@ -113,7 +113,7 @@ def get_lightcurve():
     return DaveEndpoint.get_lightcurve(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['baseline_opts'], variance_opts)
+            request.json['baseline_opts'], request.json['meanflux_opts'], variance_opts)
 
 
 @app.route('/get_joined_lightcurves', methods=['POST'])
