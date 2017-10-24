@@ -78,6 +78,11 @@ def set_config():
     DsCache.clear()
     return CONFIG.set_config(request.json['CONFIG'])
 
+@app.route('/clear_cache', methods=['POST'])
+def clear_cache():
+    DsCache.clear()
+    return ""
+
 
 @app.route('/get_dataset_schema', methods=['GET'])
 def get_dataset_schema():

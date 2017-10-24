@@ -147,6 +147,18 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     },
                                     "smallTextStyle"));
 
+  var $btnClearCache = $('<button class="btn btn-default btnClearCache" style="padding-right: 10px; padding-left: 10px; margin-top: 14px;" data-toggle="tooltip" title="Clear server cache"><i class="fa fa-refresh" aria-hidden="true"></i> Clear server cache</button>');
+  $btnClearCache.click(function(event){
+    theService.clear_cache(function (res) {
+      logInfo("Server cache clean!");
+      currentObj.$container.find(".btnClearCache").html('<i class="fa fa-check" aria-hidden="true"></i> Server cache clean!');
+      setTimeout(function () {
+        currentObj.$container.find(".btnClearCache").html('<i class="fa fa-refresh" aria-hidden="true"></i> Clear server cache');
+      }, 2000);
+    });
+  });
+  $advSettingss.append($btnClearCache);
+
   this.$container.find(".btnAboutDave").click(function () {
 
     var version = !isNull(BUILD_VERSION) ? BUILD_VERSION : "Unknown";
