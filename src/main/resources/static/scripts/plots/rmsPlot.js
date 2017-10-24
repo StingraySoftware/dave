@@ -50,6 +50,10 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.addNumberOfBandsControlToSettings("Nº Energy Segments", ".rightCol");
   }
 
+  this.getLabel = function (axis) {
+    return this.plotConfig.styles.labels[axis];
+  }
+  
   log ("new RmsPlot id: " + this.id);
 
   return this;
