@@ -261,5 +261,5 @@ function onServerMessageReceived (msg) {
 function updateServerConfig(){
   theService.set_config({ CONFIG: CONFIG }, function (res) {
     logInfo("Server configuration setted -> " + res);
-  })
+  });
 }
