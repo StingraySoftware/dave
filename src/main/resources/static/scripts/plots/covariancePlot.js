@@ -58,6 +58,7 @@ function CovariancePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
     this.refBandSelector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
     this.refBandSelector.setEnabled(true);
     this.settingsPanel.find(".leftCol").append(this.refBandSelector.$html);
+    this.settingsPanel.find(".leftCol").append("</br>");
 
     //Adds number of point control of rms plot
     this.addNumberOfBandsControlToSettings("Nº Bands", ".rightCol");

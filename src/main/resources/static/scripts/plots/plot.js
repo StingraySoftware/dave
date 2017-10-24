@@ -1158,6 +1158,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.setConfig = function (plotConfig, tab) {
+    this.plotConfig.filters = []; //Clears previous filters for avoid $.extend extrange behaviours.
     this.plotConfig = cleanPlotConfig ( $.extend(true, this.plotConfig, plotConfig) );
 
     if (plotConfig.isVisible) {
