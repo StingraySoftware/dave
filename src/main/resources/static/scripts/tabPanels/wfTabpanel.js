@@ -640,7 +640,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.showCrossSpectraSelection = function () {
-    var lcPlotButtons = currentObj.getLcButtonsHtml();
+    var lcPlotButtons = currentObj.getLcButtonsHtml(null, getAllPlots());
     if (lcPlotButtons.Count > 1) {
 
       //Else show dialog for choose the desired plots
@@ -654,9 +654,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
          var btn = $(this);
          btn.toggleClass("plotSelected");
          var plotId = btn.attr("plotId");
-         var plot = currentObj.outputPanel.getPlotById(plotId);
-         plot.onSelected();
-         $("#run_" + currentObj.id).prop("disabled", ($(this).parent().find(".plotSelected").length != 2));
+         var tab = getTabForSelector(plotId);
+         if (!isNull(tab)) {
+           var plot = tab.outputPanel.getPlotById(plotId);
+           if (!isNull(plot)) {
+             plot.onSelected();
+             $("#run_" + currentObj.id).prop("disabled", ($(this).parent().find(".plotSelected").length != 2));
+           }
+         }
       });
 
       currentObj.$html.append($xSpectraDialog);
@@ -776,13 +781,24 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
   }
 
-  this.getLcButtonsHtml = function (showAsSelected) {
+  this.getLcButtonsHtml = function (showAsSelected, plots) {
     var lcPlotButtons = "";
-    var selectablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
+    var addTabTitle = !isNull(plots);
+    if (isNull(plots)){
+      plots = currentObj.outputPanel.plots;
+    }
+    var selectablePlots = plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
     for (i in selectablePlots) {
        var plot = selectablePlots[i];
+       var title = plot.plotConfig.styles.title;
+       if (addTabTitle) {
+         var tab = getTabForSelector(plot.id);
+         if (!isNull(tab)) {
+           title = tab.getTitle() + "- " + title;
+         }
+       }
        lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + ((plot.$html.hasClass("plotSelected") && (isNull(showAsSelected) || showAsSelected))?" plotSelected":"") + '" plotId="' + plot.id + '">' +
-                           '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
+                           '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + title +
                          '</button>';
      };
      return { Html: lcPlotButtons, Count: selectablePlots.length };

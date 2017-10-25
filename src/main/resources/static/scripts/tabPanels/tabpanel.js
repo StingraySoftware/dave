@@ -19,6 +19,10 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     log("TabPanel setTitle id: " + this.id + " title: " + title);
   }
 
+  this.getTitle = function ( title ) {
+    return this.$navItem.find("." + this.navItemClass).html();
+  }
+
   this.show = function () {
     this.$navItem.parent().find(".active").removeClass("active");
     this.$navItem.addClass("active");
