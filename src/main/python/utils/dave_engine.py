@@ -257,7 +257,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            return common_error("Can't create lightcurve")
+            return common_error("Can't create lightcurve or is empty")
 
         # Sets lc values
         time_vals = lc.time
@@ -632,7 +632,7 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            return common_error("Can't create lightcurve")
+            return common_error("Can't create lightcurve or is empty")
 
         # Prepares GTI if passed
         gti = load_gti_from_destination (gti_destination)
@@ -1504,7 +1504,7 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            return common_error("Can't create lightcurve")
+            return common_error("Can't create lightcurve or is empty")
 
         duration = [lc.tseg]
         warnmsg = [""]
@@ -1557,7 +1557,7 @@ def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destinatio
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            return common_error("Can't create lightcurve")
+            return common_error("Can't create lightcurve or is empty")
 
         pds = Powerspectrum()
         pds.freq = frequency
@@ -2007,7 +2007,7 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     # Creates the lightcurve
     lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
     if not lc:
-        logging.warn("Can't create lightcurve")
+        logging.warn("Can't create lightcurve or is empty")
         return None, None, None
 
     # Prepares GTI if passed

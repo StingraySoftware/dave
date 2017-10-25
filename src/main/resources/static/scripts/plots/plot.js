@@ -1506,15 +1506,34 @@ function getSelectedPlots () {
     //For each plot element find its plot object in all tabs outputpanels
     $selectedPlots.each(function(){
       var tab = getTabForSelector(this.id);
-      if (tab != null) {
+      if (!isNull(tab)) {
         var plot = tab.outputPanel.getPlotById(this.id);
-        if (plot != null) {
+        if (!isNull(plot)) {
           selectedPlots.push(plot);
         }
       }
     });
   }
   return selectedPlots;
+}
+
+function getAllPlots () {
+  var allPlots = [];
+  var $plots = $(".plotContainer");
+  if ($plots.length > 1){
+
+    //For each plot element find its plot object in all tabs outputpanels
+    $plots.each(function(){
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)) {
+        var plot = tab.outputPanel.getPlotById(this.id);
+        if (!isNull(plot)) {
+          allPlots.push(plot);
+        }
+      }
+    });
+  }
+  return allPlots;
 }
 
 function clearSelectedPlots () {
