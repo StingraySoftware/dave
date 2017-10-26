@@ -36,7 +36,7 @@ def get_dataset_schema(destination):
     if dataset:
         return dataset.get_schema()
     else:
-        logging.error("get_dataset_schema -> Null dataset for file: " + destination)
+        logging.debug("get_dataset_schema -> Null dataset for file: " + destination)
         return None
 
 
@@ -49,7 +49,7 @@ def get_dataset_header(destination):
     if dataset:
         return dataset.get_header()
     else:
-        logging.error("get_dataset_header -> Null dataset for file: " + destination)
+        logging.debug("get_dataset_header -> Null dataset for file: " + destination)
         return None
 
 
@@ -257,7 +257,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            return common_error("Can't create lightcurve or is empty")
+            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
 
         # Sets lc values
         time_vals = lc.time
@@ -581,7 +581,10 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
     except:
         logging.error(ExHelper.getException('get_power_density_spectrum'))
-        warnmsg = [ExHelper.getWarnMsg()]
+        help_msg = ""
+        if len(freq) == 0 and pds_type != 'Sng':
+            help_msg = " Try with PDSType: Single."
+        warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
@@ -632,7 +635,7 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            return common_error("Can't create lightcurve or is empty")
+            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
 
         # Prepares GTI if passed
         gti = load_gti_from_destination (gti_destination)
@@ -796,8 +799,12 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             freq = xs.freq
             power = xs.power
             power_err = xs.power_err
-            time_lag, time_lag_err = xs.time_lag()
-            coherence, coherence_err = xs.coherence()
+            if xds_type == 'Sng':
+                time_lag, time_lag_err = xs.time_lag(), np.array([])
+                coherence, coherence_err = xs.coherence(), np.array([])
+            else:
+                time_lag, time_lag_err = xs.time_lag()
+                coherence, coherence_err = xs.coherence()
 
             # Replace posible out of range values
             time_lag = nan_and_inf_to_num(time_lag)
@@ -827,7 +834,10 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     except:
         logging.error(ExHelper.getException('get_cross_spectrum'))
-        warnmsg = [ExHelper.getWarnMsg()]
+        help_msg = ""
+        if len(freq) == 0 and xds_type != 'Sng':
+            help_msg = " Try with PDSType: Single."
+        warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
@@ -1504,7 +1514,7 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            return common_error("Can't create lightcurve or is empty")
+            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
 
         duration = [lc.tseg]
         warnmsg = [""]
@@ -1557,7 +1567,7 @@ def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destinatio
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            return common_error("Can't create lightcurve or is empty")
+            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
 
         pds = Powerspectrum()
         pds.freq = frequency
@@ -1895,12 +1905,12 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
         return DsCache.get(cache_key)
 
     eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_ds)
-    if not eventlist or eventlist.ncounts < 2:
+    if not eventlist or eventlist.ncounts < 2 or len(eventlist.time) < 2:
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
         return None
 
-    if (eventlist.time[eventlist.ncounts - 1] - eventlist.time[0]) < dt:
-        logging.warn("Lightcurve duration must be greater than bin size, for ds.id -> " + str(filtered_ds.id))
+    if (eventlist.time[eventlist.ncounts - 1] - eventlist.time[0]) < dt * 2:
+        logging.warn("Lightcurve duration must be greater than two bin sizes, for ds.id -> " + str(filtered_ds.id))
         return None
 
     lc = eventlist.to_lc(dt)
@@ -2007,7 +2017,7 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     # Creates the lightcurve
     lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
     if not lc:
-        logging.warn("Can't create lightcurve or is empty")
+        logging.warn("Can't create lightcurve or is empty, try with a smaller binsize")
         return None, None, None
 
     # Prepares GTI if passed

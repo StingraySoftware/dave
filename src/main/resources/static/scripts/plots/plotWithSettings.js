@@ -50,7 +50,8 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.$html.find(".plotTools").children().hide();
 
       var title = 'Settings:';
-      if (!isNull(this.plotConfig.styles.title)){
+      if (!isNull(this.plotConfig.styles.title)
+          && !this.plotConfig.styles.title.startsWith("$")){
         title = this.plotConfig.styles.title + ' Settings:';
       }
       this.setSettingsTitle(title);

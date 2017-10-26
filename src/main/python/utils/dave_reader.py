@@ -92,7 +92,7 @@ def get_file_dataset(destination, time_offset=0):
                     dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=CONFIG.GTI_STRING, time_offset=time_offset)
 
                 else:
-                    logging.error("Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE, EBOUNDS or " + CONFIG.GTI_STRING)
+                    logging.warn("Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE, EBOUNDS or " + CONFIG.GTI_STRING)
 
             elif file_extension == "data" and (file_extension_from_file in [".p", ".nc"]):
 
@@ -100,7 +100,7 @@ def get_file_dataset(destination, time_offset=0):
                 dataset = load_dataset_from_intermediate_file(destination)
 
             else:
-                logging.error("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
+                logging.warn("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
 
             if dataset:
                 DsCache.add(cache_key, dataset)
@@ -239,6 +239,10 @@ def get_gti_fits_dataset_with_stingray(hdulist, gtistring=CONFIG.GTI_STRING, tim
 def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
                                             column=CONFIG.TIME_COLUMN, gtistring=CONFIG.GTI_STRING, time_offset=0):
 
+    supported_rate_columns = set(['RATE', 'RATE1', 'COUNTS'])
+    found_rate_columns = set(hdulist[hduname].data.names)
+    intersection_columns = supported_rate_columns.intersection(found_rate_columns)
+
     #Check if HDUCLAS1 = LIGHTCURVE column exists
     logging.debug("Reading Lightcurve Fits columns")
     if "HDUCLAS1" not in hdulist[hduname].header:
@@ -249,11 +253,28 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
         logging.warn("HDUCLAS1 is not LIGHTCURVE")
         return None
 
+    elif len(intersection_columns) == 0:
+        logging.warn("RATE, RATE1 or COUNTS columns not found in " + str(hduname) + " HDU, found columns: " + str(hdulist[hduname].data.names))
+        return None
+
+    elif len(intersection_columns) > 1:
+        logging.warn("RATE, RATE1 or COUNTS ambiguous columns found in " + str(hduname) + " HDU, found columns: " + str(hdulist[hduname].data.names))
+        return None
+
+    ratecolumn = list(intersection_columns)[0]
+    if len(hdulist[hduname].data[ratecolumn].shape) != 1 \
+        or not (isinstance(hdulist[hduname].data[ratecolumn][0], int) \
+        or isinstance(hdulist[hduname].data[ratecolumn][0], np.integer) \
+        or isinstance(hdulist[hduname].data[ratecolumn][0], float) \
+        or isinstance(hdulist[hduname].data[ratecolumn][0], np.floating)):
+        logging.warn("Wrong data type found for column: " + str(ratecolumn) + " in " + str(hduname) + " HDU, expected Integer or Float.")
+        return None
+
     header, header_comments = get_header(hdulist, hduname)
 
     # Reads the lightcurve with HENDRICS
     outfile = lcurve_from_fits(destination, gtistring=get_hdu_string_from_hdulist(gtistring, hdulist),
-                             timecolumn=column, ratecolumn=None, ratehdu=1,
+                             timecolumn=column, ratecolumn=ratecolumn, ratehdu=1,
                              fracexp_limit=CONFIG.FRACEXP_LIMIT)[0]
 
     lcurve, events_start_time = substract_tstart_from_lcurve(load_data(outfile), time_offset)
