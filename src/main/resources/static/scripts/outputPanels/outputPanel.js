@@ -73,7 +73,7 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.generatePlotId = function (id) {
-    return (this.id + "_" + id + "_" + (new Date()).getTime()).replace(/\./g,'').replace(/\//g,'');
+    return (this.id + "_" + id.replace(/[^\w]/g,'') + "_" + (new Date()).getTime()).replace(/\./g,'').replace(/\//g,'');
   }
 
   this.broadcastEvent = function (evt_name, evt_data, senderId) {
