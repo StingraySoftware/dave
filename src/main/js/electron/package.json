@@ -8,7 +8,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-linux": "electron-packager . DAVEApp --platform=linux --arch=x64 --prune=true --icon ../../resources/static/img/icon.ico --overwrite --out ../../../../build",
+    "build-linux": "electron-packager . DAVEApp --platform=linux --arch=x64 --prune=true --icon ../../resources/static/img/icon/512x512.png --overwrite --out ../../../../build",
     "build-darwin": "electron-packager . DAVEApp --platform=darwin --arch=x64 --prune=true --icon ../../resources/static/img/icon.icns --overwrite --out ../../../../build"
   },
   "dependencies": {
