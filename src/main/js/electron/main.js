@@ -12,7 +12,8 @@ var request = require('request');
 let mainWindow,
     windowParams = {
         width:1200,
-        height: 700
+        height: 700,
+        icon: "resources/resources/static/img/icon.png"
     };
 var retryInterval = 0.5 * 1000;
 var retries = 0;
