@@ -39,8 +39,13 @@ def test_get_lightcurve(s):
     baseline_opts["lam"] = 1000
     baseline_opts["p"] = 0.01
 
+    meanflux_opts = dict()
+    meanflux_opts["niter"] = 10
+    meanflux_opts["lam"] = 1000
+    meanflux_opts["p"] = 0.01
+
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts, None)
+        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts, meanflux_opts, None)
         assert result is not None
 
 
