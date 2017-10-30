@@ -307,6 +307,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             len_excessvar = len(excessvar)
             if mean_count > len_excessvar:
                 logging.warn("mean_count fixed to " + str(len_excessvar));
+                warnmsg = ["@WARN@Mean count fixed to " + str(len_excessvar)]
                 mean_count = len_excessvar
 
             excessvarmean = get_means_from_array(excessvar, mean_count)
@@ -578,6 +579,8 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
             warnmsg = [""]
             if gti is not None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
                 warnmsg = ["@WARN@GTI gaps found on LC"]
+            if not math.isclose(dt, lc.dt, abs_tol=0.001):
+                warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
             pds = None  # Dispose memory
             lc = None  # Dispose memory
@@ -636,18 +639,20 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         if segm_size == 0:
             segm_size = None
 
+        warnmsg = [""]
+
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
             return common_error("Can't create lightcurve or is empty")
+        elif not math.isclose(dt, lc.dt, abs_tol=0.001):
+            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
         # Prepares GTI if passed
         gti = load_gti_from_destination (gti_destination)
         if not gti:
             logging.debug("External GTIs not loaded using defaults")
             gti = lc.gti
-
-        warnmsg = [""]
 
         # Check if there is only one GTI and tries to split it by segm_size
         if gti is not None and len(gti) == 1:
@@ -1000,6 +1005,9 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
                     pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
                                                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
                     if pds:
+
+                        if not math.isclose(dt, lc.dt, abs_tol=0.001):
+                            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
                         #Preapares the eventlist with energies and gtis
                         event_list = EventList()
@@ -1514,14 +1522,18 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
         if len(axis) != 2:
             return common_error("Wrong number of axis")
 
+        warnmsg = [""]
+
         # Calculates the LombScargle values
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
             return common_error("Can't create lightcurve or is empty")
+        elif not math.isclose(dt, lc.dt, abs_tol=0.001):
+            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
         duration = [lc.tseg]
-        warnmsg = [""]
+
         if lc.gti is not None and len(lc.gti) == 0 and DsHelper.hasGTIGaps(lc.time):
             warnmsg = ["@WARN@GTI gaps found on LC"]
         lc = None  # Dispose memory
