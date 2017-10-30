@@ -56,7 +56,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         currentObj.axisLabels[5],
                                         currentObj.plotConfig.styles.title,
                                         plotDefaultConfig);
-    if (data.length == 22) {
+    if (data.length == 23) {
 
       lcPlotlyConfig.data[0].yaxis = 'y6';
 
@@ -112,6 +112,10 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         plotlyConfig.layout.yaxis6.domain = [0.833, 1];
         plotlyConfig.layout.yaxis6.title = currentObj.axisLabels[5];
 
+      }
+
+      if ((data[22].values.length > 0) && (data[22].values[0] != "")){
+          this.showWarn(data[22].values[0]);
       }
 
     } else {

@@ -161,6 +161,10 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.btnSettings.hide();
     }
 
+    if ((data.length > 22) && (data[22].values.length > 0) && (data[22].values[0] != "")){
+        this.showWarn(data[22].values[0]);
+    }
+
     plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
     plotlyConfig = this.prepareAxis(plotlyConfig);
 

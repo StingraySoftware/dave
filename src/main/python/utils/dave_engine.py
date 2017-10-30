@@ -249,6 +249,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     chunk_mean_times = []
     chunk_mean_lengths = []
     confidences = []
+    warnmsg = []
 
     try:
         if len(axis) != 2:
@@ -257,7 +258,9 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
+            return common_error("Can't create lightcurve or is empty")
+        elif not math.isclose(dt, lc.dt, abs_tol=0.001):
+            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
         # Sets lc values
         time_vals = lc.time
@@ -355,6 +358,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     result = push_to_results_array(result, chunk_mean_times) #19
     result = push_to_results_array(result, chunk_mean_lengths) #20
     result = push_to_results_array(result, confidences) #21
+    result = push_to_results_array(result, warnmsg) #22
 
     return result
 
@@ -635,7 +639,7 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
+            return common_error("Can't create lightcurve or is empty")
 
         # Prepares GTI if passed
         gti = load_gti_from_destination (gti_destination)
@@ -1514,7 +1518,7 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
+            return common_error("Can't create lightcurve or is empty")
 
         duration = [lc.tseg]
         warnmsg = [""]
@@ -1567,7 +1571,7 @@ def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destinatio
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            return common_error("Can't create lightcurve or is empty, try with a smaller binsize")
+            return common_error("Can't create lightcurve or is empty")
 
         pds = Powerspectrum()
         pds.freq = frequency
@@ -1913,7 +1917,15 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
         logging.warn("Lightcurve duration must be greater than two bin sizes, for ds.id -> " + str(filtered_ds.id))
         return None
 
-    lc = eventlist.to_lc(dt)
+    while True:
+        # Checks if lc has counts or retries with smaller bin size.
+        lc = eventlist.to_lc(dt)
+        if (lc is None) or (not np.isnan(lc.meanrate) and lc.n > 1):
+            break
+        else:
+            dt = dt / 2.0
+            logging.warn("Lightcurve has no counts, bin size: " + str(lc.dt) + ", retrying with binsize: " + str(dt))
+
     if bck_destination:
 
         #Gets the backscale keyword value
@@ -1922,7 +1934,7 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
             src_backscale = int(filtered_ds.tables["EVENTS"].header["BACKSCAL"])
 
         #Applies background data
-        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale)
+        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, lc.dt, src_backscale)
 
     eventlist = None  # Dispose memory
     filtered_ds = None  # Dispose memory
@@ -2017,7 +2029,7 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     # Creates the lightcurve
     lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
     if not lc:
-        logging.warn("Can't create lightcurve or is empty, try with a smaller binsize")
+        logging.warn("Can't create lightcurve or is empty")
         return None, None, None
 
     # Prepares GTI if passed
