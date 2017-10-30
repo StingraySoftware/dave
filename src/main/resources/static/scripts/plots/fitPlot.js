@@ -63,13 +63,11 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
     var modelsConfig = { x_values: currentObj.data[0].values, estimated: estimated = isNull(estimated) || !estimated };
 
     if (modelsConfig.estimated){
-      log("refreshModelsData estimated");
       currentObj.errorsData = null;
       currentObj.modelsData = null;
       currentObj.models = currentObj.getModelsFn(false);
       modelsConfig.models = currentObj.models;
     } else {
-      log("refreshModelsData NOT estimated");
       currentObj.estimatedModels = currentObj.getModelsFn(true);
       modelsConfig.models = currentObj.estimatedModels;
     }
@@ -102,14 +100,11 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       if (isNull(currentObj.modelsData)) {
         currentObj.modelsData = data;
         if (currentObj.getModelsFn(true).length > 0){
-          log("onModelsDataReceived refreshModelsData");
           currentObj.refreshModelsData (true);
         } else {
-          log("onModelsDataReceived setData 1");
           currentObj.setData(currentObj.data, currentObj.modelsData, null, currentObj.errorsData);
         }
       } else {
-        log("onModelsDataReceived setData 2");
         currentObj.setData(currentObj.data, currentObj.modelsData, data, currentObj.errorsData);
       }
     } else {
@@ -143,17 +138,14 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       var plotlyConfig = currentObj.getPlotlyConfig(data);
 
       if (modelsData.length > 0) {
-        log("setData 1");
         plotlyConfig = this.preparePlotConfigWithModelsData (plotlyConfig, data, modelsData, currentObj.models, false, isNull(errorsData));
       }
 
       if (!isNull(estimatedModelsData) && estimatedModelsData.length > 0) {
-        log("setData 2");
         plotlyConfig = this.preparePlotConfigWithModelsData (plotlyConfig, data, estimatedModelsData, currentObj.estimatedModels, true, isNull(errorsData));
       }
 
       if (!isNull(errorsData)) {
-        log("setData 3");
         plotlyConfig = this.preparePlotConfigWithErrorsData (plotlyConfig, data, errorsData);
       }
 
