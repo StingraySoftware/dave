@@ -28,6 +28,10 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //AGNTabPanel METHODS:
+  this.getPageName = function () {
+    return "LongTermVarPage";
+  }
+
   this.getAGNDataFromServer = function (paramsData) {
 
     log("AGNTabPanel getAGNDataFromServer...");

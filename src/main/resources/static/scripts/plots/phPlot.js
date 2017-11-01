@@ -27,7 +27,7 @@ function PhPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                                                   currentObj.plotConfig.styles.labels[2],
                                                   currentObj.plotConfig.styles.labels[0],
                                                   getColorScale (this.plotConfig.colorScale),
-                                                  currentObj.plotConfig.styles.title,
+                                                  currentObj.getTitle(),
                                                   currentObj.getDefaultPlotlyConfig());
     plotlyConfig.data[0].type = "heatmap";
 

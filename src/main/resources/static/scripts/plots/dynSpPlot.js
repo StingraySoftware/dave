@@ -33,9 +33,11 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     if (currentObj.plotConfig.plotStyle == "3d") {
       currentObj.plotConfig.plotStyle = "2d";
       currentObj.btnStyle.html("3D");
+      gaTracker.sendEvent("Plots", "DYN_PDS-2d", currentObj.getTitle());
     } else {
       currentObj.plotConfig.plotStyle = "3d";
       currentObj.btnStyle.html("2D");
+      gaTracker.sendEvent("Plots", "DYN_PDS-3d", currentObj.getTitle());
     }
     setVisibility(currentObj.settingsPanel.find(".AxisType"), currentObj.plotConfig.plotStyle == "3d");
     currentObj.refreshData();
@@ -99,7 +101,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                                       this.getLabel(0),
                                                       this.getLabel(2),
                                                       getColorScale (this.plotConfig.colorScale),
-                                                      currentObj.plotConfig.styles.title,
+                                                      currentObj.getTitle(),
                                                       plotDefaultConfig);
       plotlyConfig.data[0].type = "heatmap";
 
@@ -118,7 +120,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
                                                       this.getLabel(1),
                                                       this.getLabel(2),
                                                       getColorScale (this.plotConfig.colorScale),
-                                                      currentObj.plotConfig.styles.title,
+                                                      currentObj.getTitle(),
                                                       plotDefaultConfig);
 
       //Set axis type for 3D plot only, log axes not supported on heatmaps
@@ -319,7 +321,7 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
           csvContent += time_idx < data[2].values.length ? dataString + "\n" : dataString;
         }
       }
-      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", encodeURI(csvContent));
+      saveRawToFile(currentObj.getTitle() + ".csv", encodeURI(csvContent));
     }
   }
 

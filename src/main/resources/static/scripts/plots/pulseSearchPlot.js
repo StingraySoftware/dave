@@ -32,7 +32,7 @@ function PulseSearchPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn
                                   data[coords.x].error_values, data[coords.y].error_values, [],
                                   this.getLabel(coords.x),
                                   this.getLabel(coords.y),
-                                  this.plotConfig.styles.title,
+                                  this.getTitle(),
                                   plotDefaultConfig);
 
     //Reset the candidateFreqs array

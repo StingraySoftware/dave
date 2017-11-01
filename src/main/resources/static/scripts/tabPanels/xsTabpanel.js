@@ -27,6 +27,9 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //XSTabPanel METHODS:
+  this.getPageName = function () {
+    return "CrossSpectraPage";
+  }
 
   this.getXSDataFromServer = function (paramsData) {
 

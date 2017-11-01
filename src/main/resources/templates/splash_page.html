@@ -60,6 +60,8 @@
     <script type="text/javascript" src="../static/scripts/external/bootstrap-3.3.7.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/waiting_dialog.js"></script>
     <script type="text/javascript" src="../static/scripts/external/logger.js"></script>
+    <script type="text/javascript" src="../static/scripts/external/fingerprint2-1.5.1.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/ganalytics.js"></script>
     <script type="text/javascript" src="../static/scripts/version.js"></script>
 
     <!-- Insert this line after script imports for solve Electron import issues -->
@@ -68,11 +70,23 @@
 
       $(document).ready(function () {
 
+        window.onerror = function (errorMsg, url, lineNumber) {
+            logErr(errorMsg + ", line: " + lineNumber);
+            return false;
+        };
+        window.addEventListener("error", function (e) {
+           logErr(e.error.message);
+           return false;
+        });
+
         Logger.show();
 
         var version = !isNull(BUILD_VERSION) ? BUILD_VERSION : "Unknown";
         $(".build_version").text("Version: " + version);
         setProgress("Initializing", "...", 0);
+
+        gaTracker.sendPage("SplashPage");
+        gaTracker.sendEvent("SplashPage", "Version", version);
 
         logInfo("App started!! Version: " + version);
 
@@ -87,6 +101,7 @@
         waitingDialog.show(errorArr[0], { progressType: "warning" });
         logErr("PYTHON SERVER LOG:");
         logError(errorArr[1], "LogError");
+        gaTracker.sendEvent("SplashPage", "LogError", errorArr[1]);
         Logger.open();
       }
 

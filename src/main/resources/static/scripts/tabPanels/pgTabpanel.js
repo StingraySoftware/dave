@@ -28,6 +28,9 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //PGTabPanel METHODS:
+  this.getPageName = function () {
+    return "PeriodogramPage";
+  }
 
   this.getConfig = function () {
     return { type: "PGTabPanel",

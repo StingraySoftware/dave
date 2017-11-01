@@ -29,6 +29,20 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     $(".TabPanel").hide();
     this.$html.show();
     $(window).trigger("resize"); //Forces plots to fit window size
+    this.pageNameChanged();
+  }
+
+  this.getPageName = function () {
+    return null;
+  }
+
+  this.pageNameChanged = function () {
+    setTimeout(function () {
+      //Sends page view metric
+      if (!isNull(currentObj.getPageName())){
+        gaTracker.sendPage(currentObj.getPageName());
+      }
+    }, 250);
   }
 
   this.addCloseButton = function () {

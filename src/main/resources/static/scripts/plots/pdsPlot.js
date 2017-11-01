@@ -35,6 +35,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.$html.find(".plotTools").append(this.btnFit);
     this.btnFit.click(function(event){
       onFitPlotClicked(currentObj);
+      gaTracker.sendEvent("Plots", "FitPlotClicked", currentObj.getTitle());
     });
   }
 
@@ -371,7 +372,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         [], isNull(data[1].error_values) ? [] : data[1].error_values, [],
                                         this.getLabel(0),
                                         this.getLabel(1),
-                                        this.plotConfig.styles.title,
+                                        this.getTitle(),
                                         plotDefaultConfig);
 
     plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);

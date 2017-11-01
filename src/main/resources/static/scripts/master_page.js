@@ -6,6 +6,16 @@ $(document).ready(function () {
 
   Logger.show();
   logInfo("App started!! ->" + CONFIG.DOMAIN_URL);
+  gaTracker.sendPage("MasterPage");
+
+  window.onerror = function (errorMsg, url, lineNumber) {
+      logErr(errorMsg + ", line: " + lineNumber);
+      return false;
+  };
+  window.addEventListener("error", function (e) {
+     logErr(e.error.message);
+     return false;
+  });
 
   theService = new Service(CONFIG.DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
@@ -13,19 +23,23 @@ $(document).ready(function () {
 
   $("#navbar").find(".addTabPanel").click(function () {
     addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+    gaTracker.sendEvent("MasterPage", "addTabPanel", "");
   });
 
   var rightNavbar = $("#right-navbar");
   rightNavbar.find(".loadWorkSpace").click(function () {
     onLoadWorkSpaceClicked();
+    gaTracker.sendEvent("MasterPage", "loadWorkSpace", "");
   });
 
   rightNavbar.find(".saveWorkSpace").click(function () {
     onSaveWorkSpaceClicked();
+    gaTracker.sendEvent("MasterPage", "saveWorkSpace", "");
   });
 
   rightNavbar.find(".showSettingsTab").click(function () {
     onSettingsClicked();
+    gaTracker.sendEvent("MasterPage", "showSettings", "");
   });
 
   $("#navbar").find(".addTabPanel").click();
@@ -33,6 +47,7 @@ $(document).ready(function () {
   logInfo("App Ready!! ->" + CONFIG.DOMAIN_URL);
 
   waitingDialog.hide();
+
 });
 
 
@@ -210,13 +225,14 @@ function logError(errorMsg) {
         log(msg, "LogServerWarn");
       } else  {
         log(msg, "LogServerError");
+        gaTracker.sendEvent("Logger", "LogError", msg);
       }
     }
   }
 }
 
 function connectionLost() {
-  logErr("Connection lost with Python Server!");
+  logWarn("Connection lost with Python Server!");
   waitingDialog.hide({ignoreCalls: true});
   setTimeout( function () {
 
@@ -233,7 +249,7 @@ function sendEventToElectron (event) {
 }
 
 function reconnectToServer (){
-  logErr("Connection lost with Python Server. Reconnecting ...");
+  logWarn("Connection lost with Python Server. Reconnecting ...");
   UrlExists(CONFIG.DOMAIN_URL, function(status){
       if(status === 200){
          waitingDialog.hide({ignoreCalls: true});
@@ -254,6 +270,7 @@ function onServerMessageReceived (msg) {
     cssClass = "LogServerWarn";
   } else if (msgLower.startsWith("error:")){
     cssClass = "LogServerError";
+    gaTracker.sendEvent("Logger", "LogError", msg);
   }
   log("SERVER -> " + msg, cssClass);
 }
