@@ -140,7 +140,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                                         (data.length > 4) ? this.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                         this.plotConfig.styles.labels[coords.x],
                                         this.plotConfig.styles.labels[coords.y],
-                                        this.plotConfig.styles.title,
+                                        this.getTitle(),
                                         plotDefaultConfig);
 
     if (data.length > 5) {

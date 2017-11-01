@@ -54,7 +54,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                         (data.length > 4) ? currentObj.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                         currentObj.plotConfig.styles.labels[coords.x],
                                         currentObj.axisLabels[5],
-                                        currentObj.plotConfig.styles.title,
+                                        currentObj.getTitle(),
                                         plotDefaultConfig);
     if (data.length == 23) {
 
@@ -139,7 +139,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         dataString = Array.prototype.join.call(infoArray, ",");
         csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
       });
-      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", encodeURI(csvContent));
+      saveRawToFile(currentObj.getTitle() + ".csv", encodeURI(csvContent));
     }
   }
 
@@ -155,7 +155,7 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
     //Adds the title style controls
     $style.append(getTextBox ("TITLE" + this.id, "inputTITLE width100",
-                              "Title", !isNull(this.plotConfig.styles.title) ? this.plotConfig.styles.title : "",
+                              "Title", this.getTitle(),
                               function(value, input) {
                                 currentObj.plotConfig.styles.title = value;
                                 currentObj.redrawDiffered();

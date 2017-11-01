@@ -55,6 +55,18 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     return this.wfSelector.find("li.active").find("a").attr("panel");
   }
 
+  this.getPageName = function () {
+    if (!this.projectConfig.hasSchema()) {
+      return "LoadPage";
+    } else if (this.projectConfig.schema.isEventsFile()){
+      return "EventsFilePage";
+    } else if (this.projectConfig.schema.isLightCurveFile()){
+      return "LightcurveFilePage";
+    }
+
+    return "WrongPage2";
+  }
+
   this.onDatasetChanged = function ( filenames, selectorKey, callback) {
 
     if ((selectorKey == "SRC") && (filenames.length > 0)) {
@@ -357,6 +369,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       } else {
         currentObj.addInfoPanel(currentObj.projectConfig.getFile(selectorKey), schema);
       }
+
+      currentObj.pageNameChanged();
 
     } else {
       logErr("onSchemaChangedWithKey error:" + jsonSchema);

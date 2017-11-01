@@ -18,6 +18,10 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
   TabPanel.call(this, id, classSelector, navItemClass, navBarList, panelContainer);
   this.setTitle("Settings");
 
+  this.getPageName = function () {
+    return "GeneralSettingsPage";
+  }
+
   this.$container = this.$html.find(".toolPanelContainer");
   this.$container.html('<div class="aboutDaveDiv floatRight">' +
                           '<a href="#" class="btnAboutDave InfoText">About DAVE <i class="fa fa-info-circle" aria-hidden="true"></i></a>' +
@@ -168,6 +172,8 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
             "<p>More information about DAVE in: <br>https://github.com/StingraySoftware/dave</p>" +
             "<p>© 2016 Timelab Technologies Ltd.</p>" +
             "<p style='float: right; font-size: 0.85em;'>DAVE Version: " + version + "</p>");
+
+    gaTracker.sendEvent("GeneralSettings", "btnAboutDave", currentObj.id);        
   });
 
   log("SettingsTabPanel ready! id: " + this.id);

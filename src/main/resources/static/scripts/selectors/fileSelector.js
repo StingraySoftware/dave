@@ -4,7 +4,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
   var currentObj = this;
 
-  this.id = id;
+  this.id = id.replace(/[^\w]/g,'');
   this.label = label;
   this.selectorKey = selectorKey;
   this.uploadFn = uploadFn;
@@ -139,6 +139,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
    this.$html.find(".btn").click(function () {
      currentObj.showSelectFile();
+     gaTracker.sendEvent("FileSelector", "SelectFile", currentObj.selectorKey);
    });
 
    this.showSelectFile = function () {
@@ -161,6 +162,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      } else {
        this.btnChoose.hide();
        this.btnChange.show();
+       gaTracker.sendEvent("FileSelector", "UploadSuccess", currentObj.selectorKey);
      }
    }
 
@@ -175,8 +177,9 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      if (!isNull(error)) {
        waitingDialog.hide();
        showError();
-       log("onUploadError:" + JSON.stringify(error));
+       logErr("onUploadError: " + JSON.stringify(error));
        currentObj.$input.val("");
+       gaTracker.sendEvent("FileSelector", "UploadError", currentObj.selectorKey);
      }
    }
 

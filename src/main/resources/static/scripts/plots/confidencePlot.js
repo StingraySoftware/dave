@@ -16,7 +16,7 @@ function ConfidencePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn,
     var plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                       this.getLabel(coords.x),
                                       this.getLabel(coords.y),
-                                      this.plotConfig.styles.title,
+                                      this.getTitle(),
                                       plotDefaultConfig);
 
     plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [ data[2].values[0], data[2].values[0] ], '#222222', 2, 'solid'));

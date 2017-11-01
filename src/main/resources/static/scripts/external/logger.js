@@ -63,7 +63,10 @@ function log(msg, cssClass)
 function logDebug (msg) { log(msg, "LogDebug") };
 function logInfo (msg) { log(msg, "LogInfo") };
 function logWarn (msg) { log(msg, "LogWarn") };
-function logErr (msg) { log(msg, "LogError") };
+function logErr (msg) {
+  log(msg, "LogError");
+  gaTracker.sendEvent("Logger", "LogError", msg);
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 var Logger = (function()

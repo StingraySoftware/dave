@@ -17,7 +17,7 @@ function ProfilePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, on
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values, [], [], [],
                                         this.plotConfig.styles.labels[coords.x],
                                         this.plotConfig.styles.labels[coords.y],
-                                        this.plotConfig.styles.title,
+                                        this.getTitle(),
                                         plotDefaultConfig);
 
     plotlyConfig.layout.shapes = [ getConfidenceShape( [ data[2].values[0], data[2].values[1] ],

@@ -48,25 +48,28 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '<div class="hoverinfo"></div>' +
                 '</div>');
 
+ this.getTitle = function () {
+    return !isNull(this.plotConfig.styles.title) ? this.plotConfig.styles.title : "";
+ }
+
  if (!isNull(toolbar)) {
    this.btnShow = $('<button class="btn btn-default btnShow" plotId="' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
+        gaTracker.sendEvent("Plots", "Show", currentObj.getTitle());
       } else {
         currentObj.hide();
+        gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
       }
    });
-   var btnShowText = "";
-   if (!isNull(this.plotConfig.styles.title)) {
-     btnShowText = this.plotConfig.styles.title;
-   }
-   this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + this.getTitle());
    toolbar.append(this.btnShow);
 
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
       currentObj.hide();
+      gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
    });
  } else {
    this.$html.find(".btnHidePlot").remove();
@@ -116,21 +119,24 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
-   var saveDialog = $('<div id="dialog_' + currentObj.id +  '" title="Save ' + currentObj.plotConfig.styles.title + '"></div>');
+   var saveDialog = $('<div id="dialog_' + currentObj.id +  '" title="Save ' + currentObj.getTitle() + '"></div>');
    saveDialog.dialog({
       buttons: {
         'Save as PNG': function() {
            currentObj.saveAsPNG();
+           gaTracker.sendEvent("Plots", "saveAsPNG", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as PDF': function() {
           currentObj.saveAsPDF();
+          gaTracker.sendEvent("Plots", "saveAsPDF", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as CSV': function() {
           currentObj.saveAsCSV();
+          gaTracker.sendEvent("Plots", "saveAsCSV", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         }
@@ -141,11 +147,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  });
 
  this.btnLoad.click(function( event ) {
-   var loadDialog = $('<div id="dialog_' + currentObj.id +  '" title="Load external data for ' + currentObj.plotConfig.styles.title + '"></div>');
+   var loadDialog = $('<div id="dialog_' + currentObj.id +  '" title="Load external data for ' + currentObj.getTitle() + '"></div>');
    loadDialog.dialog({
       buttons: {
         'Load CSV File': function() {
            currentObj.loadCSVFile();
+           gaTracker.sendEvent("Plots", "loadCSVFile", currentObj.getTitle());
            $(this).dialog('close');
            loadDialog.remove();
         },
@@ -162,6 +169,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.btnStyle.click(function( event ) {
    currentObj.sendPlotEvent('on_style_click', {});
+   gaTracker.sendEvent("Plots", "styleClick", currentObj.getTitle());
  });
 
  if (switchable) {
@@ -171,6 +179,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
       currentObj.refreshData();
+      gaTracker.sendEvent("Plots", "switchAxes", currentObj.getTitle());
    });
  }
 
@@ -340,7 +349,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.getLabel(coords.x),
                                     currentObj.getLabel(coords.y),
-                                    currentObj.plotConfig.styles.title,
+                                    currentObj.getTitle(),
                                     plotDefaultConfig)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
@@ -355,7 +364,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
-                                        currentObj.plotConfig.styles.title,
+                                        currentObj.getTitle(),
                                         plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_with_errors") {
@@ -363,7 +372,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                                      data[coords.x].error_values, data[coords.y].error_values,
                                                      currentObj.getLabel(coords.x),
                                                      currentObj.getLabel(coords.y),
-                                                     currentObj.plotConfig.styles.title,
+                                                     currentObj.getTitle(),
                                                      plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
@@ -371,7 +380,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
                                         'Amplitude<br>Map',
-                                        currentObj.plotConfig.styles.title,
+                                        currentObj.getTitle(),
                                         plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
@@ -381,7 +390,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.getLabel(coords.x),
                                    currentObj.getLabel(coords.y),
                                    currentObj.getLabel(2),
-                                   currentObj.plotConfig.styles.title,
+                                   currentObj.getTitle(),
                                    plotDefaultConfig);
    }
 
@@ -892,11 +901,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         'Add label': function() {
            var labelText = $('#dialog_' + currentObj.id).find('input[name="labelText"]').val();
            currentObj.addAnnotation(labelText, x, y);
+           gaTracker.sendEvent("Plots", "addAnnotation", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Clear all': function() {
            currentObj.annotations = [];
            currentObj.redrawDiffered();
+           gaTracker.sendEvent("Plots", "clearAnnotations", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Cancel': function() {
@@ -967,7 +978,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
           pdf.addImage(imgData, 'JPEG', 0, 0);
           var download = document.getElementById('download');
 
-          pdf.save(currentObj.plotConfig.styles.title + ".pdf");
+          pdf.save(currentObj.getTitle() + ".pdf");
         }
     });
   }
@@ -1005,7 +1016,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
          csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
       });
 
-      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", csvContent);
+      saveRawToFile(currentObj.getTitle() + ".csv", csvContent);
     }
   }
 
@@ -1220,7 +1231,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
     //Adds the title style controls
     $style.append(getTextBox ("TITLE" + this.id, "inputTITLE width100",
-                              "Title", !isNull(this.plotConfig.styles.title) ? this.plotConfig.styles.title : "",
+                              "Title", this.getTitle(),
                               function(value, input) {
                                 currentObj.plotConfig.styles.title = value;
                                 currentObj.redrawDiffered();
