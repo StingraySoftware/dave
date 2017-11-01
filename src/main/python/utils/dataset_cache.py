@@ -69,3 +69,6 @@ def get_key(value, strict=False):
 
 def count():
     return len(cached_datasets)
+
+def clear():
+    cached_datasets.clear()

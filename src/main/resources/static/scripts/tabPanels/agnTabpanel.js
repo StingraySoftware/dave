@@ -1,25 +1,26 @@
 
-//Adds new Long-term variability Tab Panel
-function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+//Adds new Long-Term variability Tab Panel
+function addAGNTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new AGNTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
-                        theService, navBarList, panelContainer, plotConfig, projectConfig);
+                        theService, navBarList, panelContainer, plotConfig, projectConfig, plotStyle);
 }
 
 //Subscribes the load workspace AGNTabPanel function
 tabPanelsLoadFns["AGNTabPanel"] = function (tabConfig) {
-  //Creates new Long-term variability Tab Panel
+  //Creates new Long-Term variability Tab Panel
   return addAGNTabPanel($("#navbar").find("ul").first(),
                       $(".daveContainer"),
                       tabConfig.plotConfig,
                       null,
+                      tabConfig.plotConfig.plotStyle,
                       tabConfig.id,
                       tabConfig.navItemClass);
 }
 
-//Long-term variability Tab Panel
-function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+//Long-Term variability Tab Panel
+function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -27,6 +28,10 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //AGNTabPanel METHODS:
+  this.getPageName = function () {
+    return "LongTermVarPage";
+  }
+
   this.getAGNDataFromServer = function (paramsData) {
 
     log("AGNTabPanel getAGNDataFromServer...");
@@ -41,7 +46,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, AGNTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
+        if (jsdata.statusText == "error"){
           //If abort cause is because python server died
           currentObj.outputPanel.setPlotsReadyState(true);
         }
@@ -52,7 +57,13 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       data = JSON.parse(jsdata);
 
       if (isNull(data)) {
-        log("onPlotReceived wrong data!, AGNTabPanel: " + currentObj.id);
+        log("onPlotDataReceived wrong data!, AGNTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
+        return;
+
+      } else if (!isNull(data.error)) {
+        currentObj.agnPlot.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", AGNTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
 
@@ -65,30 +76,30 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
         //Prepares Excess Variance Confidence interval Plot data and sends it to plot
         if (currentObj.exVarConfPlot.isVisible) {
-          currentObj.exVarConfPlot.setData([ data[6],
-                                             data[10],
-                                            { values: [ data[20].values[0], data[20].values[1], data[20].values[2] ] },
-                                            { values: [ data[20].values[3], data[20].values[4], data[20].values[5] ] } ]);
+          currentObj.exVarConfPlot.setData([ data[7],
+                                             data[11],
+                                            { values: [ data[21].values[0], data[21].values[1], data[21].values[2] ] },
+                                            { values: [ data[21].values[3], data[21].values[4], data[21].values[5] ] } ]);
         }
 
         //Prepares Fvar Confidence interval Plot data and sends it to plot
         if (currentObj.fvarConfPlot.isVisible) {
-          currentObj.fvarConfPlot.setData([ data[6],
-                                            data[14],
-                                            { values: [ data[20].values[6], data[20].values[7], data[20].values[8] ] },
-                                            { values: [ data[20].values[9], data[20].values[10], data[20].values[11] ] } ]);
+          currentObj.fvarConfPlot.setData([ data[7],
+                                            data[15],
+                                            { values: [ data[21].values[6], data[21].values[7], data[21].values[8] ] },
+                                            { values: [ data[21].values[9], data[21].values[10], data[21].values[11] ] } ]);
         }
 
         //Prepares Absolute RMS Plot data and sends it to plot
         if (currentObj.absRMSPlot.isVisible) {
-          currentObj.absRMSPlot.setData([ { values: data[8].values, error_values: data[9].values },
-                                          { values: data[10].values, error_values: data[11].values } ]);
+          currentObj.absRMSPlot.setData([ { values: data[9].values, error_values: data[10].values },
+                                          { values: data[11].values, error_values: data[12].values } ]);
         }
 
         //Prepares Fractional RMS Plot data and sends it to plot
         if (currentObj.fracRMSPlot.isVisible) {
-          currentObj.fracRMSPlot.setData([ { values: data[8].values, error_values: data[9].values },
-                                          { values: data[14].values, error_values: data[15].values } ]);
+          currentObj.fracRMSPlot.setData([ { values: data[9].values, error_values: data[10].values },
+                                          { values: data[15].values, error_values: data[16].values } ]);
         }
 
       }
@@ -102,22 +113,27 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              navItemClass: this.navItemClass,
              plotConfig: this.plotConfig,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
+    this.updateDefaultsFromProjectConfig(this.projectConfig);
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
 
     callback();
   }
 
-  this.createPlots = function () {
-    //Adds Long-term variability Plot to outputPanel
+  this.createPlots = function (plotStyle) {
+    //Adds Long-Term variability Plot to outputPanel
     this.agnPlot = new AgnPlot(
                               this.id + "_agn_" + (new Date()).getTime(),
                               $.extend(true, {}, plotConfig),
@@ -127,8 +143,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               null,
                               "fullScreen",
                               false,
-                              this.projectConfig
-                            );
+                              !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null);
     this.addPlot(this.agnPlot, false);
 
     //Adds Excess Variance Confidence Intervals Plot to outputPanel
@@ -136,8 +151,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_exVarConf_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter",
-                                          labels: ["TIME (" + this.projectConfig.timeUnit  + ")", "S2"],
-                                          title: "S2 Confidence Intervals",
+                                          labels: ["$\\text{TIME (" + this.projectConfig.timeUnit  + ")}$", "${\\sigma _{XS}}^{2}$"],
+                                          title: "${\\sigma _{XS}}^{2}\\text{ Confidence Intervals}$",
                                           selectable: false }
                               }),
                               null,
@@ -145,8 +160,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.exVarConfPlot, false);
 
     //Adds Fvar Confidence Intervals Plot to outputPanel
@@ -154,8 +168,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_FvarConf_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter",
-                                          labels: ["TIME (" + this.projectConfig.timeUnit  + ")", "Fvar"],
-                                          title: "Fvar Confidence Intervals",
+                                          labels: ["$\\text{TIME (" + this.projectConfig.timeUnit  + ")}$", "$F _{var}$"],
+                                          title: "$F _{var}\\text{ Confidence Intervals}$",
                                           selectable: false }
                               }),
                               null,
@@ -163,8 +177,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.fvarConfPlot, false);
 
     //Adds Avg. Absolute RMS: S2 Vs Count Rate plot to outputPanel
@@ -172,8 +185,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_absRms_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter_with_errors",
-                                          labels: ["<x>", "S2"],
-                                          title: "Avg. Absolute RMS",
+                                          labels: ["$<\\chi>$", "${\\sigma _{XS}}^{2}$"],
+                                          title: "$\\text{Avg. Absolute RMS}$",
                                           selectable: false }
                               }),
                               null,
@@ -181,8 +194,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.absRMSPlot, false);
 
     //Adds Avg. Fractional RMS: Fvar Vs Count Rate plot to outputPanel
@@ -190,8 +202,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.id + "_fracRms_" + (new Date()).getTime(),
                               $.extend(true, $.extend(true, {}, plotConfig), {
                                 styles: { type: "scatter_with_errors",
-                                          labels: ["<x>", "Fvar"],
-                                          title: "Avg. Fractional RMS",
+                                          labels: ["$<\\chi>$", "$F _{var}$"],
+                                          title: "$\\text{Avg. Fractional RMS}$",
                                           selectable: false }
                               }),
                               null,
@@ -199,8 +211,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                               this.outputPanel.onPlotReady,
                               null,
                               "",
-                              false
-                            );
+                              false);
     this.addPlot(this.fracRMSPlot, false);
 
     //Request plot data after all plots were added
@@ -208,16 +219,16 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   }
 
   this.getVarianceSelector = function () {
-    //Long-term Variability controls set
+    //Long-Term Variability controls set
     var $variance = $('<div class="variance">' +
                         '<h3>' +
-                          'Long-term variability parammeters:' +
+                          'Long-Term variability parameters:' +
                         '</h3>' +
                         '<div class="varianceContainer">' +
-                          '<p>Min counts for each chunk:</br><input id="mc_' + this.id + '" class="inputMinPhotons" type="text" name="mp_' + this.id + '" placeholder="' + this.variance_opts.min_counts.default + '" value="' + this.variance_opts.min_counts.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_counts.min + '-' + this.variance_opts.min_counts.max + '</span></p>' +
-                          '<p>Min. time bins:</br><input id="mb_' + this.id + '" class="inputMinBins" type="text" name="mb_' + this.id + '" placeholder="' + this.variance_opts.min_bins.default + '" value="' + this.variance_opts.min_bins.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_bins.min + '-' + this.variance_opts.min_bins.max + '</span></p>' +
+                          '<p>Minimum counts per segment:</br><input id="mc_' + this.id + '" class="inputMinPhotons" type="text" name="mp_' + this.id + '" placeholder="' + this.variance_opts.min_counts.default + '" value="' + this.variance_opts.min_counts.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_counts.min + '-' + this.variance_opts.min_counts.max + '</span></p>' +
+                          '<p>Minimum number of time segments:</br><input id="mb_' + this.id + '" class="inputMinBins" type="text" name="mb_' + this.id + '" placeholder="' + this.variance_opts.min_bins.default + '" value="' + this.variance_opts.min_bins.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.min_bins.min + '-' + this.variance_opts.min_bins.max + '</span></p>' +
                           '<p>Mean count:</br><input id="mc_' + this.id + '" class="inputMeanCount" type="text" name="mc_' + this.id + '" placeholder="' + this.variance_opts.mean_count.default + '" value="' + this.variance_opts.mean_count.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.variance_opts.mean_count.min + '-' + this.variance_opts.mean_count.max + '</span></p>' +
-                          '<p style="font-size:0.8em; color:#777777;">Algorithm: Vaughan et al. 2003</p>' +
+                          '<a target="_blank" href="http://articles.adsabs.harvard.edu/cgi-bin/nph-iarticle_query?bibcode=2003MNRAS.345.1271V&db_key=AST&page_ind=0&data_type=GIF&type=SCREEN_VIEW&classic=YES" class="InfoText">Algorithm: Vaughan et al, Mon. Not. R. Astron. Soc. 345, 1271-1284 (2003) <i class="fa fa-external-link" aria-hidden="true"></a>' +
                         '</div>' +
                       '</div>');
     $variance.find("input").on('change', this.onVarianceValuesChanged);
@@ -231,19 +242,29 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     currentObj.agnPlot.onDatasetValuesChanged(currentObj.outputPanel.getFilters());
   }
 
+  this.updateDefaultsFromProjectConfig = function (projectConfig){
+    var val = Math.floor(Math.sqrt((projectConfig.totalDuration / projectConfig.binSize) / 10));
+    this.toolPanel.$html.find(".inputMinPhotons").val(val);
+    this.toolPanel.$html.find(".inputMinBins").val(val);
+    this.toolPanel.$html.find(".inputMeanCount").val(val);
+  }
+
   //Set the selected plot configs
   this.plotConfig = plotConfig;
 
   this.variance_opts = {};
-  this.variance_opts.min_counts = { default:20, min:10, max: 10000}; //Minimum number of counts for each chunk on excess variance
-  this.variance_opts.min_bins = { default:20, min:10, max: 10000}; //Minimum number of time bins on excess variance
+  this.variance_opts.min_counts = { default:20, min:1, max: 10000}; //Minimum number of counts for each chunk on excess variance
+  this.variance_opts.min_bins = { default:20, min:1, max: 10000}; //Minimum number of time bins on excess variance
   this.variance_opts.mean_count = { default:10, min:1, max: 10000}; //Number of elements to calculate the means
 
-  this.setTitle("Long-term Variability");
+  //Preapares Long-Term Variability toolpanel data
+  this.setTitle("Long-Term Variability");
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
-
-  //Preapares Long-term Variability toolpanel data
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
+
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
   this.toolPanel.$html.find(".fileSelectorsContainer").append(this.getVarianceSelector());
@@ -254,7 +275,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
   if (!isNull(projectConfig)){
     this.projectConfig.updateFromProjectConfigs([projectConfig]);
-    this.createPlots();
+    this.updateDefaultsFromProjectConfig(this.projectConfig);
+    this.createPlots(plotStyle);
   }
 
   log("AGNTabPanel ready! id: " + this.id);

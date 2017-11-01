@@ -1,6 +1,6 @@
 
 //Adds new Fit Tab Panel
-function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new FitTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
@@ -8,7 +8,8 @@ function addFitTabPanel(navBarList, panelContainer, plotConfig, projectConfig, i
                         navBarList,
                         panelContainer,
                         plotConfig,
-                        projectConfig);
+                        projectConfig,
+                        plotStyle);
 }
 
 //Subscribes the load workspace FitTabPanel function
@@ -18,12 +19,13 @@ tabPanelsLoadFns["FitTabPanel"] = function (tabConfig) {
                        $(".daveContainer"),
                        tabConfig.plotConfig,
                        null,
+                       tabConfig.plotConfig.plotStyle,
                        tabConfig.id,
                        tabConfig.navItemClass);
 }
 
 //Fit Tab Panel
-function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+function FitTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -31,9 +33,19 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //FitTabPanel METHODS:
+  this.getPageName = function () {
+    return "FittingPage";
+  }
+
   this.onModelsChanged = function (){
     if (!isNull(currentObj.plot)){
-      currentObj.plot.refreshModelsData(false);
+      if (!isNull(currentObj.onModelsChangedTimeout)) {
+        clearTimeout(currentObj.onModelsChangedTimeout);
+        currentObj.onModelsChangedTimeout = null;
+      }
+      currentObj.onModelsChangedTimeout = setTimeout(function(){
+        currentObj.plot.refreshModelsData(false);
+      }, CONFIG.INMEDIATE_TIMEOUT);
     } else {
       log("Plot not created yet, FitTabPanel: " + currentObj.id);
     }
@@ -166,16 +178,17 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     $container.append(btnBack);
     btnBack.click(function(event){
       currentObj.toolPanel.showPanel("loadPanel");
+      gaTracker.sendEvent("Fitting", "BackFromBayParamEst", currentObj.id);
     });
 
-    //For each model add its parammeters controls
-    $container.append($('<h2>Prior parammeters:</h2>'));
+    //For each model add its parameters controls
+    $container.append($('<h2>Prior parameters:</h2>'));
     var $priorsContainer = $('<div class="priorsContainer"></div>');
     $container.append($priorsContainer);
 
     for (var i = 0; i < models.length; i++) {
       var model = models[i];
-      var modelParams = ModelParammeters[model["type"]];
+      var modelParams = ModelParameters[model["type"]];
       var firstParam = true;
       for (p in modelParams){
         var paramName = modelParams[p];
@@ -191,7 +204,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
 
           var name = paramName + "-" + i;
 
-          //Add the prior type selector for this parammeter
+          //Add the prior type selector for this parameter
           var $priorTypeRadioCont = getRadioControl(currentObj.id,
                                             paramName + " (" + model[paramName].toFixed(3)  + ")",
                                             "priorType_" + name,
@@ -246,6 +259,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     var $parEstBtn = $('<button class="btn btn-danger parEstBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BAYESIAN PAR. EST.</button>');
     $parEstBtn.click(function(event){
       currentObj.launchBayesianParEst();
+      gaTracker.sendEvent("Fitting", "launchBayesianParEst", currentObj.id);
     });
     $container.append($parEstBtn);
 
@@ -258,18 +272,19 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     var nameArr = paramName.split("-");
 
     if (nameArr.length == 2) {
-      var models = currentObj.modelSelector.getModels(false);
-      var paramValue = models[parseInt(nameArr[1])][nameArr[0]];
-      var paramDelta = paramValue * 0.5;
+      var estModels = currentObj.modelSelector.getModels(true);
+      var paramValue = estModels[parseInt(nameArr[1])][nameArr[0]];
+      var paramError = estModels[parseInt(nameArr[1])][nameArr[0] + "Err"];
 
       var $container = currentObj.toolPanel.$html.find("." + currentObj.id + "_prior_" + paramName);
       $container.html("");
       if (priorType == "uniform") {
+        var paramDelta = paramValue * 0.5;
         currentObj.addUniformPrior (paramName, (paramValue - paramDelta), (paramValue + paramDelta), $container);
       } else if (priorType == "normal") {
-        currentObj.addNormPrior (paramName, paramValue, paramDelta, $container);
+        currentObj.addNormPrior (paramName, paramValue, paramError, $container);
       } else if (priorType == "lognormal") {
-        currentObj.addLognormPrior (paramName, paramValue, paramDelta, $container);
+        currentObj.addLognormPrior (paramName, paramValue, paramError, $container);
       }
     }
   }
@@ -467,13 +482,17 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
              projectConfig: this.projectConfig.getConfig(),
              modelsConfig: this.modelSelector.getConfig(),
              infoPanelData: this.infoPanelData,
-             infoPanelSampleData: this.infoPanelSampleData
+             infoPanelSampleData: this.infoPanelSampleData,
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.modelSelector.setConfig( tabConfig.modelsConfig );
     this.createFitPlot();
@@ -509,7 +528,8 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                              null,
                              "fullWidth",
                              false,
-                             this.projectConfig);
+                             this.projectConfig,
+                             !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null);
 
     this.setTitle("Fit " + this.plot.plotConfig.styles.title);
 
@@ -520,6 +540,13 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.addPlot(this.plot);
   }
 
+  this.containsId = function (id) {
+    return (this.id == id)
+            || (this.toolPanel.containsId(id))
+            || (this.outputPanel.containsId(id))
+            || (this.modelSelector.containsId(id));
+  }
+
   //FitTabPanel Initialzation:
   this.infoPanelData = null;
   this.infoPanelSampleData = null;
@@ -527,11 +554,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.sampleEnabled = false;
 
   this.sampleOpts = {}; //Default, min and max values for sample params
-  this.sampleOpts.nwalkers = { default:500, min:1, max: 25000}; //The number of walkers (chains) to use during the MCMC
-  this.sampleOpts.niter = { default:100, min:1, max: 5000}; //The number of iterations to run the MCMC chains
-  this.sampleOpts.burnin = { default:100, min:1, max: 5000}; //The number of iterations to run the walkers before convergence is assumed to have occurred.
+  this.sampleOpts.nwalkers = { default:250, min:1, max: 2500}; //The number of walkers (chains) to use during the MCMC
+  this.sampleOpts.niter = { default:50, min:1, max: 500}; //The number of iterations to run the MCMC chains
+  this.sampleOpts.burnin = { default:50, min:1, max: 500}; //The number of iterations to run the walkers before convergence is assumed to have occurred.
   this.sampleOpts.threads = { default:1, min:1, max: 100}; //The number of threads for parallelization. FIXED TO 1 for avoid Flask context loss
-  this.sampleOpts.nsamples = { default:1000, min:1, max: 10000}; //The number of threads for parallelization.
+  this.sampleOpts.nsamples = { default:500, min:1, max: 5000}; //The number of threads for parallelization.
 
   this.sampleParams = {}; //Sample params values to be sent, initialized to default values
   this.sampleParams.nwalkers = this.sampleOpts.nwalkers.default;
@@ -541,7 +568,9 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.sampleParams.nsamples = this.sampleOpts.nsamples.default;
 
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Models');
-
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
 
   this.modelSelector = new ModelSelector(this.id + "_modelSelector_" + (new Date()).getTime(),
@@ -549,7 +578,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                                         this.onFitClicked,
                                         this.applyBootstrap,
                                         this.showBayesianParEst,
-                                        isNull(plotConfig.styles.title) ? plotConfig.filename : plotConfig.styles.title);
+                                        isNull(plotConfig.styles.title) ? getFilename(plotConfig.filename) : plotConfig.styles.title);
 
   this.outputPanel.getFilters = function () {
     return currentObj.plot.plotConfig.filters;

@@ -15,11 +15,14 @@ class Column:
         self.error_values = []
 
     def get_schema(self):
-        schema = dict()
-        schema["id"] = self.id
-        self.add_list_to_schema("", self.values, schema)
-        #self.add_list_to_schema("error_", self.error_values, schema)
-        return schema
+        if not self.has_extra("FAKE_COLUMN"):
+            schema = dict()
+            schema["id"] = self.id
+            self.add_list_to_schema("", self.values, schema)
+            #self.add_list_to_schema("error_", self.error_values, schema)
+            return schema
+        else:
+            return None
 
     def add_list_to_schema(self, list_prefix, dlist, schema):
         count = len(dlist)

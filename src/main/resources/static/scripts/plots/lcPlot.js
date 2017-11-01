@@ -13,38 +13,59 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.baseline_opts.p = { default:0.01, min:0.001, max: 1}; //Baseline Asymmetry ranges
   this.baseline_opts.niter = { default:10, min:1, max: 1000}; //Baseline N iterations ranges
 
+  this.meanfluxEnabled = false;
+  this.meanflux_opts = {};
+  this.meanflux_opts.lam = { default:1000, min:1, max: 100000}; //Meanflux Smoothness ranges
+  this.meanflux_opts.p = { default:0.01, min:0.001, max: 1}; //Meanflux Asymmetry ranges
+  this.meanflux_opts.niter = { default:10, min:1, max: 1000}; //Meanflux N iterations ranges
+
+
   //LC plot methods:
   this.addSettingsControls = function(){
 
     if (this.settingsPanel.find(".baseline").length == 0) {
 
       //Baseline controls set
-      var $baseline = $('<div class="baseline">' +
-                          '<h3>' +
-                            'Draw baseline:' +
-                            '<div class="switch-wrapper">' +
-                              '<div id="baseline_switch_' + this.id + '" class="switch-btn fa fa-plus-square" aria-hidden="true"></div>' +
-                            '</div>' +
-                          '</h3>' +
-                          '<div class="baselineContainer">' +
-                            '<p>Smoothness: <input id="lam_' + this.id + '" class="inputLam" type="text" name="lam_' + this.id + '" placeholder="' + this.baseline_opts.lam.default + '" value="' + this.baseline_opts.lam.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.lam.min + '-' + this.baseline_opts.lam.max + '</span></p>' +
-                            '<p>Asymmetry: <input id="p_' + this.id + '" class="inputP" type="text" name="p_' + this.id + '" placeholder="' + this.baseline_opts.p.default + '" value="' + this.baseline_opts.p.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.p.min + '-' + this.baseline_opts.p.max + '</span></p>' +
-                            '<p>Nº iterations: <input id="niter_' + this.id + '" class="inputNiter" type="text" name="niter_' + this.id + '" placeholder="' + this.baseline_opts.niter.default + '" value="' + this.baseline_opts.niter.default + '" /> <span style="font-size:0.8em; color:#777777;">' + this.baseline_opts.niter.min + '-' + this.baseline_opts.niter.max + '</span></p>' +
-                            '<p style="font-size:0.8em; color:#777777;">Algorithm: Asymmetric Least Squares Smoothing (P. Eilers and H. Boelens, 2005)</p>' +
-                          '</div>' +
-                        '</div>');
-
-      //Prepares baselineSwitchBox
-      var baselineSwitchBox = $baseline.find("#baseline_switch_" + this.id);
-      baselineSwitchBox.click( function ( event ) {
-        currentObj.setBaselineEnabled(!currentObj.baselineEnabled);
-      });
-
-      //Prepares input events
-      setVisibility($baseline.find(".baselineContainer"), currentObj.baselineEnabled);
-      $baseline.find("input").on('change', this.onBaselineValuesChanged);
+      var $baseline = getSection ("Draw baseline", "baseline", this.baselineEnabled, function ( enabled ) {
+                                    currentObj.baselineEnabled = enabled;
+                                    currentObj.onBaselineValuesChanged();
+                                  }, "clear");
+      var $baselineContainer = getSectionContainer($baseline);
+      $baselineContainer.append(getInlineRangeBox ("b_lam_" + this.id, "inputLam",
+                                                    "Smoothness", this.baseline_opts.lam.default, this.baseline_opts.lam.min, this.baseline_opts.lam.max,
+                                                    function(value, input) { currentObj.onBaselineValuesChanged(); }));
+      $baselineContainer.append(getInlineRangeBox ("b_p_" + this.id, "inputP",
+                                                    "Asymmetry", this.baseline_opts.p.default, this.baseline_opts.p.min, this.baseline_opts.p.max,
+                                                    function(value, input) { currentObj.onBaselineValuesChanged(); }));
+      $baselineContainer.append(getInlineRangeBox ("b_niter_" + this.id, "inputNiter",
+                                                    "Nº iterations", this.baseline_opts.niter.default, this.baseline_opts.niter.min, this.baseline_opts.niter.max,
+                                                    function(value, input) { currentObj.onBaselineValuesChanged(); }));
 
       this.settingsPanel.find(".leftCol").append($baseline);
+
+
+      //Meanflux controls set
+      var $meanflux = getSection ("Draw mean flux", "meanflux", this.meanfluxEnabled, function ( enabled ) {
+                                      currentObj.meanfluxEnabled = enabled;
+                                      currentObj.onMeanFluxValuesChanged();
+                                  }, "clear");
+      var $meanfluxContainer = getSectionContainer($meanflux);
+      $meanfluxContainer.append(getInlineRangeBox ("mf_lam_" + this.id, "inputLam",
+                                                    "Smoothness", this.meanflux_opts.lam.default, this.meanflux_opts.lam.min, this.meanflux_opts.lam.max,
+                                                    function(value, input) { currentObj.onMeanFluxValuesChanged(); }));
+      $meanfluxContainer.append(getInlineRangeBox ("mf_p_" + this.id, "inputP",
+                                                    "Asymmetry", this.meanflux_opts.p.default, this.meanflux_opts.p.min, this.meanflux_opts.p.max,
+                                                    function(value, input) { currentObj.onMeanFluxValuesChanged(); }));
+      $meanfluxContainer.append(getInlineRangeBox ("mf_niter_" + this.id, "inputNiter",
+                                                    "Nº iterations", this.meanflux_opts.niter.default, this.meanflux_opts.niter.min, this.meanflux_opts.niter.max,
+                                                    function(value, input) { currentObj.onMeanFluxValuesChanged(); }));
+
+      this.settingsPanel.find(".leftCol").append($meanflux);
+
+
+      var $referenceLink = $('<a target="_blank" href="https://zanran_storage.s3.amazonaws.com/www.science.uva.nl/ContentPages/443199618.pdf" class="clear InfoText">Algorithm: Eilers, Paul H. C. and Boelens, Hans F.M. Baseline Correction with Asymmetric Least Squares Smoothing. 2005 [Last query: 18/10/2017] <i class="fa fa-external-link" aria-hidden="true"></i></a>');
+      this.settingsPanel.find(".leftCol").append($referenceLink);
+
 
       //Send setting created event
       this.onSettingsCreated();
@@ -53,11 +74,23 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   this.onBaselineValuesChanged = function(){
     if (currentObj.baselineEnabled) {
-      currentObj.plotConfig.baseline_opts.lam = getInputIntValueCropped(currentObj.settingsPanel.find(".inputLam"), currentObj.plotConfig.baseline_opts.lam, currentObj.baseline_opts.lam.min, currentObj.baseline_opts.lam.max);
-      currentObj.plotConfig.baseline_opts.p = getInputFloatValueCropped(currentObj.settingsPanel.find(".inputP"), currentObj.plotConfig.baseline_opts.p, currentObj.baseline_opts.p.min, currentObj.baseline_opts.p.max);
-      currentObj.plotConfig.baseline_opts.niter = getInputIntValueCropped(currentObj.settingsPanel.find(".inputNiter"), currentObj.plotConfig.baseline_opts.niter, currentObj.baseline_opts.niter.min, currentObj.baseline_opts.niter.max);
+      var baselineContainer = getSectionContainer(currentObj.settingsPanel.find(".baseline"));
+      currentObj.plotConfig.baseline_opts.lam = parseInt(baselineContainer.find(".inputLam").val());
+      currentObj.plotConfig.baseline_opts.p = parseFloat(baselineContainer.find(".inputP").val());
+      currentObj.plotConfig.baseline_opts.niter = parseInt(baselineContainer.find(".inputNiter").val());
     } else {
       currentObj.plotConfig.baseline_opts = { niter: 0 };
+    }
+  }
+
+  this.onMeanFluxValuesChanged = function(){
+    if (currentObj.meanfluxEnabled) {
+      var meanfluxContainer = getSectionContainer(currentObj.settingsPanel.find(".meanflux"));
+      currentObj.plotConfig.meanflux_opts.lam = parseInt(meanfluxContainer.find(".inputLam").val());
+      currentObj.plotConfig.meanflux_opts.p = parseFloat(meanfluxContainer.find(".inputP").val());
+      currentObj.plotConfig.meanflux_opts.niter = parseInt(meanfluxContainer.find(".inputNiter").val());
+    } else {
+      currentObj.plotConfig.meanflux_opts = { niter: 0 };
     }
   }
 
@@ -72,15 +105,33 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     }
   }
 
+  this.updateMeanFluxControls = function () {
+    var switchBox = currentObj.settingsPanel.find("#meanflux_switch_" + currentObj.id);
+    if (currentObj.meanfluxEnabled) {
+      switchBox.switchClass("fa-plus-square", "fa-minus-square");
+      currentObj.settingsPanel.find(".meanfluxContainer").fadeIn();
+    } else {
+      switchBox.switchClass("fa-minus-square", "fa-plus-square");
+      currentObj.settingsPanel.find(".meanfluxContainer").fadeOut();
+    }
+  }
+
   this.setBaselineEnabled = function (enabled) {
     currentObj.baselineEnabled = enabled;
     currentObj.onBaselineValuesChanged();
     currentObj.updateBaselineControls();
   }
 
+  this.setMeanFluxEnabled = function (enabled) {
+    currentObj.meanfluxEnabled = enabled;
+    currentObj.onMeanFluxValuesChanged();
+    currentObj.updateMeanFluxControls();
+  }
+
   this.getPlotlyConfig = function (data) {
 
     var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
 
     var dataWithGaps = this.addGapsToData(data[0].values, data[1].values, data[2].values, this.plotConfig.dt * 5);
 
@@ -89,27 +140,59 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                                         (data.length > 4) ? this.getWtiRangesFromGtis(data[3].values, data[4].values, data[0].values) : [],
                                         this.plotConfig.styles.labels[coords.x],
                                         this.plotConfig.styles.labels[coords.y],
-                                        this.plotConfig.styles.title);
+                                        this.getTitle(),
+                                        plotDefaultConfig);
 
     if (data.length > 5) {
       if (data[5].values.length > 0) {
         //Lightcurve has baseline values
-        plotlyConfig.data.push(getLine (data[0].values, data[5].values, '#DD3333'));
+        plotlyConfig.data.push(getLine (data[0].values, data[5].values, plotDefaultConfig.BASELINE_COLOR, plotDefaultConfig.DEFAULT_LINE_WIDTH.default));
       }
     } else {
       this.btnSettings.hide();
     }
 
-    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    if (data.length > 6) {
+      if (data[6].values.length > 0) {
+        //Lightcurve has meanflux values
+        plotlyConfig.data.push(getLine (data[0].values, data[6].values, plotDefaultConfig.MEANFLUX_COLOR, plotDefaultConfig.DEFAULT_LINE_WIDTH.default));
+      }
+    } else {
+      this.btnSettings.hide();
+    }
+
+    if ((data.length > 22) && (data[22].values.length > 0) && (data[22].values[0] != "")){
+        this.showWarn(data[22].values[0]);
+    }
+
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
     plotlyConfig = this.prepareAxis(plotlyConfig);
 
     return plotlyConfig;
   }
 
-  this.addExtraDataConfig = function (plotlyConfig) {
+  this.addExtraDataConfig = function (plotlyConfig, plotDefaultConfig) {
     if (!isNull(this.extraData) && this.extraData.length > 1){
+
       //Inserts extra data as line in plot
-      plotlyConfig.data.splice(0, 0, getLine (this.extraData[0], this.extraData[1], EXTRA_DATA_COLOR));
+      var extraTrace = getLine (this.extraData[0], this.extraData[1],
+                                plotDefaultConfig.EXTRA_DATA_COLOR, plotDefaultConfig.DEFAULT_LINE_WIDTH.default);
+      if (this.extraData.length > 2
+          && this.extraData[2].length > 0
+          && jQuery.isNumeric(this.extraData[2][0])) {
+            //If third extra data column is numeric set is as y_error
+            extraTrace.error_y = getErrorConfig(this.extraData[2], plotDefaultConfig);
+      }
+      extraTrace.comesFromExtra = true;
+      plotlyConfig.data.splice(0, 0, extraTrace);
+
+      if (!isNull(this.plotStyle)){
+        var extraTraceStyle = this.plotStyle.data.filter(function(trace) { return !isNull(trace.comesFromExtra) && trace.comesFromExtra; });
+        if (isNull(extraTraceStyle) || extraTraceStyle.length == 0) {
+          this.plotStyle.data.splice(0, 0, getTracePlotStyle(extraTrace));
+          this.sendPlotEvent('on_plot_styles_changed', {});
+        }
+      }
     }
     return plotlyConfig;
   }
@@ -123,6 +206,16 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
       this.minY = minMaxY.min;
       this.maxX = minMaxX.max;
       this.maxY = minMaxY.max;
+
+      if (!isNull(this.extraData)
+          && this.extraData.length > 1) {
+          var extraMinMaxX = minMax2DArray(this.extraData[coords.x]);
+          var extraMinMaxY = minMax2DArray(this.extraData[coords.y]);
+          this.minX = Math.min(minMaxX.min, extraMinMaxX.min);
+          this.minY = Math.min(minMaxY.min, extraMinMaxY.min);
+          this.maxX = Math.max(minMaxX.max, extraMinMaxX.max);
+          this.maxY = Math.max(minMaxY.max, extraMinMaxY.max);
+      }
 
       var tab = getTabForSelector(this.id);
       if (!isNull(tab) && (0 <= this.minY) && (this.minY < this.maxY)){
@@ -180,6 +273,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
 
   //Disable BaseLine and Variance parameters:
   this.setBaselineEnabled(false);
+  this.setMeanFluxEnabled(false);
 
   log ("new LcPlot id: " + this.id);
 

@@ -6,6 +6,16 @@ $(document).ready(function () {
 
   Logger.show();
   logInfo("App started!! ->" + CONFIG.DOMAIN_URL);
+  gaTracker.sendPage("MasterPage");
+
+  window.onerror = function (errorMsg, url, lineNumber) {
+      logErr(errorMsg + ", line: " + lineNumber);
+      return false;
+  };
+  window.addEventListener("error", function (e) {
+     logErr(e.error.message);
+     return false;
+  });
 
   theService = new Service(CONFIG.DOMAIN_URL);
   theService.subscribe_to_server_messages(onServerMessageReceived);
@@ -13,19 +23,23 @@ $(document).ready(function () {
 
   $("#navbar").find(".addTabPanel").click(function () {
     addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
+    gaTracker.sendEvent("MasterPage", "addTabPanel", "");
   });
 
   var rightNavbar = $("#right-navbar");
   rightNavbar.find(".loadWorkSpace").click(function () {
     onLoadWorkSpaceClicked();
+    gaTracker.sendEvent("MasterPage", "loadWorkSpace", "");
   });
 
   rightNavbar.find(".saveWorkSpace").click(function () {
     onSaveWorkSpaceClicked();
+    gaTracker.sendEvent("MasterPage", "saveWorkSpace", "");
   });
 
   rightNavbar.find(".showSettingsTab").click(function () {
     onSettingsClicked();
+    gaTracker.sendEvent("MasterPage", "showSettings", "");
   });
 
   $("#navbar").find(".addTabPanel").click();
@@ -33,6 +47,7 @@ $(document).ready(function () {
   logInfo("App Ready!! ->" + CONFIG.DOMAIN_URL);
 
   waitingDialog.hide();
+
 });
 
 
@@ -76,27 +91,31 @@ function onSettingsClicked() {
   showSettingsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
 }
 
-function onMultiplePlotsSelected(selectedPlots) {
-  log("onMultiplePlotsSelected: selectedPlots -> " + selectedPlots.length);
+function onCrossSpectraClicked(selectedPlots) {
+  if (selectedPlots.length == 2){
+    log("onCrossSpectraClicked: selectedPlots -> " + selectedPlots.length);
 
-  waitingDialog.show('Preparing new tab ...');
+    waitingDialog.show('Preparing new tab ...');
 
-  var projectConfigs = [];
-  var plotConfigs = [];
-  for (i in selectedPlots) {
-    var plot = selectedPlots[i];
-    var tab = getTabForSelector(plot.id);
-    projectConfigs.push(tab.projectConfig);
-    plotConfigs.push(plot.plotConfig);
+    var projectConfigs = [];
+    var plotConfigs = [];
+    for (i in selectedPlots) {
+      var plot = selectedPlots[i];
+      var tab = getTabForSelector(plot.id);
+      projectConfigs.push(tab.projectConfig);
+      plotConfigs.push(plot.plotConfig);
+    }
+
+    addXsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plotConfigs, projectConfigs);
+    hideWaitingDialogDelayed(850);
+  } else {
+    logWarn("onCrossSpectraClicked, two plots must be selected. selectedPlots: " + selectedPlots.length);
   }
-
-  addXsTabPanel($("#navbar").find("ul").first(), $(".daveContainer"), plotConfigs, projectConfigs);
-  hideWaitingDialogDelayed(850, true);
 }
 
 function onFitPlotClicked(plot) {
   logInfo("onFitPlotClicked: plot -> " + plot.id);
-  prepareNewTab(plot, addFitTabPanel, false);
+  prepareNewTab(plot, addFitTabPanel);
 }
 
 function onBaselinePlotSelected(plot) {
@@ -106,29 +125,37 @@ function onBaselinePlotSelected(plot) {
   plot.btnBack.click();
 }
 
+function onMeanFluxPlotSelected(plot) {
+  logInfo("onMeanFluxPlotSelected, PlotId: " + plot.id);
+  plot.btnSettings.click();
+  plot.setMeanFluxEnabled(true);
+  plot.btnBack.click();
+}
+
+
 function onAGNPlotSelected(plot) {
   logInfo("onAGNPlotSelected, PlotId: " + plot.id);
-  prepareNewTab(plot, addAGNTabPanel, true);
+  prepareNewTab(plot, addAGNTabPanel);
 }
 
 function onPeriodogramPlotSelected(plot) {
   logInfo("onPeriodogramPlotSelected, PlotId: " + plot.id);
-  prepareNewTab(plot, addPGTabPanel, true);
+  prepareNewTab(plot, addPGTabPanel);
 }
 
 function onPhaseogramPlotSelected(plot) {
   logInfo("onPhaseogramPlotSelected, PlotId: " + plot.id);
-  prepareNewTab(plot, addPHTabPanel, true);
+  prepareNewTab(plot, addPHTabPanel);
 }
 
-function prepareNewTab(plot, addTabFn, clearSelectedPlots) {
+function prepareNewTab(plot, addTabFn) {
   logDebug("prepareNewTab: plot -> " + plot.id);
 
   waitingDialog.show('Preparing new tab ...');
   var tab = getTabForSelector(plot.id);
   if (!isNull(tab)) {
-    addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig);
-    hideWaitingDialogDelayed(850, clearSelectedPlots);
+    addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig, plot.plotStyle);
+    hideWaitingDialogDelayed(850);
   } else {
     showError(null, "Can't find tab for plot: " + plot.id);
   }
@@ -154,9 +181,8 @@ function showMsg(title, msg) {
    $msgDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 }
 
-function hideWaitingDialogDelayed (delay, clearPlots) {
+function hideWaitingDialogDelayed (delay) {
   setTimeout( function () {
-    if (clearPlots) { ClearSelectedPlots(); }
     waitingDialog.hide();
   }, delay);
 }
@@ -199,13 +225,14 @@ function logError(errorMsg) {
         log(msg, "LogServerWarn");
       } else  {
         log(msg, "LogServerError");
+        gaTracker.sendEvent("Logger", "LogError", msg);
       }
     }
   }
 }
 
 function connectionLost() {
-  logErr("Connection lost with Python Server!");
+  logWarn("Connection lost with Python Server!");
   waitingDialog.hide({ignoreCalls: true});
   setTimeout( function () {
 
@@ -222,7 +249,7 @@ function sendEventToElectron (event) {
 }
 
 function reconnectToServer (){
-  logErr("Connection lost with Python Server. Reconnecting ...");
+  logWarn("Connection lost with Python Server. Reconnecting ...");
   UrlExists(CONFIG.DOMAIN_URL, function(status){
       if(status === 200){
          waitingDialog.hide({ignoreCalls: true});
@@ -243,6 +270,7 @@ function onServerMessageReceived (msg) {
     cssClass = "LogServerWarn";
   } else if (msgLower.startsWith("error:")){
     cssClass = "LogServerError";
+    gaTracker.sendEvent("Logger", "LogError", msg);
   }
   log("SERVER -> " + msg, cssClass);
 }
@@ -250,5 +278,5 @@ function onServerMessageReceived (msg) {
 function updateServerConfig(){
   theService.set_config({ CONFIG: CONFIG }, function (res) {
     logInfo("Server configuration setted -> " + res);
-  })
+  });
 }

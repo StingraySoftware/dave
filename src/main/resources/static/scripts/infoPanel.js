@@ -25,8 +25,10 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
     this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
+        gaTracker.sendEvent("InfoPanel", "Show", currentObj.id);
       } else {
         currentObj.hide();
+        gaTracker.sendEvent("InfoPanel", "Hide", currentObj.id);
       }
     });
     toolbar.append(this.btnShow);
@@ -34,6 +36,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
     this.btnHide = this.$html.find(".btnHide");
     this.btnHide.click(function(event){
        currentObj.hide();
+       gaTracker.sendEvent("InfoPanel", "Hide", currentObj.id);
     });
 
     this.btnShowAll = this.$html.find(".btnShowAll");
@@ -45,6 +48,7 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
         currentObj.btnShowAll.find("i").switchClass("fa-minus-square-o", "fa-plus-square-o");
       }
       currentObj.redraw();
+      gaTracker.sendEvent("InfoPanel", "ShowAll", currentObj.id);
     });
 
   } else {

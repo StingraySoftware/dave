@@ -14,11 +14,13 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.plotConfig.norm = "leahy";
   this.plotConfig.xAxisType = "linear";
   this.plotConfig.yAxisType = "log";
-  this.plotConfig.plotType = "X*Y";
+  this.plotConfig.plotType = "X"; //This can be X or X*Y
   this.plotConfig.df = 0;
   this.plotConfig.maxSupportedFreq = 0.6 / Math.pow(10, -CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
   this.plotConfig.freqMax = this.plotConfig.maxSupportedFreq;
   this.plotConfig.freqMin = 0.0;
+
+  this.XYLabelAxis = 1;
 
   if (!isNull(projectConfig)) {
     // Prepare PDS Plot attributes from projectConfig
@@ -33,6 +35,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.$html.find(".plotTools").append(this.btnFit);
     this.btnFit.click(function(event){
       onFitPlotClicked(currentObj);
+      gaTracker.sendEvent("Plots", "FitPlotClicked", currentObj.getTitle());
     });
   }
 
@@ -234,7 +237,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     currentObj.segmSelector.setMinMaxValues(segmConfig.minValue, segmConfig.maxValue, segmConfig.step);
     currentObj.updateSegmSelector();
 
-    //Updates Rebin selector and Frequency range selector
+    //Updates Rebin selector and Frequency Range selector
     currentObj.updateMaxMinFreq(true);
     if (!isNull(currentObj.rebinSelector)) {
       currentObj.rebinSelector.setMinMaxValues (currentObj.plotConfig.freqMin,
@@ -316,36 +319,68 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   }
 
   this.getLabel = function (axis) {
-    if (axis == 1){
-      var yLabel = this.plotConfig.styles.labels[1];
-      if (this.plotConfig.plotType == "X*Y") {
+    if (axis == this.XYLabelAxis){
+
+      var yLabel = this.plotConfig.styles.labels[this.XYLabelAxis];
+
+      if (this.plotConfig.plotType == "X*Y" &&
+          (isNull(this.plotConfig.styles.XYLabelIsCustom)
+              || !this.plotConfig.styles.XYLabelIsCustom)) {
         if (this.plotConfig.styles.labels[0].startsWith("Freq")
-            && this.plotConfig.styles.labels[1].startsWith("Pow")) {
-              yLabel = "Power x Frequency (rms/mean)^2";
+            && this.plotConfig.styles.labels[this.XYLabelAxis].startsWith("Pow")) {
+              if (this.plotConfig.norm == "leahy") {
+                yLabel = "$Power (Leahy) \\times \\nu$";
+              } else if (this.plotConfig.norm == "frac") {
+                yLabel = "$(rms/mean)^{2}$";
+              } else if (this.plotConfig.norm == "abs") {
+                yLabel = "$rms^{2}$";
+              } else if (this.plotConfig.norm == "none") {
+                yLabel = "$Variance (unnormalized powers) \\times \\nu$";
+              }
           } else {
             yLabel += " x " + this.plotConfig.styles.labels[0];
           }
+
+      } else if (this.plotConfig.norm == "leahy") {
+        yLabel = "Power (Leahy)";
+      } else if (this.plotConfig.norm == "frac") {
+        yLabel = "$(rms/mean)^{2}\\nu ^{-1}$";
+      } else if (this.plotConfig.norm == "abs") {
+        yLabel = "$rms^{2}\\nu ^{-1}$";
+      } else if (this.plotConfig.norm == "none") {
+        yLabel = "Variance (unnormalized powers)";
       }
+
       return yLabel;
     } else {
       return this.plotConfig.styles.labels[axis];
     }
   }
 
+  this.setLabel = function (axis, value) {
+    if (axis == this.XYLabelAxis) {
+      this.plotConfig.styles.XYLabelIsCustom = (this.plotConfig.plotType == "X*Y");
+    }
+    this.plotConfig.styles.labels[axis] = value;
+  }
+
   this.getPlotlyConfig = function (data) {
+
+    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
 
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], isNull(data[1].error_values) ? [] : data[1].error_values, [],
                                         this.getLabel(0),
                                         this.getLabel(1),
-                                        this.plotConfig.styles.title);
+                                        this.getTitle(),
+                                        plotDefaultConfig);
 
-    plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+    plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
     plotlyConfig = this.prepareAxis(plotlyConfig);
 
     if (this.plotConfig.plotType == "X*Y") {
       plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots
-      plotlyConfig.layout.yaxis.titlefont.size = 12;
+      plotlyConfig.layout.yaxis.titlefont.size *= 0.75;
     }
 
     return plotlyConfig;

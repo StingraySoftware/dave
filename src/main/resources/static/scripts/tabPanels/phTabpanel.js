@@ -1,10 +1,10 @@
 
 //Adds new Phaseogram Tab Panel
-function addPHTabPanel(navBarList, panelContainer, plotConfig, projectConfig, id, navItemClass){
+function addPHTabPanel(navBarList, panelContainer, plotConfig, projectConfig, plotStyle, id, navItemClass){
   return new PHTabPanel(!isNull(id) ? id : "Tab_" + tabPanels.length,
                         "TabPanelTemplate",
                         !isNull(navItemClass) ? navItemClass : "NavItem_" + tabPanels.length,
-                        theService, navBarList, panelContainer, plotConfig, projectConfig);
+                        theService, navBarList, panelContainer, plotConfig, projectConfig, plotStyle);
 }
 
 //Subscribes the load workspace PHTabPanel function
@@ -14,12 +14,13 @@ tabPanelsLoadFns["PHTabPanel"] = function (tabConfig) {
                       $(".daveContainer"),
                       tabConfig.plotConfig,
                       null,
+                      tabConfig.plotConfig.plotStyle,
                       tabConfig.id,
                       tabConfig.navItemClass);
 }
 
 //Phaseogram Tab Panel
-function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig) {
+function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panelContainer, plotConfig, projectConfig, plotStyle) {
 
   var currentObj = this;
   tabPanels.push(this); // Insert on tabPanels here for preparing access to getTabForSelector from plots
@@ -27,6 +28,9 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //PHTabPanel METHODS:
+  this.getPageName = function () {
+    return "PhaseogramPage";
+  }
 
   this.getConfig = function () {
     return { type: "PHTabPanel",
@@ -34,13 +38,17 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
              navItemClass: this.navItemClass,
              plotConfig: this.plotConfig,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
@@ -50,12 +58,12 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.createPlots = function () {
 
-    //Adds Long-term variability Plot to outputPanel
+    //Adds Long-Term variability Plot to outputPanel
     this.pgPlot = new PgPlot(
                       this.id + "_pg_" + (new Date()).getTime(),
                       $.extend(true, $.extend(true, {}, plotConfig), {
                         styles: { type: "ligthcurve",
-                                  title: "Power Density Spectrum (PDS)",
+                                  title: "Power Density Spectrum",
                                   labels: ["Frequency (Hz)", "Power"],
                                   selectable: false,
                                   showFitBtn: true }
@@ -71,7 +79,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                             && currentObj.pgPlot.data[0].values.length > 0){
                               currentObj.outputPanel.onPlotReady();
                               if (isNull(currentObj.freqRangeSelector)){
-                                //We allready know the freq range, so create controls
+                                //We already know the freq range, so create controls
                                 currentObj.addControls();
                               }
                         } else {
@@ -81,7 +89,8 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       null,
                       "fullWidth",
                       false,
-                      this.projectConfig
+                      this.projectConfig,
+                      !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null
                     );
     this.addPlot(this.pgPlot, false);
 
@@ -99,7 +108,9 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                         //On ZSearchPlot Plot Ready
                         waitingDialog.hide();
                         currentObj.outputPanel.onPlotReady();
-                        currentObj.onCandidateFrequenciesFound();
+                        if (!isNull(currentObj.freqRangeSelector)){
+                          currentObj.onCandidateFrequenciesFound();
+                        }
                       },
                       null,
                       "fullWidth",
@@ -157,7 +168,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Adds frequency range selector
     var freqRange = this.pgPlot.getDefaultFreqRange();
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
-                                      "Frequency range (Hz):",
+                                      "Frequency Range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
                                       freqRange[0], freqRange[1],
                                       this.onFreqRangeValuesChanged,
@@ -202,6 +213,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     var searchBtn = $('<button class="btn btn-primary searchBtn"><i class="fa ffa-signal" aria-hidden="true"></i> Run Pulse Search</button>');
     searchBtn.click(function () {
       currentObj.onPulseSearchClick();
+      gaTracker.sendEvent("Phaseogram", "PulseSearchClick", currentObj.id);
     });
     $pulseSearchContainer.append(searchBtn);
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.pulseSearchSection);
@@ -220,7 +232,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     //Candidate frequency slider
     this.freqSelector = new BinSelector(this.id + "_freqSelector",
-                                      "Frequency tunning:",
+                                      "Frequency Tuning:",
                                       freqRange[0], freqRange[1], this.freqRangeSelector.step, (freqRange[1] - freqRange[0])/2,
                                       this.onFreqSelectorValuesChanged,
                                       function( event, ui ) {
@@ -365,7 +377,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, PhTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
+        if (jsdata.statusText == "error"){
           //If abort cause is because python server died
           currentObj.outputPanel.setPlotsReadyState(true);
         }
@@ -375,8 +387,14 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       log("PHData received!, PhTabPanel: " + currentObj.id);
       data = JSON.parse(jsdata);
 
-      if (isNull(data) || data.length != 6) {
+      if (isNull(data)) {
         log("onPlotReceived wrong data!, PhTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
+        return;
+
+      } else if (!isNull(data.error)) {
+        currentObj.phPlot.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", PhTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
 
@@ -405,10 +423,14 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.phaseogramAdvEnabled = false;
 
   this.setTitle("Phaseogram");
-  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
 
   //Preapares PG toolpanel data
+  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
+
   var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
   this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
 

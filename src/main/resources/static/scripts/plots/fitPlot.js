@@ -1,7 +1,6 @@
 //Fit plot for fitting PDS plots
-var CombinedModelColor = '#FF0000';
 
-function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig) {
+function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig, plotStyle) {
 
   var currentObj = this;
   plotConfig.styles.showFitBtn = false;
@@ -10,6 +9,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
   PDSPlot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable, projectConfig);
 
   this.plotConfig = tmpPlotConfig;
+  this.plotStyle = !isNull(plotStyle) ? plotStyle : null;
   this.getModelsFn = getModelsFn;
   this.getModelsDataFromServerFn = getModelsDataFromServerFn;
   this.models = [];
@@ -72,10 +72,27 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       modelsConfig.models = currentObj.estimatedModels;
     }
 
-    currentObj.getModelsDataFromServerFn( modelsConfig, currentObj.onModelsDataReceived );
+    if (!isNull(currentObj.currentModelsRequest) && !isNull(currentObj.currentModelsRequest.abort)) {
+      currentObj.currentModelsRequest.abort();
+    }
+
+    currentObj.currentModelsRequest = currentObj.getModelsDataFromServerFn( modelsConfig, currentObj.onModelsDataReceived );
   }
 
   this.onModelsDataReceived = function ( data ) {
+
+    if (!isNull(data.abort)){
+      log("Current request aborted, Plot: " + currentObj.id);
+      if (data.statusText == "error"){
+        //If abort cause is because python server died
+        currentObj.setReadyState(true);
+        currentObj.showWarn("Connection lost!");
+      }
+      return; //Comes from request abort call.
+    }
+
+    currentObj.currentModelsRequest = null;
+
     log("onModelsDataReceived passed data!, plot" + currentObj.id);
     data = JSON.parse(data);
 
@@ -122,20 +139,14 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
       if (modelsData.length > 0) {
         plotlyConfig = this.preparePlotConfigWithModelsData (plotlyConfig, data, modelsData, currentObj.models, false, isNull(errorsData));
-      } else {
-        log("setData no models data received, plot" + currentObj.id);
       }
 
       if (!isNull(estimatedModelsData) && estimatedModelsData.length > 0) {
         plotlyConfig = this.preparePlotConfigWithModelsData (plotlyConfig, data, estimatedModelsData, currentObj.estimatedModels, true, isNull(errorsData));
-      } else {
-        log("setData no estimatedModelsData data received, plot" + currentObj.id);
       }
 
       if (!isNull(errorsData)) {
         plotlyConfig = this.preparePlotConfigWithErrorsData (plotlyConfig, data, errorsData);
-      } else {
-        log("setData no errorsData data received, plot" + currentObj.id);
       }
 
       currentObj.redrawPlot(plotlyConfig);
@@ -163,6 +174,8 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
             }
           }
 
+          var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+
           plotlyConfig.data.push({
                                   type : 'scatter',
                                   showlegend : false,
@@ -172,7 +185,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
                                   y : model.values,
                                   line : {
                                           width : isNull(models[m]) ? 3 : 2,
-                                          color : isNull(models[m]) ? CombinedModelColor : models[m].color,
+                                          color : isNull(models[m]) ? plotDefaultConfig.COMBINED_MDL_COLOR : models[m].color,
                                           dash : isNull(estimated) || !estimated ? "solid" : "dash",
                                         }
                                 });

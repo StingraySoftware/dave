@@ -39,6 +39,8 @@ mkdir $BUILD_FOLDER/DAVEApp.app/dave
 \cp -r work/stingray/requirements.txt $BUILD_FOLDER/DAVEApp.app/dave/python
 rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/*.log
 rm -f $BUILD_FOLDER/DAVEApp.app/dave/python/uploadeddataset/*
+find $BUILD_FOLDER/DAVEApp.app/dave/python -name tests -exec rm -rf '{}' \;
+find $BUILD_FOLDER/DAVEApp.app/dave/python -name __pycache__ -exec rm -rf '{}' \;
 \cp -r setup/environment.yml $BUILD_FOLDER/DAVEApp.app/dave/
 echo "$BUILD_DATE" > $BUILD_FOLDER/DAVEApp.app/dave/resources/version.txt
 echo "BUILD_VERSION='$BUILD_VERSION';" > $BUILD_FOLDER/DAVEApp.app/dave/resources/static/scripts/version.js

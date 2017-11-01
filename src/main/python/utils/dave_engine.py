@@ -12,12 +12,12 @@ import utils.dataset_cache as DsCache
 import model.dataset as DataSet
 from stingray.events import EventList
 from stingray.lightcurve import Lightcurve
-from stingray import Powerspectrum, AveragedPowerspectrum
+from stingray import Powerspectrum, AveragedPowerspectrum, DynamicalPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
 from stingray import Covariancespectrum, AveragedCovariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
-from stingray.utils import baseline_als, excess_variance
+from stingray.utils import excess_variance
 from stingray.modeling import PSDLogLikelihood, PSDPosterior, PSDParEst
 from stingray.simulator import simulator
 from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
@@ -36,7 +36,7 @@ def get_dataset_schema(destination):
     if dataset:
         return dataset.get_schema()
     else:
-        logging.error("get_dataset_schema -> Null dataset for file: " + destination)
+        logging.debug("get_dataset_schema -> Null dataset for file: " + destination)
         return None
 
 
@@ -49,7 +49,7 @@ def get_dataset_header(destination):
     if dataset:
         return dataset.get_header()
     else:
-        logging.error("get_dataset_header -> Null dataset for file: " + destination)
+        logging.debug("get_dataset_header -> Null dataset for file: " + destination)
         return None
 
 
@@ -183,12 +183,10 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
 
         # Config checking
         if "type" not in styles:
-            logging.warn("No plot type specified on styles")
-            return None
+            return common_error("No plot type specified on styles")
 
         if len(axis) < 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         # Plot type mode
         if styles["type"] == "2d":
@@ -200,10 +198,12 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         elif styles["type"] == "scatter":
             return Plotter.get_plotdiv_scatter(filtered_ds, axis)
 
-        logging.warn("Wrong plot type specified on styles")
+        else:
+            return common_error("Wrong plot type specified on styles")
 
     except:
         logging.error(ExHelper.getException('get_plot_data'))
+        return common_error(ExHelper.getWarnMsg())
 
     return None
 
@@ -220,10 +220,12 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 # @param: baseline_opts: Object with the baseline parameters.
+# @param: meanflux_opts: Object with the meanflux parameters.
 # @param: variance_opts: Object with the excess variance parameters.
 #
 def get_lightcurve(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, baseline_opts, variance_opts):
+                    filters, axis, dt, baseline_opts, meanflux_opts,
+                    variance_opts):
 
     time_vals = []
     count_rate = []
@@ -231,6 +233,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     gti_start_values = []
     gti_stop_values = []
     baseline = []
+    meanflux = []
     chunk_times = []
     chunk_lengths = []
     mean = []
@@ -246,17 +249,18 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     chunk_mean_times = []
     chunk_mean_lengths = []
     confidences = []
+    warnmsg = []
 
     try:
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            logging.warn("Can't create lightcurve")
-            return None
+            return common_error("Can't create lightcurve or is empty")
+        elif not math.isclose(dt, lc.dt, abs_tol=0.001):
+            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
         # Sets lc values
         time_vals = lc.time
@@ -273,9 +277,17 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             lam = baseline_opts["lam"]  # 1000
             p = baseline_opts["p"]  # 0.01
             niter = baseline_opts["niter"]  # 10
-            baseline = lc.baseline(lam, p, niter) / dt  # Baseline from count, divide by dt to get countrate
+            baseline = lc.baseline(lam, p, niter, offset_correction=False) / dt  # Baseline from count, divide by dt to get countrate
 
-        # Gets the Long-term variability values
+        # Gets the meanflux values
+        if meanflux_opts["niter"] > 0:
+            logging.debug("Preparing lightcurve meanflux");
+            lam = meanflux_opts["lam"]  # 1000
+            p = meanflux_opts["p"]  # 0.01
+            niter = meanflux_opts["niter"]  # 10
+            meanflux = lc.baseline(lam, p, niter, offset_correction=True) / dt  # Baseline from count, divide by dt to get countrate
+
+        # Gets the Long-Term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
             logging.debug("Preparing lightcurve excess variance");
             chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
@@ -291,18 +303,25 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             excessvar = nan_and_inf_to_num(res[0])
             excessvar_err = nan_and_inf_to_num(res[1])
 
-            excessvarmean = get_means_from_array(excessvar, variance_opts["mean_count"])
-            excessvarmean_err = get_means_from_array(excessvar_err, variance_opts["mean_count"])
+            mean_count = variance_opts["mean_count"]
+            len_excessvar = len(excessvar)
+            if mean_count > len_excessvar:
+                logging.warn("mean_count fixed to " + str(len_excessvar));
+                warnmsg = ["@WARN@Mean count fixed to " + str(len_excessvar)]
+                mean_count = len_excessvar
+
+            excessvarmean = get_means_from_array(excessvar, mean_count)
+            excessvarmean_err = get_means_from_array(excessvar_err, mean_count)
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_fractional_rms)
             fvar = nan_and_inf_to_num(res[0])
             fvar_err = nan_and_inf_to_num(res[1])
 
-            fvarmean = get_means_from_array(fvar, variance_opts["mean_count"])
-            fvarmean_err = get_means_from_array(fvar_err, variance_opts["mean_count"])
+            fvarmean = get_means_from_array(fvar, mean_count)
+            fvarmean_err = get_means_from_array(fvar_err, mean_count)
 
-            chunk_mean_times = get_means_from_array(chunk_times, variance_opts["mean_count"])
-            chunk_mean_lengths = np.array([l * variance_opts["mean_count"] for l in chunk_lengths])
+            chunk_mean_times = get_means_from_array(chunk_times, mean_count)
+            chunk_mean_lengths = np.array([l * mean_count for l in chunk_lengths])
 
             confidences += (mean_confidence_interval(excessvar, confidence=0.90))
             confidences += (mean_confidence_interval(excessvar, confidence=0.99))
@@ -314,6 +333,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 
     except:
         logging.error(ExHelper.getException('get_lightcurve'))
+        return common_error(ExHelper.getWarnMsg())
 
     # Preapares the result
     logging.debug("Result lightcurve .... " + str(len(time_vals)))
@@ -323,21 +343,23 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
     result = push_to_results_array(result, gti_start_values) #3
     result = push_to_results_array(result, gti_stop_values) #4
     result = push_to_results_array(result, baseline) #5
-    result = push_to_results_array(result, chunk_times) #6
-    result = push_to_results_array(result, chunk_lengths) #7
-    result = push_to_results_array(result, mean) #8
-    result = push_to_results_array(result, mean_err) #9
-    result = push_to_results_array(result, excessvar) #10
-    result = push_to_results_array(result, excessvar_err) #11
-    result = push_to_results_array(result, excessvarmean) #12
-    result = push_to_results_array(result, excessvarmean_err) #13
-    result = push_to_results_array(result, fvar) #14
-    result = push_to_results_array(result, fvar_err) #15
-    result = push_to_results_array(result, fvarmean) #16
-    result = push_to_results_array(result, fvarmean_err) #17
-    result = push_to_results_array(result, chunk_mean_times) #18
-    result = push_to_results_array(result, chunk_mean_lengths) #19
-    result = push_to_results_array(result, confidences) #20
+    result = push_to_results_array(result, meanflux) #6
+    result = push_to_results_array(result, chunk_times) #7
+    result = push_to_results_array(result, chunk_lengths) #8
+    result = push_to_results_array(result, mean) #9
+    result = push_to_results_array(result, mean_err) #10
+    result = push_to_results_array(result, excessvar) #11
+    result = push_to_results_array(result, excessvar_err) #12
+    result = push_to_results_array(result, excessvarmean) #13
+    result = push_to_results_array(result, excessvarmean_err) #14
+    result = push_to_results_array(result, fvar) #15
+    result = push_to_results_array(result, fvar_err) #16
+    result = push_to_results_array(result, fvarmean) #17
+    result = push_to_results_array(result, fvarmean_err) #18
+    result = push_to_results_array(result, chunk_mean_times) #19
+    result = push_to_results_array(result, chunk_mean_lengths) #20
+    result = push_to_results_array(result, confidences) #21
+    result = push_to_results_array(result, warnmsg) #22
 
     return result
 
@@ -360,18 +382,15 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, bck0_destination, b
     try:
 
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         lc0 = get_lightcurve_any_dataset(lc0_destination, bck0_destination, "", filters, dt)
         if not lc0:
-            logging.warn("Wrong dataset type for lc0")
-            return None
+            return common_error("Wrong dataset type for lc0")
 
         lc1 = get_lightcurve_any_dataset(lc1_destination, bck1_destination, "", filters, dt)
         if not lc1:
-            logging.warn("Wrong dataset type for lc1")
-            return None
+            return common_error("Wrong dataset type for lc1")
 
         if lc0.countrate.shape == lc1.countrate.shape:
 
@@ -382,11 +401,11 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, bck0_destination, b
             return result
 
         else:
-            logging.warn("Lightcurves have different durations.")
-            return None
+            return common_warn("Lightcurves have different durations.")
 
     except:
         logging.error(ExHelper.getException('get_joined_lightcurves'))
+        return common_error(ExHelper.getWarnMsg())
 
     return None
 
@@ -408,8 +427,7 @@ def get_joined_lightcurves(lc0_destination, lc1_destination, bck0_destination, b
 def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt):
 
     if len(axis) != 2:
-        logging.warn("Wrong number of axis")
-        return None
+        return common_error("Wrong number of axis")
 
     try:
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
@@ -417,8 +435,7 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
         color_keys = FltHelper.get_color_keys_from_filters(filters)
 
         if len(color_keys) != 2 and len(color_keys) != 4:
-            logging.warn("Wrong number of color filters")
-            return None
+            return common_error("Wrong number of color filters")
 
         gti_start_values = []
         gti_stop_values = []
@@ -435,8 +452,7 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
             # Creates src lightcurve applying bck and gtis
             src_lc = get_lightcurve_from_events_dataset(filtered_ds, bck_destination, clean_filters, gti_destination, dt)
             if not src_lc:
-                logging.warn("Cant create lc_src")
-                return None
+                return common_error("Cant create source lc")
 
         # Prepares datasets from color filters
         filtered_datasets = split_dataset_with_color_filters(src_destination, filters, color_keys, gti_destination)
@@ -472,10 +488,11 @@ def get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_de
             return result
 
         else:
-            logging.warn("Cant create the colors filtered ligthcurves")
+            return common_warn("Cant create the colors filtered ligthcurves")
 
     except:
         logging.error(ExHelper.getException('get_divided_lightcurves_from_colors'))
+        return common_error(ExHelper.getWarnMsg())
 
     return None
 
@@ -561,7 +578,9 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
             duration = [lc.tseg]
             warnmsg = [""]
             if gti is not None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
-                warnmsg = ["GTI gaps found on LC"]
+                warnmsg = ["@WARN@GTI gaps found on LC"]
+            if not math.isclose(dt, lc.dt, abs_tol=0.001):
+                warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
             pds = None  # Dispose memory
             lc = None  # Dispose memory
@@ -569,7 +588,10 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 
     except:
         logging.error(ExHelper.getException('get_power_density_spectrum'))
-        warnmsg = [ExHelper.getWarnMsg()]
+        help_msg = ""
+        if len(freq) == 0 and pds_type != 'Sng':
+            help_msg = " Try with PDSType: Single."
+        warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
     logging.debug("Result power density spectrum .... " + str(len(freq)))
@@ -594,10 +616,12 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
 # @param: nsegm: The number of segments for splitting the lightcurve
 # @param: segm_size: The segment length for split the lightcurve
 # @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency
 # @param: df: If not 0 is the frequency rebining value
 #
 def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                            filters, axis, dt, nsegm, segm_size, norm, df=0):
+                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df=0):
 
     freq = []
     power_all = []
@@ -607,21 +631,22 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
 
     try:
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
+            return common_error("Wrong normalization")
 
         if segm_size == 0:
             segm_size = None
 
+        warnmsg = [""]
+
         # Creates the lightcurve
         lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
         if not lc:
-            logging.warn("Can't create lightcurve")
-            return None
+            return common_error("Can't create lightcurve or is empty")
+        elif not math.isclose(dt, lc.dt, abs_tol=0.001):
+            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
         # Prepares GTI if passed
         gti = load_gti_from_destination (gti_destination)
@@ -629,42 +654,40 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
             logging.debug("External GTIs not loaded using defaults")
             gti = lc.gti
 
-        warnmsg = [""]
-
         # Check if there is only one GTI and tries to split it by segm_size
         if gti is not None and len(gti) == 1:
             logging.debug("Only one GTI found, splitting by segm_size")
             new_gtis = DsHelper.get_splited_gti(gti[0], segm_size)
             if new_gtis is not None:
                 gti = new_gtis
-                warnmsg = ["GTIs obtained by splitting with segment length"]
+                warnmsg = ["@WARN@GTIs obtained by splitting with segment length"]
             else:
-                warnmsg = ["The GTI is not splitable by segment length"]
+                warnmsg = ["@WARN@The GTI is not splitable by segment length"]
                 logging.warn("Can't create splitted gtis from segm_size")
 
         # Creates the power density spectrum
         logging.debug("Create dynamical spectrum")
 
-        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+        pds = DynamicalPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
 
         if pds:
 
             if df > 0:
-                pds = pds.rebin(df=df)
+                pds.rebin_frequency(df)
 
-            #pds = rebin_spectrum_if_necessary(pds)
+            filtered_indexes = np.where((pds.freq >= freq_range[0]) & (pds.freq <= freq_range[1]))[0]
+            freq = pds.freq[filtered_indexes]
+            time = pds.time
+            logging.debug("freq: " + str(freq.shape))
+            logging.debug("time: " + str(time.shape))
+            logging.debug("dyn_ps: " + str(pds.dyn_ps.shape))
+            for tmp_pds in np.transpose(pds.dyn_ps):
+                power_all = push_to_results_array(power_all, tmp_pds[filtered_indexes])
 
-            freq = pds.freq
-
-            pds_array, nphots_all = pds._make_segment_spectrum(lc, segm_size)
-            for tmp_pds in pds_array:
-                power_all = push_to_results_array(power_all, tmp_pds.power)
-
-            time = gti[:, 0]
             duration = [lc.tseg]
 
             if gti is not None and len(gti) == 0 and DsHelper.hasGTIGaps(lc.time):
-                warnmsg = ["GTI gaps found on LC"]
+                warnmsg = ["@WARN@GTI gaps found on LC"]
 
             pds = None  # Dispose memory
 
@@ -723,20 +746,16 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     try:
         if len(axis1) != 2:
-            logging.warn("Wrong number of axis 1")
-            return None
+            return common_error("Wrong number of axis 1")
 
         if len(axis2) != 2:
-            logging.warn("Wrong number of axis 1")
-            return None
+            return common_error("Wrong number of axis 1")
 
         if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
+            return common_error("Wrong normalization")
 
         if xds_type not in ['Sng', 'Avg']:
-            logging.warn("Wrong cross spectrum type")
-            return None
+            return common_error("Wrong cross spectrum type")
 
         if segm_size == 0:
             segm_size = None
@@ -744,8 +763,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         # Creates the lightcurve 1
         lc1 = get_lightcurve_any_dataset(src_destination1, bck_destination1, gti_destination1, filters1, dt1)
         if not lc1:
-            logging.warn("Cant create lightcurve 1")
-            return None
+            return common_error("Cant create lightcurve 1")
 
         # Prepares GTI1 if passed
         gti1 = load_gti_from_destination (gti_destination1)
@@ -756,8 +774,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         # Creates the lightcurve 2
         lc2 = get_lightcurve_any_dataset(src_destination2, bck_destination2, gti_destination2, filters2, dt2)
         if not lc2:
-            logging.warn("Cant create lightcurve 2")
-            return None
+            return common_error("Cant create lightcurve 2")
 
         # Prepares GTI2 if passed
         gti2 = load_gti_from_destination (gti_destination2)
@@ -779,12 +796,6 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             gti = gti2
             logging.debug("GTI 2 applied")
 
-        # Cross Spectra requires a single Good Time Interval
-        #if gti is not None and gti.shape[0] != 1:
-        #    logging.warn("Non-averaged Cross Spectra need "
-        #                    "a single Good Time Interval: gti -> " + str(gti.shape))
-        #    return None
-
         # Creates the cross spectrum
         logging.debug("Create cross spectrum")
 
@@ -797,8 +808,12 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             freq = xs.freq
             power = xs.power
             power_err = xs.power_err
-            time_lag, time_lag_err = xs.time_lag()
-            coherence, coherence_err = xs.coherence()
+            if xds_type == 'Sng':
+                time_lag, time_lag_err = xs.time_lag(), np.array([])
+                coherence, coherence_err = xs.coherence(), np.array([])
+            else:
+                time_lag, time_lag_err = xs.time_lag()
+                coherence, coherence_err = xs.coherence()
 
             # Replace posible out of range values
             time_lag = nan_and_inf_to_num(time_lag)
@@ -817,9 +832,9 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             duration = [lc1.tseg, lc2.tseg]
             warnmsg = []
             if gti1 is not None and len(gti1) == 0 and DsHelper.hasGTIGaps(lc1.time):
-                warnmsg.append("GTI gaps found on LC 1")
+                warnmsg.append("@WARN@GTI gaps found on LC 1")
             if gti2 is not None and len(gti2) == 0 and DsHelper.hasGTIGaps(lc2.time):
-                warnmsg.append("GTI gaps found on LC 2")
+                warnmsg.append("@WARN@GTI gaps found on LC 2")
 
             xs = None  # Dispose memory
 
@@ -828,7 +843,10 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
 
     except:
         logging.error(ExHelper.getException('get_cross_spectrum'))
-        warnmsg = [ExHelper.getWarnMsg()]
+        help_msg = ""
+        if len(freq) == 0 and xds_type != 'Sng':
+            help_msg = " Try with PDSType: Single."
+        warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
     logging.debug("Result cross spectrum .... " + str(len(freq)))
@@ -871,39 +889,51 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
         if DsHelper.is_events_dataset(filtered_ds):
             events_table = filtered_ds.tables["EVENTS"]
+            time_vals = events_table.columns[CONFIG.TIME_COLUMN].values
 
-            if "E" in events_table.columns:
+            if len(time_vals) > 0:
+                if "E" in events_table.columns:
 
-                event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
-                                             events_table.columns["E"].values))
+                    if (time_vals[len(time_vals) - 1] - time_vals[0]) >= dt:
 
-                band_width = energy_range[1] - energy_range[0]
-                band_step = band_width / n_bands
-                from_val = energy_range[0]
-                band_interest = []
-                for i in range(n_bands):
-                    band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
+                        event_list = np.column_stack((time_vals, events_table.columns["E"].values))
 
-                if std < 0:
-                    std = None
+                        band_width = energy_range[1] - energy_range[0]
+                        band_step = band_width / n_bands
+                        from_val = energy_range[0]
+                        band_interest = []
+                        for i in range(n_bands):
+                            band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
 
-                # Calculates the Covariance Spectrum
-                cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
+                        if std < 0:
+                            std = None
 
-                sorted_idx = np.argsort(cs.covar[:,0])
-                sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
-                sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
-                energy_arr = sorted_covar[:,0]
-                covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
-                covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
+                        # Calculates the Covariance Spectrum
+                        cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
 
+                        sorted_idx = np.argsort(cs.covar[:,0])
+                        sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
+                        sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
+                        energy_arr = sorted_covar[:,0]
+                        covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
+                        covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
+
+                    else:
+                        logging.warn('get_covariance_spectrum: Lc duration must be greater than bin size!')
+                        return common_error("LC duration must be greater than bin size")
+                else:
+                    logging.warn('get_covariance_spectrum: E column not found!')
+                    return common_error("E column not found")
             else:
-                logging.warn('get_covariance_spectrum: E column not found!')
+                logging.warn('get_covariance_spectrum: No events data!')
+                return common_error('No events data')
         else:
             logging.warn('get_covariance_spectrum: Wrong dataset type!')
+            return common_error("Wrong dataset type")
 
     except:
         logging.error(ExHelper.getException('get_covariance_spectrum'))
+        return common_error(ExHelper.getWarnMsg())
 
     # Preapares the result
     result = push_to_results_array([], energy_arr)
@@ -948,16 +978,13 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
     try:
 
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
+            return common_error("Wrong normalization")
 
         if pds_type not in ['Sng', 'Avg']:
-            logging.warn("Wrong power density spectrum type")
-            return None
+            return common_error("Wrong power density spectrum type")
 
         if segm_size == 0:
             segm_size = None
@@ -968,67 +995,74 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 
         if DsHelper.is_events_dataset(filtered_ds):
             events_table = filtered_ds.tables["EVENTS"]
-            min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
-            max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
-            duration = [(max_time - min_time)]
+            if len(events_table.columns[CONFIG.TIME_COLUMN].values) > 0:
+                min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
+                max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
+                duration = [(max_time - min_time)]
 
-            if "E" in events_table.columns:
+                if "E" in events_table.columns:
 
-                pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                               filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
-                if pds:
+                    pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+                                                   filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
+                    if pds:
 
-                    #Preapares the eventlist with energies and gtis
-                    event_list = EventList()
-                    event_list.time = np.array(events_table.columns[CONFIG.TIME_COLUMN].values)
-                    event_list.ncounts = len(event_list.time)
-                    event_list.gti = gti
-                    event_list.energy = np.array(events_table.columns["E"].values)
+                        if not math.isclose(dt, lc.dt, abs_tol=0.001):
+                            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
-                    # Calculates the energy range
-                    if energy_range[0] < 0:
-                        min_energy = min(event_list.energy)
+                        #Preapares the eventlist with energies and gtis
+                        event_list = EventList()
+                        event_list.time = np.array(events_table.columns[CONFIG.TIME_COLUMN].values)
+                        event_list.ncounts = len(event_list.time)
+                        event_list.gti = gti
+                        event_list.energy = np.array(events_table.columns["E"].values)
+
+                        # Calculates the energy range
+                        if energy_range[0] < 0:
+                            min_energy = min(event_list.energy)
+                        else:
+                            min_energy = energy_range[0]
+
+                        if energy_range[1] >= min_energy:
+                            max_energy = energy_range[1]
+                        else:
+                            max_energy = max(event_list.energy)
+
+                        # Calculates the frequency range
+                        if freq_range[0] < 0:
+                            freq_low = min(pds.freq)
+                        else:
+                            freq_low = freq_range[0]
+                        freq_min_max[0] = freq_low
+
+                        if freq_range[1] < 0:
+                            freq_high = max(pds.freq)
+                        else:
+                            freq_high = freq_range[1]
+                        freq_min_max[1] = max([freq_min_max[1], freq_high])
+
+                        # Sets the energy ranges
+                        energy_spec = (min_energy, max_energy, n_bands, "lin")
+                        ref_band = [min_energy, max_energy]
+
+                        # Calculates the Phase Lag Spectrum
+                        les = LagEnergySpectrum(event_list, freq_min_max,
+                                                energy_spec, ref_band,
+                                                bin_time=dt,
+                                                segment_size=segm_size)
+
+                        energy_arr = np.array([(ei[0] + ei[1])/2 for ei in les.energy_intervals])
+                        lag_arr = les.spectrum
+                        lag_err_arr = les.spectrum_error
+
                     else:
-                        min_energy = energy_range[0]
-
-                    if energy_range[1] >= min_energy:
-                        max_energy = energy_range[1]
-                    else:
-                        max_energy = max(event_list.energy)
-
-                    # Calculates the frequency range
-                    if freq_range[0] < 0:
-                        freq_low = min(pds.freq)
-                    else:
-                        freq_low = freq_range[0]
-                    freq_min_max[0] = freq_low
-
-                    if freq_range[1] < 0:
-                        freq_high = max(pds.freq)
-                    else:
-                        freq_high = freq_range[1]
-                    freq_min_max[1] = max([freq_min_max[1], freq_high])
-
-                    # Sets the energy ranges
-                    energy_spec = (min_energy, max_energy, n_bands, "lin")
-                    ref_band = [min_energy, max_energy]
-
-                    # Calculates the Phase Lag Spectrum
-                    les = LagEnergySpectrum(event_list, freq_min_max,
-                                            energy_spec, ref_band,
-                                            bin_time=dt,
-                                            segment_size=segm_size)
-
-                    energy_arr = np.array([(ei[0] + ei[1])/2 for ei in les.energy_intervals])
-                    lag_arr = les.spectrum
-                    lag_err_arr = les.spectrum_error
-
+                        logging.warn("get_phase_lag_spectrum: can't create power density spectrum.")
+                        warnmsg = ['Cant create PDS']
                 else:
-                    logging.warn("get_phase_lag_spectrum: can't create power density spectrum.")
-                    warnmsg = ['Cant create PDS']
+                    logging.warn('get_phase_lag_spectrum: E column not found!')
+                    warnmsg = ['E column not found']
             else:
-                logging.warn('get_phase_lag_spectrum: E column not found!')
-                warnmsg = ['E column not found']
+                logging.warn('get_phase_lag_spectrum: No events data!')
+                warnmsg = ['No events data']
         else:
             logging.warn('get_phase_lag_spectrum: Wrong dataset type!')
             warnmsg = ['Wrong dataset type']
@@ -1082,16 +1116,13 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
     try:
 
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         if norm not in ['frac', 'abs', 'leahy', 'none']:
-            logging.warn("Wrong normalization")
-            return None
+            return common_error("Wrong normalization")
 
         if pds_type not in ['Sng', 'Avg']:
-            logging.warn("Wrong power density spectrum type")
-            return None
+            return common_error("Wrong power density spectrum type")
 
         if segm_size == 0:
             segm_size = None
@@ -1105,100 +1136,108 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
         if DsHelper.is_events_dataset(filtered_ds):
             events_table = filtered_ds.tables["EVENTS"]
-            min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
-            max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
-            duration = [(max_time - min_time)]
+            if len(events_table.columns[CONFIG.TIME_COLUMN].values) > 0:
+                min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
+                max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
+                duration = [(max_time - min_time)]
 
-            if "E" in events_table.columns:
+                if "E" in events_table.columns:
 
-                event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
-                                             events_table.columns["E"].values))
+                    event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
+                                                 events_table.columns["E"].values))
 
-                if energy_range[0] < 0:
-                    min_energy = min(event_list[:,1])
-                else:
-                    min_energy = energy_range[0]
+                    if energy_range[0] < 0:
+                        min_energy = min(event_list[:,1])
+                    else:
+                        min_energy = energy_range[0]
 
-                if energy_range[1] >= min_energy:
-                    energy_range = energy_range[1] - min_energy
-                else:
-                    energy_range = max(event_list[:,1]) - min_energy
+                    if energy_range[1] >= min_energy:
+                        energy_range = energy_range[1] - min_energy
+                    else:
+                        energy_range = max(event_list[:,1]) - min_energy
 
-                energy_step = energy_range / n_bands
+                    energy_step = energy_range / n_bands
 
-                for i in range(n_bands):
+                    for i in range(n_bands):
 
-                    energy_low = min_energy + (i * energy_step)
-                    energy_high = energy_low + energy_step
-                    energy_arr.extend([(energy_low + energy_high) / 2])
-                    rms, rms_err = 0, 0
+                        energy_low = min_energy + (i * energy_step)
+                        energy_high = energy_low + energy_step
+                        energy_arr.extend([(energy_low + energy_high) / 2])
+                        rms, rms_err = 0, 0
 
-                    try:
-                        filtered_event_list = event_list[ (energy_high>event_list[:,1]) & (event_list[:,1]>energy_low) ]
-                        if (len(filtered_event_list) > 0):
+                        try:
+                            filtered_event_list = event_list[ (energy_high>event_list[:,1]) & (event_list[:,1]>energy_low) ]
+                            if (len(filtered_event_list) > 0):
 
-                            evt_list = EventList(filtered_event_list[:,0], pi=filtered_event_list[:,1])
-                            if evt_list and evt_list.ncounts > 0:
+                                evt_list = EventList(filtered_event_list[:,0], pi=filtered_event_list[:,1])
+                                if evt_list and evt_list.ncounts > 1:
 
-                                lc = evt_list.to_lc(dt)
-                                if lc:
+                                    if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
 
-                                    gti = base_gti
-                                    if not gti:
-                                        gti = lc.gti
+                                        lc = evt_list.to_lc(dt)
+                                        if lc:
 
-                                    if segm_size > lc.tseg:
-                                        segm_size = lc.tseg
-                                        logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + ", segmsize bigger than lc.duration, lc.duration applied instead.")
+                                            gti = base_gti
+                                            if not gti:
+                                                gti = lc.gti
 
-                                    pds = None
-                                    if pds_type == 'Sng':
-                                        pds = Powerspectrum(lc, norm=norm, gti=gti)
+                                            if segm_size > lc.tseg:
+                                                segm_size = lc.tseg
+                                                logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + ", segmsize bigger than lc.duration, lc.duration applied instead.")
+
+                                            pds = None
+                                            if pds_type == 'Sng':
+                                                pds = Powerspectrum(lc, norm=norm, gti=gti)
+                                            else:
+                                                pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+
+                                            if pds:
+
+                                                if df > 0:
+                                                    pds = pds.rebin(df=df)
+
+                                                #pds = rebin_spectrum_if_necessary(pds)
+
+                                                if freq_range[0] < 0:
+                                                    freq_low = min(pds.freq)
+                                                else:
+                                                    freq_low = freq_range[0]
+
+                                                if freq_min_max[0] >= 0:
+                                                    freq_min_max[0] = min([freq_min_max[0], freq_low])
+                                                else:
+                                                    freq_min_max[0] = freq_low
+
+                                                if freq_range[1] < 0:
+                                                    freq_high = max(pds.freq)
+                                                else:
+                                                    freq_high = freq_range[1]
+                                                freq_min_max[1] = max([freq_min_max[1], freq_high])
+
+                                                rms, rms_err = pds.compute_rms(freq_low, freq_high)
+
+                                            else:
+                                                logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                                        else:
+                                            logging.warn("get_rms_spectrum: can't create lightcurve. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                     else:
-                                        pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
-
-                                    if pds:
-
-                                        if df > 0:
-                                            pds = pds.rebin(df=df)
-
-                                        #pds = rebin_spectrum_if_necessary(pds)
-
-                                        if freq_range[0] < 0:
-                                            freq_low = min(pds.freq)
-                                        else:
-                                            freq_low = freq_range[0]
-
-                                        if freq_min_max[0] >= 0:
-                                            freq_min_max[0] = min([freq_min_max[0], freq_low])
-                                        else:
-                                            freq_min_max[0] = freq_low
-
-                                        if freq_range[1] < 0:
-                                            freq_high = max(pds.freq)
-                                        else:
-                                            freq_high = freq_range[1]
-                                        freq_min_max[1] = max([freq_min_max[1], freq_high])
-
-                                        rms, rms_err = pds.compute_rms(freq_low, freq_high)
-
-                                    else:
-                                        logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                                        logging.warn("get_rms_spectrum: can't create lightcurve. Not enougth duration. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                 else:
-                                    logging.warn("get_rms_spectrum: can't create lightcurve. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                                    logging.warn("get_rms_spectrum: can't create eventlist or counts are 0. Energy range: " + str(energy_low) + " to " + str(energy_high) + ", counts: " + str(len(filtered_event_list)))
                             else:
-                                logging.warn("get_rms_spectrum: can't create eventlist or counts are 0. Energy range: " + str(energy_low) + " to " + str(energy_high) + ", counts: " + str(len(filtered_event_list)))
-                        else:
-                            logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + " has no events")
-                    except:
-                        logging.warn(ExHelper.getException('get_rms_spectrum: Energy range: ' + str(energy_low) + ' to ' + str(energy_high)))
+                                logging.warn("get_rms_spectrum: range: " + str(energy_low) + " to " + str(energy_high) + " has no events")
+                        except:
+                            logging.warn(ExHelper.getException('get_rms_spectrum: Energy range: ' + str(energy_low) + ' to ' + str(energy_high)))
 
-                    rms_arr.extend([rms])
-                    rms_err_arr.extend([rms_err])
+                        rms_arr.extend([rms])
+                        rms_err_arr.extend([rms_err])
 
+                else:
+                    logging.warn('get_rms_spectrum: E column not found!')
+                    warnmsg = ['E column not found']
             else:
-                logging.warn('get_rms_spectrum: E column not found!')
-                warnmsg = ['E column not found']
+                logging.warn('get_rms_spectrum: No events data!')
+                warnmsg = ['No events data']
         else:
             logging.warn('get_rms_spectrum: Wrong dataset type!')
             warnmsg = ['Wrong dataset type']
@@ -1250,6 +1289,7 @@ def get_plot_data_from_models(models, x_values):
 
     except:
         logging.error(ExHelper.getException('get_plot_data_from_models'))
+        return common_error(ExHelper.getWarnMsg())
 
     return models_arr
 
@@ -1273,9 +1313,9 @@ def get_plot_data_from_models(models, x_values):
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: df: If not 0 is the frequency rebining value
-# @param: models: array of models, dave_model definition with the starting parammeters
-# @param: priors: array of priors, dave_priors defined for each model parammeters
-# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
+# @param: models: array of models, dave_model definition with the starting parameters
+# @param: priors: array of priors, dave_priors defined for each model parameters
+# @param: sampling_params: dict with the parameter values for do the MCMC sampling
 #
 def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
                                 filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
@@ -1296,6 +1336,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 
     except:
         logging.error(ExHelper.getException('get_fit_powerspectrum_result'))
+        return common_error(ExHelper.getWarnMsg())
 
     return results
 
@@ -1317,7 +1358,7 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
 # @param: norm: The normalization of the (real part of the) power spectrum.
 # @param: pds_type: Type of PDS to use, single or averaged.
 # @param: df: If not 0 is the frequency rebining value
-# @param: models: array of models, dave_model definition with the optimal parammeters
+# @param: models: array of models, dave_model definition with the optimal parameters
 # @param: n_iter: Number of bootstrap iterations
 # @param: mean: Mean value of the simulated light curve
 # @param: red_noise: The red noise value
@@ -1401,13 +1442,13 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 
                 if len(models_params) > 0 and len(powers) == len(models_params):
 
-                    # Histogram all the recorded model parammeters
+                    # Histogram all the recorded model parameters
                     param_errors = []
                     for i in range(models_params.shape[1]):
                         param_values = models_params[:, i]
                         counts, values = DsHelper.get_histogram(param_values, 0.1)
 
-                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        # Fit the histogram with a Gaussian an get the optimized parameters
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
@@ -1426,7 +1467,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                         power_values = powers[:, i]
                         counts, values = DsHelper.get_histogram(power_values, 0.1)
 
-                        # Fit the histogram with a Gaussian an get the optimized parammeters
+                        # Fit the histogram with a Gaussian an get the optimized parameters
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
@@ -1445,6 +1486,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 
     except:
         logging.error(ExHelper.getException('get_bootstrap_results'))
+        return common_error(ExHelper.getWarnMsg())
 
     return results
 
@@ -1478,20 +1520,22 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
     try:
 
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
+
+        warnmsg = [""]
 
         # Calculates the LombScargle values
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            logging.warn("Can't create lightcurve")
-            return None
+            return common_error("Can't create lightcurve or is empty")
+        elif not math.isclose(dt, lc.dt, abs_tol=0.001):
+            warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
         duration = [lc.tseg]
-        warnmsg = [""]
+
         if lc.gti is not None and len(lc.gti) == 0 and DsHelper.hasGTIGaps(lc.time):
-            warnmsg = ["GTI gaps found on LC"]
+            warnmsg = ["@WARN@GTI gaps found on LC"]
         lc = None  # Dispose memory
 
     except:
@@ -1525,9 +1569,9 @@ def get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
 # @param: nyquist_factor: Average Nyquist frequency factor
 # @param: ls_norm: Periodogram normalization ["standard", "model", "log", "psd"]
 # @param: samples_per_peak: Points across each significant periodogram peak
-# @param: models: array of models, dave_model definition with the starting parammeters
-# @param: priors: array of priors, dave_priors defined for each model parammeters
-# @param: sampling_params: dict with the parammeter values for do the MCMC sampling
+# @param: models: array of models, dave_model definition with the starting parameters
+# @param: priors: array of priors, dave_priors defined for each model parameters
+# @param: sampling_params: dict with the parameter values for do the MCMC sampling
 #
 def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destination,
                                 filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak,
@@ -1539,8 +1583,7 @@ def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destinatio
         frequency, power, lc = get_lomb_scargle(src_destination, bck_destination, gti_destination,
                             filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak)
         if not lc:
-            logging.warn("Can't create lightcurve")
-            return None
+            return common_error("Can't create lightcurve or is empty")
 
         pds = Powerspectrum()
         pds.freq = frequency
@@ -1554,6 +1597,7 @@ def get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destinatio
 
     except:
         logging.error(ExHelper.getException('get_fit_lomb_scargle_result'))
+        return common_error(ExHelper.getWarnMsg())
 
     return results
 
@@ -1587,8 +1631,7 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
     try:
 
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         if mode not in ['epoch_folding', 'z_n_search']:
             logging.warn("Wrong mode, using default: z_n_search")
@@ -1599,8 +1642,7 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
 
         ds = get_filtered_dataset(src_destination, filters, gti_destination)
         if not ds:
-            logging.warn("Cant read dataset!")
-            return None
+            return common_error("Cant read dataset!")
 
         # Gets time data
         time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
@@ -1629,6 +1671,7 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
 
     except:
         logging.error(ExHelper.getException('get_pulse_search'))
+        return common_error(ExHelper.getWarnMsg())
 
     # Preapares the result
     result = push_to_results_array([], freq)
@@ -1665,16 +1708,14 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
     try:
 
         if len(axis) != 2:
-            logging.warn("Wrong number of axis")
-            return None
+            return common_error("Wrong number of axis")
 
         filters = FltHelper.get_filters_clean_color_filters(filters)
         filters = FltHelper.apply_bin_size_to_filters(filters, dt)
 
         ds = get_filtered_dataset(src_destination, filters, gti_destination)
         if not ds:
-            logging.warn("Cant read dataset!")
-            return None
+            return common_error("Cant read dataset!")
 
         weights=None
         if DsHelper.is_lightcurve_dataset(ds):
@@ -1702,6 +1743,7 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
 
     except:
         logging.error(ExHelper.getException('get_phaseogram'))
+        return common_error(ExHelper.getWarnMsg())
 
     # Preapares the result
     result = push_to_results_array([], phaseogr)
@@ -1766,7 +1808,7 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 def push_to_results_array (result, values):
     column = dict()
     try:
-        column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
+        column["values"] = np.around(values, decimals=CONFIG.PRECISION)
     except:
         column["values"] = values
     result.append(column)
@@ -1775,8 +1817,8 @@ def push_to_results_array (result, values):
 
 def push_to_results_array_with_errors (result, values, errors):
     column = dict()
-    column["values"] = np.around(values, decimals=CONFIG.PRECISSION)
-    column["error_values"] = np.around(errors, decimals=CONFIG.PRECISSION)
+    column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISION)
+    column["error_values"] = np.around(nan_and_inf_to_num(errors), decimals=CONFIG.PRECISION)
     result.append(column)
     return result
 
@@ -1879,11 +1921,23 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
         return DsCache.get(cache_key)
 
     eventlist = DsHelper.get_eventlist_from_evt_dataset(filtered_ds)
-    if not eventlist or len(eventlist.time) == 0:
+    if not eventlist or eventlist.ncounts < 2 or len(eventlist.time) < 2:
         logging.warn("Wrong lightcurve counts for eventlist from ds.id -> " + str(filtered_ds.id))
         return None
 
-    lc = eventlist.to_lc(dt)
+    if (eventlist.time[eventlist.ncounts - 1] - eventlist.time[0]) < dt * 2:
+        logging.warn("Lightcurve duration must be greater than two bin sizes, for ds.id -> " + str(filtered_ds.id))
+        return None
+
+    while True:
+        # Checks if lc has counts or retries with smaller bin size.
+        lc = eventlist.to_lc(dt)
+        if (lc is None) or (not np.isnan(lc.meanrate) and lc.n > 1):
+            break
+        else:
+            dt = dt / 2.0
+            logging.warn("Lightcurve has no counts, bin size: " + str(lc.dt) + ", retrying with binsize: " + str(dt))
+
     if bck_destination:
 
         #Gets the backscale keyword value
@@ -1892,7 +1946,7 @@ def get_lightcurve_from_events_dataset(filtered_ds, bck_destination, filters, gt
             src_backscale = int(filtered_ds.tables["EVENTS"].header["BACKSCAL"])
 
         #Applies background data
-        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, src_backscale)
+        lc = apply_background_to_lc(lc, bck_destination, filters, gti_destination, lc.dt, src_backscale)
 
     eventlist = None  # Dispose memory
     filtered_ds = None  # Dispose memory
@@ -1987,7 +2041,7 @@ def create_power_density_spectrum(src_destination, bck_destination, gti_destinat
     # Creates the lightcurve
     lc = get_lightcurve_any_dataset(src_destination, bck_destination, gti_destination, filters, dt)
     if not lc:
-        logging.warn("Can't create lightcurve")
+        logging.warn("Can't create lightcurve or is empty")
         return None, None, None
 
     # Prepares GTI if passed
@@ -2021,7 +2075,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
         fit_model, starting_pars = ModelHelper.get_astropy_model_from_dave_models(models)
         if fit_model:
 
-            # Default fit parammeters
+            # Default fit parameters
             max_post=False
             fitmethod="L-BFGS-B"
             as_priors=None
@@ -2030,7 +2084,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
                 # Creates the priors from dave_priors
                 as_priors = ModelHelper.get_astropy_priors(priors)
                 if len(as_priors.keys()) > 0:
-                    # If there are priors then is a Bayesian Parammeters Estimation
+                    # If there are priors then is a Bayesian Parameters Estimation
                     max_post=True
                     fitmethod="BFGS"
 
@@ -2045,13 +2099,13 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
                 # Creates the Maximum Likelihood object for fitting
                 lpost = PSDLogLikelihood(pds.freq, pds.power, fit_model, m=pds.m)
 
-            # Creates the PSD Parammeters Estimation object and runs the fitting
+            # Creates the PSD Parameters Estimation object and runs the fitting
             parest = PSDParEst(pds, fitmethod=fitmethod, max_post=max_post)
             res = parest.fit(lpost, starting_pars, neg=True)
 
             sample = None
             if as_priors and sampling_params is not None:
-                # If is a Bayesian Par. Est. and has sampling parammeters
+                # If is a Bayesian Par. Est. and has sampling parameters
                 # then sample the posterior distribution defined in `lpost` using MCMC
                 sample = parest.sample(lpost, res.p_opt, cov=res.cov,
                                          nwalkers=sampling_params["nwalkers"],
@@ -2065,7 +2119,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
             parnames = [n for n, f in zip(fit_model.param_names, fixed) \
                         if f is False]
 
-            # Add to results the estimated parammeters
+            # Add to results the estimated parameters
             params = []
             for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
                 param = dict()
@@ -2216,12 +2270,22 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
         divided_values = nan_and_inf_to_num(values_0 / values_1)
         if error_0.shape == error_1.shape == values_0.shape:
             divided_error = nan_and_inf_to_num((error_0/values_1) + ((error_1 * values_0)/(values_1 * values_1)))
-    divided_values[divided_values > CONFIG.BIG_NUMBER]=0
-    divided_error[divided_error > CONFIG.BIG_NUMBER]=0
+    divided_values[divided_values >= CONFIG.BIG_NUMBER]=0
+    divided_values[divided_values <= -CONFIG.BIG_NUMBER]=0
+    divided_error[divided_error >= CONFIG.BIG_NUMBER]=0
+    divided_error[divided_error <= -CONFIG.BIG_NUMBER]=0
     return divided_values, divided_error
 
 
-# ----- Long-term variability FUNCTIONS.. NOT EXPOSED  -------------
+def common_error(error):
+    logging.error(error)
+    return dict(error=error)
+
+def common_warn(warn):
+    logging.warn(warn)
+    return dict(error="@WARN@" + warn)
+
+# ----- Long-Term variability FUNCTIONS.. NOT EXPOSED  -------------
 
 def lightcurve_meancount(lc):
     return lc.meancounts, np.std(lc.counts)

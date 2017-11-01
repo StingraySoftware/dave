@@ -38,6 +38,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
     for (i in currentObj.plots) { if (currentObj.plots[i].isVisible && !currentObj.plots[i].isReady) return; };
   }
 
+  this.redrawAllDiffered = function () {
+    for (i in currentObj.plots) { if (currentObj.plots[i].isVisible) currentObj.plots[i].redrawDiffered(); };
+  }
+
   this.enableDragDrop = function (enabled) {
     if (isNull(this.dragDropEnabled)) {
       currentObj.$body.sortable({ revert: true });
@@ -69,10 +73,10 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
   }
 
   this.generatePlotId = function (id) {
-    return (this.id + "_" + id + "_" + (new Date()).getTime()).replace(/\./g,'').replace(/\//g,'');
+    return (this.id + "_" + id.replace(/[^\w]/g,'') + "_" + (new Date()).getTime()).replace(/\./g,'').replace(/\//g,'');
   }
 
-  this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
+  this.broadcastEvent = function (evt_name, evt_data, senderId) {
     for (i in this.plots) {
       this.plots[i].receivePlotEvent(evt_name, evt_data, senderId);
     }

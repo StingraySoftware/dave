@@ -57,10 +57,12 @@ function Service (base_url) {
   };
 
   this.make_ajax_call = function (callName, data, fn, errorFn) {
-    if (isNull(data.x_values)){
-      log(callName + " ,data: " + JSON.stringify(data));
-    } else {
-      log(callName + " ,data: " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
+    if (!isNull(data)){
+      if (isNull(data.x_values)){
+        log(callName + " ,data: " + JSON.stringify(data));
+      } else {
+        log(callName + " ,data: " + JSON.stringify({ x_values: data.x_values.length, models: data.models, estimated: data.estimated }));
+      }
     }
     try {
       return $.ajax({
@@ -147,6 +149,10 @@ function Service (base_url) {
 
   this.set_config = function (config, fn) {
      return thisService.make_ajax_call("set_config", config, fn);
+  };
+
+  this.clear_cache = function (fn) {
+     return thisService.make_ajax_call("clear_cache", null, fn);
   };
 
   this.request_lomb_scargle_results  = function ( data, fn ) {

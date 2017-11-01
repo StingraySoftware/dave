@@ -25,10 +25,10 @@ def get_cache_key_for_destination (destination, time_offset):
         return destination # If destination is a cache key
 
 
-def get_gti_string_from_hdulist (gtistring, hdulist):
-    supported_gtis = gtistring.split(",")
+def get_hdu_string_from_hdulist (hdu_string, hdulist):
+    supported_hdus = hdu_string.split(",")
     for hdu in hdulist:
-        if hdu.name in supported_gtis:
+        if hdu.name in supported_hdus:
             return hdu.name
     return ""
 
@@ -71,11 +71,12 @@ def get_file_dataset(destination, time_offset=0):
                 # Opening Fits
                 hdulist = fits.open(destination, memmap=True)
 
-                if 'EVENTS' in hdulist:
+                if get_hdu_string_from_hdulist(CONFIG.EVENTS_STRING, hdulist) != "":
                     # If EVENTS extension found, consider the Fits as EVENTS Fits
                     dataset = get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
-                                                       hduname='EVENTS', column=CONFIG.TIME_COLUMN,
-                                                       gtistring=CONFIG.GTI_STRING, extra_colums=['PI', "PHA"], time_offset=time_offset)
+                                                       hduname=get_hdu_string_from_hdulist(CONFIG.EVENTS_STRING, hdulist),
+                                                       column=CONFIG.TIME_COLUMN, gtistring=CONFIG.GTI_STRING,
+                                                       extra_colums=['PI', "PHA"], time_offset=time_offset)
 
                 elif 'RATE' in hdulist:
                     # If RATE extension found, consider the Fits as LIGHTCURVE Fits
@@ -86,12 +87,12 @@ def get_file_dataset(destination, time_offset=0):
                     # If EBOUNDS extension found, consider the Fits as RMF Fits
                     dataset = get_fits_dataset(hdulist, "RMF", ["EBOUNDS"])
 
-                elif len(set(CONFIG.GTI_STRING.split(",")).intersection(set(hdulist))):
+                elif get_hdu_string_from_hdulist(CONFIG.GTI_STRING, hdulist) != "":
                     # If not EVENTS or RATE extension found, check if is GTI Fits
                     dataset = get_gti_fits_dataset_with_stingray(hdulist,gtistring=CONFIG.GTI_STRING, time_offset=time_offset)
 
                 else:
-                    logging.error("Unsupported FITS type! Any table found: EVENTS, RATE, EBOUNDS or " + CONFIG.GTI_STRING)
+                    logging.warn("Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE, EBOUNDS or " + CONFIG.GTI_STRING)
 
             elif file_extension == "data" and (file_extension_from_file in [".p", ".nc"]):
 
@@ -99,7 +100,7 @@ def get_file_dataset(destination, time_offset=0):
                 dataset = load_dataset_from_intermediate_file(destination)
 
             else:
-                logging.error("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
+                logging.warn("Unknown file extension: " + str(file_extension) + " , " + str(file_extension_from_file))
 
             if dataset:
                 DsCache.add(cache_key, dataset)
@@ -173,7 +174,7 @@ def get_fits_table_column_names(hdulist, table_id):
     return None
 
 
-# Returns a dataset containin HDU table and GTI table
+# Returns a dataset containin HDU("EVENTS") table and GTI table
 # with the Fits data using Stingray library
 def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                    hduname='EVENTS', column=CONFIG.TIME_COLUMN,
@@ -214,10 +215,10 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
                                                 fits_data.additional_data, [],
                                                 event_list.time, [],
                                                 event_list.gti[:, 0], event_list.gti[:, 1],
-                                                 None, None, hduname, column)
+                                                None, None, "EVENTS", column)
 
     # Stores the events_start_time in time column extra
-    dataset.tables[hduname].columns[column].set_extra("TSTART", events_start_time)
+    dataset.tables["EVENTS"].columns[column].set_extra("TSTART", events_start_time)
 
     logging.debug("Read Events fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time))
 
@@ -238,6 +239,10 @@ def get_gti_fits_dataset_with_stingray(hdulist, gtistring=CONFIG.GTI_STRING, tim
 def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
                                             column=CONFIG.TIME_COLUMN, gtistring=CONFIG.GTI_STRING, time_offset=0):
 
+    supported_rate_columns = set(['RATE', 'RATE1', 'COUNTS'])
+    found_rate_columns = set(hdulist[hduname].data.names)
+    intersection_columns = supported_rate_columns.intersection(found_rate_columns)
+
     #Check if HDUCLAS1 = LIGHTCURVE column exists
     logging.debug("Reading Lightcurve Fits columns")
     if "HDUCLAS1" not in hdulist[hduname].header:
@@ -248,11 +253,28 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
         logging.warn("HDUCLAS1 is not LIGHTCURVE")
         return None
 
+    elif len(intersection_columns) == 0:
+        logging.warn("RATE, RATE1 or COUNTS columns not found in " + str(hduname) + " HDU, found columns: " + str(hdulist[hduname].data.names))
+        return None
+
+    elif len(intersection_columns) > 1:
+        logging.warn("RATE, RATE1 or COUNTS ambiguous columns found in " + str(hduname) + " HDU, found columns: " + str(hdulist[hduname].data.names))
+        return None
+
+    ratecolumn = list(intersection_columns)[0]
+    if len(hdulist[hduname].data[ratecolumn].shape) != 1 \
+        or not (isinstance(hdulist[hduname].data[ratecolumn][0], int) \
+        or isinstance(hdulist[hduname].data[ratecolumn][0], np.integer) \
+        or isinstance(hdulist[hduname].data[ratecolumn][0], float) \
+        or isinstance(hdulist[hduname].data[ratecolumn][0], np.floating)):
+        logging.warn("Wrong data type found for column: " + str(ratecolumn) + " in " + str(hduname) + " HDU, expected Integer or Float.")
+        return None
+
     header, header_comments = get_header(hdulist, hduname)
 
     # Reads the lightcurve with HENDRICS
-    outfile = lcurve_from_fits(destination, gtistring=get_gti_string_from_hdulist(gtistring, hdulist),
-                             timecolumn=column, ratecolumn=None, ratehdu=1,
+    outfile = lcurve_from_fits(destination, gtistring=get_hdu_string_from_hdulist(gtistring, hdulist),
+                             timecolumn=column, ratecolumn=ratecolumn, ratehdu=1,
                              fracexp_limit=CONFIG.FRACEXP_LIMIT)[0]
 
     lcurve, events_start_time = substract_tstart_from_lcurve(load_data(outfile), time_offset)
@@ -341,7 +363,7 @@ def get_stingray_object(destination, time_offset=0):
         elif 'RATE' in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
             # Reads the lightcurve with hendrics
-            outfile = lcurve_from_fits(destination, gtistring=get_gti_string_from_hdulist(CONFIG.GTI_STRING, hdulist),
+            outfile = lcurve_from_fits(destination, gtistring=get_hdu_string_from_hdulist(CONFIG.GTI_STRING, hdulist),
                                      timecolumn=CONFIG.TIME_COLUMN, ratecolumn=None, ratehdu=1,
                                      fracexp_limit=CONFIG.FRACEXP_LIMIT)[0]
             return substract_tstart_from_lcurve(load_lcurve(outfile), time_offset)

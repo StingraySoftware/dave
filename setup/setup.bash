@@ -169,8 +169,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Sep 16th, 2017 -> https://github.com/StingraySoftware/stingray/commit/a7bca309c304ffae1244f7eb1dee902d62eaf6a7
-STINGRAY_COMMIT_HASH=a7bca309c304ffae1244f7eb1dee902d62eaf6a7
+# Oct 22th, 2017 -> https://github.com/StingraySoftware/stingray/commit/b64aceb3197062ffd65bfd735ebff190a34e1066
+STINGRAY_COMMIT_HASH=b64aceb3197062ffd65bfd735ebff190a34e1066
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
@@ -189,14 +189,17 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	#Install stingray libraries
         conda install statsmodels matplotlib astropy numpy numba emcee corner scipy h5py
 	pip install -r requirements.txt
+	retVal=$?
+	if [[ retVal -ne 0 ]] ; then
+	 	echo "Failed to install Stingray dependencies"
+	 	return 1
+	fi
 
-       retVal=$?
-       if [[ retVal -ne 0 ]] ; then
-           echo "Failed to install Stingray dependencies"
-           return 1
-       fi
+	#Removes previous version of Stingray and Astropy_Helpers
+	rm -rf src/main/python/stingray
+	rm -rf src/main/python/astropy_helpers
 
-	if [[ "$OSTYPE" == "linux"* ]]; then
+	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
 
 		#Build stingray
@@ -232,12 +235,12 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	fi
 fi
 
-# Installing hendrics
+#Installing Hendrics
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Sep 18th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/524ac5f9824b09c57101e108c20d0983fb886956
-HENDRICS_COMMIT_HASH=524ac5f9824b09c57101e108c20d0983fb886956
+# Oct 20th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/9c4f95ec30837bc0bc8077b369e4957bcccefb16
+HENDRICS_COMMIT_HASH=9c4f95ec30837bc0bc8077b369e4957bcccefb16
 
 if [ ! -e $HENDRICS_FOLDER ]; then
 
@@ -254,7 +257,10 @@ if [ ! -e $HENDRICS_FOLDER ]; then
         conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
 	pip install -r requirements.txt
 
-	if [[ "$OSTYPE" == "linux"* ]]; then
+	#Removes previous version of Hendrics
+	rm -rf src/main/python/hendrics
+
+	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
 
 		#Build HENDRICS

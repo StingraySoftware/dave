@@ -191,31 +191,52 @@ function getBackgroundSubstracted (rateTableHeader) {
 
 //Extracts te text for the energy range used to create a lightcurve
 function extractEnergyRangeTextFromHeader (header) {
-
   var tableName = "RATE";
+  if (!isNull(header) && !isNull(header[tableName])) {
+    return extractEnergyRangeTextRateTable(header[tableName]);
+  }
+  return "";
+}
+
+function extractEnergyRangeTextFromSchema (schema) {
+  if (schema.hasHeader()) {
+    return extractEnergyRangeTextRateTable(schema.getHeader());
+  }
+  return "";
+}
+
+function extractEnergyRangeTextRateTable (rateTable) {
+
   var filterColumn = "PI";
   var searchFieldPrefix = "DSTYP";
   var unitFieldPrefix = "DSUNI";
   var valueFieldPrefix = "DSVAL";
 
-  if (!isNull(header) && !isNull(header[tableName])) {
+  for (i=0; i<20; i++) {
+    //Looks for the searchField index
+    var searchField = searchFieldPrefix + i;
+    if (!isNull(rateTable[searchField]) && rateTable[searchField] == filterColumn){
+      var unit = rateTable[unitFieldPrefix + i];
+      var range = rateTable[valueFieldPrefix + i];
 
-    var rateTable = header[tableName];
-
-    for (i=0; i<20; i++) {
-      //Looks for the searchField index
-      var searchField = searchFieldPrefix + i;
-      if (!isNull(rateTable[searchField]) && rateTable[searchField] == filterColumn){
-        var unit = rateTable[unitFieldPrefix + i];
-        var range = rateTable[valueFieldPrefix + i];
-
-        if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
-          var rangeVals = range.split(":");
-          return "From " + rangeVals[0] + " " + unit + ", to " + rangeVals[1] + " " + unit;
+      if (!isNull(unit) && !isNull(range) && range.indexOf(":") > -1){
+        var rangeVals = range.split(":");
+        var rangeStart = rangeVals[0].replace(/[^\d.-]/g, '');
+        var rangeEnd = rangeVals[1].replace(/[^\d.-]/g, '');
+        if (jQuery.isNumeric(rangeStart) && jQuery.isNumeric(rangeEnd)){
+          if (unit.toLowerCase() == "ev") {
+            return fixedPrecision(rangeStart/1000, 3) + " - " + fixedPrecision(rangeEnd/1000, 3) + " keV";
+          } else {
+            return rangeStart + " - " + rangeEnd + " " + unit;
+          }
         }
       }
     }
   }
 
   return "";
+}
+
+function isValidSrcSchema(schema) {
+  return !isNull(schema["EVENTS"]) || !isNull(schema["RATE"]);
 }

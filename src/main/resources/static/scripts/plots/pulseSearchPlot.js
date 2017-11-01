@@ -14,7 +14,7 @@ function PulseSearchPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn
   Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
   this.btnLoad.remove();
-  
+
   this.ps_opts = {};
   this.ps_opts.oversampling = { default:15, min:1, max: 100}; //Pulse peak oversampling for Z-squared search
   this.ps_opts.nharm = { default:1, min:1, max: 100}; //Number of harmonics for Z-squared search
@@ -26,15 +26,14 @@ function PulseSearchPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn
   this.getPlotlyConfig = function (data) {
 
     var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
 
     var plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
-                                  data[coords.x].error_values, data[coords.y].error_values,
-                                  (data.length > 3) ? this.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
+                                  data[coords.x].error_values, data[coords.y].error_values, [],
                                   this.getLabel(coords.x),
                                   this.getLabel(coords.y),
-                                  this.plotConfig.styles.title);
-
-    plotlyConfig = this.prepareAxis(plotlyConfig);
+                                  this.getTitle(),
+                                  plotDefaultConfig);
 
     //Reset the candidateFreqs array
     this.candidateFreqs = [];
@@ -52,15 +51,18 @@ function PulseSearchPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn
         for (i = 0; i < data[2].values.length; i++) {
           var freq = data[2].values[i];
           var ratio = data[3].values[i] / totalStats;
+          var opacity = parseFloat(fixedPrecision(Math.max(Math.min(Math.pow(ratio, 1/2) + 0.15, 1.0), 0.15), 3));
           this.candidateFreqs.push({ freq: freq, ratio: ratio });
           plotlyConfig.data.push(getCrossLine ([freq, freq],
                                                [this.minY, this.maxY],
-                                               '#DD3333', 3, 'solid', ratio));
+                                               plotDefaultConfig.CANDIDATE_FREQ_COLOR, Math.ceil(5 * ratio), 'solid', opacity));
          }
       } else {
         this.showWarn("No pulses found in the range of frequencies");
       }
     }
+
+    plotlyConfig = this.prepareAxis(plotlyConfig);
 
     return plotlyConfig;
   }

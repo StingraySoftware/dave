@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('TkAgg')  # Changes the matplotlib framework
 
 import utils.dave_endpoint as DaveEndpoint
+import utils.dataset_cache as DsCache
 import utils.gevent_helper as GeHelper
 import random
 from utils.np_encoder import NPEncoder
@@ -74,7 +75,13 @@ def upload():
 
 @app.route('/set_config', methods=['POST'])
 def set_config():
+    DsCache.clear()
     return CONFIG.set_config(request.json['CONFIG'])
+
+@app.route('/clear_cache', methods=['POST'])
+def clear_cache():
+    DsCache.clear()
+    return ""
 
 
 @app.route('/get_dataset_schema', methods=['GET'])
@@ -113,7 +120,7 @@ def get_lightcurve():
     return DaveEndpoint.get_lightcurve(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['baseline_opts'], variance_opts)
+            request.json['baseline_opts'], request.json['meanflux_opts'], variance_opts)
 
 
 @app.route('/get_joined_lightcurves', methods=['POST'])
@@ -153,7 +160,7 @@ def get_dynamical_spectrum():
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], float(request.json['df']))
+            request.json['norm'], request.json['freq_range'], float(request.json['df']))
 
 
 @app.route('/get_cross_spectrum', methods=['POST'])

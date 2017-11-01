@@ -1,9 +1,10 @@
+//Base plot class
 
 function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable) {
 
   var currentObj = this;
 
-  this.id = id.replace(/\./g,'');
+  this.id = id.replace(/[^\w]/g,'');
   this.plotId = "plot_" + this.id;
   this.plotConfig = plotConfig;
   this.getDataFromServerFn = getDataFromServerFn;
@@ -42,29 +43,33 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                     '</button>' +
                     '<button class="btn btn-default btnLoad" data-toggle="tooltip" title="Load external data"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
                     '<button class="btn btn-default btnSave" data-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnStyle" data-toggle="tooltip" title="Plot style"><i class="fa fa-paint-brush" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="hoverinfo"></div>' +
                 '</div>');
 
+ this.getTitle = function () {
+    return !isNull(this.plotConfig.styles.title) ? this.plotConfig.styles.title : "";
+ }
+
  if (!isNull(toolbar)) {
-   this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow = $('<button class="btn btn-default btnShow" plotId="' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
+        gaTracker.sendEvent("Plots", "Show", currentObj.getTitle());
       } else {
         currentObj.hide();
+        gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
       }
    });
-   var btnShowText = "";
-   if (!isNull(this.plotConfig.styles.title)) {
-     btnShowText = this.plotConfig.styles.title;
-   }
-   this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + btnShowText);
+   this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + this.getTitle());
    toolbar.append(this.btnShow);
 
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
       currentObj.hide();
+      gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
    });
  } else {
    this.$html.find(".btnHidePlot").remove();
@@ -73,34 +78,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.btnFullScreen = this.$html.find(".btnFullScreen");
  this.btnLoad = this.$html.find(".btnLoad");
  this.btnSave = this.$html.find(".btnSave");
+ this.btnStyle = this.$html.find(".btnStyle");
  this.plotElem = null;
  this.$hoverinfo = this.$html.find(".hoverinfo");
 
  this.show = function (){
    currentObj.isVisible = true;
    currentObj.$html.show();
-   var tab = getTabForSelector(currentObj.id);
-   if (!isNull(tab)){
-     var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
-     btnShow.removeClass("plotHidden");
-     btnShow.find("i").switchClass( "fa-eye-slash", "fa-eye");
-   } else {
-     log("ERROR on show: Plot not attached to tab, Plot: " + this.id);
-   }
+   currentObj.sendPlotEvent('on_show', {});
    currentObj.refreshData();
  }
 
  this.hide = function (){
    currentObj.isVisible = false;
    currentObj.$html.hide();
-   var tab = getTabForSelector(currentObj.id);
-   if (!isNull(tab)){
-     var btnShow = tab.$html.find(".sectionContainer").find("." + currentObj.id);
-     btnShow.addClass("plotHidden");
-     btnShow.find("i").switchClass( "fa-eye", "fa-eye-slash");
-   } else {
-     log("ERROR on show: Plot not attached to tab, Plot: " + this.id);
-   }
+   currentObj.sendPlotEvent('on_hide', {});
  }
 
  this.showLoading = function (){
@@ -114,7 +106,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.btnFullScreen.click(function( event ) {
-   if (currentObj.$html.hasClass("fullWidth")) {
+   if (currentObj.isExpanded()) {
      currentObj.btnFullScreen.find("i").switchClass( "fa-compress", "fa-arrows-alt");
    } else {
      currentObj.btnFullScreen.find("i").switchClass( "fa-arrows-alt", "fa-compress");
@@ -127,21 +119,24 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  this.updateFullscreenBtn();
 
  this.btnSave.click(function( event ) {
-   var saveDialog = $('<div id="dialog_' + currentObj.id +  '" title="Save ' + currentObj.plotConfig.styles.title + '"></div>');
+   var saveDialog = $('<div id="dialog_' + currentObj.id +  '" title="Save ' + currentObj.getTitle() + '"></div>');
    saveDialog.dialog({
       buttons: {
         'Save as PNG': function() {
            currentObj.saveAsPNG();
+           gaTracker.sendEvent("Plots", "saveAsPNG", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as PDF': function() {
           currentObj.saveAsPDF();
+          gaTracker.sendEvent("Plots", "saveAsPDF", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as CSV': function() {
           currentObj.saveAsCSV();
+          gaTracker.sendEvent("Plots", "saveAsCSV", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         }
@@ -152,17 +147,17 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  });
 
  this.btnLoad.click(function( event ) {
-   var loadDialog = $('<div id="dialog_' + currentObj.id +  '" title="Load external data for ' + currentObj.plotConfig.styles.title + '"></div>');
+   var loadDialog = $('<div id="dialog_' + currentObj.id +  '" title="Load external data for ' + currentObj.getTitle() + '"></div>');
    loadDialog.dialog({
       buttons: {
         'Load CSV File': function() {
            currentObj.loadCSVFile();
+           gaTracker.sendEvent("Plots", "loadCSVFile", currentObj.getTitle());
            $(this).dialog('close');
            loadDialog.remove();
         },
         'Cancel/Clear': function() {
-           currentObj.extraData = null;
-           currentObj.redrawDiffered();
+           currentObj.setExtraData(null);
            $(this).dialog('close');
            loadDialog.remove();
         }
@@ -172,6 +167,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     currentObj.$html.append(loadDialog);
  });
 
+ this.btnStyle.click(function( event ) {
+   currentObj.sendPlotEvent('on_style_click', {});
+   gaTracker.sendEvent("Plots", "styleClick", currentObj.getTitle());
+ });
+
  if (switchable) {
    //If switchable adds Switch button to plot
    this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
@@ -179,17 +179,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
       currentObj.refreshData();
+      gaTracker.sendEvent("Plots", "switchAxes", currentObj.getTitle());
    });
  }
 
- if (!isNull(this.plotConfig.styles.selectable) && this.plotConfig.styles.selectable) {
-   //If plot is lightcurve adds Select button to plot
-   this.btnSelect = $('<button class="btn btn-default btnSelect" data-toggle="tooltip" title="Select plot"><i class="fa fa-thumb-tack" aria-hidden="true"></i></button>');
-   this.$html.find(".plotTools").append(this.btnSelect);
-   this.btnSelect.click(function(event){
-     currentObj.$html.toggleClass("plotSelected");
-     OnPlotSelected();
-   });
+ this.isExpanded = function () {
+   return this.$html.hasClass("fullWidth");
+ }
+
+ this.onSelected = function (){
+   this.$html.toggleClass("plotSelected");
  }
 
  this.isSelectable = function(){
@@ -330,9 +329,19 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return data; //This method is just for being overriden if necessary
  }
 
+ this.getDefaultPlotlyConfig = function () {
+   var plotDefaultConfig = $.extend(true, {}, CONFIG.PLOT_CONFIG);
+   var tab = getTabForSelector(this.id);
+   if (!isNull(tab)){
+     plotDefaultConfig = tab.getDefaultPlotlyConfig();
+   }
+   return plotDefaultConfig;
+ }
+
  this.getPlotlyConfig = function (data) {
    var coords = currentObj.getSwitchedCoords( { x: 0, y: 1} );
    var plotlyConfig = null;
+   var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
 
    if (currentObj.plotConfig.styles.type == "2d") {
       plotlyConfig = get_plotdiv_xy(data[coords.x].values, data[coords.y].values,
@@ -340,32 +349,39 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                     (data.length > 3) ? currentObj.getWtiRangesFromGtis(data[2].values, data[3].values, data[0].values) : [],
                                     currentObj.getLabel(coords.x),
                                     currentObj.getLabel(coords.y),
-                                    currentObj.plotConfig.styles.title)
+                                    currentObj.getTitle(),
+                                    plotDefaultConfig)
 
    } else if (currentObj.plotConfig.styles.type == "3d") {
       plotlyConfig = get_plotdiv_xyz(data[coords.x].values, data[coords.y].values, data[2].values,
                                     data[coords.x].error_values, data[coords.y].error_values, data[2].error_values,
                                     currentObj.getLabel(coords.x),
                                     currentObj.getLabel(coords.y),
-                                    data[3].values);
+                                    data[3].values,
+                                    plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "scatter") {
       plotlyConfig = get_plotdiv_scatter(data[coords.x].values, data[coords.y].values,
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
-                                        currentObj.plotConfig.styles.title);
+                                        currentObj.getTitle(),
+                                        plotDefaultConfig);
+
    } else if (currentObj.plotConfig.styles.type == "scatter_with_errors") {
       plotlyConfig = get_plotdiv_scatter_with_errors(data[coords.x].values, data[coords.y].values,
                                                      data[coords.x].error_values, data[coords.y].error_values,
                                                      currentObj.getLabel(coords.x),
                                                      currentObj.getLabel(coords.y),
-                                                     currentObj.plotConfig.styles.title);
+                                                     currentObj.getTitle(),
+                                                     plotDefaultConfig);
+
    } else if (currentObj.plotConfig.styles.type == "scatter_colored") {
       plotlyConfig = get_plotdiv_scatter_colored(data[coords.x].values, data[coords.y].values, data[2].values,
                                         currentObj.getLabel(coords.x),
                                         currentObj.getLabel(coords.y),
                                         'Amplitude<br>Map',
-                                        currentObj.plotConfig.styles.title);
+                                        currentObj.getTitle(),
+                                        plotDefaultConfig);
 
    } else if (currentObj.plotConfig.styles.type == "colors_ligthcurve") {
       plotlyConfig = get_plotdiv_xyy(data[0].values, data[1].values, data[2].values,
@@ -374,10 +390,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                                    currentObj.getLabel(coords.x),
                                    currentObj.getLabel(coords.y),
                                    currentObj.getLabel(2),
-                                   currentObj.plotConfig.styles.title);
+                                   currentObj.getTitle(),
+                                   plotDefaultConfig);
    }
 
-   plotlyConfig = this.addExtraDataConfig(plotlyConfig);
+   plotlyConfig = this.addExtraDataConfig(plotlyConfig, plotDefaultConfig);
    plotlyConfig = this.prepareAxis(plotlyConfig);
 
    return plotlyConfig;
@@ -397,6 +414,10 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    if (currentObj.plotConfig.yAxisType == "log") {
      plotlyConfig.layout.yaxis.type = 'log';
      plotlyConfig.layout.yaxis.autorange = true;
+   }
+
+   if (!isNull(currentObj.plotStyle)) {
+     plotlyConfig = $.extend(true, plotlyConfig, currentObj.plotStyle);
    }
 
    return plotlyConfig;
@@ -419,7 +440,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         return (annotation.x >= currentObj.minX)
              && (annotation.x <= currentObj.maxX)
              && (annotation.y >= currentObj.minY)
-             && (annotation.y <= currentObj.maxY);
+             && (annotation.y <= currentObj.maxY)
+             && (isNull(annotation.opacity) || (annotation.opacity > 0));
       });
     if (visibleAnnotations.length > 0){
       plotlyConfig.layout.annotations = $.extend(true, [], visibleAnnotations);
@@ -438,7 +460,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    return plotlyConfig;
  }
 
- this.addExtraDataConfig = function (plotlyConfig) {
+ this.addExtraDataConfig = function (plotlyConfig, plotDefaultConfig) {
    if (!isNull(this.extraData)
        && this.extraData.length > 1
        && plotlyConfig.data.length > 0){
@@ -447,8 +469,41 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      var coords = this.getSwitchedCoords( { x: this.extraData[0], y: this.extraData[1]} );
      extraTrace.x = coords.x;
      extraTrace.y = coords.y;
-     extraTrace.line = $.extend(true, extraTrace.line, { color : EXTRA_DATA_COLOR });;
+     if (!isNull(extraTrace.line)) {
+       extraTrace.line = $.extend(true, extraTrace.line, { color : plotDefaultConfig.EXTRA_DATA_COLOR });
+     }
+     if (!isNull(extraTrace.marker)) {
+       extraTrace.marker = $.extend(true, extraTrace.marker, { color : plotDefaultConfig.EXTRA_DATA_COLOR });
+     }
+     if (this.extraData.length > 2
+         && this.extraData[2].length > 0
+         && jQuery.isNumeric(this.extraData[2][0])) {
+           //If third extra data column is numeric
+           if (this.extraData.length > 3
+               && this.extraData[3].length > 0
+               && jQuery.isNumeric(this.extraData[3][0])) {
+                 //If fourth extra data column is numeric also, consider both columns as errors
+                 var error_coords = this.getSwitchedCoords( { x: this.extraData[2], y: this.extraData[3]} );
+                 extraTrace.error_x = getErrorConfig(error_coords.x, plotDefaultConfig);
+                 extraTrace.error_y = getErrorConfig(error_coords.y, plotDefaultConfig);
+           } else if (!this.isSwitched){
+             //Consider third column as y_error
+             extraTrace.error_y = getErrorConfig(this.extraData[2], plotDefaultConfig);
+           } else {
+             //Consider third column as x_error
+             extraTrace.error_x = getErrorConfig(this.extraData[2], plotDefaultConfig);
+           }
+     }
+     extraTrace.comesFromExtra = true;
      plotlyConfig.data.splice(0, 0, extraTrace);
+
+     if (!isNull(this.plotStyle)){
+       var extraTraceStyle = this.plotStyle.data.filter(function(trace) { return !isNull(trace.comesFromExtra) && trace.comesFromExtra; });
+       if (isNull(extraTraceStyle) || extraTraceStyle.length == 0) {
+         this.plotStyle.data.splice(0, 0, getTracePlotStyle(extraTrace));
+         this.sendPlotEvent('on_plot_styles_changed', {});
+       }
+     }
    }
    return plotlyConfig;
  }
@@ -482,7 +537,9 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  this.redrawDiffered = function () {
-   setTimeout(function(){
+   currentObj.clearTimeouts();
+
+   currentObj.redrawTimeout = setTimeout(function(){
      //Runs redraw plot on differed execution
      if (!isNull(currentObj.data)) {
        var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
@@ -663,6 +720,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.clearTimeouts = function () {
+    if (!isNull(currentObj.redrawTimeout)) { clearTimeout(currentObj.redrawTimeout); currentObj.redrawTimeout = null; }
     if (!isNull(currentObj.resizeTimeout)) { clearTimeout(currentObj.resizeTimeout); currentObj.resizeTimeout = null; }
     if (!isNull(currentObj.onMouseEnterTimeout)) { clearTimeout(currentObj.onMouseEnterTimeout); currentObj.onMouseEnterTimeout = null; }
     if (!isNull(currentObj.onHoverTimeout)) { clearTimeout(currentObj.onHoverTimeout); currentObj.onHoverTimeout = null; }
@@ -731,6 +789,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       this.minY = minMaxY.min;
       this.maxX = minMaxX.max;
       this.maxY = minMaxY.max;
+
+      if (!isNull(this.extraData)
+          && this.extraData.length > 1) {
+          var extraMinMaxX = minMax2DArray(this.extraData[coords.x]);
+          var extraMinMaxY = minMax2DArray(this.extraData[coords.y]);
+          this.minX = Math.min(minMaxX.min, extraMinMaxX.min);
+          this.minY = Math.min(minMaxY.min, extraMinMaxY.min);
+          this.maxX = Math.max(minMaxX.max, extraMinMaxX.max);
+          this.maxY = Math.max(minMaxY.max, extraMinMaxY.max);
+      }
     }
   }
 
@@ -761,20 +829,25 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     return this.plotConfig.styles.labels[axis];
   }
 
+  this.setLabel = function (axis, value) {
+    this.plotConfig.styles.labels[axis] = value;
+  }
+
   this.getLegendTextForPoint = function (coords) {
     try {
        if (coords == null) { return ""; }
        var swcoords = this.getSwitchedCoords( { x: 0, y: 1} );
+       var maxLabelLength = (this.isExpanded()) ? 60 : 20;
        var labelY = !isNull(coords.label) ? coords.label : this.getLabel(swcoords.y);
-       var infotextforx = this.getLabel(swcoords.x) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(3));
-       var infotextfory = labelY + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(3));
+       var infotextforx = truncateText(this.getLabel(swcoords.x), maxLabelLength) + ': ' + (isNull(coords.x) ? "---" : coords.x.toFixed(CONFIG.SERVER_DATA_PRECISION));
+       var infotextfory = truncateText(labelY, maxLabelLength) + ': ' + (isNull(coords.y) ? "---" : coords.y.toFixed(CONFIG.SERVER_DATA_PRECISION));
        var error_x_string = "";
        var error_y_string = "";
        if (!isNull(coords.error_x)) {
-         error_x_string= " +/-" + coords.error_x.toFixed(3);
+         error_x_string= " +/-" + coords.error_x.toFixed(CONFIG.SERVER_DATA_PRECISION);
        }
        if (!isNull(coords.error_y)){
-         error_y_string= " +/-" + coords.error_y.toFixed(3);
+         error_y_string= " +/-" + coords.error_y.toFixed(CONFIG.SERVER_DATA_PRECISION);
        }
        return infotextforx + error_x_string + '</br>' + infotextfory + error_y_string;
      } catch (ex) {
@@ -787,10 +860,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   }
 
   this.showWarn = function (warnmsg) {
+    var isWarnLevel = warnmsg.startsWith("@WARN@");
     this.$html.find(".plotTools").find(".btnWarn").remove();
     if (warnmsg != ""){
-      this.btnWarn = $('<button class="btn btn-danger btnWarn ' + this.id + '"><div>' +
-                         '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + warnmsg +
+      this.btnWarn = $('<button class="btn ' + ((isWarnLevel) ? 'btn-warning' : 'btn-danger') + ' btnWarn ' + this.id + '"><div>' +
+                         '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' + ((isWarnLevel) ? warnmsg.replace("@WARN@", "") : warnmsg) +
                         '</div></button>');
       if (warnmsg.length > 50) {
         this.btnWarn.addClass("bigWarnBtn");
@@ -827,11 +901,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         'Add label': function() {
            var labelText = $('#dialog_' + currentObj.id).find('input[name="labelText"]').val();
            currentObj.addAnnotation(labelText, x, y);
+           gaTracker.sendEvent("Plots", "addAnnotation", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Clear all': function() {
            currentObj.annotations = [];
            currentObj.redrawDiffered();
+           gaTracker.sendEvent("Plots", "clearAnnotations", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Cancel': function() {
@@ -848,10 +924,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
   this.addAnnotation = function (text, x, y){
     if (text != ""){
-      if (!isNull(currentObj.plotConfig.plotType) && currentObj.plotConfig.plotType == "X*Y") { y = y / x; }
+      if (!isNull(this.plotConfig.plotType) && this.plotConfig.plotType == "X*Y") { y = y / x; }
       log("addAnnotation: " + text + " to (" + x + "," + y + "), Plot.id: " + this.id);
-      this.annotations.push(getAnnotation(text, x, y));
+      this.annotations.push(getAnnotation(text, x, y, this.getDefaultPlotlyConfig().ANNOTATION_ARROWHEAD));
       this.redrawDiffered();
+      this.sendPlotEvent('on_plot_styles_changed', {});
     }
   }
 
@@ -860,7 +937,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     setTimeout(function(){
       var tab = getTabForSelector(currentObj.id);
       if (tab != null) {
-        tab.broadcastEventToPlots(evt_name, evt_data, currentObj.id);
+        tab.broadcastEvent(evt_name, evt_data, currentObj.id);
       }
     }, CONFIG.INMEDIATE_TIMEOUT);
   }
@@ -901,7 +978,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
           pdf.addImage(imgData, 'JPEG', 0, 0);
           var download = document.getElementById('download');
 
-          pdf.save(currentObj.plotConfig.styles.title + ".pdf");
+          pdf.save(currentObj.getTitle() + ".pdf");
         }
     });
   }
@@ -925,19 +1002,21 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       //Saves points as CSV lines
       data[0].values.forEach(function(values, index){
          var infoArray = [data[0].values[index], data[1].values[index]];
-         if (!isNull(data[1].error_values)) {
-           infoArray.push(data[1].error_values[index]); //Adds errors if available
+         for (axis = 0; axis < 2; axis ++){ // Axis = 0, 1
+           if (!isNull(data[axis].error_values)) {
+             infoArray.push(data[axis].error_values[index]); //Adds X, Y errors if available
+           }
          }
          if (data.length > 2 && (data[1].values.length == data[2].values.length)) {
            infoArray.push(data[2].values[index]); //Adds errors or extra data if available
          }
          //Adds the annotation text if exists as last column
-         infoArray.push(!isNull(annotations[index]) ? annotations[index].text.replace(/\,/g,';') : "");
+         infoArray.push(!isNull(annotations[index]) ? "'" + annotations[index].text.replace(/\,/g,';') + "'" : "");
          dataString = Array.prototype.join.call(infoArray, ",");
          csvContent += index < data[0].values.length ? dataString + "\n" : dataString;
       });
 
-      saveRawToFile(currentObj.plotConfig.styles.title + ".csv", csvContent);
+      saveRawToFile(currentObj.getTitle() + ".csv", csvContent);
     }
   }
 
@@ -947,20 +1026,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         if ((file.type == "text/plain") || (file.type == "text/csv")) {
           var externalData = extractDatafromCSVContents(e.target.result);
           if (externalData.length > 0){
-            currentObj.extraData = transposeArray(externalData);
-
-            //Add annotations
-            if (currentObj.extraData.length > 2) {
-              var annotationsArr = currentObj.extraData[currentObj.extraData.length - 1];
-              for (i in annotationsArr){
-                var text = annotationsArr[i];
-                if (text != ""){
-                  currentObj.annotations.push(getAnnotation(text, currentObj.extraData[0][i], currentObj.extraData[1][i]));
-                }
-              }
-            }
-
-            currentObj.redrawDiffered();
+            currentObj.setExtraData(transposeArray(externalData));
           } else {
             showError("File: " + file.name + ", data can't be extracted.");
           }
@@ -971,6 +1037,42 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         showError("File: " + file.name + " is not supported as CSV file", e);
       }
     });
+  }
+
+  this.setExtraData = function (extraData) {
+    this.extraData = extraData;
+
+    //Prepare annotations
+    if (!isNull(this.extraData)
+        && (this.extraData.length > 2)) {
+      var annotationsArr = this.extraData[this.extraData.length - 1];
+      var plotDefaultConfig = this.getDefaultPlotlyConfig();
+
+      for (i in annotationsArr){
+        var text = annotationsArr[i];
+        if (text != "" && !jQuery.isNumeric(text)){
+          //Add annotations from extraData
+          var annotation = getAnnotation(text.replace(/\'/g,''),
+                                         this.extraData[0][i],
+                                         this.extraData[1][i],
+                                         plotDefaultConfig.ANNOTATION_ARROWHEAD);
+          annotation.comesFromExtra = true;
+          this.annotations.push(annotation);
+        }
+      }
+    } else {
+      //Remove annotations from extraData
+      this.annotations = this.annotations.filter(function(annotation) { return isNull(annotation.comesFromExtra) || !annotation.comesFromExtra; });
+
+      //Remove trace style from extraData
+      if (!isNull(this.plotStyle)){
+        this.plotStyle.data = this.plotStyle.data.filter(function(trace) { return isNull(trace.comesFromExtra) || !trace.comesFromExtra; });
+      }
+    }
+
+    this.updateMinMaxCoords();
+    this.sendPlotEvent('on_plot_styles_changed', {});
+    this.redrawDiffered();
   }
 
   this.applyValidFilters = function (filters) {
@@ -1059,12 +1161,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     plotConfig.id = this.id;
     plotConfig.class = this.constructor.name;
     plotConfig.isVisible = this.isVisible;
-    plotConfig.fullWidth = this.$html.hasClass("fullWidth");
+    plotConfig.fullWidth = this.isExpanded();
+    plotConfig.annotations = this.annotations;
+    plotConfig.plotStyle = this.plotStyle;
 
     return plotConfig;
   }
 
   this.setConfig = function (plotConfig, tab) {
+    this.plotConfig.filters = []; //Clears previous filters for avoid $.extend extrange behaviours.
     this.plotConfig = cleanPlotConfig ( $.extend(true, this.plotConfig, plotConfig) );
 
     if (plotConfig.isVisible) {
@@ -1075,8 +1180,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         tab.setSectionVisibility(section, true);
       }
 
-      if (this.$html.hasClass("fullWidth") != plotConfig.fullWidth){
+      if (this.isExpanded() != plotConfig.fullWidth){
         this.btnFullScreen.click();
+      }
+
+      if (!isNull(plotConfig.annotations)){
+        this.annotations = $.extend(true, [], plotConfig.annotations);
+      }
+
+      if (!isNull(plotConfig.plotStyle)){
+        this.plotStyle = $.extend(true, {}, plotConfig.plotStyle);
       }
 
     } else {
@@ -1096,6 +1209,291 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
     }
   }
 
+  this.getStyleJQElem = function () {
+      var $style = $('<div class="plotStyle marginTop">' +
+                      '<div class="floatingContainer">' +
+                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                      '</div>' +
+                    '</div>');
+
+      $style.find(".btnClear").click(function () {
+        currentObj.plotStyle = null;
+        currentObj.sendPlotEvent('on_style_click', {});
+        currentObj.redrawDiffered();
+      });
+
+      $style = this.addTitleAndAxisLabelsToStyleJQElem($style);
+      $style = this.addPlotConfigStyleJQElem($style);
+      return $style;
+  }
+
+  this.addTitleAndAxisLabelsToStyleJQElem = function ($style) {
+
+    //Adds the title style controls
+    $style.append(getTextBox ("TITLE" + this.id, "inputTITLE width100",
+                              "Title", this.getTitle(),
+                              function(value, input) {
+                                currentObj.plotConfig.styles.title = value;
+                                currentObj.redrawDiffered();
+                              }));
+
+    //Adds the axis labels style controls
+    for (axis in this.plotConfig.styles.labels){
+      $style.append(getTextBox ("LABEL_" + axis + "_" + this.id, "inputLABEL" + axis + " width100",
+                                "Label " + axis, this.getLabel(axis),
+                                function(value, input) {
+                                  var axis = input.attr("name").split("_")[1];
+                                  currentObj.setLabel(axis, value);
+                                  currentObj.redrawDiffered();
+                                }));
+    }
+
+    return $style;
+  }
+
+  this.addPlotConfigStyleJQElem = function ($style) {
+
+    if (!isNull(this.data)) {
+      var plotlyConfig = currentObj.getPlotlyConfig(currentObj.data);
+      var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+
+      //Prepares or updates plot style object
+      if (isNull(currentObj.plotStyle)
+          || currentObj.plotStyle.data.length != plotlyConfig.data.length){
+        currentObj.plotStyle = getEmptyPlotStyle(plotlyConfig);
+      }
+
+      if (!isNull(plotlyConfig)) {
+
+        //For each trace in the plot
+        for (traceIdx in plotlyConfig.data){
+          var trace = plotlyConfig.data[traceIdx];
+          if ((trace.type != "surface")
+              && (trace.type != "heatmap")
+              && !isNull(trace.x)) {
+            //If not is 3d or heatmap type plot and has data
+            $style.append($('<h3 class="clear">Trace ' + traceIdx + ':</h3>'));
+
+            if (!isNull(trace.line)){
+              $style.append($('<p class="clear">Line style:</p>'));
+
+              //Adds the line color selector
+              var colorPickerId = "colorPickerLn_" + traceIdx + "_" + this.id;
+              $style.append(getColorPicker(colorPickerId, trace.line.color, function (color, id) {
+                var traceIdx = id.split("_")[1];
+                currentObj.plotStyle.data[traceIdx].line.color = color;
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the line width
+              $style.append(getInlineRangeBox ("lineWidth_" + traceIdx + "_" + this.id, "inputLineWidth",
+                                          "Line width", trace.line.width, plotDefaultConfig.DEFAULT_LINE_WIDTH.min, plotDefaultConfig.DEFAULT_LINE_WIDTH.max,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].line.width = value;
+                                            currentObj.redrawDiffered();
+                                          }));
+
+              var $lineOpacity = getInlineRangeBox ("lineOpacity_" + traceIdx + "_" + this.id, "inputLineOpacity float",
+                                          "Opacity", !isNull(trace.opacity) ? trace.opacity : 1, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].opacity = value;
+                                            currentObj.redrawDiffered();
+                                          });
+              $lineOpacity.attr("style", "margin-top: -4px;");
+              $style.append($lineOpacity);
+            }
+
+            if (!isNull(trace.marker)){
+
+              //Adds the marker type selector
+              $style.append(getRadioControl("markerType_" + traceIdx + "_" + this.id,
+                                            "Marker type",
+                                            "markerType",
+                                            [
+                                              { id:"circle", label:"circle", value:"circle" },
+                                              { id:"circle-open", label:"circle-open", value:"circle-open" },
+                                              { id:"square", label:"square", value:"square" },
+                                              { id:"square-open", label:"square-open", value:"square-open" },
+                                              { id:"diamond", label:"diamond", value:"diamond" },
+                                              { id:"diamond-open", label:"diamond-open", value:"diamond-open" },
+                                              { id:"cross", label:"cross", value:"cross" },
+                                              { id:"x", label:"x", value:"x" }
+                                            ],
+                                            !isNull(trace.marker.symbol) ? trace.marker.symbol : "circle",
+                                            function(value, id) {
+                                              var traceIdx = id.split("_")[1];
+                                              currentObj.plotStyle.data[traceIdx].marker.symbol = value;
+                                              currentObj.redrawDiffered();
+                                            },
+                                            "smallTextStyle"));
+
+              //Adds the marker style
+              $style.append($('<p class="clear marginTop">Markers style:</p>'));
+
+              //Adds the marker color selector
+              var colorPickerId = "colorPickerMk_" + traceIdx + "_" + this.id;
+              $style.append(getColorPicker(colorPickerId, trace.marker.color, function (color, id) {
+                var traceIdx = id.split("_")[1];
+                currentObj.plotStyle.data[traceIdx].marker.color = color;
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the marker size
+              $style.append(getInlineRangeBox ("markerSize_" + traceIdx + "_" + this.id, "inputMarkerSize",
+                                          "Marker size", trace.marker.size, plotDefaultConfig.DEFAULT_MARKER_SIZE.min, plotDefaultConfig.DEFAULT_MARKER_SIZE.max,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].marker.size = value;
+                                            currentObj.redrawDiffered();
+                                          }));
+
+              var $markerOpacity = getInlineRangeBox ("markerOpacity_" + traceIdx + "_" + this.id, "inputMarkerOpacity float",
+                                          "Opacity", trace.marker.opacity, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            currentObj.plotStyle.data[traceIdx].marker.opacity = value;
+                                            currentObj.redrawDiffered();
+                                          });
+              $markerOpacity.attr("style", "margin-top: -4px;");
+              $style.append($markerOpacity);
+            }
+
+            if (!isNull(trace.error_x)
+                && !isNull(trace.error_x.array)
+                && trace.error_x.array.length > 0){
+              $style.append($('<p class="clear">Error X style:</p>'));
+
+              //Adds the error_x color selector
+              var colorPickerId = "colorPickerEx_" + traceIdx + "_" + this.id;
+              $style.append(getColorPicker(colorPickerId, "#" + RGBAStrToHex(trace.error_x.color), function (color, id) {
+                var traceIdx = id.split("_")[1];
+                var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_x.color) ?
+                                                  currentObj.plotStyle.data[traceIdx].error_x.color :
+                                                  currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                currentObj.plotStyle.data[traceIdx].error_x.color = HexAndAlphaToRGBAStr (color, rgba.a);
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the error_x opacity
+              $style.append(getInlineRangeBox ("errorXOpacity_" + traceIdx + "_" + this.id, "inputErrorXOpacity float",
+                                          "Opacity", RGBAStrToRGBA(trace.error_x.color).a, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_x.color) ?
+                                                                              currentObj.plotStyle.data[traceIdx].error_x.color :
+                                                                              currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                                            currentObj.plotStyle.data[traceIdx].error_x.color = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
+                                            currentObj.redrawDiffered();
+                                          }));
+            }
+
+            if (!isNull(trace.error_y)
+                && !isNull(trace.error_y.array)
+                && trace.error_y.array.length > 0){
+              $style.append($('<p class="clear">Error Y style:</p>'));
+
+              //Adds the error_y color selector
+              var colorPickerId = "colorPickerEy_" + traceIdx + this.id;
+              $style.append(getColorPicker(colorPickerId, "#" + RGBAStrToHex(trace.error_y.color), function (color, id) {
+                var traceIdx = id.replace("colorPickerEy_","").replace(currentObj.id, "");
+                var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_y.color) ?
+                                                  currentObj.plotStyle.data[traceIdx].error_y.color :
+                                                  currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                currentObj.plotStyle.data[traceIdx].error_y.color = HexAndAlphaToRGBAStr (color, rgba.a);
+                currentObj.redrawDiffered();
+              }));
+
+              //Adds the error_y opacity
+              $style.append(getInlineRangeBox ("errorYOpacity_" + traceIdx + "_" + this.id, "inputErrorYOpacity float",
+                                          "Opacity", RGBAStrToRGBA(trace.error_y.color).a, 0, 1,
+                                          function(value, input) {
+                                            var traceIdx = input.attr("name").split("_")[1];
+                                            var rgba = RGBAStrToRGBA(!isNull(currentObj.plotStyle.data[traceIdx].error_y.color) ?
+                                                                        currentObj.plotStyle.data[traceIdx].error_y.color :
+                                                                        currentObj.getDefaultPlotlyConfig().ERROR_BAR_COLOR);
+                                            currentObj.plotStyle.data[traceIdx].error_y.color = HexAndAlphaToRGBAStr (RGBToHex(rgba), value);
+                                            currentObj.redrawDiffered();
+                                          }));
+            }
+          }
+        }
+
+        //If there are annotations:
+        if (!isNull(currentObj.annotations)
+            && currentObj.annotations.length > 0){
+
+          $style.append($('<h3>Annotations:</h3>'));
+
+          //For each annotation in the plot
+          for (annotationIdx in currentObj.annotations){
+
+            var annotation = currentObj.annotations[annotationIdx];
+
+            if (annotationIdx > 0) { $style.append("</br></br></br>"); }
+
+            var deleteBtnWrp = $('<div class="switch-wrapper">' +
+                                    '<div class="delete-btn fa fa-trash-o" annId="' + annotationIdx + '" aria-hidden="true"></div>' +
+                                  '</div>');
+            var deleteBtn = deleteBtnWrp.find(".delete-btn");
+            deleteBtn.click( function ( event ) {
+              var annIdx = $(this).attr("annId");
+              currentObj.annotations.splice(annIdx,1);
+              currentObj.redrawDiffered();
+              currentObj.sendPlotEvent('on_plot_styles_changed', {});
+            });
+            $style.append(deleteBtnWrp);
+
+            $style.append(getTextBox ("ANNTEXT_" + annotationIdx + "_" + this.id, "inputANNTEXT",
+                                              "Annotation", annotation.text,
+                                              function(value, input) {
+                                                var annIdx = input.attr("name").split("_")[1];
+                                                currentObj.annotations[annIdx].text = value;
+                                                currentObj.redrawDiffered();
+                                              }));
+
+            $style.append(getBooleanBox ("Show arrow",
+                                        "chkShowArrow_" + annotationIdx, annotation.showarrow,
+                                        function(enabled, cssClass) {
+                                          var annIdx = cssClass.split("_")[1];
+                                          currentObj.annotations[annIdx].showarrow = enabled;
+                                          currentObj.redrawDiffered();
+                                        }));
+
+            var colorPickerId = "colorPickerAnn_" + annotationIdx + "_" + this.id;
+            $style.append(getColorPicker(colorPickerId, annotation.arrowcolor , function (color, id) {
+              var annIdx = id.split("_")[1];
+              currentObj.annotations[annIdx].arrowcolor = color;
+              currentObj.annotations[annIdx].font = { color: color };
+              currentObj.redrawDiffered();
+            }));
+
+            $style.append(getInlineRangeBox ("arrowHead_" + annotationIdx + "_" + this.id, "inputArrowHead",
+                                        "Arrow head", annotation.arrowhead, 0, 7,
+                                        function(value, input) {
+                                          var annIdx = input.attr("name").split("_")[1];
+                                          currentObj.annotations[annIdx].arrowhead = value;
+                                          currentObj.redrawDiffered();
+                                        }));
+
+            var opacityBox = getInlineRangeBox ("annOpacity_" + annotationIdx + "_" + this.id, "inputAnnOpacity float",
+                                        "Opacity", (!isNull(annotation.opacity) ? annotation.opacity : 1), 0, 1,
+                                        function(value, input) {
+                                          var annIdx = input.attr("name").split("_")[1];
+                                          currentObj.annotations[annIdx].opacity = value;
+                                          currentObj.redrawDiffered();
+                                        });
+            opacityBox.attr("style", "margin-top: 0px;")
+            $style.append(opacityBox);
+          }
+        }
+      }
+    }
+
+    return $style;
+  }
+
   log ("new plot id: " + this.id);
 
   return this;
@@ -1111,32 +1509,44 @@ function cleanPlotConfig (plotConfig) {
   return plotConfig;
 }
 
-function OnPlotSelected () {
-
+function getSelectedPlots () {
+  var selectedPlots = [];
   var $selectedPlots = $(".plotSelected");
   if ($selectedPlots.length > 1){
-
-    log("OnPlotSelected: Multiple plots selected!");
-    var selectedPlots = [];
 
     //For each plot element find its plot object in all tabs outputpanels
     $selectedPlots.each(function(){
       var tab = getTabForSelector(this.id);
-      if (tab != null) {
+      if (!isNull(tab)) {
         var plot = tab.outputPanel.getPlotById(this.id);
-        if (plot != null) {
-          log("OnPlotSelected: Got plot id: " + this.id);
+        if (!isNull(plot)) {
           selectedPlots.push(plot);
         }
       }
-    })
-
-    if (selectedPlots.length > 1) {
-      onMultiplePlotsSelected(selectedPlots); // master_page.js method
-    }
+    });
   }
+  return selectedPlots;
 }
 
-function ClearSelectedPlots () {
+function getAllPlots () {
+  var allPlots = [];
+  var $plots = $(".plotContainer");
+  if ($plots.length > 1){
+
+    //For each plot element find its plot object in all tabs outputpanels
+    $plots.each(function(){
+      var tab = getTabForSelector(this.id);
+      if (!isNull(tab)) {
+        var plot = tab.outputPanel.getPlotById(this.id);
+        if (!isNull(plot)) {
+          allPlots.push(plot);
+        }
+      }
+    });
+  }
+  return allPlots;
+}
+
+function clearSelectedPlots () {
   $(".plotSelected").removeClass("plotSelected");
 }

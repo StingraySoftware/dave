@@ -66,7 +66,7 @@ function getCheckBox(cssClass, checked, onCheckChangedFn, cssClassesCheck) {
   checkBox.click( function ( event ) {
     var checked = !$(this).hasClass(isNull(cssClassesCheck) ? "fa-minus-square" : cssClassesCheck.checked);
     setCheckBoxState ($(this), checked, cssClassesCheck);
-    onCheckChangedFn(checked);
+    onCheckChangedFn(checked, $(this).parent().parent().parent().attr("class"));
   });
   setCheckBoxState (checkBox, checked, cssClassesCheck);
   return checkBoxWrp;
@@ -91,8 +91,15 @@ function getRangeBoxCfg (name, cssClass, title, config, onChangeFn) {
   return getRangeBox (name, cssClass, title, config.default, config.min, config.max, onChangeFn);
 }
 
+function getInlineRangeBox (name, cssClass, title, defaultValue, minValue, maxValue, onChangeFn) {
+  var rangeBox = getRangeBox (name, cssClass, title, defaultValue, minValue, maxValue, onChangeFn);
+  rangeBox.addClass("rangeBoxInline");
+  rangeBox.find("br").remove();
+  return rangeBox;
+}
+
 function getRangeBox (name, cssClass, title, defaultValue, minValue, maxValue, onChangeFn) {
-  var $rangeBox = $('<p>' + title + ':</br><input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" /> <span class="rangeBoxSpan">' + minValue + '-' + maxValue + '</span></p>');
+  var $rangeBox = $('<p>' + title + ((title.indexOf(":") > -1) ? "" : ":") + '</br><input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" /> <span class="rangeBoxSpan">' + minValue + '-' + maxValue + '</span></p>');
   $rangeBox.find("input").on('change', function() {
     var value = (!$(this).hasClass("float")) ? getInputIntValueCropped($(this), defaultValue, minValue, maxValue)
                                              : getInputFloatValueCropped($(this), defaultValue, minValue, maxValue);
@@ -104,11 +111,10 @@ function getRangeBox (name, cssClass, title, defaultValue, minValue, maxValue, o
 function getTextBox (name, cssClass, title, defaultValue, onChangeFn) {
   var $textBox = $('<p>' + title + ':</br><input name="' + name + '" class="' + cssClass + '" type="text" placeholder="' + defaultValue + '" value="' + defaultValue + '" /></p>');
   $textBox.find("input").on('change', function() {
-    if ($(this).val() != ""){
-      onChangeFn($(this).val(), $(this));
-    } else {
-      $(this).val(defaultValue);
+    if ($(this).val() == ""){
+      $(this).val($(this).attr("placeholder"));
     }
+    onChangeFn($(this).val(), $(this));
   });
   return $textBox;
 }
@@ -117,8 +123,8 @@ function getBooleanBox (title, cssClass, checked, onCheckChangedFn){
   var $box = $('<div class="' + cssClass +'">' +
                       '<p>' + title + ':</p>' +
                     '</div>');
-  var boxSwitchBox = getCheckBox(cssClass + "_switch", checked, function ( enabled ) {
-     if (!isNull(onCheckChangedFn)) { onCheckChangedFn(enabled); }
+  var boxSwitchBox = getCheckBox(cssClass + "_switch", checked, function ( enabled, cssClass ) {
+     if (!isNull(onCheckChangedFn)) { onCheckChangedFn(enabled, cssClass); }
   }, { checked: "fa-check-square-o", unchecked: "fa-square-o" });
   boxSwitchBox.addClass("booleanBox");
   $box.find("p").append(boxSwitchBox);
@@ -150,9 +156,9 @@ function getSectionContainer ($section){
   return $section.find(".sectionContainer").first();
 }
 
-function getRadioControl (containerId, title, cssClass, options, selectedValue, onChangeFn){
+function getRadioControl (containerId, title, cssClass, options, selectedValue, onChangeFn, extraCssClasses){
   var radioName = containerId + "_" + cssClass;
-  var $radiosCont = $('<div class="' + cssClass + '">' +
+  var $radiosCont = $('<div class="' + cssClass + (isNull(extraCssClasses) ? '' : ' ' + extraCssClasses) + '">' +
                         '<h3>' + title + ':</h3>' +
                         '<fieldset></fieldset>' +
                       '</div>');
@@ -173,4 +179,21 @@ function getRadioControl (containerId, title, cssClass, options, selectedValue, 
 
 function setVisibility(element, visible) {
   if (visible) { element.show(); } else { element.hide(); }
+}
+
+function getColorPicker(colorPickerId, defaultColor, onChangeFn) {
+  var colorPicker = $("<div colorpickerId='" + colorPickerId + "' class='colorPicker'>" +
+                        "<div style='background-color: " + defaultColor + "'></div>" +
+                      "</div>");
+  colorPicker.ColorPicker({
+    color: defaultColor,
+    onChange: function (hsb, hex, rgb) {
+      var color = '#' + hex;
+      var id = $(this).attr("id");
+      var colorPicker = $("[colorpickerId=" + id + "]");
+      colorPicker.find('div').css('backgroundColor', color);
+      onChangeFn(color, id);
+    }
+  });
+  return colorPicker;
 }

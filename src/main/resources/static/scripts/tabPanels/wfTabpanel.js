@@ -23,6 +23,9 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   var currentObj = this;
 
+  //Adds random number to Id
+  id = id + "_" + (new Date()).getTime();
+
   TabPanel.call(this, id, classSelector, navItemClass, navBarList, panelContainer);
 
   //WORKFLOW TAB_PANEL ATTRIBUTES
@@ -31,27 +34,37 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   //TAB_PANEL METHODS AND EVENTS HANDLERS
   this.containsId = function (id) {
-    if (this.id == id) {
-        return true;
-    } else if (this.toolPanel.containsId(id)) {
-        return true;
-    } else if (this.outputPanel.containsId(id)) {
-        return true;
-    }
-
-    return false;
+    return (this.id == id)
+            || (this.toolPanel.containsId(id))
+            || (this.outputPanel.containsId(id));
   }
 
-  this.prepareButton = function ( buttonElem, panel ) {
+  this.prepareTabButton = function ( buttonElem ) {
     buttonElem.button().click(function () {
-      currentObj.wfSelector.find("li").removeClass('active');
-      $(this).parent().addClass("active");
-      currentObj.setCurrentPanel(panel);
+      currentObj.setCurrentPanel($(this).attr("panel"));
     });
   }
 
   this.setCurrentPanel = function ( panel ) {
+    this.wfSelector.find("li").removeClass('active');
+    this.wfSelector.find("[panel='" + panel + "']").parent().addClass("active");
     this.toolPanel.showPanel(panel);
+  }
+
+  this.getCurrentPanel = function ( panel ) {
+    return this.wfSelector.find("li.active").find("a").attr("panel");
+  }
+
+  this.getPageName = function () {
+    if (!this.projectConfig.hasSchema()) {
+      return "LoadPage";
+    } else if (this.projectConfig.schema.isEventsFile()){
+      return "EventsFilePage";
+    } else if (this.projectConfig.schema.isLightCurveFile()){
+      return "LightcurveFilePage";
+    }
+
+    return "WrongPage2";
   }
 
   this.onDatasetChanged = function ( filenames, selectorKey, callback) {
@@ -131,19 +144,22 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.service.get_dataset_header(filenames[0], function( jsonHeader ){
 
         if (!isNull(jsonHeader.abort)){
-          //Comes from error returned request.
-          showError("Wrong lightcurve file!");
-          return;
+          log("Current request aborted, WfTabPanel: " + currentObj.id);
+          if (jsdata.statusText != "error"){
+            //If abort cause is not because python server died
+            showError("Wrong lightcurve file!");
+          }
+          return; //Comes from request abort call.
         }
 
         var header = JSON.parse(jsonHeader);
-        if (!isNull(header)) {
+        if (!isNull(header) && isNull(header.error)) {
 
           log("onLcDatasetChanged - get_dataset_header: " + selectorKey + ": " + filenames[0]);
           currentObj.onLcHeaderReceived(selectorKey, filenames[0], header);
 
         } else {
-          showError("Wrong lightcurve file!");
+          showError((!isNull(header.error)) ? header.error : "Wrong lightcurve file!");
         }
 
         if (!isNull(callback)) { callback(); }
@@ -247,7 +263,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onRmfApplied = function ( result, callback ) {
     result = JSON.parse(result);
-    if (!isNull(result) && result.length > 0){
+    if (!isNull(result) && isNull(result.error) && result.length > 0){
       log("onRmfApplied: Getting new shema..");
 
       currentObj.projectConfig.setRmfData(result);
@@ -256,32 +272,38 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         log("onRmfApplied: Success!");
         var schema = JSON.parse(jsonSchema);
-        currentObj.projectConfig.updateFile("RMF");
-        currentObj.projectConfig.updateSchema(schema);
-        currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
+        if (!isNull(schema) && isNull(schema.error)){
 
-        //Cleans previous plots for RMF key
-        currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
-        currentObj.projectConfig.cleanPlotsIdsKey("RMF");
+          currentObj.projectConfig.updateFile("RMF");
+          currentObj.projectConfig.updateSchema(schema);
+          currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
-        //Add RMF plots
-        currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
+          //Cleans previous plots for RMF key
+          currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
+          currentObj.projectConfig.cleanPlotsIdsKey("RMF");
 
-        //Hides upload RMF buttons from Analyze tab
-        currentObj.toolPanel.$html.find(".rmsBtn").remove();
-        currentObj.toolPanel.$html.find(".covarianceBtn").remove();
-        currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
+          //Add RMF plots
+          currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
-        //Adds infoPanel for this file
-        currentObj.addInfoPanel(currentObj.projectConfig.getFile("RMF"));
+          //Hides upload RMF buttons from Analyze tab
+          currentObj.toolPanel.$html.find(".rmsBtn").remove();
+          currentObj.toolPanel.$html.find(".covarianceBtn").remove();
+          currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
+          //Adds infoPanel for this file
+          currentObj.addInfoPanel(currentObj.projectConfig.getFile("RMF"));
+
+        } else {
+          showError((!isNull(schema) && !isNull(schema.error)) ? schema.error : "Wrong RMF file!");
+        }
         waitingDialog.hide();
         if (!isNull(callback)) { callback(); }
 
       }, currentObj.onSchemaError, null);
+
     } else {
       logErr("onRmfApplied error:" + JSON.stringify(result));
-      showError("Wrong RMF file!");
+      showError((!isNull(result.error)) ? result.error : "Wrong RMF file!");
       if (!isNull(callback)) { callback(); }
     }
   }
@@ -297,6 +319,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.projectConfig.updateFile(selectorKey);
 
       if (selectorKey == "SRC"){
+
+        if (!isValidSrcSchema(schema)){
+          logErr("onSchemaChangedWithKey error: Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE");
+          showError("Unsupported FITS type! Any table found: " + CONFIG.EVENTS_STRING + ", RATE");
+          return;
+        }
 
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(schema);
@@ -342,9 +370,11 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         currentObj.addInfoPanel(currentObj.projectConfig.getFile(selectorKey), schema);
       }
 
+      currentObj.pageNameChanged();
+
     } else {
-      logErr("onSchemaChangedWithKey error:" + schema);
-      showError();
+      logErr("onSchemaChangedWithKey error:" + jsonSchema);
+      showError((!isNull(schema) && !isNull(schema.error)) ? schema.error : "Wrong file");
     }
 
     if (!isNull(params) && !isNull(params.callback)) { params.callback(); }
@@ -358,7 +388,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
           //Calls this function again with the schema obj
           log("addInfoPanel.get_dataset_schema: Success!");
-          currentObj.addInfoPanel(filepath, JSON.parse(jsonSchema));
+          var schema = JSON.parse(jsonSchema);
+          if (!isNull(schema) && isNull(schema.error)){
+            currentObj.addInfoPanel(filepath, schema);
+          } else {
+            logErr("addInfoPanel.get_dataset_schema filename:" + filepath + " error:" + JSON.stringify(jsonSchema));
+          }
 
         }, function ( error ) {
           logErr("onSchemaError filename:" + filepath + " error:" + JSON.stringify(error));
@@ -379,7 +414,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     pdsPlotsButtons = currentObj.addButtonToArray("Lomb-Scargle Periodogram",
                                                   "periodogramBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Lomb-Scargle Periodogram:",
+                                                    currentObj.showLcSelectionDialog("Lomb-Scargle Periodogram",
                                                                                      onPeriodogramPlotSelected);
                                                   },
                                                   pdsPlotsButtons);
@@ -419,18 +454,26 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     }
 
     var variancePlotsButtons = [];
-    variancePlotsButtons = currentObj.addButtonToArray("Mean flux estimator",
+    variancePlotsButtons = currentObj.addButtonToArray("Baseline Estimator",
                                                   "baselineBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Mean flux estimator (baseline):",
+                                                    currentObj.showLcSelectionDialog("Baseline Estimator",
                                                                                      onBaselinePlotSelected);
                                                   },
                                                   variancePlotsButtons);
 
-    variancePlotsButtons = currentObj.addButtonToArray("Long-term Variability",
+    variancePlotsButtons = currentObj.addButtonToArray("Mean Flux Estimator",
+                                                  "meanfluxBtn",
+                                                  function () {
+                                                    currentObj.showLcSelectionDialog("Mean Flux Estimator",
+                                                                                     onMeanFluxPlotSelected);
+                                                  },
+                                                  variancePlotsButtons);
+
+    variancePlotsButtons = currentObj.addButtonToArray("Long-Term Variability",
                                                   "intVarBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Long-term Variability:",
+                                                    currentObj.showLcSelectionDialog("Long-Term Variability",
                                                                                      onAGNPlotSelected);
                                                   },
                                                   variancePlotsButtons);
@@ -439,7 +482,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     pulsarPlotsButtons = currentObj.addButtonToArray("Phaseogram",
                                                   "phaseogramBtn",
                                                   function () {
-                                                    currentObj.showLcSelectionDialog("Phaseogram:",
+                                                    currentObj.showLcSelectionDialog("Phaseogram",
                                                                                      onPhaseogramPlotSelected);
                                                   },
                                                   pulsarPlotsButtons);
@@ -448,8 +491,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
               { cssClass: "LcPlot", title:"Light Curves and Colors" },
               { cssClass: "PDSPlot", title:"Power Density Spectra", extraButtons: pdsPlotsButtons},
               { cssClass: "TimingPlot", title:"Spectral Timing", extraButtons: timingPlotsButtons },
-              { cssClass: "VariancePlot", title:"Long-term Variability Analysis", extraButtons: variancePlotsButtons },
-              { cssClass: "PulsarPlot", title:"X-Ray Pulsars", extraButtons: pulsarPlotsButtons },
+              { cssClass: "VariancePlot", title:"Long-Term Variability Analysis", extraButtons: variancePlotsButtons },
+              { cssClass: "PulsarPlot", title:"X-ray Pulsars", extraButtons: pulsarPlotsButtons },
               { cssClass: "HdrFileInfo", title:"Header File Information" }
           ];
   }
@@ -476,7 +519,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       if (!isNull(res)){
         if (!isNull(res.error)) {
           //Error while server tried to read params.filename
-          showError("Can't read file: " + params.filename);
+          showError("Can't read file: " + params.filename + ", error: " + res.error);
           return;
         } else if (res == "") {
           showError("Can't concatenate files");
@@ -509,7 +552,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.onSchemaError = function ( error ) {
     logErr("onSchemaError error:" + JSON.stringify(error));
     waitingDialog.hide();
-    showError();
+    showError((!isNull(error.error)) ? error.error : "Can't get schema from file");
   }
 
   this.updateMinMaxCountRate = function (minRate, maxRate) {
@@ -526,8 +569,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onFiltersChangedFromPlot = function (filters) {
     log("onFiltersChangedFromPlot: filters: " + JSON.stringify(filters));
+    currentObj.setCurrentPanel("filterPanel");
     currentObj.toolPanel.applyFilters(filters);
-    currentObj.toolPanel.showPanel("filterPanel");
   }
 
   this.onTimeRangeChanged = function (timeRange) {
@@ -539,8 +582,24 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     return currentObj.toolPanel.getReplaceColumn();
   }
 
-  this.broadcastEventToPlots = function (evt_name, evt_data, senderId) {
-    currentObj.outputPanel.broadcastEventToPlots(evt_name, evt_data, senderId);
+  this.broadcastEvent = function (evt_name, evt_data, senderId) {
+    switch (evt_name) {
+         case 'on_show':
+             currentObj.toolPanel.onPlotShown(senderId)
+             break;
+         case 'on_hide':
+             currentObj.toolPanel.onPlotHidden(senderId)
+             break;
+         case 'on_style_click':
+             currentObj.toolPanel.onPlotStyleClicked(senderId)
+             break;
+         case 'on_plot_styles_changed':
+             currentObj.toolPanel.onPlotStylesChanged(senderId)
+             break;
+         default:
+             //Broadcast event to all plots
+             currentObj.outputPanel.broadcastEvent(evt_name, evt_data, senderId);
+     }
   }
 
   this.addToHistory = function (actionType, actionData){
@@ -588,14 +647,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.enableWfSelector = function () {
-    this.prepareButton(this.wfSelector.find(".filterBtn"), "filterPanel");
-    this.prepareButton(this.wfSelector.find(".analyzeBtn"), "analyzePanel");
-    this.prepareButton(this.wfSelector.find(".styleBtn"), "stylePanel");
+    this.prepareTabButton(this.wfSelector.find(".filterBtn"));
+    this.prepareTabButton(this.wfSelector.find(".analyzeBtn"));
+    this.prepareTabButton(this.wfSelector.find(".styleBtn"));
     this.wfSelector.find(".wfSelectorDisableable").fadeIn();
   }
 
   this.showCrossSpectraSelection = function () {
-    var lcPlotButtons = currentObj.getLcButtonsHtml();
+    var lcPlotButtons = currentObj.getLcButtonsHtml(null, getAllPlots());
     if (lcPlotButtons.Count > 1) {
 
       //Else show dialog for choose the desired plots
@@ -609,24 +668,45 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
          var btn = $(this);
          btn.toggleClass("plotSelected");
          var plotId = btn.attr("plotId");
-         var plot = currentObj.outputPanel.getPlotById(plotId);
-         plot.btnSelect.click();
-         if ($(this).parent().find(".plotSelected").length > 1) {
-              $xSpectraDialog.dialog('close');
-              $xSpectraDialog.remove();
+         var tab = getTabForSelector(plotId);
+         if (!isNull(tab)) {
+           var plot = tab.outputPanel.getPlotById(plotId);
+           if (!isNull(plot)) {
+             plot.onSelected();
+             $("#run_" + currentObj.id).prop("disabled", ($(this).parent().find(".plotSelected").length != 2));
+           }
          }
       });
 
       currentObj.$html.append($xSpectraDialog);
-      currentObj.createCustomDialog($xSpectraDialog);
+      currentObj.createCustomDialog($xSpectraDialog, [
+            {
+             id: "run_" + currentObj.id,
+             text: "Run Cross Spectra",
+             click:function() {
+               onCrossSpectraClicked(getSelectedPlots());
+               $xSpectraDialog.dialog('close');
+               $xSpectraDialog.remove();
+             }
+           },
+           {
+            id: "cancel_" + currentObj.id,
+            text: "Cancel",
+            click:function() {
+              $xSpectraDialog.dialog('close');
+              $xSpectraDialog.remove();
+            }
+          }
+        ]);
+
+      $("#run_" + currentObj.id).prop("disabled", true);
+      $xSpectraDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 
     } else {
       var lcPlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() });
       showMsg("Spectral Timing:", "At least two plots of type Light Curve must be visible/enabled to continue. " +
                                   "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots" +
-                                  ((lcPlots.length > 4) ? "." : " or use the Load section to upload more Light Curve's files." +
-                                  "</br> Also you can use the <i class='fa fa-thumb-tack' aria-hidden='true'></i> button to select two Ligth Curve's plots" +
-                                  " of the same Tab or from different Tabs to create a Cross Spectrum Tab."));
+                                  ((lcPlots.length > 4) ? "." : " or use the Load section to upload more Light Curve's files."));
     }
   }
 
@@ -670,46 +750,113 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                         '</div>');
 
       $lcDialog.find("button").click(function(event){
-         var plotId = $(this).attr("plotId");
-         var plot = currentObj.outputPanel.getPlotById(plotId);
-         onPlotSelectedFn(plot);
-         $lcDialog.dialog('close');
-         $lcDialog.remove();
+        var btn = $(this);
+        if (!btn.hasClass("plotSelected")){
+          clearSelectedPlots();
+          btn.parent().find(".plotSelected").removeClass("plotSelected");
+          btn.addClass("plotSelected");
+          var plotId = btn.attr("plotId");
+          var plot = currentObj.outputPanel.getPlotById(plotId);
+          plot.onSelected();
+        }
+        $("#run_" + currentObj.id).prop("disabled", ($(this).parent().find(".plotSelected").length != 1));
       });
 
       currentObj.$html.append($lcDialog);
-      currentObj.createCustomDialog($lcDialog);
+      currentObj.createCustomDialog($lcDialog, [
+            {
+             id: "run_" + currentObj.id,
+             text: "Run " + title,
+             click:function() {
+               var selectedPlots = getSelectedPlots();
+               if (selectedPlots.length == 1){
+                 onPlotSelectedFn(selectedPlots[0]);
+                 $lcDialog.dialog('close');
+                 $lcDialog.remove();
+               }
+             }
+           },
+           {
+            id: "cancel_" + currentObj.id,
+            text: "Cancel",
+            click:function() {
+              $lcDialog.dialog('close');
+              $lcDialog.remove();
+            }
+          }
+        ]);
+
+        $("#run_" + currentObj.id).prop("disabled", true);
+        $lcDialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
 
     } else {
-      showMsg(title, "At least one plot of type Light Curve must be visible/enabled to continue. " +
+      showMsg(title + ":", "At least one plot of type Light Curve must be visible/enabled to continue. " +
                      "</br> Use <i class='fa fa-eye' aria-hidden='true'></i> buttons to enable plots.");
     }
   }
 
-  this.getLcButtonsHtml = function (showAsSelected) {
+  this.getLcButtonsHtml = function (showAsSelected, plots) {
     var lcPlotButtons = "";
-    var selectablePlots = currentObj.outputPanel.plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
+    var addTabTitle = !isNull(plots);
+    if (isNull(plots)){
+      plots = currentObj.outputPanel.plots;
+    }
+    var selectablePlots = plots.filter(function(plot) { return plot.isSelectable() && plot.isVisible; });
     for (i in selectablePlots) {
        var plot = selectablePlots[i];
+       var title = plot.plotConfig.styles.title;
+       if (addTabTitle) {
+         var tab = getTabForSelector(plot.id);
+         if (!isNull(tab)) {
+           title = tab.getTitle() + "- " + title;
+         }
+       }
        lcPlotButtons += '<button class="btn btn-default btnSelect ' + plot.id + ((plot.$html.hasClass("plotSelected") && (isNull(showAsSelected) || showAsSelected))?" plotSelected":"") + '" plotId="' + plot.id + '">' +
-                           '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + plot.plotConfig.styles.title +
+                           '<i class="fa fa-thumb-tack" aria-hidden="true"></i> ' + title +
                          '</button>';
      };
      return { Html: lcPlotButtons, Count: selectablePlots.length };
   }
 
-  this.createCustomDialog = function ($dialogElement) {
+  this.createCustomDialog = function ($dialogElement, buttons) {
     $dialogElement.dialog({
        width: 450,
        modal: true,
-       buttons: {
-         'Cancel': function() {
-            $(this).dialog('close');
-            $dialogElement.remove();
-         }
+       buttons: buttons,
+       close: function( event, ui ) {
+         clearSelectedPlots();
+         $dialogElement.remove();
        }
      });
      $dialogElement.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
+  }
+
+  this.getDefaultPlotlyConfig = function () {
+    if (isNull(this.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, CONFIG.PLOT_CONFIG);
+    }
+    return this.plotDefaultConfig;
+  }
+
+  this.saveDefaultPlotlyConfig = function () {
+    if (!isNull(this.plotDefaultConfig)){
+      saveToFile (getFilename(currentObj.projectConfig.filename) + "_style.stl", JSON.stringify(currentObj.plotDefaultConfig));
+    }
+  }
+
+  this.loadDefaultPlotlyConfig = function (onLoadedFn) {
+    showLoadFile (function(e, file) {
+      try {
+        if (!isNull(e)) {
+          currentObj.plotDefaultConfig = JSON.parse(e.target.result);
+          onLoadedFn();
+        } else {
+          showError("File: " + file.name + " is not supported as style");
+        }
+     } catch (e) {
+       showError("File: " + file.name + " is not supported as style", e);
+     }
+    }, ".stl");
   }
 
   this.getConfig = function () {
@@ -718,7 +865,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
              navItemClass: this.navItemClass,
              projectConfig: this.projectConfig.getConfig(),
              toolPanelConfig: this.toolPanel.getConfig(this.projectConfig),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
@@ -726,6 +874,12 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     log("setConfig for tab " + this.id);
 
     async.waterfall([
+        function(callback) {
+            if (!isNull(tabConfig.plotDefaultConfig)){
+              currentObj.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+            }
+            callback();
+        },
         function(callback) {
             currentObj.toolPanel.setConfig(tabConfig.projectConfig, callback);
         },
@@ -762,6 +916,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       delete this.outputPanel;
       delete this.historyManager;
       delete this.projectConfig;
+      delete this.plotDefaultConfig
 
       delete this.id;
     } catch (ex) {
@@ -782,7 +937,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                   this.onLcDatasetChanged,
                                   this.onFiltersChanged,
                                   this.historyManager,
-                                  this.enableDragDrop);
+                                  this.enableDragDrop,
+                                  this);
 
   this.outputPanel = new WfOutputPanel (this.id + "_wfOutputPanel",
                                       "OutputPanelTemplate",
@@ -793,7 +949,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   $(window).resize(function () { if (!isNull(currentObj.outputPanel)){currentObj.outputPanel.resize();} });
 
-  this.prepareButton(this.wfSelector.find(".loadBtn"), "loadPanel");
+  this.prepareTabButton(this.wfSelector.find(".loadBtn"));
 
   this.setCurrentPanel("loadPanel");
   this.wfSelector.find(".loadBtn").parent().addClass('active');

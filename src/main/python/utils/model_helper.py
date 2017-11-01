@@ -27,18 +27,18 @@ def get_astropy_model(model):
          astropy_model = BrokenPowerLaw1D(model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"])
 
     if astropy_model:
-         astropy_model = fix_parammeters_to_astropy_model(astropy_model, model)
+         astropy_model = fix_parameters_to_astropy_model(astropy_model, model)
 
     return astropy_model
 
 
-# fix_parammeters_to_astropy_model:
-# Returns an astropy.models object with the fixed parammeters set on dave model
+# fix_parameters_to_astropy_model:
+# Returns an astropy.models object with the fixed parameters set on dave model
 #
 # @param: astropy_model: The astropy model
 # @param: model: Dave Model specification
 #
-def fix_parammeters_to_astropy_model(astropy_model, model):
+def fix_parameters_to_astropy_model(astropy_model, model):
     if "fixed" in model:
         for param in model["fixed"]:
             getattr(astropy_model, param).fixed = True
@@ -96,13 +96,13 @@ def get_astropy_model_from_dave_models(models):
 
 
 # fit_data_with_gaussian:
-# Returns the optimized parammeters for a Gaussian that fits the given array data
+# Returns the optimized parameters for a Gaussian that fits the given array data
 #
 # @param: x_values: array data whit the x values to fit with the Gaussian
 # @param: y_values: array data whit the x values to fit with the Gaussian
-# @param: amplitude: initial guess for amplitude parammeter of the Gaussian
-# @param: mean: initial guess for mean parammeter of the Gaussian
-# @param: stddev: initial guess for stddev parammeter of the Gaussian
+# @param: amplitude: initial guess for amplitude parameter of the Gaussian
+# @param: mean: initial guess for mean parameter of the Gaussian
+# @param: stddev: initial guess for stddev parameter of the Gaussian
 #
 def fit_data_with_gaussian(x_values, y_values, amplitude=1., mean=0, stddev=1.):
     g_init = Gaussian1D(amplitude, mean, stddev)
@@ -119,7 +119,7 @@ def fit_data_with_gaussian(x_values, y_values, amplitude=1., mean=0, stddev=1.):
 # Returns a dictionary with the priors. A dict of form {"parameter name": function}
 # A dictionary with the definitions for the prior probabilities.
 #
-# @param: dave_priors: array of priors, dave_priors defined for each model parammeters
+# @param: dave_priors: array of priors, dave_priors defined for each model parameters
 #
 def get_astropy_priors(dave_priors):
     priors = {}
@@ -142,19 +142,19 @@ def get_astropy_priors(dave_priors):
                     if ("min" in model_param) and ("max" in model_param):
                         priors[prior_key] = lambda value, min=float(model_param["min"]), max=float(model_param["max"]): ((min <= value) & (value <= max))
                     else:
-                        logging.warn("get_astropy_priors: Wrong uniform prior parammeters, prior_key: " + prior_key)
+                        logging.warn("get_astropy_priors: Wrong uniform prior parameters, prior_key: " + prior_key)
 
                 elif model_param["type"] == "normal":
                     if ("mean" in model_param) and ("sigma" in model_param):
                         priors[prior_key] = lambda value, mean=float(model_param["mean"]), sigma=float(model_param["sigma"]): scipy.stats.norm(mean, sigma).pdf(value)
                     else:
-                        logging.warn("get_astropy_priors: Wrong normal prior parammeters, prior_key: " + prior_key)
+                        logging.warn("get_astropy_priors: Wrong normal prior parameters, prior_key: " + prior_key)
 
                 elif model_param["type"] == "lognormal":
                     if ("mean" in model_param) and ("sigma" in model_param):
                         priors[prior_key] = lambda value, mean=float(model_param["mean"]), sigma=float(model_param["sigma"]): scipy.stats.lognorm(mean, sigma).pdf(value)
                     else:
-                        logging.warn("get_astropy_priors: Wrong lognormal prior parammeters, prior_key: " + prior_key)
+                        logging.warn("get_astropy_priors: Wrong lognormal prior parameters, prior_key: " + prior_key)
 
                 else:
                     logging.warn("get_astropy_priors: Unknown prior 'type', prior_key: " + prior_key + ", type: " + model_param["type"])

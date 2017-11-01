@@ -96,7 +96,7 @@ def append_file_to_dataset(filename, nextfile, target):
         return common_error("Invalid file or cache key")
 
     if not nextfile:
-        return common_error(error="No nextfile setted")
+        return common_error("No nextfile setted")
 
     if not SessionHelper.is_file_uploaded(nextfile):
         if not FileUtils.file_exist(target, nextfile):
@@ -128,7 +128,7 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
         return common_error("Invalid file or cache key")
 
     if not rmf_filename:
-        return common_error(error="No rmf_filename setted")
+        return common_error("No rmf_filename setted")
 
     rmf_destination = FileUtils.get_destination(target, rmf_filename)
     if not FileUtils.is_valid_file(rmf_destination):
@@ -174,7 +174,7 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
 
 
 def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt,
-                    baseline_opts, variance_opts):
+                    baseline_opts, meanflux_opts, variance_opts):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -198,10 +198,11 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
     logging.debug("get_lightcurve: axis %s" % axis)
     logging.debug("get_lightcurve: dt %s" % dt)
     logging.debug("get_lightcurve: baseline_opts %s" % baseline_opts)
+    logging.debug("get_lightcurve: meanflux_opts %s" % meanflux_opts)
     logging.debug("get_lightcurve: variance_opts %s" % variance_opts)
 
     data = DaveEngine.get_lightcurve(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, baseline_opts, variance_opts)
+                                    filters, axis, dt, baseline_opts, meanflux_opts, variance_opts)
 
     logging.debug("get_lightcurve: Finish!")
 
@@ -351,7 +352,7 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
 
 
 def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
-                            filters, axis, dt, nsegm, segm_size, norm, df):
+                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -377,10 +378,11 @@ def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_dynamical_spectrum: nsegm %f" % nsegm)
     logging.debug("get_dynamical_spectrum: segm_size %f" % segm_size)
     logging.debug("get_dynamical_spectrum: norm %s" % norm)
+    logging.debug("get_dynamical_spectrum: freq_range %s" % freq_range)
     logging.debug("get_dynamical_spectrum: df %s" % df)
 
     data = DaveEngine.get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, df)
+                                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df)
 
     logging.debug("get_dynamical_spectrum: Finish!")
 

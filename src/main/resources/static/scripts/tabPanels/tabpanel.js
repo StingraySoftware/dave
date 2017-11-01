@@ -6,7 +6,7 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
   var currentObj = this;
 
   //TAB_PANEL ATTRIBUTES
-  this.id = id + "_" + (new Date()).getTime();
+  this.id = id;
   this.classSelector = classSelector;
   this.navItemClass = navItemClass;
   this.$html = cloneHtmlElement(id, classSelector);
@@ -19,12 +19,30 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     log("TabPanel setTitle id: " + this.id + " title: " + title);
   }
 
+  this.getTitle = function ( title ) {
+    return this.$navItem.find("." + this.navItemClass).html();
+  }
+
   this.show = function () {
     this.$navItem.parent().find(".active").removeClass("active");
     this.$navItem.addClass("active");
     $(".TabPanel").hide();
     this.$html.show();
     $(window).trigger("resize"); //Forces plots to fit window size
+    this.pageNameChanged();
+  }
+
+  this.getPageName = function () {
+    return null;
+  }
+
+  this.pageNameChanged = function () {
+    setTimeout(function () {
+      //Sends page view metric
+      if (!isNull(currentObj.getPageName())){
+        gaTracker.sendPage(currentObj.getPageName());
+      }
+    }, 250);
   }
 
   this.addCloseButton = function () {

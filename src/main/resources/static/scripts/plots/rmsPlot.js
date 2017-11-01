@@ -6,7 +6,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   plotConfig.energy_range = [-1, -1];
   plotConfig.default_energy_range = [-1, -1];
 
-  this.freq_range_title = "RMS Frequency range (Hz):";
+  this.freq_range_title = "RMS Frequency Range (Hz):";
 
   if (projectConfig.schema.isEventsFile()) {
       var column = projectConfig.schema.getTable()["E"];
@@ -50,6 +50,10 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.addNumberOfBandsControlToSettings("Nº Energy Segments", ".rightCol");
   }
 
+  this.getLabel = function (axis) {
+    return this.plotConfig.styles.labels[axis];
+  }
+  
   log ("new RmsPlot id: " + this.id);
 
   return this;

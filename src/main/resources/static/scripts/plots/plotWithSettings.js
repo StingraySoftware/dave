@@ -25,6 +25,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.$html.find(".plotTools").append(this.btnSettings);
   this.btnSettings.click(function(event){
     currentObj.showSettings();
+    gaTracker.sendEvent("Plots", "ShowPlotSettings", currentObj.getTitle());
   });
 
   this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '" data-toggle="tooltip" title="Close plot settings"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
@@ -33,6 +34,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.btnBack.click(function(event){
     currentObj.hideSettings();
     currentObj.refreshData();
+    gaTracker.sendEvent("Plots", "HidePlotSettings", currentObj.getTitle());
   });
 
   //PlotWithSettings plot methods:
@@ -50,7 +52,8 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.$html.find(".plotTools").children().hide();
 
       var title = 'Settings:';
-      if (!isNull(this.plotConfig.styles.title)){
+      if (!isNull(this.plotConfig.styles.title)
+          && !this.plotConfig.styles.title.startsWith("$")){
         title = this.plotConfig.styles.title + ' Settings:';
       }
       this.setSettingsTitle(title);
@@ -103,6 +106,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.$html.find(".plot").show();
       this.$html.find(".plotTools").children().show();
       this.btnBack.hide();
+      this.sendPlotEvent('on_plot_styles_changed', {});
     }
   }
 
@@ -245,7 +249,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
         var binSelectorConfig = getBinSelectorConfig(tab.projectConfig);
 
         this.binSelector = new BinSelector(this.id + "_binSelector",
-                                          "BIN SIZE (" + tab.projectConfig.timeUnit  + "):",
+                                          "Bin Size (" + tab.projectConfig.timeUnit  + "):",
                                           tab.projectConfig.minBinSize,
                                           tab.projectConfig.maxBinSize,
                                           binSelectorConfig.step,
@@ -283,7 +287,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       } else if (!isNull(currentObj.plotConfig.dt) && currentObj.plotConfig.dt > 0){
         return currentObj.plotConfig.dt;
       } else {
-        logErr("ERROR on getBinSize: Plot not attached to tab and has no plotConfig.dt, Plot: " + this.id);
+        //logWarn("ERROR on getBinSize: Plot not attached to tab and has no plotConfig.dt, Plot: " + this.id);
         return null;
       }
     } else {

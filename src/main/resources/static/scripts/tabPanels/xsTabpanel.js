@@ -27,6 +27,9 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   WfTabPanel.call(this, id, classSelector, navItemClass, service, navBarList, panelContainer);
 
   //XSTabPanel METHODS:
+  this.getPageName = function () {
+    return "CrossSpectraPage";
+  }
 
   this.getXSDataFromServer = function (paramsData) {
 
@@ -42,7 +45,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       if (!isNull(jsdata.abort)){
         log("Current request aborted, XSTabPanel: " + currentObj.id);
-        if (data.statusText == "error"){
+        if (jsdata.statusText == "error"){
           //If abort cause is because python server died
           currentObj.outputPanel.setPlotsReadyState(true);
         }
@@ -53,7 +56,13 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       data = JSON.parse(jsdata);
 
       if (isNull(data)) {
-        log("onPlotReceived wrong data!, XSTabPanel: " + currentObj.id);
+        log("onPlotDataReceived wrong data!, XSTabPanel: " + currentObj.id);
+        currentObj.outputPanel.setPlotsReadyState(true);
+        return;
+
+      } else if (!isNull(data.error)) {
+        currentObj.xsPlot.showWarn(data.error);
+        log("onPlotDataReceived data error: " + data.error + ", XSTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
 
@@ -71,14 +80,20 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         var timeLagPlot = currentObj.outputPanel.plots[currentObj.timeLagPlotIdx];
         if (timeLagPlot.isVisible) {
           //Lightcurve Params req: freq, time_lag, error_values, gti_start, gti_stop
-          timeLagPlot.setData($.extend(true, [], [ data[0], { values: data[2].values[0] }, { values: data[2].values[1] }, [], [] ]));
+          timeLagPlot.setData($.extend(true, [], [ data[0],
+                                                  { values: (data[2].values.length > 0) ? data[2].values[0] : [] },
+                                                  { values: (data[2].values.length > 1) ? data[2].values[1] : [] },
+                                                  [], [] ]));
         }
 
         //Prepares Coherence Plot data and sends it to coherencePlot
         var coherencePlot = currentObj.outputPanel.plots[currentObj.coherencePlotIdx];
         if (coherencePlot.isVisible) {
           //ColorLc Params req: freq, color_A, color_B, gti_start, gti_stop
-          coherencePlot.setData($.extend(true, [], [ data[0], { values: data[3].values[0] }, { values: data[3].values[1] }, [], [] ]));
+          coherencePlot.setData($.extend(true, [], [ data[0],
+                                                    { values: (data[3].values.length > 0) ? data[3].values[0] : [] },
+                                                    { values: (data[3].values.length > 1) ? data[3].values[1] : [] },
+                                                    [], [] ]));
         }
 
       }
@@ -92,13 +107,17 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
              navItemClass: this.navItemClass,
              plotConfigs: this.plotConfigs,
              projectConfig: this.projectConfig.getConfig(),
-             outputPanelConfig: this.outputPanel.getConfig()
+             outputPanelConfig: this.outputPanel.getConfig(),
+             plotDefaultConfig: this.plotDefaultConfig
            };
   }
 
   this.setConfig = function (tabConfig, callback) {
     log("setConfig for tab " + this.id);
 
+    if (!isNull(tabConfig.plotDefaultConfig)){
+      this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+    }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
@@ -194,6 +213,10 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.setTitle("XSpectrum");
 
   //Preapares XS toolpanel data
+  this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
+  this.prepareTabButton(this.wfSelector.find(".styleBtn"));
+  this.wfSelector.find(".styleBtn").show();
+  this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
   for (i in this.plotConfigs){
     var plotConfig = this.plotConfigs[i];
