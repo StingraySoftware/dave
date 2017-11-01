@@ -195,21 +195,11 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	 	return 1
 	fi
 
-<<<<<<< 56317bdf96cac38659dc27ee8d5814c046efc69a
-       retVal=$?
-       if [[ retVal -ne 0 ]] ; then
-           echo "Failed to install Stingray dependencies"
-           return 1
-       fi
-
-	if [[ "$OSTYPE" == "linux"* ]]; then
-=======
 	#Removes previous version of Stingray and Astropy_Helpers
 	rm -rf src/main/python/stingray
 	rm -rf src/main/python/astropy_helpers
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
->>>>>>> DAVE-340: Mean Flux Estimator in the correct way
 		#Linux
 
 		#Build stingray
