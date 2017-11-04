@@ -39,28 +39,58 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 	#This is for MagicFile but only applies to macosx
 	if [ ! -f /usr/local/bin/brew ]; then
+		# HomeBrew is not installed
 		if hash /opt/local/bin/port 2>/dev/null; then
+			# MacPorts is installed
+			libmagic_lines_count=`/opt/local/bin/port echo installed 2>/dev/null | grep libmagic | wc -l`
+			if [[ $libmagic_lines_count -eq 0 ]]; then
+				# LibMagic not installed with MacPorts
 
-				# Make sure only root can run our script
 				if [ "$(id -u)" != "0" ]; then
-				 echo "You need Administrator privileges to continue with the installation."
-				 echo "LibMagic will be installed with MacPorts, try relanching the application as root"
-				 echo "or run this HomeBrew installation command on a terminal and relanch DAVE:"
- 				 echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-				 sendError "Administrator privileges requiered"
+					# We don't have administrator rights, suggest how to proceed
+					echo "=========================================================================="
+          echo "LibMagic is required. There are three available options to continue:"
+					echo "=========================================================================="
+					echo "|"
+          echo "|  1 - Relaunch DAVE as root running this command on the terminal:"
+          echo "|      sudo DAVEApp.app/Contents/MacOS/DAVEApp"
+					echo "|"
+          echo "|  2 - Or install LibMagic by yourself running this MacPorts command on the terminal and relanch DAVE:"
+          echo "|      sudo /opt/local/bin/port install file"
+					echo "|"
+          echo "|  3 - Or run this HomeBrew installation command on a terminal and relanch DAVE:"
+          echo '|      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+					echo "|"
+					echo "=========================================================================="
+          sendError "LibMagic is required, read the logs to proceed"
+
+        else
+          # If we have administrator rights just install LibMagic
+          echo "Installing LibMagic with MacPorts"
+          sudo /opt/local/bin/port install file
 				fi
 
-				echo "Installing LibMagic with MacPorts"
-        su /opt/local/bin/port install file
+			else
+				# LibMagic already installed with MacPorts
+				echo "LibMagic already installed with MacPorts"
+			fi
     else
+				# No MacPorts or HomeBrew is installed
+				echo "=========================================================================="
 				echo "Please install HomeBrew or MacPorts before continue."
-				echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"
-				echo '/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
-				echo "Or install MacPorts with this guide:"
-				echo 'https://www.macports.org/install.php'
+				echo "=========================================================================="
+				echo "|"
+				echo "|	 Run this HomeBrew installation command on a terminal and relanch DAVE:"
+				echo '|	 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+				echo "|"
+				echo "|  Or install MacPorts with this guide:"
+				echo '|  https://www.macports.org/install.php'
+				echo "|"
+				echo "=========================================================================="
 				sendError "HomeBrew or MacPorts requiered"
     fi
 	else
+		# HomeBrew is installed
 		echo "Installing LibMagic with HomeBrew"
 		/usr/local/bin/brew install libmagic
 	fi

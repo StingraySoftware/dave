@@ -71,12 +71,10 @@
       $(document).ready(function () {
 
         window.onerror = function (errorMsg, url, lineNumber) {
-            logErr(errorMsg + ", line: " + lineNumber);
-            return false;
+            return uncaugthError(errorMsg + ", line: " + lineNumber);
         };
         window.addEventListener("error", function (e) {
-           logErr(e.error.message);
-           return false;
+           return uncaugthError(e.error.message);
         });
 
         Logger.show();
@@ -96,12 +94,22 @@
         return (value === undefined) || (value == null);
       }
 
+      function uncaugthError(errorMsg) {
+        if (!errorMsg.toLowerCase().includes("invalid or unexpected token")){
+          logErr(errorMsg + ", line: " + lineNumber);
+        }
+        return false;
+      }
+
       function showError(errorMsg) {
         var errorArr = errorMsg.split("|");
         waitingDialog.show(errorArr[0], { progressType: "warning" });
-        logErr("PYTHON SERVER LOG:");
-        logError(errorArr[1], "LogError");
-        gaTracker.sendEvent("SplashPage", "LogError", errorArr[1]);
+        if (errorArr[1].trim() != ""){
+          logErr("PYTHON SERVER LOG:");
+          logError(errorArr[1], "LogError");
+          gaTracker.sendEvent("SplashPage", "LogError", JSON.stringify(errorArr[1]));
+        }
+        gaTracker.sendEvent("SplashPage", "showError", JSON.stringify(errorArr[0]));
         Logger.open();
       }
 

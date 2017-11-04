@@ -3,6 +3,11 @@
 # Source this script to set up the environment for developing DAVE.
 # - Download miniconda and install packages and virtual env
 # - Download node and install packages
+# - Install Python dependencies
+# - Install Stingray and Astropy Helpers
+# - Install Hendrics
+# - Install LibMagic
+# - Install node modules
 
 # First check if the script is being sourced...
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
@@ -114,7 +119,7 @@ NODE_FILENAME="node-v$NODE_VERSION"
 			fi
 		fi
 
-		sudo installer -pkg $NODE_TAR -target /
+		installer -pkg $NODE_TAR -target /
 
 	else
 		# Unknown.
@@ -220,12 +225,12 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		# Mac OSX
 
 		#Build stingray
-		sudo python setup.py install
+		python setup.py install
 
 		cd $STINGRAY_FOLDER/astropy_helpers
 
 		#Build astropy_helpers
-		sudo python setup.py install
+		python setup.py install
 
 		cd $DIR/..
 
@@ -274,7 +279,7 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 		# Mac OSX
 
 		#Build HENDRICS
-		sudo python setup.py install
+		python setup.py install
 
 		cd $DIR/..
 
