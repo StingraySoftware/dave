@@ -210,7 +210,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.timeLagPlotIdx = -1;
   this.coherencePlotIdx = -1;
 
-  this.setTitle("XSpectrum");
+  this.setTitle("Spectral Timing");
 
   //Preapares XS toolpanel data
   this.wfSelector.find(".loadBtn").html('<i class="fa fa-fw fa-line-chart"></i>Analyze');
