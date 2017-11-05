@@ -1731,13 +1731,8 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
         profile = np.sum(phaseogr, axis=1)
         mean_profile = np.mean(profile)
         if np.all(mean_phases < 1.5):
-            logging.debug("np.all < 1.5")
             mean_phases = np.concatenate((mean_phases, mean_phases + 1))
             profile = np.concatenate((profile, profile))
-        logging.debug("mean_phases:" + str(mean_phases.shape))
-        logging.debug("mean_phases data:" + str(mean_phases))
-        logging.debug("profile:" + str(profile.shape))
-        logging.debug("profile data:" + str(profile))
         err_low, err_high = poisson_conf_interval(mean_profile, interval='frequentist-confidence', sigma=1)
         error_dist = [err_low, err_high]
 
