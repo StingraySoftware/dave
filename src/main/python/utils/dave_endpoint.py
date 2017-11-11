@@ -826,7 +826,8 @@ def get_pulse_search(src_filename, bck_filename, gti_filename, target,
 
 
 def get_phaseogram(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, f, nph, nt):
+                    filters, axis, dt, f, nph, nt, fdot=0, fddot=0,
+                    binary_parameters=None):
 
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -853,9 +854,12 @@ def get_phaseogram(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_phaseogram: f %s" % f)
     logging.debug("get_phaseogram: nph %s" % nph)
     logging.debug("get_phaseogram: nt %s" % nt)
+    logging.debug("get_phaseogram: fdot %s" % fdot)
+    logging.debug("get_phaseogram: fddot %s" % fddot)
+    logging.debug("get_phaseogram: binary_parameters %s" % binary_parameters)
 
     data = DaveEngine.get_phaseogram(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, f, nph, nt)
+                                    filters, axis, dt, f, nph, nt, fdot, fddot, binary_parameters)
 
     logging.debug("get_phaseogram: Finish!")
 

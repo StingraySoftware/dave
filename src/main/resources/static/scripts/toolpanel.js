@@ -324,7 +324,7 @@ function ToolPanel (id,
                                                 function (selector) {
                                                 //Notifies that time range has changed
                                                 if (!isNull(currentObj.tabPanel)){
-                                                  currentObj.tabPanel.onTimeRangeChanged(Math.max ((selector.toValue - selector.fromValue) * 0.95, selector.step));
+                                                  currentObj.tabPanel.onTimeRangeChanged(Math.max ((selector.toValue - selector.fromValue), selector.step));
                                                 }
                                               },
                                               this.selectors_array,

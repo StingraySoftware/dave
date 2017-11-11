@@ -9,6 +9,7 @@ function BinSelector(id, title, fromValue, toValue, step, initValue, onSelectorV
   this.fromValue = fromValue;
   this.toValue = toValue;
   this.value = initValue;
+  this.initValue = initValue;
   this.step = step;
   this.type = (!isNull(type) && (type == "log")) ? type : "linear"; // Type: linear or log
   this.precision = !isNull(precision) ? precision : CONFIG.DEFAULT_NUMBER_DECIMALS;

@@ -187,7 +187,7 @@ function hideWaitingDialogDelayed (delay) {
 
 function uncaugthError(errorMsg) {
   if (!errorMsg.toLowerCase().includes("invalid or unexpected token")){
-    logErr(errorMsg + ", line: " + lineNumber);
+    logErr(errorMsg);
   }
   return false;
 }

@@ -284,10 +284,16 @@ def get_pulse_search():
 
 @app.route('/get_phaseogram', methods=['POST'])
 def get_phaseogram():
+
+    binary_params= None
+    if "binary_params" in request.json:
+        binary_params = request.json['binary_params']
+
     return DaveEndpoint.get_phaseogram(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['f']), int(request.json['nph']), int(request.json['nt']))
+            float(request.json['f']), int(request.json['nph']), int(request.json['nt']),
+            float(request.json['fdot']), float(request.json['fddot']), binary_params)
 
 
 # Receives a message from client and send it to all subscribers

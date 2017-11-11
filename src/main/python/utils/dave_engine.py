@@ -590,7 +590,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
         logging.error(ExHelper.getException('get_power_density_spectrum'))
         help_msg = ""
         if len(freq) == 0 and pds_type != 'Sng':
-            help_msg = " Try with PDSType: Single."
+            help_msg = " Try with PDSType: Single or a smaller segment length."
         warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
@@ -845,7 +845,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         logging.error(ExHelper.getException('get_cross_spectrum'))
         help_msg = ""
         if len(freq) == 0 and xds_type != 'Sng':
-            help_msg = " Try with PDSType: Single."
+            help_msg = " Try with PDSType: Single a smaller segment length."
         warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
@@ -1647,6 +1647,9 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
         # Gets time data
         time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
 
+        tseg = np.median(np.diff(time_data))
+        logging.debug("tseg: " + str(tseg))
+
         # We will search for pulsations over a range
         # of frequencies around the known pulsation period.
 
@@ -1697,7 +1700,7 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
 # @param: nt: Number of time bins.
 #
 def get_phaseogram(src_destination, bck_destination, gti_destination, filters, axis,
-                   dt, f, nph, nt):
+                   dt, f, nph, nt, fdot=0, fddot=0, binary_parameters=None):
     phaseogr = []
     phases = []
     times = []
@@ -1721,9 +1724,33 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
         if DsHelper.is_lightcurve_dataset(ds):
             weights = np.array(ds.tables["RATE"].columns["RATE"].values)
 
-        # Calculate the phaseogram plot data
+        # Prepares the phaseogram parameters
         time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-        phaseogr, phases, times, additional_info = phaseogram(time_data, f, nph=nph, nt=nt, weights=weights)
+
+        pepoch = None
+        if len(ds.tables["GTI"].columns["START"].values) > 0:
+            pepoch = ds.tables["GTI"].columns["START"].values[0]
+
+        delay_times = 0
+        orbital_period = time_data[-1] - time_data[0]
+        asini = 0
+        t0 = pepoch
+        prev_t0 = 0
+        if not binary_parameters is None:
+            if binary_parameters[0] > 0:
+                orbital_period=binary_parameters[0]
+            if binary_parameters[1] > 0:
+                asini=binary_parameters[1]
+            if binary_parameters[2] > 0:
+                t0=binary_parameters[2]
+            delay_times = asini * np.sin(2 * np.pi * (time_data - t0) / orbital_period)
+
+        corrected_times = time_data - delay_times
+
+        # Calculate the phaseogram plot data
+        phaseogr, phases, times, additional_info = phaseogram(corrected_times, f, nph=nph, nt=nt,
+                                                                fdot=fdot, fddot=fddot, plot=False,
+                                                                pepoch=pepoch, weights=weights)
         phaseogr = np.transpose(phaseogr)
 
         # Calculates the profile plot data
@@ -1735,6 +1762,7 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
             profile = np.concatenate((profile, profile))
         err_low, err_high = poisson_conf_interval(mean_profile, interval='frequentist-confidence', sigma=1)
         error_dist = [err_low, err_high]
+
 
     except:
         logging.error(ExHelper.getException('get_phaseogram'))

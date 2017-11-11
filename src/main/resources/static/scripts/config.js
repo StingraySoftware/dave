@@ -68,6 +68,7 @@ CONFIG = {
     BASELINE_COLOR: '#DD3333',
     MEANFLUX_COLOR: '#3333DD',
     CANDIDATE_FREQ_COLOR: '#DD3333',
-    AGN_COLORS: ['#20b378', '#6fb320', '#cc8d10', '#cc2610', '#cc10a6']
+    AGN_COLORS: ['#20b378', '#6fb320', '#cc8d10', '#cc2610', '#cc10a6'],
+    PHASEOGRAM_LINE_COLOR: '#dddddd'
   }
 }

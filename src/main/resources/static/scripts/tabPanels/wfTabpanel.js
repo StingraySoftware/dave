@@ -876,7 +876,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     async.waterfall([
         function(callback) {
             if (!isNull(tabConfig.plotDefaultConfig)){
-              currentObj.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+              currentObj.plotDefaultConfig = $.extend(true, CONFIG.PLOT_CONFIG, tabConfig.plotDefaultConfig);
             }
             callback();
         },

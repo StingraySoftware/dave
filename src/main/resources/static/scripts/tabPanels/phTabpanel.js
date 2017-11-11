@@ -58,8 +58,8 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.createPlots = function () {
 
-    //Adds Long-Term variability Plot to outputPanel
-    this.pgPlot = new PgPlot(
+    //Adds FreqRangePlot Plot to outputPanel
+    this.freqRangePlot = new FreqRangePlot(
                       this.id + "_pg_" + (new Date()).getTime(),
                       $.extend(true, $.extend(true, {}, plotConfig), {
                         styles: { type: "ligthcurve",
@@ -72,18 +72,27 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       function (filters) {
                         //onFiltersChangedFromPlot
                         currentObj.freqRangeSelector.setValues( filters[0].from, filters[0].to );
+                        currentObj.freqRangePlot.plotConfig.selected_freq_range = [ filters[0].from, filters[0].to ];
+                        currentObj.freqRangePlot.redrawDiffered();
                       },
-                      function (comesFromLombScargle) {
-                        //On PgPlot Plot Ready
-                        if (!isNull(currentObj.pgPlot.data)
-                            && currentObj.pgPlot.data[0].values.length > 0){
+                      function () {
+                        //On FreqRangePlot Plot Ready
+                        if (!isNull(currentObj.freqRangePlot.data)
+                            && currentObj.freqRangePlot.data[0].values.length > 0){
                               currentObj.outputPanel.onPlotReady();
                               if (isNull(currentObj.freqRangeSelector)){
                                 //We already know the freq range, so create controls
                                 currentObj.addControls();
+                              } else {
+                                //Else update freqRangeSelector
+                                var freqRange = currentObj.freqRangePlot.getDefaultFreqRange();
+                                currentObj.freqRangeSelector.setMinMaxValues(freqRange[0], freqRange[1]);
                               }
+                        } else if (!isNull(currentObj.freqRangePlot.data)
+                                   && currentObj.freqRangePlot.data[3].values.length > 0) {
+                          currentObj.freqRangePlot.showWarn(currentObj.freqRangePlot.data[3].values[0]);
                         } else {
-                          currentObj.pgPlot.showWarn("Wrong PDS data");
+                          currentObj.freqRangePlot.showWarn("Wrong PDS data");
                         }
                       },
                       null,
@@ -92,7 +101,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       this.projectConfig,
                       !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null
                     );
-    this.addPlot(this.pgPlot, false);
+    this.addPlot(this.freqRangePlot, false);
 
     //Adds Pulse Search Plot to outputPanel
     this.psPlot = new PulseSearchPlot(
@@ -157,7 +166,14 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     this.addPlot(this.phPlot, false);
 
     //Request plot data after all plots were added
-    this.pgPlot.onDatasetValuesChanged(this.outputPanel.getFilters());
+    this.freqRangePlot.onDatasetValuesChanged(this.outputPanel.getFilters());
+  }
+
+  this.onBinSizeChanged = function (dt) {
+    currentObj.projectConfig.binSize = dt;
+    currentObj.psPlot.plotConfig.dt = dt;
+    currentObj.prPlot.plotConfig.dt = dt;
+    currentObj.phPlot.plotConfig.dt = dt;
   }
 
   this.addControls = function(){
@@ -166,7 +182,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     var $pulseSearchContainer = getSectionContainer(this.pulseSearchSection);
 
     //Adds frequency range selector
-    var freqRange = this.pgPlot.getDefaultFreqRange();
+    var freqRange = this.freqRangePlot.getDefaultFreqRange();
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
                                       "Frequency Range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
@@ -175,6 +191,10 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                       null,
                                       function( event, ui ) {
                                         currentObj.freqRangeSelector.setValues( ui.values[ 0 ], ui.values[ 1 ], "slider");
+                                        currentObj.freqRangePlot.plotConfig.selected_freq_range = [ ui.values[ 0 ], ui.values[ 1 ]];
+                                        setTimeout( function () {
+                                          currentObj.freqRangePlot.redrawDiffered();
+                                        }, 120);
                                       },
                                       null,
                                       getStepSizeFromRange(freqRange[1] - freqRange[0], 100));
@@ -250,7 +270,8 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     restoreBtn.click(function () {
       if (!isNull(currentObj.candidateFrequency)){
         currentObj.freqSelector.setValues(currentObj.candidateFrequency);
-        currentObj.phPlot.plotConfig.f = currentObj.candidateFrequency;
+        currentObj.phPlot.resetFrequecy(currentObj.candidateFrequency);
+        currentObj.createPhaseogramSliders();
         currentObj.getPhaseogramFromServer();
       }
     });
@@ -267,6 +288,8 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     $phaseogramContainer.append($phaseogramAdv);
 
     this.toolPanel.$html.find(".fileSelectorsContainer").append($phaseogram);
+
+    this.createPhaseogramSliders();
   }
 
   this.onPulseSearchClick = function() {
@@ -281,12 +304,250 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.onFreqSelectorValuesChanged = function(){
     currentObj.phPlot.plotConfig.f = currentObj.freqSelector.value;
+    currentObj.createPhaseogramSliders();
     if (!isNull(currentObj.freqSelectorTimeOutId)){
       clearTimeout(currentObj.freqSelectorTimeOutId);
     }
     currentObj.freqSelectorTimeOutId = setTimeout( function () {
       currentObj.getPhaseogramFromServer();
     }, 350);
+  }
+
+  this.createPhaseogramSliders = function () {
+
+    //Prepares containers
+    var $phaseogramContainer = getSectionContainer(this.toolPanel.$html.find(".phaseogram"));
+    $phaseogramContainer.find(".phSlidersContainer").remove();
+    var $phSliders = getSection ("Pulse adjustment", "phSlidersContainer",
+                                    currentObj.phPlot.showLines,
+                                    function ( enabled ) {
+                                      currentObj.phPlot.showLines = enabled;
+                                      if (enabled) {
+                                        currentObj.phPlot.redrawDiffered();
+                                      } else {
+                                        currentObj.phPlot.resetFrequecy(currentObj.candidateFrequency);
+                                        currentObj.createPhaseogramSliders();
+                                        currentObj.getPhaseogramFromServer();
+                                      }
+                                  });
+    $phaseogramContainer.append($phSliders);
+    var $phSlidersContainer = getSectionContainer($phSliders);
+
+    var sliderPrecision = 3;
+
+    //Resets plot temp values
+    this.phPlot.resetTempValues();
+
+    //Creates Pulse search mode radios on Pulse Search Advanced container
+    var $adjModeRadiosCont = getRadioControl(this.id,
+                                            "Mode",
+                                            "adjMode",
+                                            [
+                                              { id:"pder", label:"Period derivatives", value:"per_der"},
+                                              { id:"orbm", label:"Orbital motion", value:"orbital_motion"}
+                                            ],
+                                            this.phSlidersMode,
+                                            function( value ) {
+                                              currentObj.onPhSlidersModeChanged(value);
+                                              currentObj.restorePhSliders();
+                                            });
+    $phSlidersContainer.append($adjModeRadiosCont);
+
+    //Df slider
+    var delta_df_start = 4 / this.projectConfig.getTimeRange();
+    this.df_order_of_mag = Math.floor(Math.log10(delta_df_start));
+    var delta_df = delta_df_start / Math.pow(10, this.df_order_of_mag);
+    this.dfSelector = new BinSelector(this.id + "_dfSelector",
+                                      "Delta freq x$10^" + this.df_order_of_mag,
+                                      -delta_df, delta_df, Math.pow(10, -sliderPrecision), currentObj.phPlot.plotConfig.tmp_df,
+                                      this.onDfSelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.dfSelector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onDfSelectorValuesChanged();
+                                      });
+    this.dfSelector.precision = sliderPrecision;
+    this.dfSelector.inputChanged = function ( event ) {
+       currentObj.dfSelector.setValues( getInputFloatValue(currentObj.dfSelector.fromInput, currentObj.phPlot.plotConfig.tmp_df) );
+       currentObj.onDfSelectorValuesChanged();
+    };
+    $phSlidersContainer.append(this.dfSelector.$html);
+
+    //Fdot slider
+    var delta_dfdot_start = 8 / Math.pow(this.projectConfig.getTimeRange(), 2);
+    this.dfdot_order_of_mag = Math.floor(Math.log10(delta_dfdot_start));
+    var delta_dfdot = delta_dfdot_start / Math.pow(10, this.dfdot_order_of_mag);
+    this.fdotSelector = new BinSelector(this.id + "_fdotSelector",
+                                      "Delta fdot x$10^" + this.dfdot_order_of_mag,
+                                      -delta_dfdot, delta_dfdot, Math.pow(10, -sliderPrecision), currentObj.phPlot.plotConfig.tmp_fdot,
+                                      this.onFdotSelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.fdotSelector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onFdotSelectorValuesChanged();
+                                      });
+    this.fdotSelector.precision = sliderPrecision;
+    this.fdotSelector.inputChanged = function ( event ) {
+       currentObj.fdotSelector.setValues( getInputFloatValue(currentObj.fdotSelector.fromInput, currentObj.phPlot.plotConfig.tmp_fdot) );
+       currentObj.onFdotSelectorValuesChanged();
+    };
+    $phSlidersContainer.append(this.fdotSelector.$html);
+
+    //Fddot slider
+    var delta_dfddot_start = 16 / Math.pow(this.projectConfig.getTimeRange(), 3);
+    this.dfddot_order_of_mag = Math.floor(Math.log10(delta_dfddot_start));
+    var delta_dfddot = delta_dfddot_start / Math.pow(10, this.dfddot_order_of_mag);
+    this.fddotSelector = new BinSelector(this.id + "_fddotSelector",
+                                      "Delta fddot x$10^" + this.dfddot_order_of_mag,
+                                      -delta_dfddot, delta_dfddot, Math.pow(10, -sliderPrecision), currentObj.phPlot.plotConfig.tmp_fddot,
+                                      this.onFddotSelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.fddotSelector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onFddotSelectorValuesChanged();
+                                      });
+    this.fddotSelector.precision = sliderPrecision;
+    this.fddotSelector.inputChanged = function ( event ) {
+       currentObj.fddotSelector.setValues( getInputFloatValue(currentObj.fddotSelector.fromInput, currentObj.phPlot.plotConfig.tmp_fddot) );
+       currentObj.onFddotSelectorValuesChanged();
+    };
+    $phSlidersContainer.append(this.fddotSelector.$html);
+
+    //Orbital Period slider
+    var delta_period = this.projectConfig.getTimeRange() * 5;
+    var orbital_period = !isNull(currentObj.phPlot.plotConfig.binary_params) ?
+                            currentObj.phPlot.plotConfig.binary_params[0] :
+                            this.projectConfig.getTimeRange() * 0.99;
+    this.orbPerSelector = new BinSelector(this.id + "_orbPerSelector",
+                                      "Orb. Per. (s)",
+                                      Math.max(this.projectConfig.getTimeRange() - delta_period),
+                                      this.projectConfig.getTimeRange() + delta_period,
+                                      this.projectConfig.getTimeRange() / 500,
+                                      orbital_period,
+                                      this.onOrbPerSelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.orbPerSelector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onOrbPerSelectorValuesChanged();
+                                      });
+    this.orbPerSelector.precision = CONFIG.MAX_TIME_RESOLUTION_DECIMALS;
+    this.orbPerSelector.inputChanged = function ( event ) {
+       currentObj.orbPerSelector.setValues( getInputFloatValue(currentObj.orbPerSelector.fromInput, currentObj.phPlot.plotConfig.tmp_binary_params[0]) );
+       currentObj.onOrbPerSelectorValuesChanged();
+    };
+    $phSlidersContainer.append(this.orbPerSelector.$html);
+
+    //Asini slider
+    var delta_asini = 5 / currentObj.phPlot.plotConfig.f;
+    var min_asini = 1 / Math.pow(10, CONFIG.MAX_TIME_RESOLUTION_DECIMALS);
+    var asini = !isNull(currentObj.phPlot.plotConfig.binary_params) ? currentObj.phPlot.plotConfig.binary_params[1] : min_asini * 500;
+    this.asiniSelector = new BinSelector(this.id + "_asiniSelector",
+                                      "a sin i / c (l-sec)",
+                                      min_asini, asini + delta_asini, (asini + delta_asini) / 500, asini,
+                                      this.onAsiniSelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.asiniSelector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onAsiniSelectorValuesChanged();
+                                      });
+    this.asiniSelector.precision = CONFIG.MAX_TIME_RESOLUTION_DECIMALS;
+    this.asiniSelector.inputChanged = function ( event ) {
+       currentObj.asiniSelector.setValues( getInputFloatValue(currentObj.asiniSelector.fromInput, currentObj.phPlot.plotConfig.tmp_binary_params[1]) );
+       currentObj.onAsiniSelectorValuesChanged();
+    };
+    $phSlidersContainer.append(this.asiniSelector.$html);
+
+    //Asini slider
+    var delta_t0 = delta_period;
+    var t0 = !isNull(currentObj.phPlot.plotConfig.binary_params) ? currentObj.phPlot.plotConfig.binary_params[2] : 0;
+    this.t0Selector = new BinSelector(this.id + "_t0Selector",
+                                      "T0 (MET)",
+                                      t0 - delta_t0, t0 + delta_t0, (delta_t0 * 2) / 500, t0,
+                                      this.onT0SelectorValuesChanged,
+                                      function( event, ui ) {
+                                        currentObj.t0Selector.setValues( ui.values[ 0 ], "slider");
+                                        currentObj.onT0SelectorValuesChanged();
+                                      });
+    this.t0Selector.precision = CONFIG.DEFAULT_NUMBER_DECIMALS;
+    this.t0Selector.inputChanged = function ( event ) {
+       currentObj.t0Selector.setValues( getInputFloatValue(currentObj.t0Selector.fromInput, currentObj.phPlot.plotConfig.tmp_binary_params[2]) );
+       currentObj.onT0SelectorValuesChanged();
+    };
+    $phSlidersContainer.append(this.t0Selector.$html);
+
+    //Adds the Recalculate button
+    var recalculateBtn = $('<button class="btn btn-success applyPhBtn" style="float: left; margin-top: 24px; margin-bottom: 40px;">Recalculate</button>');
+    recalculateBtn.click(function () {
+      currentObj.phPlot.applySliders();
+      currentObj.createPhaseogramSliders();
+      currentObj.getPhaseogramFromServer();
+      currentObj.addInfoPanel();
+    });
+    $phSlidersContainer.append(recalculateBtn);
+
+    //Adds the Restore sliders button
+    var restorePhBtn = $('<button class="btn btn-default restorePhBtn" style="float: right; margin-top: 24px;">Restore</button>');
+    restorePhBtn.click(function () {
+      currentObj.restorePhSliders();
+    });
+    $phSlidersContainer.append(restorePhBtn);
+
+    //Sets selectors visibilities
+    this.onPhSlidersModeChanged(this.phSlidersMode);
+
+    //Removes infoPanel if exists
+    this.outputPanel.$body.find(".infoPanel").remove();
+  }
+
+  this.onPhSlidersModeChanged = function(mode) {
+    this.phSlidersMode = mode;
+
+    setVisibility(this.dfSelector.$html, mode=="per_der");
+    setVisibility(this.fdotSelector.$html, mode=="per_der");
+    setVisibility(this.fddotSelector.$html, mode=="per_der");
+
+    setVisibility(this.orbPerSelector.$html, mode=="orbital_motion");
+    setVisibility(this.asiniSelector.$html, mode=="orbital_motion");
+    setVisibility(this.t0Selector.$html, mode=="orbital_motion");
+
+    if (mode=="per_der"){
+      this.phPlot.resetTempValues();
+    } else {
+      this.phPlot.plotConfig.tmp_binary_params = [ currentObj.orbPerSelector.initValue,
+                                                   currentObj.asiniSelector.initValue,
+                                                   currentObj.t0Selector.initValue ];
+    }
+  }
+
+  this.onDfSelectorValuesChanged = function(){
+    currentObj.phPlot.plotConfig.tmp_df = currentObj.dfSelector.value * Math.pow(10, currentObj.dfdot_order_of_mag);
+    currentObj.phPlot.redrawDiffered();
+  }
+
+  this.onFdotSelectorValuesChanged = function(){
+    currentObj.phPlot.plotConfig.tmp_fdot = currentObj.fdotSelector.value * Math.pow(10, currentObj.df_order_of_mag);
+    currentObj.phPlot.redrawDiffered();
+  }
+
+  this.onFddotSelectorValuesChanged = function(){
+    currentObj.phPlot.plotConfig.tmp_fddot = currentObj.fddotSelector.value * Math.pow(10, currentObj.dfdot_order_of_mag);
+    currentObj.phPlot.redrawDiffered();
+  }
+
+  this.onOrbPerSelectorValuesChanged = function(){
+    currentObj.phPlot.plotConfig.tmp_binary_params[0] = currentObj.orbPerSelector.value;
+    currentObj.phPlot.redrawDiffered();
+  }
+
+  this.onAsiniSelectorValuesChanged = function(){
+    currentObj.phPlot.plotConfig.tmp_binary_params[1] = currentObj.asiniSelector.value;
+    currentObj.phPlot.redrawDiffered();
+  }
+
+  this.onT0SelectorValuesChanged = function(){
+    currentObj.phPlot.plotConfig.tmp_binary_params[2] = currentObj.t0Selector.value;
+    currentObj.phPlot.redrawDiffered();
+  }
+
+  this.restorePhSliders = function () {
+    this.phPlot.resetFrequecy(this.candidateFrequency);
+    this.createPhaseogramSliders();
+    this.getPhaseogramFromServer();
   }
 
   this.onPHTexboxesChanged = function(event){
@@ -307,7 +568,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onCandidateFrequenciesFound = function () {
-    if (currentObj.psPlot.candidateFreqs.length > 0) {
+    if (!isNull(currentObj.psPlot.candidateFreqs) && currentObj.psPlot.candidateFreqs.length > 0) {
 
       //If we have candidate frequency we can continue plotting the plofile and phaseogram
       //Fill candidate frequencies selector
@@ -334,8 +595,8 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       setVisibility(currentObj.toolPanel.$html.find(".phaseogram"), true);
 
       //Minimize Pulse Search Plots
-      if (currentObj.pgPlot.$html.hasClass("fullWidth")) {
-        currentObj.pgPlot.btnFullScreen.click();
+      if (currentObj.freqRangePlot.$html.hasClass("fullWidth")) {
+        currentObj.freqRangePlot.btnFullScreen.click();
       }
       if (currentObj.psPlot.$html.hasClass("fullWidth")) {
         currentObj.psPlot.btnFullScreen.click();
@@ -416,11 +677,34 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   };
 
+  this.addInfoPanel = function () {
+    this.outputPanel.$body.find(".infoPanel").remove();
+    this.infoPanel = new InfoPanel("infoPanel", "Pulse adjustment parameters", null, null, null);
+    this.infoPanel.redraw = function() {
+
+      if (currentObj.phSlidersMode == "per_der"){
+        content = "<tr><td> Frequency: " + currentObj.phPlot.plotConfig.f.toFixed(6) + " Hz</td></tr>" +
+                  "<tr><td> Delta fdot: " + currentObj.phPlot.plotConfig.fdot.toFixed(9) + "</td></tr>" +
+                  "<tr><td> Delta fddot: " + currentObj.phPlot.plotConfig.fddot.toFixed(9) + "</td></tr>";
+      } else {
+        content = "<tr><td> PB (s):   " + currentObj.phPlot.plotConfig.binary_params[0].toFixed(6) + "  (" + (currentObj.phPlot.plotConfig.binary_params[0] / 86400).toFixed(6) + " d)</td></tr>" +
+                  "<tr><td> A1 (l-s): " + currentObj.phPlot.plotConfig.binary_params[1].toFixed(6) + "</td></tr>" +
+                  "<tr><td> T0 (MET): " + currentObj.phPlot.plotConfig.binary_params[2].toFixed(6) + "</td></tr>";
+      }
+
+      this.container.html(content);
+    }
+    this.infoPanel.redraw();
+    this.outputPanel.$body.append(this.infoPanel.$html);
+  }
+
   //Set the selected plot configs
   this.plotConfig = plotConfig;
 
   this.pulseSearchAdvEnabled = false;
   this.phaseogramAdvEnabled = false;
+  this.phSlidersTimeout = 25;
+  this.phSlidersMode = "per_der";
 
   this.setTitle("Phaseogram");
 

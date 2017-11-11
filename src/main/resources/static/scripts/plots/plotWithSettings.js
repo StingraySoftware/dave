@@ -215,7 +215,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
       //Adds bin size selector to plot
       var tab = getTabForSelector(currentObj.id);
-      if (!isNull(tab) && !isNull(tab.toolPanel.binSelector)){
+      if (!isNull(tab)){ //&& !isNull(tab.toolPanel.binSelector)
 
         var enabled = !isNull(this.binSelector) && this.binSelector.enabled;
         var binSize = (enabled) ? this.plotConfig.dt : tab.projectConfig.binSize;
@@ -250,8 +250,8 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
         this.binSelector = new BinSelector(this.id + "_binSelector",
                                           "Bin Size (" + tab.projectConfig.timeUnit  + "):",
-                                          tab.projectConfig.minBinSize,
-                                          tab.projectConfig.maxBinSize,
+                                          binSelectorConfig.minBinSize,
+                                          binSelectorConfig.maxBinSize,
                                           binSelectorConfig.step,
                                           binSize,
                                           this.onBinSizeChanged,

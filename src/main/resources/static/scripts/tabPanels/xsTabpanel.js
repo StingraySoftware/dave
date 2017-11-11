@@ -158,6 +158,10 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 false,
                                 this.projectConfig
                               );
+      xsPlot.onBinSizeChanged = function () {
+          this.plotConfig.dt1 = this.binSelector.value;
+          this.plotConfig.dt2 = this.binSelector.value;
+        };
       this.xsPlotIdx = this.outputPanel.plots.length;
       this.addPlot(xsPlot, false);
 
