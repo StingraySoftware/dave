@@ -238,15 +238,16 @@ function ToolPanel (id,
 
       //Sets RMF fileSelector message depending on PHA column
       var rmfMessage = "";
-      if (!projectConfig.schema.hasColumn("PHA")){
-          //PHA Column doesn't exist, show we can't apply RMF file
-          rmfMessage = "PHA column not found in SRC file";
-      } else if (projectConfig.schema.getTable()["PHA"].min_value >= projectConfig.schema.getTable()["PHA"].max_value){
+      var calibrationColumn = projectConfig.getCalibrationColumn();
+      if (!projectConfig.schema.hasColumn(calibrationColumn)){
+          //calibrationColumn Column doesn't exist, show we can't apply RMF file
+          rmfMessage = calibrationColumn + " column not found in SRC file";
+      } else if (projectConfig.schema.getTable()[calibrationColumn].min_value >= projectConfig.schema.getTable()[calibrationColumn].max_value){
           //PHA Column is empty, show we can't apply RMF file
-          rmfMessage = "PHA column is empty in SRC file";
+          rmfMessage = calibrationColumn + " column is empty in SRC file";
       }
 
-      if (rmfMessage != ""){
+      if ((rmfMessage != "") || (calibrationColumn == "PI")){
         //If hasen't PHA column then remove PI from excludedFilters
         excludedFilters = excludedFilters.filter(function(column) { return column != "PI"; });
       }
@@ -380,6 +381,14 @@ function ToolPanel (id,
 
       //Adds color selectors, PHA filters
       this.createColorSelectors (pha_column);
+
+    } else if (projectConfig.getCalibrationColumn() == "PI"){
+      //If NuSTAR and show must upload RMF file for set energy ranges:
+      this.$html.find(".selectorsContainer").append('<div class="colorFilterType">' +
+                                                      '<h3>Energy range filter:</h3>' +
+                                                    '</div>');
+      this.onColorFilterTypeChanged("E"); // If no rmffile yet, upload rmf will be shown.
+      this.$html.find(".colorSelectorsContainer").removeClass("hidden");
     }
 
     //Sets initial filters to ToolPanel

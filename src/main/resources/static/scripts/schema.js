@@ -174,6 +174,19 @@ function Schema(schema){
     return this.getTotalDuration() * CONFIG.TIMERANGE_MULTIPLIER;
   }
 
+  this.getCalibrationColumn = function () {
+    if (this.hasHeader()){
+      var tableHeader = this.getHeader();
+      if (!isNull(tableHeader["TELESCOP"])) {
+        var telescop = tableHeader["TELESCOP"].trim().toLowerCase();
+        if (telescop == "nustar") {
+            return "PI";
+        }
+      }
+    }
+    return "PHA";
+  }
+
   return this;
 }
 

@@ -197,6 +197,13 @@ function ProjectConfig(){
     }
   }
 
+  this.getCalibrationColumn = function () {
+    if (this.hasSchema()){
+      return this.schema.getCalibrationColumn();
+    }
+    return "PHA";
+  }
+
   this.getConfig = function () {
     var config = $.extend( {}, this );
     config.selectorFilenames = Object.assign({}, this.selectorFilenames);

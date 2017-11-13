@@ -116,8 +116,9 @@ def append_file_to_dataset(destination, next_destination):
 #
 # @param: destination: file destination or dataset cache key
 # @param: rmf_destination: file destination of file to apply
+# @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(destination, rmf_destination):
+def apply_rmf_file_to_dataset(destination, rmf_destination, column):
     try:
         dataset, cache_key = DaveReader.get_file_dataset(destination)
         if DsHelper.is_events_dataset(dataset):
@@ -127,11 +128,11 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                 events_table = dataset.tables["EVENTS"]
                 rmf_table = rmf_dataset.tables["EBOUNDS"]
 
-                if "PHA" not in events_table.columns:
-                    logging.warn('apply_rmf_file_to_dataset: PHA column not found!')
+                if column not in events_table.columns:
+                    logging.warn('apply_rmf_file_to_dataset: ' + str(column) +  ' column not found!')
                     return False
 
-                pha_data = events_table.columns["PHA"].values
+                pha_data = events_table.columns[column].values
 
                 e_avg_data = dict((channel, (min + max)/2) for channel, min, max in zip(rmf_table.columns["CHANNEL"].values,
                                                                                     rmf_table.columns["E_MIN"].values,

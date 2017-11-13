@@ -50,8 +50,10 @@ function Service (base_url) {
                                         errorFn);
   };
 
-  this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
-    $.get( thisService.base_url + "/apply_rmf_file_to_dataset", { filename: filename, rmf_filename: rmf_filename } )
+  this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, column, fn ) {
+    $.get( thisService.base_url + "/apply_rmf_file_to_dataset", { filename: filename,
+                                                                  rmf_filename: rmf_filename,
+                                                                  column: column } )
       .done(fn)
       .fail(fn);
   };

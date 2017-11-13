@@ -121,8 +121,9 @@ def append_file_to_dataset(filename, nextfile, target):
 #                            Creates a new column E with Enery data on dataset
 # @param: filename: filename or dataset cache key
 # @param: rmf_filename: rmf file to apply
+# @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(filename, rmf_filename, target):
+def apply_rmf_file_to_dataset(filename, rmf_filename, column, target):
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key")
@@ -134,7 +135,7 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
     if not FileUtils.is_valid_file(rmf_destination):
         return common_error("Invalid RMF file")
 
-    result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination)
+    result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination, column)
     return json.dumps(result)
 
 

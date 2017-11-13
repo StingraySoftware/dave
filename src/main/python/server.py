@@ -101,7 +101,7 @@ def append_file_to_dataset():
 
 @app.route('/apply_rmf_file_to_dataset', methods=['GET'])
 def apply_rmf_file_to_dataset():
-    return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], UPLOADS_TARGET)
+    return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], request.args['column'], UPLOADS_TARGET)
 
 
 @app.route('/get_plot_data', methods=['POST'])
