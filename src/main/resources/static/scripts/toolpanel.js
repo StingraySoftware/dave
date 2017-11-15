@@ -400,46 +400,69 @@ function ToolPanel (id,
     var selectorNames = ["A", "B", "C", "D"];
     var increment = (column.max_value - column.min_value) * (1 / selectorNames.length);
     var container = $("<div class='colorSelectors_" + column.id + "'></div>");
+    var mustAppend = false;
 
     for (i in selectorNames) {
       var selectorName = selectorNames[i];
       var selectorKey = "Color_" + selectorName;
-      var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector", replaceColumn: column.id };
-      var selector = new sliderSelector(this.id + "_selector_" + selectorKey + "_" + column.id,
-                                        ((column.id == this.channelColumn) ? "Channel" : "Energy") + " range " + selectorName + ":",
-                                        filterData,
-                                        column.min_value, column.max_value,
-                                        this.onSelectorValuesChanged,
-                                        this.selectors_array);
+      var sliderId = this.id + "_selector_" + selectorKey + "_" + column.id;
       var min_value = column.min_value + (increment * i);
       var max_value = min_value + increment;
-      if (column.id == this.channelColumn) {
-        selector.precision = 0;
+      var selector = sliderSelectors_getSelector(this.selectors_array, sliderId);
+
+      if (isNull(selector)) {
+        //Creates new selector
+        mustAppend = true;
+        var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector", replaceColumn: column.id };
+        selector = new sliderSelector(sliderId,
+                                      ((column.id == this.channelColumn) ? "Channel" : "Energy") + " range " + selectorName + ":",
+                                      filterData,
+                                      column.min_value, column.max_value,
+                                      this.onSelectorValuesChanged,
+                                      this.selectors_array);
+        if (column.id == this.channelColumn) {
+          selector.precision = 0;
+        } else {
+          selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
+        }
+        selector.setValues (min_value, max_value);
+        selector.setEnabled (true);
+        container.append(selector.$html);
+
       } else {
-        selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
+        //Udpate selector min and max values
+        selector.setMinMaxValues(column.min_value, column.max_value);
+        selector.setValues (min_value, max_value);
       }
-      selector.setValues (min_value, max_value);
-      selector.setEnabled (true);
-      container.append(selector.$html);
     }
 
-    this.$html.find(".colorSelectorsContainer").append(container);
-    this.$html.find(".colorSelectorsContainer").removeClass("hidden");
+    if (mustAppend){
+      this.$html.find(".colorSelectorsContainer").append(container);
+      this.$html.find(".colorSelectorsContainer").removeClass("hidden");
+    }
   }
 
   this.onRmfDatasetUploaded = function ( schema ) {
     if (schema.isEventsFile()) {
       var column = schema.getTable()["E"];
       if (!isNull(column)){
-        //Adds Energy general filter
-        var selector = new sliderSelector(this.id + "_Energy",
-                                          "Energy (keV):",
-                                          { table:"EVENTS", column:"E" },
-                                          column.min_value, column.max_value,
-                                          this.onSelectorValuesChanged,
-                                          this.selectors_array);
-        selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
-        selector.$html.insertAfter("." + this.id + "_TIME");
+        var energySliderId = this.id + "_Energy";
+        var selector = sliderSelectors_getSelector(this.selectors_array, energySliderId);
+        if (isNull(selector)) {
+          //Adds energy general filter selector
+          selector = new sliderSelector(energySliderId,
+                                            "Energy (keV):",
+                                            { table:"EVENTS", column:"E" },
+                                            column.min_value, column.max_value,
+                                            this.onSelectorValuesChanged,
+                                            this.selectors_array);
+          selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
+          selector.$html.insertAfter("." + this.id + "_TIME");
+        } else {
+
+          //Udpate energy selector min and max values
+          selector.setMinMaxValues(column.min_value, column.max_value);
+        }
 
         //Prepares Energy color filters
         this.createColorSelectors(column);
@@ -465,7 +488,7 @@ function ToolPanel (id,
 
     } else {
 
-      //Udpated rate slider min and max values
+      //Udpate rate slider min and max values
       var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
       if (!isNull(rateSelector)) {
         var newMinRate = Math.min(rateSelector.initFromValue, minRate);
