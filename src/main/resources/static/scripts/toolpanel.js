@@ -44,6 +44,7 @@ function ToolPanel (id,
   this.file_selectors_ids_array = [];
   this.file_selectors_array = [];
   this.selectors_array = [];
+  this.channelColumn = "PHA";
   this.replaceColumn = "PHA";
 
   this.tabPanel = isNull(tabPanel) ? null : tabPanel;
@@ -236,19 +237,19 @@ function ToolPanel (id,
 
       this.showEventsSelectors();
 
-      //Sets RMF fileSelector message depending on PHA column
+      //Sets RMF fileSelector message depending on channel column
       var rmfMessage = "";
-      var calibrationColumn = projectConfig.getCalibrationColumn();
-      if (!projectConfig.schema.hasColumn(calibrationColumn)){
-          //calibrationColumn Column doesn't exist, show we can't apply RMF file
-          rmfMessage = calibrationColumn + " column not found in SRC file";
-      } else if (projectConfig.schema.getTable()[calibrationColumn].min_value >= projectConfig.schema.getTable()[calibrationColumn].max_value){
-          //PHA Column is empty, show we can't apply RMF file
-          rmfMessage = calibrationColumn + " column is empty in SRC file";
+      this.channelColumn = projectConfig.getChannelColumn();
+      if (!projectConfig.schema.hasColumn(this.channelColumn)){
+          //channelColumn Column doesn't exist, show we can't apply RMF file
+          rmfMessage = this.channelColumn + " column not found in Event file";
+      } else if (projectConfig.schema.getTable()[this.channelColumn].min_value >= projectConfig.schema.getTable()[this.channelColumn].max_value){
+          //channelColumn is empty, show we can't apply RMF file
+          rmfMessage = this.channelColumn + " column is empty in Event file";
       }
 
-      if ((rmfMessage != "") || (calibrationColumn == "PI")){
-        //If hasen't PHA column then remove PI from excludedFilters
+      if ((rmfMessage != "") || (this.channelColumn == "PI")){
+        //Remove PI from excludedFilters if there is rmfMessage or channel column is PI
         excludedFilters = excludedFilters.filter(function(column) { return column != "PI"; });
       }
       this.rmfFileSelector.disable(rmfMessage);
@@ -283,7 +284,7 @@ function ToolPanel (id,
       this.$html.find(".selectorsContainer").append(binDiv);
     }
 
-    var pha_column = null;
+    var channel_column_data = null;
 
     //Adds the rest of selectors from dataset columns
     for (tableName in projectConfig.schema.contents) {
@@ -308,8 +309,8 @@ function ToolPanel (id,
 
             //Sets the slider precision
             var precision = CONFIG.DEFAULT_NUMBER_DECIMALS;
-            if (tableName == "EVENTS" && columnName == "PHA") {
-              pha_column = column;
+            if (tableName == "EVENTS" && columnName == projectConfig.getChannelColumn()) {
+              channel_column_data = column;
               precision = 0;
             } else if (columnName == CONFIG.TIME_COLUMN){
               precision = CONFIG.MAX_TIME_RESOLUTION_DECIMALS;
@@ -357,14 +358,14 @@ function ToolPanel (id,
       }
     }
 
-    if (pha_column != null){
+    if (channel_column_data != null){
 
-      // Creates colors filter type (PHA by default or ENERGY with RMF file upload requisite)
+      // Creates colors filter type (channelColumn by default or ENERGY with RMF file upload requisite)
       this.colorFilterTypeRadios = $('<div class="colorFilterType">' +
                                       '<h3>Energy range filter type:</h3>' +
                                       '<fieldset>' +
-                                        '<label for="' + this.id + '_PHA">Channel</label>' +
-                                        '<input type="radio" name="' + this.id + '_ColorFilterType" id="' + this.id + '_PHA" value="PHA" checked="checked">' +
+                                        '<label for="' + this.id + '_Channel">Channel</label>' +
+                                        '<input type="radio" name="' + this.id + '_ColorFilterType" id="' + this.id + '_Channel" value="' + this.channelColumn + '" checked="checked">' +
                                         '<label for="' + this.id + '_Energy">Energy (keV)</label>' +
                                         '<input type="radio" name="' + this.id + '_ColorFilterType" id="' + this.id + '_Energy" value="E">' +
                                       '</fieldset>' +
@@ -379,16 +380,15 @@ function ToolPanel (id,
         gaTracker.sendEvent("LoadPage", "colorFilterTypeRadios_" + this.value, currentObj.id);
       });
 
-      //Adds color selectors, PHA filters
-      this.createColorSelectors (pha_column);
+      //Adds color selectors, Channel filters
+      this.createColorSelectors (channel_column_data);
+    } else {
+      // Shows can't find channel column in file
+      this.colorFilterTypeRadios = $('<div class="colorFilterType Orange">' +
+                                      '<h5></br>Energy range filter: </br> No channel column ( ' + this.channelColumn + ' ) found in Event file</h5>' +
+                                    '</div>');
 
-    } else if (projectConfig.getCalibrationColumn() == "PI"){
-      //If NuSTAR and show must upload RMF file for set energy ranges:
-      this.$html.find(".selectorsContainer").append('<div class="colorFilterType">' +
-                                                      '<h3>Energy range filter:</h3>' +
-                                                    '</div>');
-      this.onColorFilterTypeChanged("E"); // If no rmffile yet, upload rmf will be shown.
-      this.$html.find(".colorSelectorsContainer").removeClass("hidden");
+      this.$html.find(".selectorsContainer").append(this.colorFilterTypeRadios);
     }
 
     //Sets initial filters to ToolPanel
@@ -405,14 +405,14 @@ function ToolPanel (id,
       var selectorKey = "Color_" + selectorName;
       var filterData = { table:"EVENTS", column:selectorKey, source:"ColorSelector", replaceColumn: column.id };
       var selector = new sliderSelector(this.id + "_selector_" + selectorKey + "_" + column.id,
-                                        ((column.id == "PHA") ? "Channel" : "Energy") + " range " + selectorName + ":",
+                                        ((column.id == this.channelColumn) ? "Channel" : "Energy") + " range " + selectorName + ":",
                                         filterData,
                                         column.min_value, column.max_value,
                                         this.onSelectorValuesChanged,
                                         this.selectors_array);
       var min_value = column.min_value + (increment * i);
       var max_value = min_value + increment;
-      if (column.id == "PHA") {
+      if (column.id == this.channelColumn) {
         selector.precision = 0;
       } else {
         selector.setFixedStep(CONFIG.ENERGY_FILTER_STEP);
@@ -481,7 +481,7 @@ function ToolPanel (id,
 
   this.setColorFilterRadios = function (column) {
     var colorFilterTypeRadios = this.$html.find(".colorFilterType").find("input");
-    colorFilterTypeRadios.filter('[value=PHA]').prop('checked', column == "PHA").checkboxradio('refresh');
+    colorFilterTypeRadios.filter('[value=' + this.channelColumn + ']').prop('checked', column == this.channelColumn).checkboxradio('refresh');
     colorFilterTypeRadios.filter('[value=E]').prop('checked', column == "E").checkboxradio('refresh');
   }
 
@@ -498,13 +498,13 @@ function ToolPanel (id,
         && filters[f].source == 'ColorSelector') {
         //Sets Energy or Channels filters visible
         var selectorsContainer = currentObj.$html.find(".colorSelectorsContainer");
-        var showPHA = (currentObj.tabPanel.projectConfig.rmfFilename == "") || (filters[f].replaceColumn == "PHA");
-        setVisibility(selectorsContainer.find(".colorSelectors_PHA"), showPHA);
-        setVisibility(selectorsContainer.find(".colorSelectors_E"), !showPHA);
-        if (showPHA) {
-          sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
-          currentObj.setColorFilterRadios("PHA");
-          currentObj.replaceColumn = "PHA";
+        var showChannel = (currentObj.tabPanel.projectConfig.rmfFilename == "") || (filters[f].replaceColumn == currentObj.channelColumn);
+        setVisibility(selectorsContainer.find(".colorSelectors_" + currentObj.channelColumn), showChannel);
+        setVisibility(selectorsContainer.find(".colorSelectors_E"), !showChannel);
+        if (showChannel) {
+          sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", currentObj.channelColumn);
+          currentObj.setColorFilterRadios(currentObj.channelColumn);
+          currentObj.replaceColumn = currentObj.channelColumn;
         } else {
           sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "E");
           currentObj.setColorFilterRadios("E");
@@ -552,7 +552,7 @@ function ToolPanel (id,
 
         //Sets energy values to Energy Selectors from Pha selector values
         var e_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "E");
-        var pha_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "PHA");
+        var pha_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", currentObj.channelColumn);
         for (i in pha_Selectors) {
           var phaSelector = pha_Selectors[i];
           for (i in e_Selectors) {
@@ -573,12 +573,12 @@ function ToolPanel (id,
         currentObj.onSelectorValuesChanged();
       }
     } else {
-      //Show PHA color selectors
-      sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", "PHA");
+      //Show Channel color selectors
+      sliderSelectors_setFiltersEnabled (currentObj.selectors_array, "ColorSelector", currentObj.channelColumn);
 
-      //Sets pha values to PHA Selectors from Energy selector values
+      //Sets values to Channel Selectors from Energy selector values
       var e_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "E");
-      var pha_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", "PHA");
+      var pha_Selectors = sliderSelectors_getSelectors(currentObj.selectors_array, "ColorSelector", currentObj.channelColumn);
       for (i in pha_Selectors) {
         var phaSelector = pha_Selectors[i];
         for (i in e_Selectors) {
@@ -594,8 +594,8 @@ function ToolPanel (id,
         }
       }
 
-      selectorsContainer.find(".colorSelectors_PHA").show();
-      currentObj.replaceColumn = "PHA";
+      selectorsContainer.find(".colorSelectors_" + currentObj.channelColumn).show();
+      currentObj.replaceColumn = currentObj.channelColumn;
       currentObj.onSelectorValuesChanged();
     }
   }

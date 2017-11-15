@@ -56,12 +56,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.getPageName = function () {
-    if (!this.projectConfig.hasSchema()) {
-      return "LoadPage";
-    } else if (this.projectConfig.schema.isEventsFile()){
-      return "EventsFilePage";
-    } else if (this.projectConfig.schema.isLightCurveFile()){
-      return "LightcurveFilePage";
+    if (!isNull(this.projectConfig)){
+      if (!this.projectConfig.hasSchema()) {
+        return "LoadPage";
+      } else if (this.projectConfig.schema.isEventsFile()){
+        return "EventsFilePage";
+      } else if (this.projectConfig.schema.isLightCurveFile()){
+        return "LightcurveFilePage";
+      }
     }
 
     return "WrongPage2";
@@ -87,7 +89,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
         waitingDialog.show('Applying RMF: ' + getFilename(filenames[0]));
-        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.projectConfig.getCalibrationColumn(), function (res) { currentObj.onRmfApplied(res, callback); } );
+        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.projectConfig.getChannelColumn(), function (res) { currentObj.onRmfApplied(res, callback); } );
       }
 
     } else if (filenames.length > 1){

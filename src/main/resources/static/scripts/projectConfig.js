@@ -197,11 +197,11 @@ function ProjectConfig(){
     }
   }
 
-  this.getCalibrationColumn = function () {
+  this.getChannelColumn = function () {
     if (this.hasSchema()){
-      return this.schema.getCalibrationColumn();
+      return this.schema.getChannelColumn();
     }
-    return "PHA";
+    return CONFIG.DEFAULT_CHANNEL_COLUMN;
   }
 
   this.getConfig = function () {

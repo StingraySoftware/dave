@@ -28,6 +28,12 @@ CONFIG = {
   EVENTS_STRING: 'EVENTS,XTE_SE,XTE_SA', //Supported EVENTS HDU names
   GTI_STRING: 'GTI,STDGTI,STDGTI04,STDGTI04-1,SRC_GTIS,BKG_GTIS', //Supported GTI HDU names
   FRACEXP_LIMIT: 0.5, // Minimum exposure fraction allowed
+  CHANNEL_COLUMNS: [ { TELESCOP: "XMM", COLUMN: "PHA"},
+                     { TELESCOP: "RXTE", COLUMN: "PI"},
+                     { TELESCOP: "SWIFT", COLUMN: "PHA"},
+                     { TELESCOP: "CHANDRA", COLUMN: "PI"},
+                     { TELESCOP: "NuSTAR", COLUMN: "PI"} ], //Sets the channel column for each telescop, Supported columns: "PI", "PHA"
+  DEFAULT_CHANNEL_COLUMN: "PI",
 
   PLOT_CONFIG: {
 
