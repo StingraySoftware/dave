@@ -50,7 +50,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                             '</div>' +
                         '</div>' +
                       '</div>' +
-                      '<p class="InfoText">Settings changed here only applies to new tabs. You can save the workspace for reusing this settings later, or edit config.js file to update the default settings.</p>' +
+                      '<p class="InfoText">Settings changed here only applies to new tabs. You can save the workspace to reuse this settings later, or edit config.js file to update the default settings.</p>' +
                     '</br></br></br>');
 
   var $mainSettings = this.$container.find(".mainSettings");
@@ -173,7 +173,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
             "<p>© 2016 Timelab Technologies Ltd.</p>" +
             "<p style='float: right; font-size: 0.85em;'>DAVE Version: " + version + "</p>");
 
-    gaTracker.sendEvent("GeneralSettings", "btnAboutDave", currentObj.id);        
+    gaTracker.sendEvent("GeneralSettings", "btnAboutDave", currentObj.id);
   });
 
   log("SettingsTabPanel ready! id: " + this.id);
