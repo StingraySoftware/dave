@@ -55,7 +55,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
 
   var $mainSettings = this.$container.find(".mainSettings");
   var $segmSettings = this.$container.find(".segmSettings");
-  var $advSettingss = this.$container.find(".advSettings");
+  var $advSettings = this.$container.find(".advSettings");
 
   /* Shows the auto BinSize or time filtering choice
     $mainSettings.append(getRadioControl(currentObj.id,
@@ -111,29 +111,58 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     "Default segment size: TotalTime /", CONFIG.DEFAULT_SEGMENT_DIVIDER, 1, 100,
                                     function(value, input) { CONFIG.DEFAULT_SEGMENT_DIVIDER = value; updateServerConfig(); }));
 
-  $advSettingss.append(getTextBox ("TIME_COLUMN_" + this.id, "inputTIME_COLUMN",
+  $advSettings.append(getTextBox ("TIME_COLUMN_" + this.id, "inputTIME_COLUMN",
                                     "Time column name on HDU", CONFIG.TIME_COLUMN,
                                     function(value, input) { CONFIG.TIME_COLUMN = value; updateServerConfig(); }));
 
-  $advSettingss.append(getTextBox ("EVENTS_STRING_" + this.id, "inputEVENTS_STRING width80",
+  $advSettings.append(getRadioControl(currentObj.id,
+                                    "Default channel column name on HDU",
+                                    "defaultChannelColumn",
+                                    [
+                                      { id:"pi", label:"PI", value:"PI" },
+                                      { id:"pha", label:"PHA", value:"PHA" }
+                                    ],
+                                    CONFIG.DEFAULT_CHANNEL_COLUMN,
+                                    function(value, id) {
+                                      CONFIG.DEFAULT_CHANNEL_COLUMN = value;
+                                      updateServerConfig();
+                                    },
+                                    "smallTextStyle"));
+
+
+  $advSettings.append('<a href="#" class="btnTelescopConfig InfoText">Telescops configuration <i class="fa fa-info-circle" aria-hidden="true"></i></a>');
+  $advSettings.find(".btnTelescopConfig").click(function () {
+
+    var msg = "";
+    for (var i = 0; i < CONFIG.CHANNEL_COLUMNS.length; i++){
+      msg += "<p>" + CONFIG.CHANNEL_COLUMNS[i].TELESCOP + " -> " + CONFIG.CHANNEL_COLUMNS[i].COLUMN + "</p>";
+    }
+    msg += '<p class="InfoText">You can change this settings in config.js file to update the default channel column and the channel column per each telescop.</p>'
+
+    showMsg("Telescops configuration", msg);
+
+    gaTracker.sendEvent("GeneralSettings", "btnTelescopConfig", currentObj.id);
+  });
+
+  $advSettings.append(getTextBox ("EVENTS_STRING_" + this.id, "inputEVENTS_STRING width80",
                                     "HDU names supported as EVENT tables (separated by commas without spaces)", CONFIG.EVENTS_STRING,
                                     function(value, input) { CONFIG.EVENTS_STRING = value; updateServerConfig(); }));
 
-  $advSettingss.append(getTextBox ("GTI_STRING_" + this.id, "inputGTI_STRING width80",
+  $advSettings.append(getTextBox ("GTI_STRING_" + this.id, "inputGTI_STRING width80",
                                     "HDU names supported as GTI tables (separated by commas without spaces)", CONFIG.GTI_STRING,
                                     function(value, input) { CONFIG.GTI_STRING = value; updateServerConfig(); }));
 
-  $advSettingss.append(getBooleanBox ("Avoid set background light curve if it is already subtracted",
+  $advSettings.append(getBooleanBox ("Avoid set background light curve if it is already subtracted",
                                     "chkDENY_BCK_IF_SUBS", CONFIG.DENY_BCK_IF_SUBS,
                                     function(enabled) { CONFIG.DENY_BCK_IF_SUBS = enabled; updateServerConfig(); }));
 
-  $advSettingss.append(getBooleanBox ("Show server logs on GUI Log tab",
+  $advSettings.append(getBooleanBox ("Show server logs on GUI Log tab",
                                     "chkLOG_TO_SERVER_ENABLED", CONFIG.LOG_TO_SERVER_ENABLED,
                                     function(enabled) { CONFIG.LOG_TO_SERVER_ENABLED = enabled; updateServerConfig(); }));
 
   //Add the server log level radio buttons
   // PYTHON SERVER LOG LEVEL -> ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
-  $advSettingss.append(getRadioControl(currentObj.id,
+  $advSettings.append(getRadioControl(currentObj.id,
                                     "Server logging level",
                                     "serverLogLevel",
                                     [
@@ -161,7 +190,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
       }, 2000);
     });
   });
-  $advSettingss.append($btnClearCache);
+  $advSettings.append($btnClearCache);
 
   this.$container.find(".btnAboutDave").click(function () {
 
