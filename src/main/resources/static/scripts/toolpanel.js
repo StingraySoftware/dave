@@ -382,13 +382,14 @@ function ToolPanel (id,
 
       //Adds color selectors, Channel filters
       this.createColorSelectors (channel_column_data);
-    } else {
-      // Shows can't find channel column in file
-      this.colorFilterTypeRadios = $('<div class="colorFilterType Orange">' +
-                                      '<h5></br>Energy range filter: </br> No channel column ( ' + this.channelColumn + ' ) found in Event file</h5>' +
-                                    '</div>');
 
-      this.$html.find(".selectorsContainer").append(this.colorFilterTypeRadios);
+    } else if (projectConfig.schema.isEventsFile()){
+      // Shows can't find channel column in Event file
+      var colorFilterTypeMsg = $('<div class="colorFilterType Orange">' +
+                                    '<h5></br>Energy range filter: </br> No channel column ( ' + this.channelColumn + ' ) found in Event file</h5>' +
+                                  '</div>');
+
+      this.$html.find(".selectorsContainer").append(colorFilterTypeMsg);
     }
 
     //Sets initial filters to ToolPanel

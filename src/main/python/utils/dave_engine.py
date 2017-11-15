@@ -92,7 +92,7 @@ def append_file_to_dataset(destination, next_destination):
                 new_dataset = dataset.clone()
                 new_hdutable = DsHelper.get_hdutable_from_dataset(new_dataset)
                 next_hdutable = DsHelper.get_hdutable_from_dataset(next_dataset)
-                new_hdutable = new_hdutable.join(next_hdutable)
+                new_dataset.tables[new_hdutable.id] = new_hdutable.join(next_hdutable)
                 new_dataset.tables["GTI"] = DsHelper.join_gti_tables(new_dataset.tables["GTI"], next_dataset.tables["GTI"])
 
                 # DsCache.remove(destination)  # Removes previous cached dataset for prev key

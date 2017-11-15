@@ -285,7 +285,7 @@ def get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RAT
     # Stores the events_start_time in time column extra
     dataset.tables[hduname].columns[column].set_extra("TSTART", events_start_time)
 
-    logging.debug("Read Lightcurve fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time) + ", rate: " + str(lcurve["counts"]))
+    logging.debug("Read Lightcurve fits with stingray file successfully: " + str(destination) + ", tstart: " + str(events_start_time) + ", rate: " + str(len(lcurve["counts"])))
 
     return dataset
 
