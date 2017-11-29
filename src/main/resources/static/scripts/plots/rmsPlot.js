@@ -5,9 +5,8 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   plotConfig.freq_range = [-1, -1];
   plotConfig.energy_range = [-1, -1];
   plotConfig.default_energy_range = [-1, -1];
-  plotConfig.x_type = (plotConfig.x_axis_type != "countrate") ? "energy" : "countrate";
 
-  this.freq_range_title = "RMS Frequency Range (Hz):";
+  this.freq_range_title = (plotConfig.x_axis_type != "countrate") ? "RMS Frequency Range (Hz):" : "Frequency Range (Hz):";
 
   if (projectConfig.schema.isEventsFile()) {
       var column = projectConfig.schema.getTable()["E"];
@@ -16,7 +15,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
         //Adds Reference Band filter
         plotConfig.energy_range = [column.min_value, column.max_value];
         plotConfig.default_energy_range = [column.min_value, column.max_value];
-        plotConfig.n_bands = Math.floor(column.max_value - column.min_value);
+        plotConfig.n_bands = (plotConfig.x_axis_type != "countrate") ? Math.floor(column.max_value - column.min_value) : 20;
 
       } else {
         log("RmsPlot error, plot" + currentObj.id + ", NO ENERGY COLUMN ON SCHEMA");
@@ -48,7 +47,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.addEnergyRangeControlToSetting("Energy range (keV)", ".rightCol");
 
     //Adds number of point control of rms plot
-    this.addNumberOfBandsControlToSettings("Nº Energy Segments", ".rightCol");
+    this.addNumberOfBandsControlToSettings((plotConfig.x_axis_type != "countrate") ? "Nº Energy Segments" : "Nº Time Segments", ".rightCol");
   }
 
   this.getLabel = function (axis) {

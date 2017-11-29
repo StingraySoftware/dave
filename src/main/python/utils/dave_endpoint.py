@@ -532,7 +532,7 @@ def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
 
 def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
                     filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands, x_type):
+                    freq_range, energy_range, n_bands):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -563,13 +563,55 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_spectrum: freq_range %s" % freq_range)
     logging.debug("get_rms_spectrum: energy_range %s" % energy_range)
     logging.debug("get_rms_spectrum: n_bands %s" % n_bands)
-    logging.debug("get_rms_spectrum: x_type %s" % x_type)
 
     data = DaveEngine.get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                         filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                        freq_range, energy_range, n_bands, x_type)
+                                        freq_range, energy_range, n_bands)
 
     logging.debug("get_rms_spectrum: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
+def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
+                    freq_range, energy_range, n_bands):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_rms_vs_countrate src: %s" % src_filename)
+    logging.debug("get_rms_vs_countrate bck: %s" % bck_filename)
+    logging.debug("get_rms_vs_countrate gti: %s" % gti_filename)
+    logging.debug("get_rms_vs_countrate: filters %s" % filters)
+    logging.debug("get_rms_vs_countrate: axis %s" % axis)
+    logging.debug("get_rms_vs_countrate: dt %s" % dt)
+    logging.debug("get_rms_vs_countrate: nsegm %f" % nsegm)
+    logging.debug("get_rms_vs_countrate: segm_size %f" % segm_size)
+    logging.debug("get_rms_vs_countrate: norm %s" % norm)
+    logging.debug("get_rms_vs_countrate: type %s" % pds_type)
+    logging.debug("get_rms_vs_countrate: df %s" % df)
+    logging.debug("get_rms_vs_countrate: freq_range %s" % freq_range)
+    logging.debug("get_rms_vs_countrate: energy_range %s" % energy_range)
+    logging.debug("get_rms_vs_countrate: n_bands %s" % n_bands)
+
+    data = DaveEngine.get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
+                                        freq_range, energy_range, n_bands)
+
+    logging.debug("get_rms_vs_countrate: Finish!")
 
     return json.dumps(data, cls=NPEncoder)
 

@@ -686,14 +686,16 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
 
     log("getRMSPlot: filename: " + filename );
     return new RmsPlot(
-                      this.generatePlotId("rms_" + filename),
+                      this.generatePlotId("rms_" + x_axis_type + "_" + filename),
                       {
                         selectorKey: "SRC",
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
-                                  labels: [ (x_axis_type != "countrate") ? "Energy(keV)" : "Count Rate (c/s)",
+                                  labels: [ (x_axis_type != "countrate") ?
+                                              "Energy(keV)" :
+                                              "Count Rate (c/s)",
                                           "RMS"],
                                   title: title },
                         axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
@@ -701,7 +703,9 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                         mandatoryFilters: mandatoryFilters,
                         x_axis_type: x_axis_type
                       },
-                      this.service.request_rms_spectrum,
+                      (x_axis_type != "countrate") ?
+                        this.service.request_rms_spectrum :
+                        this.service.request_rms_vs_countrate,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),

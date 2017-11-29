@@ -1103,12 +1103,11 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 # @param: energy_range: A tuple with minimum and maximum values of the
 #         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
-# @param: x_type: Defines de values for x_axis data, "energy" by default or "countrate"
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                     filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands, x_type):
-    xaxis_arr = []
+                    freq_range, energy_range, n_bands):
+    energy_arr = []
     rms_arr =[]
     rms_err_arr = []
     duration = []
@@ -1128,9 +1127,6 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
         if segm_size == 0:
             segm_size = None
-
-        if x_type not in ['energy', 'countrate']:
-            x_type = "energy"
 
         # Prepares GTI if passed
         base_gti = load_gti_from_destination (gti_destination)
@@ -1168,8 +1164,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                         energy_low = min_energy + (i * energy_step)
                         energy_high = energy_low + energy_step
 
-                        if x_type == "energy":
-                            xaxis_arr.extend([(energy_low + energy_high) / 2])
+                        energy_arr.extend([(energy_low + energy_high) / 2])
 
                         rms, rms_err = 0, 0
 
@@ -1184,9 +1179,6 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                                         lc = evt_list.to_lc(dt)
                                         if lc:
-
-                                            if x_type == "countrate":
-                                                xaxis_arr.extend([lc.meanrate])
 
                                             gti = base_gti
                                             if not gti:
@@ -1242,14 +1234,6 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                         rms_arr.extend([rms])
                         rms_err_arr.extend([rms_err])
-
-                    # If x_type is countrate we need to sort values
-                    if x_type == "countrate":
-                        sorted_idx = np.argsort(xaxis_arr)
-                        xaxis_arr = np.array(xaxis_arr)[sorted_idx]
-                        rms_arr = np.array(rms_arr)[sorted_idx]
-                        rms_err_arr = np.array(rms_err_arr)[sorted_idx]
-                        
                 else:
                     logging.warn('get_rms_spectrum: E column not found!')
                     warnmsg = ['E column not found']
@@ -1265,7 +1249,191 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
         warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
-    result = push_to_results_array([], xaxis_arr)
+    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
+    result = push_to_results_array(result, freq_min_max)
+    return result
+
+
+# get_rms_vs_countrate:
+# Returns the energy values and its correlated rms and rms errors
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: segm_size: The segment length for split the lightcurve
+# @param: norm: The normalization of the (real part of the) power spectrum.
+# @param: pds_type: Type of PDS to use, single or averaged.
+# @param: df: If not 0 is the frequency rebining value
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
+#
+def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
+                    freq_range, energy_range, n_bands):
+    countrate_arr = []
+    rms_arr =[]
+    rms_err_arr = []
+    duration = []
+    warnmsg = []
+    freq_min_max = [-1, -1]
+
+    try:
+
+        if len(axis) != 2:
+            return common_error("Wrong number of axis")
+
+        if norm not in ['frac', 'abs', 'leahy', 'none']:
+            return common_error("Wrong normalization")
+
+        if pds_type not in ['Sng', 'Avg']:
+            return common_error("Wrong power density spectrum type")
+
+        if segm_size == 0:
+            segm_size = None
+
+        # Prepares GTI if passed
+        base_gti = load_gti_from_destination (gti_destination)
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+            if len(events_table.columns[CONFIG.TIME_COLUMN].values) > 0:
+                min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
+                max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
+                duration = [(max_time - min_time)]
+
+                if "E" in events_table.columns:
+
+                    event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
+                                                 events_table.columns["E"].values))
+
+                    if energy_range[0] < 0:
+                        min_energy = min(event_list[:,1])
+                    else:
+                        min_energy = energy_range[0]
+
+                    if energy_range[1] >= min_energy:
+                        max_energy = energy_range[1] - min_energy
+                    else:
+                        max_energy = max(event_list[:,1]) - min_energy
+
+                    event_list = event_list[ (max_energy>event_list[:,1]) & (event_list[:,1]>min_energy) ]
+
+                    time_step = duration[0] / n_bands
+
+                    for i in range(n_bands):
+
+                        time_low = min_energy + (i * time_step)
+                        time_high = time_low + time_step
+
+                        try:
+                            filtered_event_list = event_list[ (time_high>event_list[:,0]) & (event_list[:,0]>time_low) ]
+                            if (len(filtered_event_list) > 0):
+
+                                evt_list = EventList(filtered_event_list[:,0], pi=filtered_event_list[:,1])
+                                if evt_list and evt_list.ncounts > 1:
+
+                                    if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
+
+                                        lc = evt_list.to_lc(dt)
+                                        if lc:
+
+                                            rms, rms_err = 0, 0
+
+                                            gti = base_gti
+                                            if not gti:
+                                                gti = lc.gti
+
+                                            if segm_size > lc.tseg:
+                                                segm_size = lc.tseg
+                                                logging.warn("get_rms_vs_countrate: Time range: " + str(time_low) + " to " + str(time_high) + ", segmsize bigger than lc.duration, lc.duration applied instead.")
+
+                                            pds = None
+                                            if pds_type == 'Sng':
+                                                pds = Powerspectrum(lc, norm=norm, gti=gti)
+                                            else:
+                                                pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
+
+                                            if pds:
+
+                                                if df > 0:
+                                                    pds = pds.rebin(df=df)
+
+                                                #pds = rebin_spectrum_if_necessary(pds)
+
+                                                if len(pds.freq):
+                                                    if freq_range[0] < 0:
+                                                        freq_low = min(pds.freq)
+                                                    else:
+                                                        freq_low = freq_range[0]
+
+                                                    if freq_min_max[0] >= 0:
+                                                        freq_min_max[0] = min([freq_min_max[0], freq_low])
+                                                    else:
+                                                        freq_min_max[0] = freq_low
+
+                                                    if freq_range[1] < 0:
+                                                        freq_high = max(pds.freq)
+                                                    else:
+                                                        freq_high = freq_range[1]
+                                                    freq_min_max[1] = max([freq_min_max[1], freq_high])
+
+                                                    rms, rms_err = pds.compute_rms(freq_low, freq_high)
+                                            else:
+                                                logging.warn("get_rms_vs_countrate: can't create power density spectrum. Time range: " + str(time_low) + " to " + str(time_high))
+
+                                            countrate_arr.extend([lc.meanrate])
+                                            rms_arr.extend([rms])
+                                            rms_err_arr.extend([rms_err])
+
+                                        else:
+                                            logging.warn("get_rms_vs_countrate: can't create lightcurve. Time range: " + str(time_low) + " to " + str(time_high))
+                                    else:
+                                        logging.warn("get_rms_vs_countrate: can't create lightcurve. Not enougth duration. Time range: " + str(time_low) + " to " + str(time_high))
+                                else:
+                                    logging.warn("get_rms_vs_countrate: can't create eventlist or counts are 0. Time range: " + str(time_low) + " to " + str(time_high) + ", counts: " + str(len(filtered_event_list)))
+                            else:
+                                logging.warn("get_rms_vs_countrate: Time range: " + str(time_low) + " to " + str(time_high) + " has no events")
+                        except:
+                            logging.warn(ExHelper.getException('get_rms_vs_countrate: Time range: ' + str(time_low) + ' to ' + str(time_high)))
+
+                    # If x_type is countrate we need to sort values
+                    sorted_idx = np.argsort(countrate_arr)
+                    countrate_arr = np.array(countrate_arr)[sorted_idx]
+                    rms_arr = np.array(rms_arr)[sorted_idx]
+                    rms_err_arr = np.array(rms_err_arr)[sorted_idx]
+
+                else:
+                    logging.warn('get_rms_vs_countrate: E column not found!')
+                    warnmsg = ['E column not found']
+            else:
+                logging.warn('get_rms_vs_countrate: No events data!')
+                warnmsg = ['No events data']
+        else:
+            logging.warn('get_rms_vs_countrate: Wrong dataset type!')
+            warnmsg = ['Wrong dataset type']
+
+    except:
+        logging.error(ExHelper.getException('get_rms_vs_countrate'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], countrate_arr)
     result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)

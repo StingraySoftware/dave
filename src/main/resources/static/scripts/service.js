@@ -129,6 +129,10 @@ function Service (base_url) {
     return thisService.make_ajax_call("get_rms_spectrum", data, fn);
   };
 
+  this.request_rms_vs_countrate  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_rms_vs_countrate", data, fn);
+  };
+
   this.request_plot_data_from_models  = function ( data, fn ) {
     return thisService.make_ajax_call("get_plot_data_from_models", data, fn);
   };
