@@ -199,7 +199,8 @@ def get_rms_spectrum():
             request.json['filters'], request.json['axis'], float(request.json['dt']),
             float(request.json['nsegm']), float(request.json['segment_size']),
             request.json['norm'], request.json['type'], float(request.json['df']),
-            request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']))
+            request.json['freq_range'], request.json['energy_range'],
+            int(request.json['n_bands']), request.json['x_type'])
 
 
 @app.route('/get_plot_data_from_models', methods=['POST'])

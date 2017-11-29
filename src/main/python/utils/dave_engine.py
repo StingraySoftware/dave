@@ -1103,11 +1103,12 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 # @param: energy_range: A tuple with minimum and maximum values of the
 #         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
+# @param: x_type: Defines de values for x_axis data, "energy" by default or "countrate"
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                     filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands):
-    energy_arr = []
+                    freq_range, energy_range, n_bands, x_type):
+    xaxis_arr = []
     rms_arr =[]
     rms_err_arr = []
     duration = []
@@ -1127,6 +1128,9 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
         if segm_size == 0:
             segm_size = None
+
+        if x_type not in ['energy', 'countrate']:
+            x_type = "energy"
 
         # Prepares GTI if passed
         base_gti = load_gti_from_destination (gti_destination)
@@ -1163,7 +1167,10 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                         energy_low = min_energy + (i * energy_step)
                         energy_high = energy_low + energy_step
-                        energy_arr.extend([(energy_low + energy_high) / 2])
+
+                        if x_type == "energy":
+                            xaxis_arr.extend([(energy_low + energy_high) / 2])
+
                         rms, rms_err = 0, 0
 
                         try:
@@ -1177,6 +1184,9 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                                         lc = evt_list.to_lc(dt)
                                         if lc:
+
+                                            if x_type == "countrate":
+                                                xaxis_arr.extend([lc.meanrate])
 
                                             gti = base_gti
                                             if not gti:
@@ -1233,6 +1243,13 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                         rms_arr.extend([rms])
                         rms_err_arr.extend([rms_err])
 
+                    # If x_type is countrate we need to sort values
+                    if x_type == "countrate":
+                        sorted_idx = np.argsort(xaxis_arr)
+                        xaxis_arr = np.array(xaxis_arr)[sorted_idx]
+                        rms_arr = np.array(rms_arr)[sorted_idx]
+                        rms_err_arr = np.array(rms_err_arr)[sorted_idx]
+                        
                 else:
                     logging.warn('get_rms_spectrum: E column not found!')
                     warnmsg = ['E column not found']
@@ -1248,7 +1265,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
         warnmsg = [ExHelper.getWarnMsg()]
 
     # Preapares the result
-    result = push_to_results_array([], energy_arr)
+    result = push_to_results_array([], xaxis_arr)
     result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)

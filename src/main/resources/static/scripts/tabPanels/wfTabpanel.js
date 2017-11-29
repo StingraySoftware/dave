@@ -288,7 +288,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
           //Hides upload RMF buttons from Analyze tab
-          currentObj.toolPanel.$html.find(".rmsBtn").remove();
+          currentObj.toolPanel.$html.find(".rmsEnergyBtn").remove();
+          currentObj.toolPanel.$html.find(".rmsCountRateBtn").remove();
           currentObj.toolPanel.$html.find(".covarianceBtn").remove();
           currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
@@ -444,12 +445,17 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                         function () { currentObj.showUploadRMFDialog("covariance") },
                                                         timingPlotsButtons);
 
-      timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
-                                                        "rmsBtn",
-                                                        function () { currentObj.showUploadRMFDialog("rms") },
+      timingPlotsButtons = currentObj.addButtonToArray("RMS vs Energy",
+                                                        "rmsEnergyBtn",
+                                                        function () { currentObj.showUploadRMFDialog("rmsEnergy") },
                                                         timingPlotsButtons);
 
-      timingPlotsButtons = currentObj.addButtonToArray("Phase Lag spectrum",
+      timingPlotsButtons = currentObj.addButtonToArray("RMS vs Count Rate",
+                                                        "rmsCountRateBtn",
+                                                        function () { currentObj.showUploadRMFDialog("rmsCountRate") },
+                                                        timingPlotsButtons);
+
+      timingPlotsButtons = currentObj.addButtonToArray("Phase lag vs Energy",
                                                         "phaseLagBtn",
                                                         function () { currentObj.showUploadRMFDialog("phaseLag") },
                                                         timingPlotsButtons);
@@ -716,7 +722,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Show upload RMF file
     var $uploadRMFDialog = $('<div id="uploadRMFDialog_' + currentObj.id +  '" title="Upload RMF file:">' +
                                 '<div class="rmfDialogContainer">' +
-                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum", "RMS spectrum" and "Phase lag spectrum"</p>' +
+                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum", "RMS vs Energy", "RMS vs Count Rate" and "Phase lag spectrum"</p>' +
                                 '</div>' +
                             '</div>');
 

@@ -5,6 +5,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   plotConfig.freq_range = [-1, -1];
   plotConfig.energy_range = [-1, -1];
   plotConfig.default_energy_range = [-1, -1];
+  plotConfig.x_type = (plotConfig.x_axis_type != "countrate") ? "energy" : "countrate";
 
   this.freq_range_title = "RMS Frequency Range (Hz):";
 
@@ -53,7 +54,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.getLabel = function (axis) {
     return this.plotConfig.styles.labels[axis];
   }
-  
+
   log ("new RmsPlot id: " + this.id);
 
   return this;
