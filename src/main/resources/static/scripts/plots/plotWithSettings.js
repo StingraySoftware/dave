@@ -166,8 +166,10 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
       //Adds energy range selector
       this.onEnergyRangeValuesChanged = function() {
-        currentObj.plotConfig.n_bands = Math.max.apply(Math, [1, Math.floor(currentObj.energyRangeSelector.toValue - currentObj.energyRangeSelector.fromValue)]);
-        currentObj.settingsPanel.find(".inputNBands").val(currentObj.plotConfig.n_bands);
+        if (plotConfig.x_axis_type != "countrate"){
+          currentObj.plotConfig.n_bands = Math.max.apply(Math, [1, Math.floor(currentObj.energyRangeSelector.toValue - currentObj.energyRangeSelector.fromValue)]);
+          currentObj.settingsPanel.find(".inputNBands").val(currentObj.plotConfig.n_bands);
+        }
         currentObj.plotConfig.energy_range = [currentObj.energyRangeSelector.fromValue, currentObj.energyRangeSelector.toValue];
       }
 

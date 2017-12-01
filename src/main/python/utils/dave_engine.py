@@ -1119,7 +1119,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
         if len(axis) != 2:
             return common_error("Wrong number of axis")
 
-        if norm not in ['frac', 'abs', 'leahy', 'none']:
+        if norm not in ['frac', 'leahy']:
             return common_error("Wrong normalization")
 
         if pds_type not in ['Sng', 'Avg']:
@@ -1178,7 +1178,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                     if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
 
                                         lc = evt_list.to_lc(dt)
-                                        if lc:
+                                        if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
 
                                             gti = base_gti
                                             if not gti:
@@ -1222,7 +1222,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                             else:
                                                 logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                         else:
-                                            logging.warn("get_rms_spectrum: can't create lightcurve. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                                            logging.warn("get_rms_spectrum: can't create lightcurve or is invalid. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                     else:
                                         logging.warn("get_rms_spectrum: can't create lightcurve. Not enougth duration. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                 else:
@@ -1270,9 +1270,6 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 #            { table = "EVENTS", column = "PHA" } ]
 # @param: dt: The time resolution of the events.
 # @param: nsegm: The number of segments for splitting the lightcurve
-# @param: segm_size: The segment length for split the lightcurve
-# @param: norm: The normalization of the (real part of the) power spectrum.
-# @param: pds_type: Type of PDS to use, single or averaged.
 # @param: df: If not 0 is the frequency rebining value
 # @param: freq_range: A tuple with minimum and maximum values of the
 #         range of frequency, send [-1, -1] for use all frequencies
@@ -1280,8 +1277,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 #         range of energy, send [-1, -1] for use all energies
 #
 def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands):
+                    filters, axis, dt, nsegm, df, freq_range, energy_range):
     countrate_arr = []
     rms_arr =[]
     rms_err_arr = []
@@ -1293,15 +1289,6 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
 
         if len(axis) != 2:
             return common_error("Wrong number of axis")
-
-        if norm not in ['frac', 'abs', 'leahy', 'none']:
-            return common_error("Wrong normalization")
-
-        if pds_type not in ['Sng', 'Avg']:
-            return common_error("Wrong power density spectrum type")
-
-        if segm_size == 0:
-            segm_size = None
 
         # Prepares GTI if passed
         base_gti = load_gti_from_destination (gti_destination)
@@ -1334,9 +1321,9 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
 
                     event_list = event_list[ (max_energy>event_list[:,1]) & (event_list[:,1]>min_energy) ]
 
-                    time_step = duration[0] / n_bands
+                    time_step = duration[0] / nsegm
 
-                    for i in range(n_bands):
+                    for i in range(nsegm):
 
                         time_low = min_energy + (i * time_step)
                         time_high = time_low + time_step
@@ -1351,7 +1338,7 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
                                     if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
 
                                         lc = evt_list.to_lc(dt)
-                                        if lc:
+                                        if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
 
                                             rms, rms_err = 0, 0
 
@@ -1359,22 +1346,11 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
                                             if not gti:
                                                 gti = lc.gti
 
-                                            if segm_size > lc.tseg:
-                                                segm_size = lc.tseg
-                                                logging.warn("get_rms_vs_countrate: Time range: " + str(time_low) + " to " + str(time_high) + ", segmsize bigger than lc.duration, lc.duration applied instead.")
-
-                                            pds = None
-                                            if pds_type == 'Sng':
-                                                pds = Powerspectrum(lc, norm=norm, gti=gti)
-                                            else:
-                                                pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm=norm, gti=gti)
-
+                                            pds = Powerspectrum(lc, norm='frac', gti=gti)
                                             if pds:
 
                                                 if df > 0:
                                                     pds = pds.rebin(df=df)
-
-                                                #pds = rebin_spectrum_if_necessary(pds)
 
                                                 if len(pds.freq):
                                                     if freq_range[0] < 0:

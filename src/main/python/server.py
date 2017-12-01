@@ -207,9 +207,8 @@ def get_rms_vs_countrate():
     return DaveEndpoint.get_rms_vs_countrate(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], float(request.json['df']),
-            request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']))
+            int(request.json['n_bands']), float(request.json['df']),
+            request.json['freq_range'], request.json['energy_range'])
 
 
 @app.route('/get_plot_data_from_models', methods=['POST'])
