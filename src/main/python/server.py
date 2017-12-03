@@ -101,7 +101,7 @@ def append_file_to_dataset():
 
 @app.route('/apply_rmf_file_to_dataset', methods=['GET'])
 def apply_rmf_file_to_dataset():
-    return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], UPLOADS_TARGET)
+    return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], request.args['column'], UPLOADS_TARGET)
 
 
 @app.route('/get_plot_data', methods=['POST'])
@@ -202,6 +202,15 @@ def get_rms_spectrum():
             request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']))
 
 
+@app.route('/get_rms_vs_countrate', methods=['POST'])
+def get_rms_vs_countrate():
+    return DaveEndpoint.get_rms_vs_countrate(request.json['filename'],
+            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
+            request.json['filters'], request.json['axis'], float(request.json['dt']),
+            int(request.json['n_bands']), float(request.json['df']),
+            request.json['freq_range'], request.json['energy_range'])
+
+
 @app.route('/get_plot_data_from_models', methods=['POST'])
 def get_plot_data_from_models():
     return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])
@@ -284,10 +293,16 @@ def get_pulse_search():
 
 @app.route('/get_phaseogram', methods=['POST'])
 def get_phaseogram():
+
+    binary_params= None
+    if "binary_params" in request.json:
+        binary_params = request.json['binary_params']
+
     return DaveEndpoint.get_phaseogram(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['f']), int(request.json['nph']), int(request.json['nt']))
+            float(request.json['f']), int(request.json['nph']), int(request.json['nt']),
+            float(request.json['fdot']), float(request.json['fddot']), binary_params)
 
 
 # Receives a message from client and send it to all subscribers

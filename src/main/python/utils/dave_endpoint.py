@@ -121,8 +121,9 @@ def append_file_to_dataset(filename, nextfile, target):
 #                            Creates a new column E with Enery data on dataset
 # @param: filename: filename or dataset cache key
 # @param: rmf_filename: rmf file to apply
+# @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(filename, rmf_filename, target):
+def apply_rmf_file_to_dataset(filename, rmf_filename, column, target):
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key")
@@ -134,7 +135,7 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, target):
     if not FileUtils.is_valid_file(rmf_destination):
         return common_error("Invalid RMF file")
 
-    result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination)
+    result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination, column)
     return json.dumps(result)
 
 
@@ -572,6 +573,43 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
     return json.dumps(data, cls=NPEncoder)
 
 
+def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
+                    filters, axis, dt, nsegm, df, freq_range, energy_range):
+    src_destination = get_destination(src_filename, target)
+    if not src_destination:
+        return common_error("Invalid file or cache key for source data")
+
+    bck_destination = ""
+    if bck_filename:
+        bck_destination = get_destination(bck_filename, target)
+        if not bck_destination:
+            return common_error("Invalid file or cache key for backgrund data")
+
+    gti_destination = ""
+    if gti_filename:
+        gti_destination = get_destination(gti_filename, target)
+        if not gti_destination:
+            return common_error("Invalid file or cache key for gti data")
+
+    logging.debug("get_rms_vs_countrate src: %s" % src_filename)
+    logging.debug("get_rms_vs_countrate bck: %s" % bck_filename)
+    logging.debug("get_rms_vs_countrate gti: %s" % gti_filename)
+    logging.debug("get_rms_vs_countrate: filters %s" % filters)
+    logging.debug("get_rms_vs_countrate: axis %s" % axis)
+    logging.debug("get_rms_vs_countrate: dt %s" % dt)
+    logging.debug("get_rms_vs_countrate: nsegm %f" % nsegm)
+    logging.debug("get_rms_vs_countrate: df %s" % df)
+    logging.debug("get_rms_vs_countrate: freq_range %s" % freq_range)
+    logging.debug("get_rms_vs_countrate: energy_range %s" % energy_range)
+
+    data = DaveEngine.get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
+                                        filters, axis, dt, nsegm, df, freq_range, energy_range)
+
+    logging.debug("get_rms_vs_countrate: Finish!")
+
+    return json.dumps(data, cls=NPEncoder)
+
+
 def get_plot_data_from_models(models, x_values):
 
     logging.debug("get_plot_data_from_models models: %s" % models)
@@ -826,7 +864,8 @@ def get_pulse_search(src_filename, bck_filename, gti_filename, target,
 
 
 def get_phaseogram(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, f, nph, nt):
+                    filters, axis, dt, f, nph, nt, fdot=0, fddot=0,
+                    binary_parameters=None):
 
     src_destination = get_destination(src_filename, target)
     if not src_destination:
@@ -853,9 +892,12 @@ def get_phaseogram(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_phaseogram: f %s" % f)
     logging.debug("get_phaseogram: nph %s" % nph)
     logging.debug("get_phaseogram: nt %s" % nt)
+    logging.debug("get_phaseogram: fdot %s" % fdot)
+    logging.debug("get_phaseogram: fddot %s" % fddot)
+    logging.debug("get_phaseogram: binary_parameters %s" % binary_parameters)
 
     data = DaveEngine.get_phaseogram(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, f, nph, nt)
+                                    filters, axis, dt, f, nph, nt, fdot, fddot, binary_parameters)
 
     logging.debug("get_phaseogram: Finish!")
 

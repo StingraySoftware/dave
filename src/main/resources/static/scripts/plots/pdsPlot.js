@@ -366,7 +366,7 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   this.getPlotlyConfig = function (data) {
 
-    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
+    var plotDefaultConfig = this.getDefaultPlotlyConfig();
 
     var plotlyConfig = get_plotdiv_lightcurve(data[0].values, data[1].values,
                                         [], isNull(data[1].error_values) ? [] : data[1].error_values, [],

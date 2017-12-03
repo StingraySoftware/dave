@@ -7,19 +7,31 @@ function PhPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   Plot.call(this, id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotReadyFn, toolbar, cssClass, switchable);
 
   this.ph_opts = {};
-  this.ph_opts.nph = { default:32, min:1, max: 256}; //Number of phase bins of the phaseogram
-  this.ph_opts.nt = { default:64, min:1, max: 512}; //Number of time bins of the phaseogram
+  this.ph_opts.nph = { default:64, min:1, max: 256}; //Number of phase bins of the phaseogram
+  this.ph_opts.nt = { default:128, min:1, max: 512}; //Number of time bins of the phaseogram
 
   this.plotConfig.f = 0;
   this.plotConfig.nph = this.ph_opts.nph.default;
   this.plotConfig.nt = this.ph_opts.nt.default;
+  this.plotConfig.fdot = 0;
+  this.plotConfig.fddot = 0;
+  this.plotConfig.binary_params = null;
+  //this.plotConfig.binary_params = [0, 0, 0]; // [orbital_period, asini, t0]
   this.plotConfig.colorScale = $.extend(true, {}, this.getDefaultPlotlyConfig().DEFAULT_COLORSCALE);
+
+  this.plotConfig.tmp_df = 0;
+  this.plotConfig.tmp_fdot = 0;
+  this.plotConfig.tmp_fddot = 0;
+  this.plotConfig.tmp_binary_params = null;
+
+  this.showLines = false;
 
   this.btnFullScreen.remove();
   this.btnLoad.remove();
 
   this.getPlotlyConfig = function (data) {
 
+    var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
     var plotlyConfig = get_plotdiv_dynamical_spectrum(data[1].values,
                                                   data[2].values,
                                                   data[0].values,
@@ -31,7 +43,72 @@ function PhPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                                                   currentObj.getDefaultPlotlyConfig());
     plotlyConfig.data[0].type = "heatmap";
 
+    //Calculates and plots the lines
+    if (currentObj.showLines && data[2].values.length > 0){
+      var pepoch = data[2].values[0];
+      var orbital_period = !isNull(currentObj.plotConfig.tmp_binary_params) ? currentObj.plotConfig.tmp_binary_params[0] : 1;
+      if (Math.abs(orbital_period) < 0.00001) {
+        orbital_period = 0.00001;
+      }
+      var asini = !isNull(currentObj.plotConfig.tmp_binary_params) ? currentObj.plotConfig.tmp_binary_params[1] : 0;
+      var t0 = !isNull(currentObj.plotConfig.tmp_binary_params) ? currentObj.plotConfig.tmp_binary_params[2] : 0;
+
+      var prev_orbital_period = !isNull(currentObj.plotConfig.binary_params) ? currentObj.plotConfig.binary_params[0] : 1;
+      var prev_asini = !isNull(currentObj.plotConfig.binary_params) ? currentObj.plotConfig.binary_params[1] : 0;
+      var prev_t0 = !isNull(currentObj.plotConfig.binary_params) ? currentObj.plotConfig.binary_params[2] : 0;
+
+      for (ph0 = 0.0; ph0 <= 2.0; ph0 += 0.5) {
+        var xData = [];
+        var delay0 = null;
+        for (j = 0; j < data[2].values.length; j++) {
+          var delay = null;
+          if (isNull(currentObj.plotConfig.tmp_binary_params)) {
+            var t = data[2].values[j] - pepoch;
+            delay = (t * currentObj.plotConfig.tmp_df) +
+                     (0.5 * Math.pow(t, 2) * currentObj.plotConfig.tmp_fdot) +
+                     (1/6 *  Math.pow(t, 3) * currentObj.plotConfig.tmp_fddot);
+           } else {
+             var new_value = asini * Math.sin(2 * Math.PI * (data[2].values[j] - t0) / orbital_period)
+             var old_value = prev_asini * Math.sin(2 * Math.PI * (data[2].values[j] - prev_t0) / prev_orbital_period)
+             delay = (new_value - old_value) * currentObj.plotConfig.f
+           }
+          if (isNull(delay0)){
+            delay0 = delay;
+          }
+          xData.push(ph0 + delay - delay0);
+        }
+        plotlyConfig.data.push(getLine (xData, data[2].values, plotDefaultConfig.PHASEOGRAM_LINE_COLOR, 1));
+      }
+
+      //Fixes xaxis range
+      plotlyConfig.layout.xaxis.range = [0.0, 2.0];
+    }
+
     return plotlyConfig;
+  }
+
+  this.applySliders = function (){
+    if (isNull(this.plotConfig.tmp_binary_params)){
+      this.plotConfig.f -= this.plotConfig.tmp_df;
+      this.plotConfig.fdot -= this.plotConfig.tmp_fdot;
+      this.plotConfig.fddot -= this.plotConfig.tmp_fddot;
+    } else {
+      this.plotConfig.binary_params = this.plotConfig.tmp_binary_params;
+    }
+  }
+
+  this.resetFrequecy = function (freq) {
+    this.plotConfig.f = freq;
+    this.plotConfig.fdot = 0;
+    this.plotConfig.fddot = 0;
+    this.plotConfig.binary_params = null;
+  }
+
+  this.resetTempValues = function () {
+    this.plotConfig.tmp_df = 0;
+    this.plotConfig.tmp_fdot = 0;
+    this.plotConfig.tmp_fddot = 0;
+    this.plotConfig.tmp_binary_params = null;
   }
 
   this.getCoordsFromPlotlyHoverEvent = function (){

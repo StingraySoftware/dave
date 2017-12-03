@@ -20,7 +20,9 @@ You will see that there's plenty left to do!
 
 NOTE: Mac OSX dependencies
 * At least Homebrew installed (http://brew.sh/) or MacPorts installed (https://www.macports.org)
-* Administrator rights are required for using MacPorts, please run Dave using: sudo DAVEApp.app/Contents/MacOS/DAVEApp 
+* If MacPorts will be used, you have two available options:
+* 1 - Install LibMagic by yourself running this MacPorts command `sudo /opt/local/bin/port install file` on the terminal and then launch DAVE running `DAVEApp.app/Contents/MacOS/DAVEApp`.
+* 2 - Launch DAVE as root running this command on the terminal: `sudo DAVEApp.app/Contents/MacOS/DAVEApp`
 
 
 ## Contribute

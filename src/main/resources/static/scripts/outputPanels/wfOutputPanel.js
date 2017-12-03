@@ -580,7 +580,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
                                         gti_filename: projectConfig.gtiFilename,
                                         styles:{ type: "2d",
                                                  labels: ["Energy(keV)", "Covariance"],
-                                                 title: "Covariance Spectrum" }
+                                                 title: "Covariance spectrum" }
                                       },
                                       this.service.request_covariance_spectrum,
                                       this.onFiltersChangedFromPlot,
@@ -595,21 +595,31 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     if (this.waitingPlotType != "covariance") { covarianceSpectrumPlot.hide(); }
     this.appendPlot(covarianceSpectrumPlot, true);
 
-    var rmsPlot = this.getRMSPlot ( projectConfig,
+    var rmsEnergyPlot = this.getRMSPlot ( projectConfig,
                         projectConfig.filename,
                         projectConfig.bckFilename,
                         projectConfig.gtiFilename,
-                        "EVENTS", "PHA", "fullWidth", "RMS vs Energy" )
-    this.plots.push(rmsPlot);
-    projectConfig.addPlotId(rmsPlot.id, "RMF");
-    if (this.waitingPlotType != "rms") { rmsPlot.hide(); }
-    this.appendPlot(rmsPlot, true);
+                        "EVENTS", "PHA", "fullWidth", "RMS vs Energy", null, "energy");
+    this.plots.push(rmsEnergyPlot);
+    projectConfig.addPlotId(rmsEnergyPlot.id, "RMF");
+    if (this.waitingPlotType != "rmsEnergy") { rmsEnergyPlot.hide(); }
+    this.appendPlot(rmsEnergyPlot, true);
+
+    var rmsCountRatePlot = this.getRMSPlot ( projectConfig,
+                        projectConfig.filename,
+                        projectConfig.bckFilename,
+                        projectConfig.gtiFilename,
+                        "EVENTS", "PHA", "fullWidth", "RMS vs Count Rate", null, "countrate");
+    this.plots.push(rmsCountRatePlot);
+    projectConfig.addPlotId(rmsCountRatePlot.id, "RMF");
+    if (this.waitingPlotType != "rmsCountRate") { rmsCountRatePlot.hide(); }
+    this.appendPlot(rmsCountRatePlot, true);
 
     var phaseLagPlot = this.getPhaseLagPlot ( projectConfig,
                         projectConfig.filename,
                         projectConfig.bckFilename,
                         projectConfig.gtiFilename,
-                        "EVENTS", "PHA", "fullWidth", "Phase lag vs Energy" )
+                        "EVENTS", "PHA", "fullWidth", "Phase lag vs Energy");
     this.plots.push(phaseLagPlot);
     projectConfig.addPlotId(phaseLagPlot.id, "RMF");
     if (this.waitingPlotType != "phaseLag") { phaseLagPlot.hide(); }
@@ -672,24 +682,30 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
   }
 
   this.getRMSPlot = function ( projectConfig, filename, bck_filename, gti_filename, tableName, columnName,
-                                cssClass, title, mandatoryFilters ) {
+                                cssClass, title, mandatoryFilters, x_axis_type ) {
 
     log("getRMSPlot: filename: " + filename );
     return new RmsPlot(
-                      this.generatePlotId("rms_" + filename),
+                      this.generatePlotId("rms_" + x_axis_type + "_" + filename),
                       {
                         selectorKey: "SRC",
                         filename: filename,
                         bck_filename: bck_filename,
                         gti_filename: gti_filename,
                         styles: { type: "ligthcurve",
-                                  labels: ["Energy(keV)", "RMS"],
+                                  labels: [ (x_axis_type != "countrate") ?
+                                              "Energy(keV)" :
+                                              "Count Rate (c/s)",
+                                          "RMS"],
                                   title: title },
                         axis: [ { table: tableName, column:CONFIG.TIME_COLUMN },
                                 { table: tableName, column:columnName } ],
                         mandatoryFilters: mandatoryFilters,
+                        x_axis_type: x_axis_type
                       },
-                      this.service.request_rms_spectrum,
+                      (x_axis_type != "countrate") ?
+                        this.service.request_rms_spectrum :
+                        this.service.request_rms_vs_countrate,
                       this.onFiltersChangedFromPlot,
                       this.onPlotReady,
                       getTabForSelector(this.id).$html.find(".TimingPlot").find(".sectionContainer"),

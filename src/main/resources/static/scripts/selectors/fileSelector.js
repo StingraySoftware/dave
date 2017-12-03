@@ -235,6 +235,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      }
    }
 
+   this.setMultiFileEnabled(this.multiFileEnabled);
    this.onUploadSuccess();
 
    log ("new fileSelector id: " + id + ", label: " + label + ", inputId: " + this.uploadInputId);

@@ -3,6 +3,11 @@
 # Source this script to set up the environment for developing DAVE.
 # - Download miniconda and install packages and virtual env
 # - Download node and install packages
+# - Install Python dependencies
+# - Install Stingray and Astropy Helpers
+# - Install Hendrics
+# - Install LibMagic
+# - Install node modules
 
 # First check if the script is being sourced...
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]] ; then
@@ -114,7 +119,7 @@ NODE_FILENAME="node-v$NODE_VERSION"
 			fi
 		fi
 
-		sudo installer -pkg $NODE_TAR -target /
+		installer -pkg $NODE_TAR -target /
 
 	else
 		# Unknown.
@@ -169,8 +174,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Oct 22th, 2017 -> https://github.com/StingraySoftware/stingray/commit/b64aceb3197062ffd65bfd735ebff190a34e1066
-STINGRAY_COMMIT_HASH=b64aceb3197062ffd65bfd735ebff190a34e1066
+# Nov 7th, 2017 -> https://github.com/StingraySoftware/stingray/commit/0870c2051dadd9fd921fe286132971eb31b6a199
+STINGRAY_COMMIT_HASH=0870c2051dadd9fd921fe286132971eb31b6a199
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
@@ -220,12 +225,12 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 		# Mac OSX
 
 		#Build stingray
-		sudo python setup.py install
+		python setup.py install
 
 		cd $STINGRAY_FOLDER/astropy_helpers
 
 		#Build astropy_helpers
-		sudo python setup.py install
+		python setup.py install
 
 		cd $DIR/..
 
@@ -239,8 +244,8 @@ fi
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Oct 20th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/9c4f95ec30837bc0bc8077b369e4957bcccefb16
-HENDRICS_COMMIT_HASH=9c4f95ec30837bc0bc8077b369e4957bcccefb16
+# Oct 27th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/53ebffd826583027acc7ccad565029babd08d24d
+HENDRICS_COMMIT_HASH=53ebffd826583027acc7ccad565029babd08d24d
 
 if [ ! -e $HENDRICS_FOLDER ]; then
 
@@ -275,7 +280,7 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 		# Mac OSX
 
 		#Build HENDRICS
-		sudo python setup.py install
+		python setup.py install
 
 		cd $DIR/..
 

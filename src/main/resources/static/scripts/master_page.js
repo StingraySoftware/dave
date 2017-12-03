@@ -9,12 +9,10 @@ $(document).ready(function () {
   gaTracker.sendPage("MasterPage");
 
   window.onerror = function (errorMsg, url, lineNumber) {
-      logErr(errorMsg + ", line: " + lineNumber);
-      return false;
+      return uncaugthError(errorMsg + ", line: " + lineNumber);
   };
   window.addEventListener("error", function (e) {
-     logErr(e.error.message);
-     return false;
+     return uncaugthError(e.error.message);
   });
 
   theService = new Service(CONFIG.DOMAIN_URL);
@@ -185,6 +183,14 @@ function hideWaitingDialogDelayed (delay) {
   setTimeout( function () {
     waitingDialog.hide();
   }, delay);
+}
+
+function uncaugthError(errorMsg) {
+  if (!errorMsg.toLowerCase().includes("invalid or unexpected token")
+      && !errorMsg.toLowerCase().includes("missing ) after argument list")){
+    logErr(errorMsg);
+  }
+  return false;
 }
 
 function showError(errorMsg, exception, options) {

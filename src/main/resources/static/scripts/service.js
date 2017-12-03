@@ -50,8 +50,10 @@ function Service (base_url) {
                                         errorFn);
   };
 
-  this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, fn ) {
-    $.get( thisService.base_url + "/apply_rmf_file_to_dataset", { filename: filename, rmf_filename: rmf_filename } )
+  this.apply_rmf_file_to_dataset  = function ( filename, rmf_filename, column, fn ) {
+    $.get( thisService.base_url + "/apply_rmf_file_to_dataset", { filename: filename,
+                                                                  rmf_filename: rmf_filename,
+                                                                  column: column } )
       .done(fn)
       .fail(fn);
   };
@@ -125,6 +127,10 @@ function Service (base_url) {
 
   this.request_rms_spectrum  = function ( data, fn ) {
     return thisService.make_ajax_call("get_rms_spectrum", data, fn);
+  };
+
+  this.request_rms_vs_countrate  = function ( data, fn ) {
+    return thisService.make_ajax_call("get_rms_vs_countrate", data, fn);
   };
 
   this.request_plot_data_from_models  = function ( data, fn ) {

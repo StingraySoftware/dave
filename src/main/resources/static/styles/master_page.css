@@ -10,6 +10,10 @@ html,body,.container {
   margin: 0;
 }
 
+body {
+  min-width: 1090px;
+}
+
 h2 {
   font-size: 18px;
 }
@@ -133,6 +137,7 @@ ul#right-navbar li {
   padding-left: 15px;
   padding-bottom: 60px;
   background-color: #ffffff;
+  min-width: 720px;
 }
 
 .daveContainer .columnDivider
@@ -668,12 +673,14 @@ input.wrongValue {
 {
   color: rgb(245, 243, 243);
   font-size: 1.5em;
+  margin-top: 0px;
 }
 
 .TabPanel.Settings h3
 {
   color: #e68f4d;
   clear: both;
+  margin-top: 0px;
 }
 
 .floatRight {
@@ -747,7 +754,7 @@ input.wrongValue {
   padding-left: 12px;
 }
 
-.serverLogLevel h3 {
+.serverLogLevel h3, .defaultChannelColumn h3 {
   color: #9d9d9d !important;
 }
 
@@ -821,4 +828,10 @@ p.allPlots {
 
 fieldset.ui-controlgroup.ui-controlgroup-horizontal.ui-helper-clearfix input {
   display: none;
+}
+
+.btnTelescopConfig {
+  float: right;
+  margin-top: -26px;
+  margin-right: 230px;
 }

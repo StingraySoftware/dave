@@ -174,6 +174,21 @@ function Schema(schema){
     return this.getTotalDuration() * CONFIG.TIMERANGE_MULTIPLIER;
   }
 
+  this.getChannelColumn = function () {
+
+    if (this.hasHeader()){
+      var tableHeader = this.getHeader();
+      if (!isNull(tableHeader["TELESCOP"])) {
+        var telescop = tableHeader["TELESCOP"].trim().toLowerCase();
+        var channel_colums = CONFIG.CHANNEL_COLUMNS.filter(function(channel_colum) { return channel_colum.TELESCOP.trim().toLowerCase() == telescop; });
+        if (channel_colums.length > 0) {
+            return channel_colums[0].COLUMN;
+        }
+      }
+    }
+    return CONFIG.DEFAULT_CHANNEL_COLUMN;
+  }
+
   return this;
 }
 

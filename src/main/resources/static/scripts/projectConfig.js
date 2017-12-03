@@ -165,6 +165,7 @@ function ProjectConfig(){
     for (i in projectConfigs) {
       this.totalDuration = (this.totalDuration != 0) ? Math.min(this.totalDuration, projectConfigs[i].totalDuration) : projectConfigs[i].totalDuration;
       this.minBinSize = (this.minBinSize != 0) ? Math.max(this.minBinSize, projectConfigs[i].minBinSize) : projectConfigs[i].minBinSize;
+      this.maxBinSize = (this.maxBinSize != 0) ? Math.max(this.maxBinSize, projectConfigs[i].maxBinSize) : projectConfigs[i].maxBinSize;
       this.binSize = (this.binSize != 0) ? Math.max(this.binSize, projectConfigs[i].binSize) : projectConfigs[i].binSize;
       this.avgSegmentSize = (this.avgSegmentSize != 0) ? Math.min(this.avgSegmentSize, projectConfigs[i].avgSegmentSize) : projectConfigs[i].avgSegmentSize;
       this.maxSegmentSize = (this.maxSegmentSize != 0) ? Math.min(this.maxSegmentSize, projectConfigs[i].maxSegmentSize) * 0.95 : projectConfigs[i].maxSegmentSize * 0.95;
@@ -194,6 +195,13 @@ function ProjectConfig(){
     if (!isNull(this.plotsIdsByKey[key])) {
       this.plotsIdsByKey[key] = [];
     }
+  }
+
+  this.getChannelColumn = function () {
+    if (this.hasSchema()){
+      return this.schema.getChannelColumn();
+    }
+    return CONFIG.DEFAULT_CHANNEL_COLUMN;
   }
 
   this.getConfig = function () {

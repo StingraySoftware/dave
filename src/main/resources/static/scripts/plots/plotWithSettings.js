@@ -166,8 +166,10 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
       //Adds energy range selector
       this.onEnergyRangeValuesChanged = function() {
-        currentObj.plotConfig.n_bands = Math.max.apply(Math, [1, Math.floor(currentObj.energyRangeSelector.toValue - currentObj.energyRangeSelector.fromValue)]);
-        currentObj.settingsPanel.find(".inputNBands").val(currentObj.plotConfig.n_bands);
+        if (plotConfig.x_axis_type != "countrate"){
+          currentObj.plotConfig.n_bands = Math.max.apply(Math, [1, Math.floor(currentObj.energyRangeSelector.toValue - currentObj.energyRangeSelector.fromValue)]);
+          currentObj.settingsPanel.find(".inputNBands").val(currentObj.plotConfig.n_bands);
+        }
         currentObj.plotConfig.energy_range = [currentObj.energyRangeSelector.fromValue, currentObj.energyRangeSelector.toValue];
       }
 
@@ -215,7 +217,7 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
       //Adds bin size selector to plot
       var tab = getTabForSelector(currentObj.id);
-      if (!isNull(tab) && !isNull(tab.toolPanel.binSelector)){
+      if (!isNull(tab)){ //&& !isNull(tab.toolPanel.binSelector)
 
         var enabled = !isNull(this.binSelector) && this.binSelector.enabled;
         var binSize = (enabled) ? this.plotConfig.dt : tab.projectConfig.binSize;
@@ -250,8 +252,8 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
 
         this.binSelector = new BinSelector(this.id + "_binSelector",
                                           "Bin Size (" + tab.projectConfig.timeUnit  + "):",
-                                          tab.projectConfig.minBinSize,
-                                          tab.projectConfig.maxBinSize,
+                                          binSelectorConfig.minBinSize,
+                                          binSelectorConfig.maxBinSize,
                                           binSelectorConfig.step,
                                           binSize,
                                           this.onBinSizeChanged,

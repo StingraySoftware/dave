@@ -56,12 +56,14 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.getPageName = function () {
-    if (!this.projectConfig.hasSchema()) {
-      return "LoadPage";
-    } else if (this.projectConfig.schema.isEventsFile()){
-      return "EventsFilePage";
-    } else if (this.projectConfig.schema.isLightCurveFile()){
-      return "LightcurveFilePage";
+    if (!isNull(this.projectConfig)){
+      if (!this.projectConfig.hasSchema()) {
+        return "LoadPage";
+      } else if (this.projectConfig.schema.isEventsFile()){
+        return "EventsFilePage";
+      } else if (this.projectConfig.schema.isLightCurveFile()){
+        return "LightcurveFilePage";
+      }
     }
 
     return "WrongPage2";
@@ -87,7 +89,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         currentObj.service.get_dataset_schema(currentObj.projectConfig.gtiFilename, currentObj.onGtiSchemaChanged, currentObj.onSchemaError, !isNull(callback) ? { callback: callback } : null );
       } else if ((selectorKey == "RMF") && currentObj.projectConfig.hasSchema()) {
         waitingDialog.show('Applying RMF: ' + getFilename(filenames[0]));
-        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, function (res) { currentObj.onRmfApplied(res, callback); } );
+        currentObj.service.apply_rmf_file_to_dataset(currentObj.projectConfig.filename, currentObj.projectConfig.rmfFilename, currentObj.projectConfig.getChannelColumn(), function (res) { currentObj.onRmfApplied(res, callback); } );
       }
 
     } else if (filenames.length > 1){
@@ -286,7 +288,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
           //Hides upload RMF buttons from Analyze tab
-          currentObj.toolPanel.$html.find(".rmsBtn").remove();
+          currentObj.toolPanel.$html.find(".rmsEnergyBtn").remove();
+          currentObj.toolPanel.$html.find(".rmsCountRateBtn").remove();
           currentObj.toolPanel.$html.find(".covarianceBtn").remove();
           currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
 
@@ -442,12 +445,17 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                                         function () { currentObj.showUploadRMFDialog("covariance") },
                                                         timingPlotsButtons);
 
-      timingPlotsButtons = currentObj.addButtonToArray("RMS spectrum",
-                                                        "rmsBtn",
-                                                        function () { currentObj.showUploadRMFDialog("rms") },
+      timingPlotsButtons = currentObj.addButtonToArray("RMS vs Energy",
+                                                        "rmsEnergyBtn",
+                                                        function () { currentObj.showUploadRMFDialog("rmsEnergy") },
                                                         timingPlotsButtons);
 
-      timingPlotsButtons = currentObj.addButtonToArray("Phase Lag spectrum",
+      timingPlotsButtons = currentObj.addButtonToArray("RMS vs Count Rate",
+                                                        "rmsCountRateBtn",
+                                                        function () { currentObj.showUploadRMFDialog("rmsCountRate") },
+                                                        timingPlotsButtons);
+
+      timingPlotsButtons = currentObj.addButtonToArray("Phase lag vs Energy",
                                                         "phaseLagBtn",
                                                         function () { currentObj.showUploadRMFDialog("phaseLag") },
                                                         timingPlotsButtons);
@@ -714,7 +722,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Show upload RMF file
     var $uploadRMFDialog = $('<div id="uploadRMFDialog_' + currentObj.id +  '" title="Upload RMF file:">' +
                                 '<div class="rmfDialogContainer">' +
-                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum", "RMS spectrum" and "Phase lag spectrum"</p>' +
+                                  '<p class="text-warning">RMF file is requiered for "Covariance spectrum", "RMS vs Energy", "RMS vs Count Rate" and "Phase lag spectrum"</p>' +
                                 '</div>' +
                             '</div>');
 
@@ -876,7 +884,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     async.waterfall([
         function(callback) {
             if (!isNull(tabConfig.plotDefaultConfig)){
-              currentObj.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
+              currentObj.plotDefaultConfig = $.extend(true, CONFIG.PLOT_CONFIG, tabConfig.plotDefaultConfig);
             }
             callback();
         },

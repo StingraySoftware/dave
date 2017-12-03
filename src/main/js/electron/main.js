@@ -8,11 +8,14 @@ var rq = require('request-promise');
 var Config = require('config-js');
 var Menu = require("menu");
 var request = require('request');
+var fs = require('fs');
 
 let mainWindow,
     windowParams = {
         width:1200,
         height: 700,
+        minHeight: 300,
+        minWidth: 768,
         icon: "resources/resources/static/img/icon.png"
     };
 var retryInterval = 0.5 * 1000;
@@ -85,7 +88,7 @@ function launchPythonServer(config, callback) {
       } else if (config.pythonEnabled) {
         launchProcess ("python", [config.pythonPath, '/tmp', '..', port, 'PY_ENV'], "Python");
       } else if (config.envEnabled) {
-        launchProcess ("/bin/bash", [config.envScriptPath], "Env&Python");
+        launchProcess ("/bin/bash", [config.envScriptPath], "E&P");
       }
 
       if (callback != null) {
@@ -261,15 +264,17 @@ function connectionLost (){
 }
 
 function getTailFromLogFile (logFilePath) {
-  log('Getting log info from: ' + logFilePath, "Warn");
-  var tailProc = cp.spawn("tail", [ "-10", logFilePath ]);
-  var stdout = "";
-  tailProc.stdout.on('data', (data) => {
-    stdout += data;
-  });
-  tailProc.on('close', (code) => {
-    log("LOGFILE: " + stdout);
-  });
+  if (fs.existsSync(logFilePath)) {
+    log('Getting log info from: ' + logFilePath, "Warn");
+    var tailProc = cp.spawn("tail", [ "-10", logFilePath ]);
+    var stdout = "";
+    tailProc.stdout.on('data', (data) => {
+      stdout += data;
+    });
+    tailProc.on('close', (code) => {
+      log("LOGFILE: " + stdout);
+    });
+  }
 }
 
 function escapeSpecialChars (text) {

@@ -92,7 +92,7 @@ def append_file_to_dataset(destination, next_destination):
                 new_dataset = dataset.clone()
                 new_hdutable = DsHelper.get_hdutable_from_dataset(new_dataset)
                 next_hdutable = DsHelper.get_hdutable_from_dataset(next_dataset)
-                new_hdutable = new_hdutable.join(next_hdutable)
+                new_dataset.tables[new_hdutable.id] = new_hdutable.join(next_hdutable)
                 new_dataset.tables["GTI"] = DsHelper.join_gti_tables(new_dataset.tables["GTI"], next_dataset.tables["GTI"])
 
                 # DsCache.remove(destination)  # Removes previous cached dataset for prev key
@@ -116,8 +116,9 @@ def append_file_to_dataset(destination, next_destination):
 #
 # @param: destination: file destination or dataset cache key
 # @param: rmf_destination: file destination of file to apply
+# @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(destination, rmf_destination):
+def apply_rmf_file_to_dataset(destination, rmf_destination, column):
     try:
         dataset, cache_key = DaveReader.get_file_dataset(destination)
         if DsHelper.is_events_dataset(dataset):
@@ -127,11 +128,11 @@ def apply_rmf_file_to_dataset(destination, rmf_destination):
                 events_table = dataset.tables["EVENTS"]
                 rmf_table = rmf_dataset.tables["EBOUNDS"]
 
-                if "PHA" not in events_table.columns:
-                    logging.warn('apply_rmf_file_to_dataset: PHA column not found!')
+                if column not in events_table.columns:
+                    logging.warn('apply_rmf_file_to_dataset: ' + str(column) +  ' column not found!')
                     return False
 
-                pha_data = events_table.columns["PHA"].values
+                pha_data = events_table.columns[column].values
 
                 e_avg_data = dict((channel, (min + max)/2) for channel, min, max in zip(rmf_table.columns["CHANNEL"].values,
                                                                                     rmf_table.columns["E_MIN"].values,
@@ -590,7 +591,7 @@ def get_power_density_spectrum(src_destination, bck_destination, gti_destination
         logging.error(ExHelper.getException('get_power_density_spectrum'))
         help_msg = ""
         if len(freq) == 0 and pds_type != 'Sng':
-            help_msg = " Try with PDSType: Single."
+            help_msg = " Try with PDSType: Single or a smaller segment length."
         warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
@@ -845,7 +846,7 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
         logging.error(ExHelper.getException('get_cross_spectrum'))
         help_msg = ""
         if len(freq) == 0 and xds_type != 'Sng':
-            help_msg = " Try with PDSType: Single."
+            help_msg = " Try with PDSType: Single a smaller segment length."
         warnmsg = [ExHelper.getWarnMsg() + help_msg]
 
     # Preapares the result
@@ -1118,7 +1119,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
         if len(axis) != 2:
             return common_error("Wrong number of axis")
 
-        if norm not in ['frac', 'abs', 'leahy', 'none']:
+        if norm not in ['frac', 'leahy']:
             return common_error("Wrong normalization")
 
         if pds_type not in ['Sng', 'Avg']:
@@ -1162,7 +1163,9 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                         energy_low = min_energy + (i * energy_step)
                         energy_high = energy_low + energy_step
+
                         energy_arr.extend([(energy_low + energy_high) / 2])
+
                         rms, rms_err = 0, 0
 
                         try:
@@ -1175,7 +1178,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                     if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
 
                                         lc = evt_list.to_lc(dt)
-                                        if lc:
+                                        if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
 
                                             gti = base_gti
                                             if not gti:
@@ -1219,7 +1222,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                             else:
                                                 logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                         else:
-                                            logging.warn("get_rms_spectrum: can't create lightcurve. Energy range: " + str(energy_low) + " to " + str(energy_high))
+                                            logging.warn("get_rms_spectrum: can't create lightcurve or is invalid. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                     else:
                                         logging.warn("get_rms_spectrum: can't create lightcurve. Not enougth duration. Energy range: " + str(energy_low) + " to " + str(energy_high))
                                 else:
@@ -1231,7 +1234,6 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                         rms_arr.extend([rms])
                         rms_err_arr.extend([rms_err])
-
                 else:
                     logging.warn('get_rms_spectrum: E column not found!')
                     warnmsg = ['E column not found']
@@ -1248,6 +1250,166 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
     # Preapares the result
     result = push_to_results_array([], energy_arr)
+    result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
+    result = push_to_results_array(result, duration)
+    result = push_to_results_array(result, warnmsg)
+    result = push_to_results_array(result, freq_min_max)
+    return result
+
+
+# get_rms_vs_countrate:
+# Returns the energy values and its correlated rms and rms errors
+#
+# @param: src_destination: source file destination
+# @param: bck_destination: background file destination, is optional
+# @param: gti_destination: gti file destination, is optional
+# @param: filters: array with the filters to apply
+#         [{ table = "EVENTS", column = "Time", from=0, to=10 }, ... ]
+# @param: axis: array with the column names to use in ploting
+#           [{ table = "EVENTS", column = "TIME" },
+#            { table = "EVENTS", column = "PHA" } ]
+# @param: dt: The time resolution of the events.
+# @param: nsegm: The number of segments for splitting the lightcurve
+# @param: df: If not 0 is the frequency rebining value
+# @param: freq_range: A tuple with minimum and maximum values of the
+#         range of frequency, send [-1, -1] for use all frequencies
+# @param: energy_range: A tuple with minimum and maximum values of the
+#         range of energy, send [-1, -1] for use all energies
+#
+def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
+                    filters, axis, dt, nsegm, df, freq_range, energy_range):
+    countrate_arr = []
+    rms_arr =[]
+    rms_err_arr = []
+    duration = []
+    warnmsg = []
+    freq_min_max = [-1, -1]
+
+    try:
+
+        if len(axis) != 2:
+            return common_error("Wrong number of axis")
+
+        # Prepares GTI if passed
+        base_gti = load_gti_from_destination (gti_destination)
+
+        filters = FltHelper.get_filters_clean_color_filters(filters)
+
+        filtered_ds = get_filtered_dataset(src_destination, filters, gti_destination)
+
+        if DsHelper.is_events_dataset(filtered_ds):
+            events_table = filtered_ds.tables["EVENTS"]
+            if len(events_table.columns[CONFIG.TIME_COLUMN].values) > 0:
+                min_time = events_table.columns[CONFIG.TIME_COLUMN].values[0]
+                max_time = events_table.columns[CONFIG.TIME_COLUMN].values[len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1]
+                duration = [(max_time - min_time)]
+
+                if "E" in events_table.columns:
+
+                    event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
+                                                 events_table.columns["E"].values))
+
+                    if energy_range[0] < 0:
+                        min_energy = min(event_list[:,1])
+                    else:
+                        min_energy = energy_range[0]
+
+                    if energy_range[1] >= min_energy:
+                        max_energy = energy_range[1] - min_energy
+                    else:
+                        max_energy = max(event_list[:,1]) - min_energy
+
+                    event_list = event_list[ (max_energy>event_list[:,1]) & (event_list[:,1]>min_energy) ]
+
+                    time_step = duration[0] / nsegm
+
+                    for i in range(nsegm):
+
+                        time_low = min_energy + (i * time_step)
+                        time_high = time_low + time_step
+
+                        try:
+                            filtered_event_list = event_list[ (time_high>event_list[:,0]) & (event_list[:,0]>time_low) ]
+                            if (len(filtered_event_list) > 0):
+
+                                evt_list = EventList(filtered_event_list[:,0], pi=filtered_event_list[:,1])
+                                if evt_list and evt_list.ncounts > 1:
+
+                                    if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
+
+                                        lc = evt_list.to_lc(dt)
+                                        if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
+
+                                            rms, rms_err = 0, 0
+
+                                            gti = base_gti
+                                            if not gti:
+                                                gti = lc.gti
+
+                                            pds = Powerspectrum(lc, norm='frac', gti=gti)
+                                            if pds:
+
+                                                if df > 0:
+                                                    pds = pds.rebin(df=df)
+
+                                                if len(pds.freq):
+                                                    if freq_range[0] < 0:
+                                                        freq_low = min(pds.freq)
+                                                    else:
+                                                        freq_low = freq_range[0]
+
+                                                    if freq_min_max[0] >= 0:
+                                                        freq_min_max[0] = min([freq_min_max[0], freq_low])
+                                                    else:
+                                                        freq_min_max[0] = freq_low
+
+                                                    if freq_range[1] < 0:
+                                                        freq_high = max(pds.freq)
+                                                    else:
+                                                        freq_high = freq_range[1]
+                                                    freq_min_max[1] = max([freq_min_max[1], freq_high])
+
+                                                    rms, rms_err = pds.compute_rms(freq_low, freq_high)
+                                            else:
+                                                logging.warn("get_rms_vs_countrate: can't create power density spectrum. Time range: " + str(time_low) + " to " + str(time_high))
+
+                                            countrate_arr.extend([lc.meanrate])
+                                            rms_arr.extend([rms])
+                                            rms_err_arr.extend([rms_err])
+
+                                        else:
+                                            logging.warn("get_rms_vs_countrate: can't create lightcurve. Time range: " + str(time_low) + " to " + str(time_high))
+                                    else:
+                                        logging.warn("get_rms_vs_countrate: can't create lightcurve. Not enougth duration. Time range: " + str(time_low) + " to " + str(time_high))
+                                else:
+                                    logging.warn("get_rms_vs_countrate: can't create eventlist or counts are 0. Time range: " + str(time_low) + " to " + str(time_high) + ", counts: " + str(len(filtered_event_list)))
+                            else:
+                                logging.warn("get_rms_vs_countrate: Time range: " + str(time_low) + " to " + str(time_high) + " has no events")
+                        except:
+                            logging.warn(ExHelper.getException('get_rms_vs_countrate: Time range: ' + str(time_low) + ' to ' + str(time_high)))
+
+                    # If x_type is countrate we need to sort values
+                    sorted_idx = np.argsort(countrate_arr)
+                    countrate_arr = np.array(countrate_arr)[sorted_idx]
+                    rms_arr = np.array(rms_arr)[sorted_idx]
+                    rms_err_arr = np.array(rms_err_arr)[sorted_idx]
+
+                else:
+                    logging.warn('get_rms_vs_countrate: E column not found!')
+                    warnmsg = ['E column not found']
+            else:
+                logging.warn('get_rms_vs_countrate: No events data!')
+                warnmsg = ['No events data']
+        else:
+            logging.warn('get_rms_vs_countrate: Wrong dataset type!')
+            warnmsg = ['Wrong dataset type']
+
+    except:
+        logging.error(ExHelper.getException('get_rms_vs_countrate'))
+        warnmsg = [ExHelper.getWarnMsg()]
+
+    # Preapares the result
+    result = push_to_results_array([], countrate_arr)
     result = push_to_results_array_with_errors(result, rms_arr, rms_err_arr)
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
@@ -1647,6 +1809,9 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
         # Gets time data
         time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
 
+        tseg = np.median(np.diff(time_data))
+        logging.debug("tseg: " + str(tseg))
+
         # We will search for pulsations over a range
         # of frequencies around the known pulsation period.
 
@@ -1697,7 +1862,7 @@ def get_pulse_search(src_destination, bck_destination, gti_destination, filters,
 # @param: nt: Number of time bins.
 #
 def get_phaseogram(src_destination, bck_destination, gti_destination, filters, axis,
-                   dt, f, nph, nt):
+                   dt, f, nph, nt, fdot=0, fddot=0, binary_parameters=None):
     phaseogr = []
     phases = []
     times = []
@@ -1721,9 +1886,33 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
         if DsHelper.is_lightcurve_dataset(ds):
             weights = np.array(ds.tables["RATE"].columns["RATE"].values)
 
-        # Calculate the phaseogram plot data
+        # Prepares the phaseogram parameters
         time_data = np.array(ds.tables[axis[0]["table"]].columns[axis[0]["column"]].values)
-        phaseogr, phases, times, additional_info = phaseogram(time_data, f, nph=nph, nt=nt, weights=weights)
+
+        pepoch = None
+        if len(ds.tables["GTI"].columns["START"].values) > 0:
+            pepoch = ds.tables["GTI"].columns["START"].values[0]
+
+        delay_times = 0
+        orbital_period = time_data[-1] - time_data[0]
+        asini = 0
+        t0 = pepoch
+        prev_t0 = 0
+        if not binary_parameters is None:
+            if binary_parameters[0] > 0:
+                orbital_period=binary_parameters[0]
+            if binary_parameters[1] > 0:
+                asini=binary_parameters[1]
+            if binary_parameters[2] > 0:
+                t0=binary_parameters[2]
+            delay_times = asini * np.sin(2 * np.pi * (time_data - t0) / orbital_period)
+
+        corrected_times = time_data - delay_times
+
+        # Calculate the phaseogram plot data
+        phaseogr, phases, times, additional_info = phaseogram(corrected_times, f, nph=nph, nt=nt,
+                                                                fdot=fdot, fddot=fddot, plot=False,
+                                                                pepoch=pepoch, weights=weights)
         phaseogr = np.transpose(phaseogr)
 
         # Calculates the profile plot data
@@ -1731,15 +1920,11 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
         profile = np.sum(phaseogr, axis=1)
         mean_profile = np.mean(profile)
         if np.all(mean_phases < 1.5):
-            logging.debug("np.all < 1.5")
             mean_phases = np.concatenate((mean_phases, mean_phases + 1))
             profile = np.concatenate((profile, profile))
-        logging.debug("mean_phases:" + str(mean_phases.shape))
-        logging.debug("mean_phases data:" + str(mean_phases))
-        logging.debug("profile:" + str(profile.shape))
-        logging.debug("profile data:" + str(profile))
         err_low, err_high = poisson_conf_interval(mean_profile, interval='frequentist-confidence', sigma=1)
         error_dist = [err_low, err_high]
+
 
     except:
         logging.error(ExHelper.getException('get_phaseogram'))
