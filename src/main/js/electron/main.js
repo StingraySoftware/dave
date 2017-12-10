@@ -184,6 +184,10 @@ function connectToServer (){
         connected = true;
         console.log('Server started!');
         loadDaveContents(PYTHON_URL);
+        if (!logDebugMode){
+          //If app is not in debug mode, show app menu, reload page and dev tools are disbled.
+          prepareMenu();
+        }
       })
       .catch(function(err){
 
@@ -357,29 +361,30 @@ function delayedQuit(){
   setTimeout (function(){ app.quit(); }, retryInterval);
 }
 
+function showAbout(){
+  if (mainWindow != null) {
+    mainWindow.webContents.executeJavaScript("showAboutDialog();");
+  }
+}
+
 function prepareMenu (){
 
     // Create the Application's main menu
     var template = [{
         label: "DAVE",
         submenu: [
-            { label: "About DAVE", selector: "orderFrontStandardAboutPanel:" },
+            { label: "About DAVE", click: function() { showAbout(); } },
             { type: "separator" },
-            { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
+            { label: "Quit", accelerator: "Command+Q", click: function() { stop(); }}
         ]}, {
         label: "Edit",
         submenu: [
-            //{ label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
-            //{ label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
-            //{ type: "separator" },
-            { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
             { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
-            { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
-            { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+            { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" }
         ]}
     ];
 
-    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+    electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(template));
 }
 
 function checkPortInUse(port, callback) {

@@ -193,18 +193,21 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
   $advSettings.append($btnClearCache);
 
   this.$container.find(".btnAboutDave").click(function () {
-
-    var version = !isNull(BUILD_VERSION) ? BUILD_VERSION : "Unknown";
-
-    showMsg("About DAVE",
-            "<p>DAVE stands for Data Analysis of Variable Events, which is a GUI built on top of the Stingray library. It is intended to be used by astronomers for time-series analysis in general, and analysis of variable sources in particular.<br>The goal is to enable scientific exploration and flexible analysis flows where users can insert their own algorithms to compare the effects of such changes.</p>" +
-            "<p>More information about DAVE in: <br>https://github.com/StingraySoftware/dave</p>" +
-            "<p>© 2016 Timelab Technologies Ltd.</p>" +
-            "<p style='float: right; font-size: 0.85em;'>DAVE Version: " + version + "</p>");
-
-    gaTracker.sendEvent("GeneralSettings", "btnAboutDave", currentObj.id);
+    showAboutDialog();
   });
 
   log("SettingsTabPanel ready! id: " + this.id);
   return this;
+}
+
+function showAboutDialog() {
+  var version = !isNull(BUILD_VERSION) ? BUILD_VERSION : "Unknown";
+
+  showMsg("About DAVE",
+          "<p>DAVE stands for Data Analysis of Variable Events, which is a GUI built on top of the Stingray library. It is intended to be used by astronomers for time-series analysis in general, and analysis of variable sources in particular.<br>The goal is to enable scientific exploration and flexible analysis flows where users can insert their own algorithms to compare the effects of such changes.</p>" +
+          "<p>More information about DAVE in: <br>https://github.com/StingraySoftware/dave</p>" +
+          "<p>© 2016 Timelab Technologies Ltd.</p>" +
+          "<p style='float: right; font-size: 0.85em;'>DAVE Version: " + version + "</p>");
+
+  gaTracker.sendEvent("GeneralSettings", "btnAboutDave", "SettingsTabPanel");
 }
