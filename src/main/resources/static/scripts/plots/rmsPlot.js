@@ -7,6 +7,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   plotConfig.default_energy_range = [-1, -1];
 
   this.freq_range_title = (plotConfig.x_axis_type != "countrate") ? "RMS Frequency Range (Hz):" : "Frequency Range (Hz):";
+  this.energy_range_title = "Energy range (keV)";
 
   if (projectConfig.schema.isEventsFile()) {
       var column = projectConfig.schema.getTable()["E"];
@@ -52,7 +53,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
                                     ".rightCol");
 
     //Adds energy range selector
-    this.addEnergyRangeControlToSetting("Energy range (keV)", ".rightCol");
+    this.addEnergyRangeControlToSetting(this.energy_range_title, ".rightCol");
 
     //Adds number of point control of rms plot
     if (plotConfig.x_axis_type != "countrate"){
