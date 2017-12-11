@@ -184,6 +184,11 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     return $style;
   }
 
+  //Sets default plot.setLegendText, that was overriden on LcPlot
+  this.setLegendText = function (text) {
+   this.$hoverinfo.html(text);
+  }
+
   log ("new AgnPlot id: " + this.id);
 
   return this;

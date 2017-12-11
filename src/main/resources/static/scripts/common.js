@@ -42,8 +42,10 @@ function minMax2DArray(arr) {
   var max = Number.MIN_VALUE,
       min = Number.MAX_VALUE;
   arr.forEach(function(e) {
-    if (max < e) { max = e; }
-    if (min > e) { min = e; }
+    if (e != null && !isNaN(e)){
+      if (max < e) { max = e; }
+      if (min > e) { min = e; }
+    }
   });
   return {max: max, min: min};
 }
