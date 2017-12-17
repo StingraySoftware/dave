@@ -806,6 +806,13 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
 
         if xs:
+
+            if not hasattr(xs, 'pds1'):
+                return common_error("Cant create PDS of lightcurve 1")
+
+            if not hasattr(xs, 'pds2'):
+                return common_error("Cant create PDS of lightcurve 2")
+
             freq = xs.freq
             power = xs.power
             power_err = xs.power_err

@@ -91,6 +91,19 @@ function ProjectConfig(){
     return "";
   }
 
+  this.getFilename = function () {
+    var filename = "";
+    if (this.filenames.length > 0) {
+      filename = this.filenames[0].replace(/^.*[\\\/]/, '');
+      if (this.filenames.length > 1) {
+        filename += "_" + (this.filenames.length - 1);
+      }
+    } else {
+      filename = this.filename.replace(/^.*[\\\/]/, '');
+    }
+    return filename;
+  }
+
   this.updateFile = function (selectorKey) {
     if (selectorKey == "SRC") {
       this.setFile("SRC", this.filename);
@@ -163,6 +176,8 @@ function ProjectConfig(){
 
   this.updateFromProjectConfigs = function (projectConfigs) {
     for (i in projectConfigs) {
+      if (this.filename == ""){ this.filename = projectConfigs[i].filename; }
+      if (this.filenames.length == 0){ this.filenames = projectConfigs[i].filenames; }
       this.totalDuration = (this.totalDuration != 0) ? Math.min(this.totalDuration, projectConfigs[i].totalDuration) : projectConfigs[i].totalDuration;
       this.minBinSize = (this.minBinSize != 0) ? Math.max(this.minBinSize, projectConfigs[i].minBinSize) : projectConfigs[i].minBinSize;
       this.maxBinSize = (this.maxBinSize != 0) ? Math.max(this.maxBinSize, projectConfigs[i].maxBinSize) : projectConfigs[i].maxBinSize;

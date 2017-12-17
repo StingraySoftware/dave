@@ -23,6 +23,14 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     return this.$navItem.find("." + this.navItemClass).html();
   }
 
+  this.updateSelectedFile = function (plotConfig, projectConfig){
+    if (!isNull(projectConfig)){
+      var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
+      var filename = (projectConfig.getFilename() != "") ? projectConfig.getFilename() : plotConfig.filename;
+      this.toolPanel.addSelectedFile(label, filename);
+    }
+  }
+
   this.show = function () {
     this.$navItem.parent().find(".active").removeClass("active");
     this.$navItem.addClass("active");

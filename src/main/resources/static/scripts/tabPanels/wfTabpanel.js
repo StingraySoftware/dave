@@ -331,7 +331,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(schema);
-        currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
+        currentObj.setTitle(currentObj.projectConfig.getFilename());
 
         //Prepare sections
         var sections = currentObj.getAnalysisSections();
@@ -551,7 +551,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     } else {
 
-      waitingDialog.show('Getting file schema: ' + getFilename(params.filename));
+      waitingDialog.show('Getting file schema: ...');
       currentObj.service.get_dataset_schema(params.filename, params.onSchemaChanged, currentObj.onSchemaError, params);
     }
 
@@ -848,7 +848,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.saveDefaultPlotlyConfig = function () {
     if (!isNull(this.plotDefaultConfig)){
-      saveToFile (getFilename(currentObj.projectConfig.filename) + "_style.stl", JSON.stringify(currentObj.plotDefaultConfig));
+      saveToFile (currentObj.projectConfig.getFilename() + "_style.stl", JSON.stringify(currentObj.plotDefaultConfig));
     }
   }
 

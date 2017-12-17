@@ -126,6 +126,8 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
     this.updateDefaultsFromProjectConfig(this.projectConfig);
+    this.updateSelectedFile(this.plotConfig, this.projectConfig);
+    this.toolPanel.$html.find(".fileSelectorsContainer").append(this.getVarianceSelector());
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
 
@@ -249,6 +251,10 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.toolPanel.$html.find(".inputMeanCount").val(val);
   }
 
+  this.outputPanel.getFilters = function () {
+    return currentObj.agnPlot.plotConfig.filters;
+  }
+
   //Set the selected plot configs
   this.plotConfig = plotConfig;
 
@@ -265,15 +271,9 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
 
-  var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
-  this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
-  this.toolPanel.$html.find(".fileSelectorsContainer").append(this.getVarianceSelector());
-
-  this.outputPanel.getFilters = function () {
-    return currentObj.agnPlot.plotConfig.filters;
-  }
-
   if (!isNull(projectConfig)){
+    this.updateSelectedFile(this.plotConfig, projectConfig);
+    this.toolPanel.$html.find(".fileSelectorsContainer").append(this.getVarianceSelector());
     this.projectConfig.updateFromProjectConfigs([projectConfig]);
     this.updateDefaultsFromProjectConfig(this.projectConfig);
     this.createPlots(plotStyle);
