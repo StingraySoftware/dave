@@ -41,7 +41,6 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   this.onSettingsCreated = function(){
 
     //Hides pds settings controls that doesn't apply to rms plot
-    this.binSelector.$html.hide();
     this.xAxisRadios.hide();
     this.yAxisRadios.hide();
     this.plotTypeRadios.hide();
