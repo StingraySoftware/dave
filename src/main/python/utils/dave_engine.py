@@ -919,13 +919,17 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                         # Calculates the Covariance Spectrum
                         cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
 
-                        sorted_idx = np.argsort(cs.covar[:,0])
-                        sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
-                        sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
-                        energy_arr = sorted_covar[:,0]
-                        covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
-                        covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
+                        if cs and hasattr(cs, 'covar') and len(cs.covar.shape) > 1:
+                            sorted_idx = np.argsort(cs.covar[:,0])
+                            sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
+                            sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
+                            energy_arr = sorted_covar[:,0]
+                            covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
+                            covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
 
+                        else:
+                            logging.warn('get_covariance_spectrum: Cant create covariance spectrum!')
+                            return common_error("Cant create covariance spectrum")
                     else:
                         logging.warn('get_covariance_spectrum: Lc duration must be greater than bin size!')
                         return common_error("LC duration must be greater than bin size")

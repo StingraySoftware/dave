@@ -25,7 +25,7 @@ function sliderSelector(id, title, filterData, fromValue, toValue, onSelectorVal
   this.multiplier = 1.0;
 
   if (!isNull(selectors_array)){
-    selectors_array[this.id] = this;
+    selectors_array = sliderSelectors_addSelector(selectors_array, this);
   }
 
   this.$html = $('<div class="sliderSelector ' + this.id + '">' +
@@ -304,6 +304,22 @@ function sliderSelectors_getSelectors (selectors_array, source, columnName) {
         && selector.filterData.replaceColumn == columnName){
         selectors.push(selector);
       }
+  }
+  return selectors;
+}
+
+function sliderSelectors_addSelector (selectors_array, selector) {
+  selectors_array[selector.id] = selector;
+  return selectors_array;
+}
+
+function sliderSelectors_removeSelector (selectors_array, selector) {
+  var selectors = [];
+  for (i in selectors_array) {
+    var tmpSelector = selectors_array[i];
+    if (tmpSelector.id != selector.id){
+      selectors = sliderSelectors_addSelector(selectors, tmpSelector);
+    }
   }
   return selectors;
 }

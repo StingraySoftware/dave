@@ -105,8 +105,14 @@ function OutputPanel (id, classSelector, container, service, onFiltersChangedFro
       var plotId = plotIds[plotIdx];
       var plot = this.getPlotById(plotId);
       if (!isNull(plot)) {
+        //Removes the plot html from outputpanel
         plot.$html.remove();
+
+        //Removes show plot buttons from analisys tab on toolpanel
         tab.$html.find(".sectionContainer").find("." + plot.id).remove();
+        tab.$html.find(".sectionContainer").find("button[plotId='" + plotId + "']").remove();
+
+        //Removes the plot from plots array
         this.plots = this.plots.filter(function(plot) {
                           return plot.id !== plotId;
                       });
