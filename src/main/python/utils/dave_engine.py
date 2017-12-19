@@ -14,7 +14,7 @@ from stingray.events import EventList
 from stingray.lightcurve import Lightcurve
 from stingray import Powerspectrum, AveragedPowerspectrum, DynamicalPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
-from stingray import Covariancespectrum, AveragedCovariancespectrum
+from stingray import Covariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import excess_variance
@@ -912,6 +912,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                         band_interest = []
                         for i in range(n_bands):
                             band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
+                            energy_arr.extend([(energy_range[0] + (i * band_step) + energy_range[0] + ((i + 1) * band_step))/2])
 
                         if std < 0:
                             std = None
@@ -919,17 +920,9 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                         # Calculates the Covariance Spectrum
                         cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
 
-                        if cs and hasattr(cs, 'covar') and len(cs.covar.shape) > 1:
-                            sorted_idx = np.argsort(cs.covar[:,0])
-                            sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
-                            sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
-                            energy_arr = sorted_covar[:,0]
-                            covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
-                            covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
+                        covariance_arr = nan_and_inf_to_num(cs.covar)
+                        covariance_err_arr = nan_and_inf_to_num(cs.covar_error)
 
-                        else:
-                            logging.warn('get_covariance_spectrum: Cant create covariance spectrum!')
-                            return common_error("Cant create covariance spectrum")
                     else:
                         logging.warn('get_covariance_spectrum: Lc duration must be greater than bin size!')
                         return common_error("LC duration must be greater than bin size")

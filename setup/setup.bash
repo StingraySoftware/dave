@@ -174,8 +174,8 @@ source activate dave
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Dic 4th, 2017 -> https://github.com/StingraySoftware/stingray/commit/3e64f3d4445211f6eff5ab2a4539f79724ee8e49
-STINGRAY_COMMIT_HASH=3e64f3d4445211f6eff5ab2a4539f79724ee8e49
+# Dic 19th, 2017 -> https://github.com/StingraySoftware/stingray/commit/e0699411019bb685aa9250901e0f942513b5c861
+STINGRAY_COMMIT_HASH=e0699411019bb685aa9250901e0f942513b5c861
 LINUX_COMPILATION=lib.linux-x86_64-3.5
 DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
