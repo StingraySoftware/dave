@@ -17,6 +17,7 @@
 //       log()        : print a blank line
 //
 // History:
+//        LATEST: Customized for DAVE GUI, support log level colors, and max lines
 //          1.15: Fixed height issue for box-sizing CSS.
 //          1.14: Added toggle() to draw logger window up/down.
 //                Added open()/close() to slide up/down.
@@ -85,6 +86,7 @@ var Logger = (function()
     var enabled = true;     // does not accept log messages any more if it is false
     var logHeight = 215;    // 204 + 2*padding + border-top
     var tabHeight = 20;
+    var maxRows = -1;
     // for animation
     var animTime = 0;
     var animDuration = 200; // ms
@@ -236,9 +238,8 @@ var Logger = (function()
                 span.style.fontWeight = "bold";
 
                 // the first message in log
-                var msg = "===== Log Started at " +
+                var msg = "===== DAVE Started at " +
                           getDate() + ", " + getTime() + ", " +
-                          "(Logger version " + version + ") " +
                           "=====";
 
                 span.appendChild(document.createTextNode(msg));
@@ -306,7 +307,7 @@ var Logger = (function()
                 if(!msgDefined)
                     msgDiv.style.color = "#afa"; // override color if msg is not defined
 
-                if (!isNull(cssClass))
+                if (!((cssClass === undefined) || (cssClass == null)))
                   msgDiv.setAttribute("class", cssClass);
 
                 // put message into a text node
@@ -316,13 +317,23 @@ var Logger = (function()
 
                 // new line div with clearing css float property
                 var newLineDiv = document.createElement("div");
-                newLineDiv.setAttribute("style", "clear:both;");
+                newLineDiv.setAttribute("class", "loggerRow");
+                newLineDiv.setAttribute("style", "width:97%;");
 
-                logDiv.appendChild(timeDiv);            // add time
-                logDiv.appendChild(msgDiv);             // add message
-                logDiv.appendChild(newLineDiv);         // add message
+                newLineDiv.appendChild(timeDiv);            // add time
+                newLineDiv.appendChild(msgDiv);             // add message
+                logDiv.appendChild(newLineDiv);             // adds new log row
 
                 logDiv.scrollTop = logDiv.scrollHeight; // scroll to last line
+            }
+
+            if (maxRows > 0){
+              var $logDiv = $(logDiv);
+              var resultRows = $logDiv.find(".loggerRow").length;
+              if (resultRows > maxRows){
+                  var rowsToRemove = resultRows - maxRows;
+                  $logDiv.find('.loggerRow:lt(' + rowsToRemove + ')').remove();
+              }
             }
         },
         ///////////////////////////////////////////////////////////////////////
@@ -433,6 +444,12 @@ var Logger = (function()
                 return;
 
             logDiv.innerHTML = "";
+        },
+        ///////////////////////////////////////////////////////////////////////
+        // set max message rows in logger
+        setMaxRows: function(maxRowsParam)
+        {
+            maxRows = maxRowsParam;
         }
     };
     return self;

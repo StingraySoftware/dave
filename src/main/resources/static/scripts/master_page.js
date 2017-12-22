@@ -4,6 +4,7 @@ var theService = null;
 $(document).ready(function () {
   waitingDialog.show('Creating environment');
 
+  Logger.setMaxRows(CONFIG.MAX_LOGGER_ROWS);
   Logger.show();
   logInfo("App started!! ->" + CONFIG.DOMAIN_URL);
   gaTracker.sendPage("MasterPage");
