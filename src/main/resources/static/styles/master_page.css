@@ -841,3 +841,7 @@ fieldset.ui-controlgroup.ui-controlgroup-horizontal.ui-helper-clearfix input {
   margin-top: -26px;
   margin-right: 230px;
 }
+
+.inputWNoise:disabled, .inputWNoise[disabled]{
+  border-style: none;
+}

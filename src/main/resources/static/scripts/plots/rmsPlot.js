@@ -4,6 +4,7 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
   plotConfig.n_bands = 25;
   plotConfig.freq_range = [-1, -1];
   plotConfig.energy_range = [-1, -1];
+  plotConfig.white_noise = -999;
   plotConfig.default_energy_range = [-1, -1];
 
   this.freq_range_title = (plotConfig.x_axis_type != "countrate") ? "RMS Frequency Range (Hz):" : "Frequency Range (Hz):";
@@ -63,10 +64,43 @@ function RmsPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
       this.rebinSelector.$html.hide();
       this.addNumberOfBandsControlToSettings("Nº Time Segments", ".leftCol");
     }
+
+    this.addWhiteNoiseControlToSettings("White noise level", ".leftCol");
   }
 
   this.getLabel = function (axis) {
     return this.plotConfig.styles.labels[axis];
+  }
+
+  this.getAutoWhiteNoiseOffset = function () {
+    return (!isNull(this.data) && this.data.length > 5) ? this.data[5].values : -999;
+  }
+
+  this.showFitWhiteNoiseDialog = function (plotType) {
+    //Show White Noise Dialog
+    var $fitWNODialog = $('<div id="fitWNODialogDialog_' + currentObj.id +  '" title="Calculate the White Noise Level:">' +
+                                '<div class="fitWNODialogDialogContainer">' +
+                                  '<p class="text-warning">For calculating the White Noise Level please do a fit of the Power Density Spectrum with Const model and a Lorentz model.</br>The resulting amplitude of the Const model after fitting and appliying the results will be the requested white noise level value.</p>' +
+                                '</div>' +
+                            '</div>');
+
+    currentObj.$html.append($fitWNODialog);
+    $fitWNODialog.dialog({
+       width: 450,
+       modal: true,
+       buttons: {
+         'Continue with fitting': function() {
+            onFitPlotClicked(currentObj);
+            $(this).dialog('close');
+            $fitWNODialog.remove();
+         },
+         'Cancel': function() {
+            $(this).dialog('close');
+            $fitWNODialog.remove();
+         }
+       }
+     });
+     $fitWNODialog.parent().find(".ui-dialog-titlebar-close").html('<i class="fa fa-times" aria-hidden="true"></i>');
   }
 
   log ("new RmsPlot id: " + this.id);

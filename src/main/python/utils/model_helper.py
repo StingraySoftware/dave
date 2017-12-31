@@ -1,5 +1,5 @@
 import utils.dave_logger as logging
-from astropy.modeling.models import Gaussian1D, Lorentz1D
+from astropy.modeling.models import Const1D, Gaussian1D, Lorentz1D
 from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
 from stingray.modeling import ParameterEstimation, PSDLogLikelihood
 import scipy.stats
@@ -14,7 +14,10 @@ import scipy.stats
 def get_astropy_model(model):
     astropy_model = None
 
-    if model["type"] == "Gaussian":
+    if model["type"] == "Const":
+         astropy_model = Const1D(model["amplitude"])
+
+    elif model["type"] == "Gaussian":
          astropy_model = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
 
     elif model["type"] == "Lorentz":
@@ -78,7 +81,9 @@ def get_astropy_model_from_dave_models(models):
         model_obj = get_astropy_model(model)
         if model_obj:
 
-            if model["type"] == "Gaussian":
+            if model["type"] == "Const":
+                 starting_pars.extend(get_starting_params_from_model(model, ["amplitude"]))
+            elif model["type"] == "Gaussian":
                  starting_pars.extend(get_starting_params_from_model(model, ["amplitude", "mean", "stddev"]))
             elif model["type"] == "Lorentz":
                  starting_pars.extend(get_starting_params_from_model(model, ["amplitude", "x_0", "fwhm"]))
@@ -134,7 +139,7 @@ def get_astropy_priors(dave_priors):
                 prior_key = str(paramName) + "_" + str(i)
             else:
                 prior_key = str(paramName)
-                
+
             model_param = model_params[paramName]
 
             if "type" in model_param:
@@ -162,3 +167,29 @@ def get_astropy_priors(dave_priors):
                 logging.warn("get_astropy_priors: can't find 'type' key on dave_priors, prior_key: " + prior_key)
 
     return priors
+
+
+# fit_data_with_gaussian:
+# Returns the optimized parameters for a Gaussian that fits the given array data
+#
+# @param: x_values: array data whit the x values to fit with the Gaussian
+# @param: y_values: array data whit the x values to fit with the Gaussian
+# @param: amplitude: initial guess for amplitude parameter of the Gaussian
+# @param: mean: initial guess for mean parameter of the Gaussian
+# @param: stddev: initial guess for stddev parameter of the Gaussian
+#
+def fit_data_with_lorentz_and_const(x_values, y_values):
+    amplitude=5.
+    x_0=1
+    fwhm=0.5
+    const=5.
+    g_init = Lorentz1D(amplitude, x_0, fwhm)
+    g_init += Const1D(const)
+    lpost = PSDLogLikelihood(x_values, y_values, g_init)
+    parest = ParameterEstimation()
+    res = parest.fit(lpost, [amplitude, x_0, fwhm, const], neg=True)
+    opt_amplitude = res.p_opt[0]
+    opt_x_0 = res.p_opt[1]
+    opt_fwhm = res.p_opt[2]
+    opt_const = res.p_opt[3]
+    return opt_amplitude, opt_x_0, opt_fwhm, opt_const

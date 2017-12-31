@@ -532,7 +532,7 @@ def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
 
 def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
                     filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands):
+                    freq_range, energy_range, n_bands, white_noise_offset):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -563,10 +563,11 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_spectrum: freq_range %s" % freq_range)
     logging.debug("get_rms_spectrum: energy_range %s" % energy_range)
     logging.debug("get_rms_spectrum: n_bands %s" % n_bands)
+    logging.debug("get_rms_spectrum: white_noise_offset %s" % white_noise_offset)
 
     data = DaveEngine.get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                         filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                        freq_range, energy_range, n_bands)
+                                        freq_range, energy_range, n_bands, white_noise_offset)
 
     logging.debug("get_rms_spectrum: Finish!")
 
@@ -574,7 +575,8 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
 
 
 def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, df, freq_range, energy_range):
+                    filters, axis, dt, nsegm, df, freq_range, energy_range,
+                    white_noise_offset):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -601,9 +603,11 @@ def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_vs_countrate: df %s" % df)
     logging.debug("get_rms_vs_countrate: freq_range %s" % freq_range)
     logging.debug("get_rms_vs_countrate: energy_range %s" % energy_range)
+    logging.debug("get_rms_vs_countrate: white_noise_offset %s" % white_noise_offset)
 
     data = DaveEngine.get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, df, freq_range, energy_range)
+                                        filters, axis, dt, nsegm, df, freq_range, energy_range,
+                                        white_noise_offset)
 
     logging.debug("get_rms_vs_countrate: Finish!")
 
