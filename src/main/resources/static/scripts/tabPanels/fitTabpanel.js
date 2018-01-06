@@ -535,7 +535,11 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     this.updateSelectedFile(this.plot.plotConfig, this.projectConfig);
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.modelSelector.$html);
 
-    this.addPlot(this.plot);
+    this.addPlot(this.plot, !isNull(plotConfig.autoRefresh) ? plotConfig.autoRefresh : true);
+  }
+
+  this.setPlotData = function (data){
+    this.plot.setPDSData (data);
   }
 
   this.containsId = function (id) {

@@ -1464,7 +1464,7 @@ def get_plot_data_from_models(models, x_values):
             if model_obj:
                 val_array = []
                 for i in range(len(x_values)):
-                     val_array.append(model_obj(x_values[i]))
+                     val_array.append(nan_and_inf_to_num(model_obj(x_values[i])))
 
                 if len(val_array) > 0:
                     models_arr = push_to_results_array(models_arr, nan_and_inf_to_num(val_array))

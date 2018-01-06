@@ -42,7 +42,6 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
         //Prepares PDS Data
         currentObj.data = currentObj.prepareData(data);
         currentObj.updateMinMaxCoords();
-
         currentObj.refreshModelsData(false);
         return;
 
@@ -57,6 +56,18 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
 
     currentObj.setReadyState(true);
     currentObj.onPlotReady();
+  }
+
+  this.setPDSData = function ( data ) {
+    //Aborts posible previous calls
+    if (!isNull(this.currentRequest) && !isNull(this.currentRequest.abort)) {
+      this.currentRequest.abort();
+    }
+
+    //Stores data, updates ranges and retrieves models data
+    currentObj.data = data;
+    currentObj.updateMinMaxCoords();
+    currentObj.refreshModelsData(false);
   }
 
   this.refreshModelsData = function (estimated) {

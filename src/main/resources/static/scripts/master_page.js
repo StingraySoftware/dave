@@ -114,7 +114,11 @@ function onCrossSpectraClicked(selectedPlots) {
 
 function onFitPlotClicked(plot) {
   logInfo("onFitPlotClicked: plot -> " + plot.id);
-  prepareNewTab(plot, addFitTabPanel);
+  plot.plotConfig.autoRefresh = plot.getSectionName() == "TimingPlot"; //TimingPlot is returned by RmsPlots, this plots data is not PDS data.
+  var fitTab = prepareNewTab(plot, addFitTabPanel);
+  if (!isNull(fitTab) && !isNull(plot.data) && !plot.plotConfig.autoRefresh){
+    fitTab.setPlotData(plot.data);
+  }
 }
 
 function onBaselinePlotSelected(plot) {
@@ -149,15 +153,18 @@ function onPhaseogramPlotSelected(plot) {
 
 function prepareNewTab(plot, addTabFn) {
   logDebug("prepareNewTab: plot -> " + plot.id);
+  var newTab = null;
 
   waitingDialog.show('Preparing new tab ...');
   var tab = getTabForSelector(plot.id);
   if (!isNull(tab)) {
-    addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig, plot.plotStyle);
+    newTab = addTabFn($("#navbar").find("ul").first(), $(".daveContainer"), plot.plotConfig, tab.projectConfig, plot.plotStyle);
     hideWaitingDialogDelayed(850);
   } else {
     showError(null, "Can't find tab for plot: " + plot.id);
   }
+
+  return newTab;
 }
 
 
