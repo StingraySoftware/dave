@@ -282,11 +282,16 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 
         # Gets the meanflux values
         if meanflux_opts["niter"] > 0:
-            logging.debug("Preparing lightcurve meanflux");
-            lam = meanflux_opts["lam"]  # 1000
-            p = meanflux_opts["p"]  # 0.01
-            niter = meanflux_opts["niter"]  # 10
-            meanflux = lc.baseline(lam, p, niter, offset_correction=True) / dt  # Baseline from count, divide by dt to get countrate
+            try:
+                logging.debug("Preparing lightcurve meanflux");
+                lam = meanflux_opts["lam"]  # 1000
+                p = meanflux_opts["p"]  # 0.01
+                niter = meanflux_opts["niter"]  # 10
+                meanflux = lc.baseline(lam, p, niter, offset_correction=True) / dt  # Baseline from count, divide by dt to get countrate
+            except:
+                logging.error(ExHelper.getException('get_lightcurve: Cant estimate Mean Flux'))
+                warnmsg = ["@WARN@Can't estimate Mean Flux, check GTIs"]
+                meanflux = []
 
         # Gets the Long-Term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
@@ -2019,9 +2024,9 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 def push_to_results_array (result, values):
     column = dict()
     try:
-        column["values"] = np.around(values, decimals=CONFIG.PRECISION)
+        column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISION)
     except:
-        column["values"] = values
+        column["values"] = nan_and_inf_to_num(values)
     result.append(column)
     return result
 
