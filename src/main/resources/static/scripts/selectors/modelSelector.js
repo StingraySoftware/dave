@@ -23,6 +23,7 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
                     '<button class="btn button btnCopy" data-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="buttonsContainer">' +
+                    '<button class="btn btn-info btnConst"><i class="fa fa-plus" aria-hidden="true"></i> Const</button>' +
                     '<button class="btn btn-info btnGaussian"><i class="fa fa-plus" aria-hidden="true"></i> Gaussian</button>' +
                     '<button class="btn btn-info btnLorentz"><i class="fa fa-plus" aria-hidden="true"></i> Lorentz</button>' +
                     '<button class="btn btn-info btnPowerLaw"><i class="fa fa-plus" aria-hidden="true"></i> PowerLaw</button>' +
@@ -61,6 +62,11 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.$html.find(".btnCopy").click(function () {
     copyToClipboard(currentObj.modelsToLaTeX());
     gaTracker.sendEvent("Fitting", "copyToClipboard", currentObj.filename);
+  });
+
+  this.$html.find(".btnConst").click(function () {
+    currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Const", color:getRandomColor() }));
+    gaTracker.sendEvent("Fitting", "addConst", currentObj.filename);
   });
 
   this.$html.find(".btnGaussian").click(function () {
@@ -106,7 +112,9 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
 
   this.getModelFromDaveModel = function (daveModel) {
     var model = null;
-    if (daveModel.type == "Gaussian") {
+    if (daveModel.type == "Const") {
+      model = new ConstModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
+    } else if (daveModel.type == "Gaussian") {
       model = new GaussianModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
     } else if (daveModel.type == "Lorentz") {
       model = new LorentzModel(currentObj.models.length, daveModel.color, currentObj.onModelsChanged)
@@ -572,6 +580,33 @@ function Model(idx, title, type, color, onModelsChangedFn) {
 
   return this;
 }
+
+//Model: Const specific model inherited from Model class
+function ConstModel(idx, color, onModelsChangedFn) {
+
+  var currentObj = this;
+  this.id = "const_" + idx;
+
+  this.amplitude = 5.0;
+
+  this.getParameters = function () {
+    return ModelParameters["Const"];
+  }
+
+  Model.call(this,
+            idx,
+            'Const ' + idx + ':',
+            'Const',
+            color, onModelsChangedFn);
+
+  //Prepares inputs
+  this.setInputs();
+
+  log ("new ConstModel id: " + this.id);
+
+  return this;
+};
+ModelParameters["Const"] = ["amplitude"];
 
 
 //Model: Gaussian specific model inherited from Model class

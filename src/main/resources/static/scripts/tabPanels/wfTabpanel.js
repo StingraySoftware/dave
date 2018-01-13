@@ -123,6 +123,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         currentObj.projectConfig.setFiles(selectorKey, [], "");
         currentObj.projectConfig.updateFile(selectorKey);
         currentObj.outputPanel.updatePlotsFiles (currentObj.projectConfig);
+
+        if (selectorKey == "RMF") {
+          //Removes RMF plots and show RMF buttons
+          currentObj.removeRMFPlots();
+          currentObj.setRMFButtonsVisibility(true);
+          currentObj.toolPanel.onRmfDatasetCancelled();
+        }
       }
 
       if (!isNull(callback)) { callback(); }
@@ -281,17 +288,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
           currentObj.toolPanel.onRmfDatasetUploaded(currentObj.projectConfig.schema);
 
           //Cleans previous plots for RMF key
-          currentObj.outputPanel.removePlotsById(currentObj.projectConfig.getPlotsIdsByKey("RMF"));
-          currentObj.projectConfig.cleanPlotsIdsKey("RMF");
+          currentObj.removeRMFPlots();
 
           //Add RMF plots
           currentObj.outputPanel.addRmfPlots(currentObj.projectConfig);
 
           //Hides upload RMF buttons from Analyze tab
-          currentObj.toolPanel.$html.find(".rmsEnergyBtn").remove();
-          currentObj.toolPanel.$html.find(".rmsCountRateBtn").remove();
-          currentObj.toolPanel.$html.find(".covarianceBtn").remove();
-          currentObj.toolPanel.$html.find(".phaseLagBtn").remove();
+          currentObj.setRMFButtonsVisibility(false);
 
           //Adds infoPanel for this file
           currentObj.addInfoPanel(currentObj.projectConfig.getFile("RMF"));
@@ -309,6 +312,20 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       showError((!isNull(result.error)) ? result.error : "Wrong RMF file!");
       if (!isNull(callback)) { callback(); }
     }
+  }
+
+  this.removeRMFPlots = function (){
+    //Cleans previous plots for RMF key
+    this.outputPanel.removePlotsById(this.projectConfig.getPlotsIdsByKey("RMF"));
+    this.projectConfig.cleanPlotsIdsKey("RMF");
+  }
+
+  this.setRMFButtonsVisibility = function (visible){
+    //Hides or shows upload RMF buttons from Analyze tab
+    setVisibility(this.toolPanel.$html.find(".rmsEnergyBtn"), visible);
+    setVisibility(this.toolPanel.$html.find(".rmsCountRateBtn"), visible);
+    setVisibility(this.toolPanel.$html.find(".covarianceBtn"), visible);
+    setVisibility(this.toolPanel.$html.find(".phaseLagBtn"), visible);
   }
 
   this.onSchemaChangedWithKey = function (selectorKey, jsonSchema, params) {
@@ -331,7 +348,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
         //Update projectConfig schema and tabPanel info
         currentObj.projectConfig.setSchema(schema);
-        currentObj.setTitle(getFilename(currentObj.projectConfig.filename));
+        currentObj.setTitle(currentObj.projectConfig.getFilename());
 
         //Prepare sections
         var sections = currentObj.getAnalysisSections();
@@ -551,7 +568,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     } else {
 
-      waitingDialog.show('Getting file schema: ' + getFilename(params.filename));
+      waitingDialog.show('Getting file schema: ...');
       currentObj.service.get_dataset_schema(params.filename, params.onSchemaChanged, currentObj.onSchemaError, params);
     }
 
@@ -726,13 +743,13 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                                 '</div>' +
                             '</div>');
 
-    currentObj.outputPanel.waitingPlotType = plotType;
     currentObj.$html.append($uploadRMFDialog);
     $uploadRMFDialog.dialog({
        width: 450,
        modal: true,
        buttons: {
          'Upload RMF file': function() {
+            currentObj.outputPanel.waitingPlotType = plotType;
             currentObj.toolPanel.rmfFileSelector.showSelectFile();
             $(this).dialog('close');
             $uploadRMFDialog.remove();
@@ -848,7 +865,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
   this.saveDefaultPlotlyConfig = function () {
     if (!isNull(this.plotDefaultConfig)){
-      saveToFile (getFilename(currentObj.projectConfig.filename) + "_style.stl", JSON.stringify(currentObj.plotDefaultConfig));
+      saveToFile (currentObj.projectConfig.getFilename() + "_style.stl", JSON.stringify(currentObj.plotDefaultConfig));
     }
   }
 

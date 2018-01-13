@@ -14,7 +14,7 @@ from stingray.events import EventList
 from stingray.lightcurve import Lightcurve
 from stingray import Powerspectrum, AveragedPowerspectrum, DynamicalPowerspectrum
 from stingray import Crossspectrum, AveragedCrossspectrum
-from stingray import Covariancespectrum, AveragedCovariancespectrum
+from stingray import Covariancespectrum
 from stingray.varenergyspectrum import LagEnergySpectrum
 from stingray.gti import cross_two_gtis
 from stingray.utils import excess_variance
@@ -282,11 +282,16 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 
         # Gets the meanflux values
         if meanflux_opts["niter"] > 0:
-            logging.debug("Preparing lightcurve meanflux");
-            lam = meanflux_opts["lam"]  # 1000
-            p = meanflux_opts["p"]  # 0.01
-            niter = meanflux_opts["niter"]  # 10
-            meanflux = lc.baseline(lam, p, niter, offset_correction=True) / dt  # Baseline from count, divide by dt to get countrate
+            try:
+                logging.debug("Preparing lightcurve meanflux");
+                lam = meanflux_opts["lam"]  # 1000
+                p = meanflux_opts["p"]  # 0.01
+                niter = meanflux_opts["niter"]  # 10
+                meanflux = lc.baseline(lam, p, niter, offset_correction=True) / dt  # Baseline from count, divide by dt to get countrate
+            except:
+                logging.error(ExHelper.getException('get_lightcurve: Cant estimate Mean Flux'))
+                warnmsg = ["@WARN@Can't estimate Mean Flux, check GTIs"]
+                meanflux = []
 
         # Gets the Long-Term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
@@ -806,6 +811,13 @@ def get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, fil
             xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
 
         if xs:
+
+            if not hasattr(xs, 'pds1'):
+                return common_error("Cant create PDS of lightcurve 1")
+
+            if not hasattr(xs, 'pds2'):
+                return common_error("Cant create PDS of lightcurve 2")
+
             freq = xs.freq
             power = xs.power
             power_err = xs.power_err
@@ -905,6 +917,7 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                         band_interest = []
                         for i in range(n_bands):
                             band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
+                            energy_arr.extend([(energy_range[0] + (i * band_step) + energy_range[0] + ((i + 1) * band_step))/2])
 
                         if std < 0:
                             std = None
@@ -912,12 +925,8 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
                         # Calculates the Covariance Spectrum
                         cs = Covariancespectrum(event_list, dt, band_interest=band_interest, ref_band_interest=ref_band_interest, std=std)
 
-                        sorted_idx = np.argsort(cs.covar[:,0])
-                        sorted_covar = cs.covar[sorted_idx]  # Sort covariance values by energy
-                        sorted_covar_err = cs.covar_error[sorted_idx]  # Sort covariance values by energy
-                        energy_arr = sorted_covar[:,0]
-                        covariance_arr = nan_and_inf_to_num(sorted_covar[:,1])
-                        covariance_err_arr = nan_and_inf_to_num(sorted_covar_err[:,1])
+                        covariance_arr = nan_and_inf_to_num(cs.covar)
+                        covariance_err_arr = nan_and_inf_to_num(cs.covar_error)
 
                     else:
                         logging.warn('get_covariance_spectrum: Lc duration must be greater than bin size!')
@@ -1103,16 +1112,20 @@ def get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
 # @param: energy_range: A tuple with minimum and maximum values of the
 #         range of energy, send [-1, -1] for use all energies
 # @param: n_bands: The number of bands to split the refence band
+# @param: white_noise_offset: The white noise level, in Leahy normalization,
+#         default 0, if passed value is less than -100 the white_noise_offset
+#         will be calculated automatically.
 #
 def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                     filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands):
+                    freq_range, energy_range, n_bands, white_noise_offset=0.):
     energy_arr = []
     rms_arr =[]
     rms_err_arr = []
     duration = []
     warnmsg = []
     freq_min_max = [-1, -1]
+    auto_white_noise_offset = 0.0
 
     try:
 
@@ -1146,6 +1159,11 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 
                     event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
                                                  events_table.columns["E"].values))
+
+                    auto_white_noise_offset = get_white_noise_offset (event_list, base_gti, dt, pds_type, segm_size, df)
+                    if white_noise_offset < -100:
+                        white_noise_offset = auto_white_noise_offset
+                        logging.debug("get_rms_spectrum: white_noise_offset calculated automatically, value " + str(white_noise_offset))
 
                     if energy_range[0] < 0:
                         min_energy = min(event_list[:,1])
@@ -1199,7 +1217,8 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                                 if df > 0:
                                                     pds = pds.rebin(df=df)
 
-                                                #pds = rebin_spectrum_if_necessary(pds)
+                                                #amp, x0, fwhm, white_noise_offset = ModelHelper.fit_data_with_lorentz_and_const(pds.freq, pds.power)
+                                                #logging.info("get_rms_spectrum: amp: " + str(amp) + ", x0: " + str(x0) + ", fwhm: " + str(fwhm) + ", white_noise: " + str(white_noise))
 
                                                 if freq_range[0] < 0:
                                                     freq_low = min(pds.freq)
@@ -1217,7 +1236,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                                                     freq_high = freq_range[1]
                                                 freq_min_max[1] = max([freq_min_max[1], freq_high])
 
-                                                rms, rms_err = pds.compute_rms(freq_low, freq_high)
+                                                rms, rms_err = pds.compute_rms(freq_low, freq_high, white_noise_offset)
 
                                             else:
                                                 logging.warn("get_rms_spectrum: can't create power density spectrum. Energy range: " + str(energy_low) + " to " + str(energy_high))
@@ -1232,8 +1251,8 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
                         except:
                             logging.warn(ExHelper.getException('get_rms_spectrum: Energy range: ' + str(energy_low) + ' to ' + str(energy_high)))
 
-                        rms_arr.extend([rms])
-                        rms_err_arr.extend([rms_err])
+                        rms_arr.extend([nan_and_inf_to_num(rms)])
+                        rms_err_arr.extend([nan_and_inf_to_num(rms_err)])
                 else:
                     logging.warn('get_rms_spectrum: E column not found!')
                     warnmsg = ['E column not found']
@@ -1254,6 +1273,7 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
     result = push_to_results_array(result, freq_min_max)
+    result = push_to_results_array(result, auto_white_noise_offset)
     return result
 
 
@@ -1275,15 +1295,20 @@ def get_rms_spectrum(src_destination, bck_destination, gti_destination,
 #         range of frequency, send [-1, -1] for use all frequencies
 # @param: energy_range: A tuple with minimum and maximum values of the
 #         range of energy, send [-1, -1] for use all energies
+# @param: white_noise_offset: The white noise level, in Leahy normalization,
+#         default 0, if passed value is less than -100 the white_noise_offset
+#         will be calculated automatically.
 #
 def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
-                    filters, axis, dt, nsegm, df, freq_range, energy_range):
+                    filters, axis, dt, nsegm, df, freq_range, energy_range,
+                    white_noise_offset=0.):
     countrate_arr = []
     rms_arr =[]
     rms_err_arr = []
     duration = []
     warnmsg = []
     freq_min_max = [-1, -1]
+    auto_white_noise_offset = 0.0
 
     try:
 
@@ -1308,6 +1333,11 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
 
                     event_list = np.column_stack((events_table.columns[CONFIG.TIME_COLUMN].values,
                                                  events_table.columns["E"].values))
+
+                    auto_white_noise_offset = get_white_noise_offset (event_list, base_gti, dt, 'Sng', 0, df)
+                    if white_noise_offset < -100:
+                        white_noise_offset = auto_white_noise_offset
+                        logging.debug("get_rms_vs_countrate: white_noise_offset calculated automatically, value " + str(white_noise_offset))
 
                     if energy_range[0] < 0:
                         min_energy = min(event_list[:,1])
@@ -1369,7 +1399,7 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
                                                         freq_high = freq_range[1]
                                                     freq_min_max[1] = max([freq_min_max[1], freq_high])
 
-                                                    rms, rms_err = pds.compute_rms(freq_low, freq_high)
+                                                    rms, rms_err = pds.compute_rms(freq_low, freq_high, white_noise_offset)
                                             else:
                                                 logging.warn("get_rms_vs_countrate: can't create power density spectrum. Time range: " + str(time_low) + " to " + str(time_high))
 
@@ -1414,6 +1444,7 @@ def get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
     result = push_to_results_array(result, duration)
     result = push_to_results_array(result, warnmsg)
     result = push_to_results_array(result, freq_min_max)
+    result = push_to_results_array(result, auto_white_noise_offset)
     return result
 
 
@@ -1438,7 +1469,7 @@ def get_plot_data_from_models(models, x_values):
             if model_obj:
                 val_array = []
                 for i in range(len(x_values)):
-                     val_array.append(model_obj(x_values[i]))
+                     val_array.append(nan_and_inf_to_num(model_obj(x_values[i])))
 
                 if len(val_array) > 0:
                     models_arr = push_to_results_array(models_arr, nan_and_inf_to_num(val_array))
@@ -1993,9 +2024,9 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 def push_to_results_array (result, values):
     column = dict()
     try:
-        column["values"] = np.around(values, decimals=CONFIG.PRECISION)
+        column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISION)
     except:
-        column["values"] = values
+        column["values"] = nan_and_inf_to_num(values)
     result.append(column)
     return result
 
@@ -2462,6 +2493,43 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
     return divided_values, divided_error
 
 
+#Return the white_noise_offset automatically
+def get_white_noise_offset (event_arr, gti, dt, pds_type, segm_size, df):
+    white_noise_offset = 0.0
+    evt_list = EventList(event_arr[:,0], pi=event_arr[:,1])
+    if evt_list and evt_list.ncounts > 1:
+        if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
+
+            lc = evt_list.to_lc(dt)
+            if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
+
+                if not gti:
+                    gti = lc.gti
+
+                if segm_size > lc.tseg:
+                    segm_size = lc.tseg
+                    logging.warn("get_white_noise_offset: segmsize bigger than lc.duration, lc.duration applied instead.")
+
+                pds = None
+                if pds_type == 'Sng':
+                    pds = Powerspectrum(lc, norm='leahy', gti=gti)
+                else:
+                    pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm='leahy', gti=gti)
+
+                if pds:
+
+                    if df > 0:
+                        pds = pds.rebin(df=df)
+
+                    num_tries = 0
+                    while white_noise_offset <= 0.0 and num_tries < 5:
+                        amp, x0, fwhm, wno = ModelHelper.fit_data_with_lorentz_and_const(pds.freq, pds.power)
+                        white_noise_offset = wno
+                        num_tries += 1
+
+    return white_noise_offset
+
+
 def common_error(error):
     logging.error(error)
     return dict(error=error)
@@ -2469,6 +2537,8 @@ def common_error(error):
 def common_warn(warn):
     logging.warn(warn)
     return dict(error="@WARN@" + warn)
+
+
 
 # ----- Long-Term variability FUNCTIONS.. NOT EXPOSED  -------------
 

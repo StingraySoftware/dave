@@ -236,6 +236,12 @@ ul#right-navbar li {
   height: 305px;
 }
 
+.plot .modebar {
+    background: rgba(255, 255, 255, 1.0) !important;
+    border: lightgrey 1px solid !important;
+    padding: 4px !important;
+}
+
 .plotContainer .hoverinfo
 {
   margin-left: 6px;
@@ -834,4 +840,8 @@ fieldset.ui-controlgroup.ui-controlgroup-horizontal.ui-helper-clearfix input {
   float: right;
   margin-top: -26px;
   margin-right: 230px;
+}
+
+.inputWNoise:disabled, .inputWNoise[disabled]{
+  border-style: none;
 }

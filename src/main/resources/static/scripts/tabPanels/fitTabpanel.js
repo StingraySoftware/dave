@@ -532,12 +532,14 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                              !isNull(plotStyle) ? $.extend(true, {}, plotStyle) : null);
 
     this.setTitle("Fit " + this.plot.plotConfig.styles.title);
-
-    var label = isNull(this.plot.plotConfig.styles.title) ? "File: " + this.plot.plotConfig.filename : this.plot.plotConfig.styles.title;
-    this.toolPanel.addSelectedFile(label, getFilename(this.plot.plotConfig.filename));
+    this.updateSelectedFile(this.plot.plotConfig, this.projectConfig);
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.modelSelector.$html);
 
-    this.addPlot(this.plot);
+    this.addPlot(this.plot, !isNull(plotConfig.autoRefresh) ? plotConfig.autoRefresh : true);
+  }
+
+  this.setPlotData = function (data){
+    this.plot.setPDSData (data);
   }
 
   this.containsId = function (id) {
@@ -545,6 +547,10 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
             || (this.toolPanel.containsId(id))
             || (this.outputPanel.containsId(id))
             || (this.modelSelector.containsId(id));
+  }
+
+  this.outputPanel.getFilters = function () {
+    return currentObj.plot.plotConfig.filters;
   }
 
   //FitTabPanel Initialzation:
@@ -579,10 +585,6 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
                                         this.applyBootstrap,
                                         this.showBayesianParEst,
                                         isNull(plotConfig.styles.title) ? getFilename(plotConfig.filename) : plotConfig.styles.title);
-
-  this.outputPanel.getFilters = function () {
-    return currentObj.plot.plotConfig.filters;
-  }
 
   if (!isNull(projectConfig)){
     this.projectConfig.updateFromProjectConfigs([ projectConfig ]);

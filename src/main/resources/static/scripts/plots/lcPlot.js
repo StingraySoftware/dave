@@ -19,6 +19,7 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
   this.meanflux_opts.p = { default:0.01, min:0.001, max: 1}; //Meanflux Asymmetry ranges
   this.meanflux_opts.niter = { default:10, min:1, max: 1000}; //Meanflux N iterations ranges
 
+  this.countRateStats = "";
 
   //LC plot methods:
   this.addSettingsControls = function(){
@@ -142,6 +143,9 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
                                         this.plotConfig.styles.labels[coords.y],
                                         this.getTitle(),
                                         plotDefaultConfig);
+
+    this.countRateStats = this.getCountRateStats();
+    this.setLegendText("");
 
     if (data.length > 5) {
       if (data[5].values.length > 0) {
@@ -269,6 +273,42 @@ function LcPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotR
     }
 
     return [times, values, errorValues];
+  }
+
+  this.setLegendText = function (text) {
+    if (text != ""){
+      this.$hoverinfo.html(text);
+    } else {
+      this.$hoverinfo.html(this.countRateStats);
+    }
+  }
+
+  this.getCountRateStats = function () {
+    var countRateStats = "";
+
+    if (this.data != null) {
+      var coords = this.getSwitchedCoords( { x: 0, y: 1} );
+      var countrateArr = this.data[coords.y].values;
+      countRateStats = this.plotConfig.styles.labels[coords.y] + " -> ";
+      var minMaxY = minMax2DArray(countrateArr);
+      var sum = 0;
+      var validCount = 0;
+      var elem = null;
+      for(var i=0; i<countrateArr.length; i++){
+        elem = countrateArr[i];
+        if (!isNull(elem) && !isNaN(elem)){
+          sum+=elem;
+          validCount++;
+        }
+      }
+
+      countRateStats += " avg: " + (sum/validCount).toFixed(2);
+      countRateStats += ", min: " + minMaxY.min.toFixed(2);
+      countRateStats += ", max: " + minMaxY.max.toFixed(2);
+      countRateStats += ", count: " + validCount;
+    }
+
+    return countRateStats;
   }
 
   //Disable BaseLine and Variance parameters:

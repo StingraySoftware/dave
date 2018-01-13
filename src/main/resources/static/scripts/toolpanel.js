@@ -181,15 +181,14 @@ function ToolPanel (id,
     this.$html.find(".fileSelectorsContainer").find(".btnSupportedFormats").remove();
   }
 
-  /*this.onTimeRangeChanged = function (timeRange) {
-    if (CONFIG.AUTO_BINSIZE && !isNull(this.binSelector)){
-      if (!isNull(this.tabPanel)){
-        var minValue = Math.max(timeRange / CONFIG.MAX_PLOT_POINTS, this.tabPanel.projectConfig.minBinSize);
-        var maxValue = Math.max(Math.min(timeRange / CONFIG.MIN_PLOT_POINTS, this.tabPanel.projectConfig.maxBinSize), minValue * CONFIG.MIN_PLOT_POINTS);
-        this.binSelector.setMinMaxValues(minValue, maxValue);
-      }
+  this.removeSelector = function(selector){
+    if (!isNull(selector)) {
+      //Removes selector html
+      selector.$html.remove();
+      //Removes selector from selectors_array
+      this.selectors_array = sliderSelectors_removeSelector (this.selectors_array, selector);
     }
-  }*/
+  }
 
   this.onBinSizeChanged = function () {
     currentObj.onSelectorValuesChanged();
@@ -472,12 +471,26 @@ function ToolPanel (id,
     }
   }
 
+  this.onRmfDatasetCancelled = function (){
+    var energyFilterSelector = sliderSelectors_getSelector(this.selectors_array, this.id + "_Energy");
+    this.removeSelector(energyFilterSelector);
+
+    var e_Selectors = sliderSelectors_getSelectors(this.selectors_array, "ColorSelector", "E");
+    for (idx in e_Selectors){
+      this.removeSelector(e_Selectors[idx]);
+    }
+
+    this.onColorFilterTypeChanged(this.channelColumn);
+    this.setColorFilterRadios(this.channelColumn);
+  }
+
   this.updateCountRateSlider = function ( minRate, maxRate ) {
     var rateSliderId = this.id + "_RATE";
-    if (isNull(getTabForSelector(rateSliderId))) {
+    var rateSelector = sliderSelectors_getSelector(this.selectors_array, rateSliderId);
+    if (isNull(rateSelector)) {
 
       //Creates the rate slider if not created yet:
-      var rateSelector = new sliderSelector(rateSliderId,
+      rateSelector = new sliderSelector(rateSliderId,
                                             "Count Rate (c/s):",
                                             { table:"EVENTS", column:"RATE" },
                                             minRate, maxRate,
@@ -489,18 +502,13 @@ function ToolPanel (id,
     } else {
 
       //Udpate rate slider min and max values
-      var rateSelector = sliderSelectors_getSelector(currentObj.selectors_array, rateSliderId);
-      if (!isNull(rateSelector)) {
-        var newMinRate = Math.min(rateSelector.initFromValue, minRate);
-        var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
-        if ((newMinRate != rateSelector.initFromValue)
-            || (newMaxRate != rateSelector.initToValue)) {
-              rateSelector.setMinMaxValues(newMinRate, newMaxRate);
-            }
-      }
-
+      var newMinRate = Math.min(rateSelector.initFromValue, minRate);
+      var newMaxRate = Math.max(rateSelector.initToValue, maxRate);
+      if ((newMinRate != rateSelector.initFromValue)
+          || (newMaxRate != rateSelector.initToValue)) {
+            rateSelector.setMinMaxValues(newMinRate, newMaxRate);
+          }
     }
-
   }
 
   this.setColorFilterRadios = function (column) {

@@ -54,6 +54,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
       log("XSData received!, XSTabPanel: " + currentObj.id);
       data = JSON.parse(jsdata);
+      var xsPlot = currentObj.outputPanel.plots[currentObj.xsPlotIdx];
 
       if (isNull(data)) {
         log("onPlotDataReceived wrong data!, XSTabPanel: " + currentObj.id);
@@ -61,7 +62,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
         return;
 
       } else if (!isNull(data.error)) {
-        currentObj.xsPlot.showWarn(data.error);
+        xsPlot.showWarn(data.error);
         log("onPlotDataReceived data error: " + data.error + ", XSTabPanel: " + currentObj.id);
         currentObj.outputPanel.setPlotsReadyState(true);
         return;
@@ -69,7 +70,6 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       } else {
 
         //Prepares Cross Spectrum Plot data and sends it to xsPlot
-        var xsPlot = currentObj.outputPanel.plots[currentObj.xsPlotIdx];
         if (xsPlot.isVisible) {
           //PDSPlot Params req: freq, power, duration, warnmsg
           //Clones array data for allowing changes on data withot affecting othe plotsdata
@@ -225,7 +225,8 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   for (i in this.plotConfigs){
     var plotConfig = this.plotConfigs[i];
     var label = isNull(plotConfig.styles.title) ? "File " + i + ":" : plotConfig.styles.title;
-    this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
+    var filename = (!isNull(projectConfigs[i]) && projectConfigs[i].getFilename() != "") ? projectConfigs[i].getFilename() : getFilename(plotConfig.filename);
+    this.toolPanel.addSelectedFile(label, filename);
   }
 
   if (projectConfigs.length > 0){

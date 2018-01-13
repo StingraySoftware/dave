@@ -208,6 +208,61 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
     }
   }
 
+  this.addWhiteNoiseControlToSettings = function (title, columnClass) {
+    if (!isNull(this.plotConfig.white_noise)){
+
+      var unchecked = this.plotConfig.white_noise > -100;
+      var white_noise = ((unchecked) ? this.plotConfig.white_noise : this.getAutoWhiteNoiseOffset());
+
+      //Adds the custom white noise level switch
+      var $wnSelectorCheckBox = $('<div class="whiteNoiseCheckBox ' + ((unchecked) ? '' : 'Orange') + '">' +
+                                      'Auto White noise level' +
+                                      '<div class="switch-wrapper">' +
+                                        '<div id="' + this.id + '_whiteNoiseSwitch" class="switch-btn fa ' + ((unchecked) ? 'fa-square-o' : 'fa-check-square-o') + '" aria-hidden="true"></div>' +
+                                      '</div>' +
+                                    '</div>');
+      $wnSelectorCheckBox.find(".switch-btn").click( function ( event ) {
+        var checkBox = $(this);
+        if (checkBox.hasClass("fa-square-o")){
+          checkBox.switchClass("fa-square-o", "fa-check-square-o");
+          checkBox.parent().parent().addClass("Orange");
+          currentObj.whiteNoiseInput.prop('disabled', true);
+          setVisibility(currentObj.fitWhiteNoiseLink, false);
+          currentObj.whiteNoiseInput.val(currentObj.getAutoWhiteNoiseOffset());
+          currentObj.plotConfig.white_noise = -999;
+        } else {
+          checkBox.switchClass("fa-check-square-o", "fa-square-o");
+          checkBox.parent().parent().removeClass("Orange");
+          currentObj.whiteNoiseInput.prop('disabled', false);
+          setVisibility(currentObj.fitWhiteNoiseLink, true);
+          if (currentObj.plotConfig.white_noise < -100){
+            currentObj.plotConfig.white_noise = currentObj.getAutoWhiteNoiseOffset();
+          }
+          currentObj.whiteNoiseInput.val(currentObj.plotConfig.white_noise);
+        }
+      });
+      this.settingsPanel.find(columnClass).append('</br>');
+      this.settingsPanel.find(columnClass).append($wnSelectorCheckBox);
+
+      //Adds number of point control of rms plot
+      this.settingsPanel.find(columnClass).append('<p>' + title + ': <input id="white_noise_' + this.id + '" class="inputWNoise" type="text" name="white_noise_' + this.id + '" placeholder="' + white_noise + '" value="' + white_noise + '" /></br><a href="#" class="btnFitWNO InfoText">Calculate it <i class="fa fa-line-chart" aria-hidden="true"></i></a></p>');
+      this.whiteNoiseInput = this.settingsPanel.find(columnClass).find(".inputWNoise");
+      this.whiteNoiseInput.prop('disabled', !unchecked);
+      this.whiteNoiseInput.on('change', function(){
+        currentObj.plotConfig.white_noise = getInputFloatValueCropped($(this), currentObj.plotConfig.white_noise, -100.0, 9999999.0);
+      });
+      this.fitWhiteNoiseLink = this.settingsPanel.find(columnClass).find(".btnFitWNO");
+      this.fitWhiteNoiseLink.click(function(event){
+        currentObj.showFitWhiteNoiseDialog();
+        gaTracker.sendEvent("Plots", "FitWhiteNoiseClicked", currentObj.getTitle());
+      });
+      setVisibility(this.fitWhiteNoiseLink, unchecked);
+
+    } else {
+      logErr ("PlotWithSettings id: " + this.id + " - addWhiteNoiseControlToSettings ERROR: plotConfig.white_noise not initialized!");
+    }
+  }
+
   this.addBinSizeSelectorToSettings = function (columnClass) {
     if (this.settingsPanel.find(".binSelectorCheckBox").length > 0) {
       return;

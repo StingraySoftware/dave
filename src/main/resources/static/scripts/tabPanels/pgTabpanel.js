@@ -50,6 +50,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       this.plotDefaultConfig = $.extend(true, {}, tabConfig.plotDefaultConfig);
     }
     this.projectConfig = $.extend( this.projectConfig, tabConfig.projectConfig );
+    this.updateSelectedFile(tabConfig.plotConfig, this.projectConfig);
     this.createPlots();
     this.outputPanel.setConfig(tabConfig.outputPanelConfig);
 
@@ -147,6 +148,10 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     currentObj.outputPanel.onDatasetValuesChanged();
   }
 
+  this.outputPanel.getFilters = function () {
+    return currentObj.pgPlot.plotConfig.filters;
+  }
+
   //Set the selected plot configs
   this.plotConfig = plotConfig;
 
@@ -157,13 +162,7 @@ function PGTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   this.wfSelector.find(".styleBtn").show();
   this.toolPanel.styleContainer.removeClass("hidden");
   this.toolPanel.clearFileSelectors();
-
-  var label = isNull(plotConfig.styles.title) ? "File:" : plotConfig.styles.title;
-  this.toolPanel.addSelectedFile(label, getFilename(plotConfig.filename));
-
-  this.outputPanel.getFilters = function () {
-    return currentObj.pgPlot.plotConfig.filters;
-  }
+  this.updateSelectedFile(this.plotConfig, projectConfig);
 
   if (!isNull(projectConfig)){
     this.projectConfig.updateFromProjectConfigs([projectConfig]);

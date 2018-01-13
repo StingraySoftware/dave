@@ -8,7 +8,7 @@ module.exports = {
     path : '../resources/python/server.py',
     url : 'http://localhost:5000'
   },
-  logDebugMode : 'true',
+  logDebugMode : 'false',
   logsPath : '$HOME/.dave/flaskserver.log',
   splash_path : '/../resources/templates/splash_page.html'
 };
