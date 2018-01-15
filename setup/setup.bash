@@ -79,7 +79,7 @@ fi
 export PATH=${PATH}:${INSTALL_DIR}/bin
 
 # Install node.js
-NODE_VERSION=4.4.4
+NODE_VERSION=7.9.0
 NODE_FILENAME="node-v$NODE_VERSION"
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -114,12 +114,13 @@ NODE_FILENAME="node-v$NODE_VERSION"
 			retVal=$?
 			if [[ retVal -ne 0 ]] ; then
 				rm $NODE_TAR
-				echo "Can't download NODE fro Mac OSX!!!"
+				echo "Can't download NODE for Mac OSX!!!"
 				return 1
 			fi
 		fi
 
-		installer -pkg $NODE_TAR -target /
+		echo "Please type your root password for installing Node"
+		sudo installer -pkg $NODE_TAR -target /
 
 	else
 		# Unknown.
