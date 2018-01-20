@@ -13,12 +13,12 @@
   },
   "dependencies": {
     "config-js": "^1.1.9",
-    "electron-packager": "^8.5.0",
+    "electron-packager": "^10.1.1",
     "menu": "^0.2.5",
     "request": "^2.79.0",
     "request-promise": "*"
   },
   "devDependencies": {
-    "electron": "^1.4.14"
+    "electron": "^1.7.10"
   }
 }
