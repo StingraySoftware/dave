@@ -684,9 +684,6 @@ def get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
             filtered_indexes = np.where((pds.freq >= freq_range[0]) & (pds.freq <= freq_range[1]))[0]
             freq = pds.freq[filtered_indexes]
             time = pds.time
-            logging.debug("freq: " + str(freq.shape))
-            logging.debug("time: " + str(time.shape))
-            logging.debug("dyn_ps: " + str(pds.dyn_ps.shape))
             for tmp_pds in np.transpose(pds.dyn_ps):
                 power_all = push_to_results_array(power_all, tmp_pds[filtered_indexes])
 
@@ -2051,7 +2048,8 @@ def nan_and_inf_to_num (obj):
         if np.isnan(obj):
             return 0
 
-    elif isinstance(obj, np.ndarray):
+    elif isinstance(obj, np.ndarray) \
+        and len(obj.shape) == 1:
         # Checks if any element is NaN of Inf and replaces it for BIG_NUMBER or 0
         # This is the fastest way to check it:
         # https://stackoverflow.com/questions/6736590/fast-check-for-nan-in-numpy
