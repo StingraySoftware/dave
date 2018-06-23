@@ -187,7 +187,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     //Adds frequency range selector
     var freqRange = this.freqRangePlot.getDefaultFreqRange();
     if ((freqRange[0] == freqRange[1]) && (freqRange[0] < 0)){
-      logWarn("PHTabPanel.addControls: No valid frecuency range.");
+      logWarn("PHTabPanel.addControls: No valid frequency range.");
       return;
     }
 
