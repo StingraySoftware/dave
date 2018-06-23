@@ -23,7 +23,7 @@ function FreqRangePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, 
 
   this.getDefaultFreqRange = function (){
     if (this.plotConfig.default_freq_range[0] < 0
-        && !isNull(this.data) && this.data.length >= 4) {
+        && !isNull(this.data) && this.data.length >= 4 && this.data[0].values.length > 0) {
       var minMax = minMax2DArray(this.data[0].values);
       this.plotConfig.default_freq_range = [ minMax.min, minMax.max ];
     }

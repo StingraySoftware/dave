@@ -72,9 +72,11 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
                       this.service.request_power_density_spectrum,
                       function (filters) {
                         //onFiltersChangedFromPlot
-                        currentObj.freqRangeSelector.setValues( filters[0].from, filters[0].to );
-                        currentObj.freqRangePlot.plotConfig.selected_freq_range = [ filters[0].from, filters[0].to ];
-                        currentObj.freqRangePlot.redrawDiffered();
+                        if (!isNull(currentObj.freqRangeSelector)){
+                          currentObj.freqRangeSelector.setValues( filters[0].from, filters[0].to );
+                          currentObj.freqRangePlot.plotConfig.selected_freq_range = [ filters[0].from, filters[0].to ];
+                          currentObj.freqRangePlot.redrawDiffered();
+                        }
                       },
                       function () {
                         //On FreqRangePlot Plot Ready
@@ -184,6 +186,11 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
 
     //Adds frequency range selector
     var freqRange = this.freqRangePlot.getDefaultFreqRange();
+    if ((freqRange[0] == freqRange[1]) && (freqRange[0] < 0)){
+      logWarn("PHTabPanel.addControls: No valid frequency range.");
+      return;
+    }
+
     this.freqRangeSelector = new sliderSelector(this.id + "_FreqRange",
                                       "Frequency Range (Hz):",
                                       { table:"EVENTS", column:"FREQ", source: "frequency" },
