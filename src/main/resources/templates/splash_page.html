@@ -88,6 +88,7 @@
 
         logInfo("App started!! Version: " + version);
 
+        sendEventToElectron('onBrowserReady');
       });
 
       function isNull (value) {
@@ -126,6 +127,11 @@
         $(".mainProgress").find(".progress-bar").attr("aria-valuenow", progress);
         $(".mainProgress").find(".progress-bar").attr("style", "width:" + progress + "%");
         $(".mainProgress").find(".progress-bar").html(progress + "% - " + msg);
+      }
+
+      function sendEventToElectron (event) {
+        const { ipcRenderer } = require('electron');
+        ipcRenderer.send(event);
       }
 
     </script>

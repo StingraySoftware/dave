@@ -80,11 +80,11 @@ checkReturnCode $? "Can´t activate Python environment, error $?"
 
 #Installing Stingray
 PYTHON_FOLDER=$RES_DIR/python
-echo "@PROGRESS@|80|Installing Python dependencies|"
-echo "Installing Python dependencies"
+echo "@PROGRESS@|80|Installing Stingray dependencies|"
+echo "Installing Stingray dependencies"
 cd $PYTHON_FOLDER
 pip install -r requirements.txt
-checkReturnCode $? "Can´t install Python dependencies, error $?"
+checkReturnCode $? "Can´t install Stingray dependencies, error $?"
 
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
