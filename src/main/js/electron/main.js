@@ -340,12 +340,6 @@ function stop (){
   }
 }
 
-function showAbout(){
-  if (mainWindow != null) {
-    mainWindow.webContents.executeJavaScript("showAboutDialog();");
-  }
-}
-
 function sendkillToServer (){
   connected = false;
   try {
