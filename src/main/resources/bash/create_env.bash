@@ -94,7 +94,11 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	else
 		# HomeBrew is installed
 		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
+		OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1 > /dev/null)"
+		if [[ $? -ne 0 ]] ; then
+			echo $OUTPUT
+			checkReturnCode 1 "Can´t install LibMagic, read the logs to proceed"
+		fi
 	fi
 fi
 
