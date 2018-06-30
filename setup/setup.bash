@@ -295,7 +295,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     # Mac OSX
     # This is for MagicFile but only applies to macosx
     if [ ! -f /usr/local/bin/brew ]; then
-        if hash /opt/local/bin/port 2>/dev/null; then
+        if [ -f /opt/local/bin/port ]; then
             echo "Installing LibMagic with MacPorts"
             yes | sudo /opt/local/bin/port install libmagic
         else
@@ -308,7 +308,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
        fi
    else
        echo "Installing LibMagic with HomeBrew"
-       /usr/local/bin/brew install libmagic
+       BREW_OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1)"
+			 if [[ $? -ne 0 ]] ; then
+					echo "Error installing LibMagic with HomeBrew"
+					echo $BREW_OUTPUT
+					exit 1
+			 fi
    fi
 fi
 

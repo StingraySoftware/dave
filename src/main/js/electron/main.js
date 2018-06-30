@@ -43,15 +43,20 @@ app.on('ready', function() {
     PYTHON_URL = mainConfig.pythonUrl;
     LOGS_PATH = mainConfig.logsPath.replace("$HOME", require('os').homedir());
 
-    launchPythonServer(mainConfig, function() {
-      console.log('Connecting to server... URL: ' + PYTHON_URL);
-      connectToServer ();
-    });
-
   } else {
 
     log('Error loading DAVE configuration: </br> ERROR: ' + mainConfig.error +  '</br> CWD: ' + __dirname);
   }
+});
+
+ipcMain.on('onBrowserReady', function(){
+
+  //Browser is loaded and ready, launch Python server.
+  launchPythonServer(mainConfig, function() {
+    console.log('Connecting to server... URL: ' + PYTHON_URL);
+    connectToServer ();
+  });
+
 });
 
 function loadConfig(){

@@ -12,6 +12,7 @@ sendError()
 			fi
 		fi
 	fi
+	sleep 1
 	exit 10
 }
 
@@ -40,7 +41,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	#This is for MagicFile but only applies to macosx
 	if [ ! -f /usr/local/bin/brew ]; then
 		# HomeBrew is not installed
-		if hash /opt/local/bin/port 2>/dev/null; then
+		if [ -f /opt/local/bin/port ]; then
 			# MacPorts is installed
 			libmagic_lines_count=`/opt/local/bin/port echo installed 2>/dev/null | grep libmagic | wc -l`
 			if [[ $libmagic_lines_count -eq 0 ]]; then
@@ -52,14 +53,13 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
           echo "LibMagic is required. There are three available options to continue:"
 					echo "=========================================================================="
 					echo "|"
-          echo "|  1 - Relaunch DAVE as root running this command on the terminal:"
+					echo "|  RECOMMENDED: Install LibMagic by yourself running this MacPorts command on the terminal and relanch DAVE:"
+					echo "|      sudo /opt/local/bin/port install libmagic"
+					echo "|"
+					echo "|  - Or relaunch DAVE as root running this command on the terminal:"
           echo "|      sudo DAVEApp.app/Contents/MacOS/DAVEApp"
 					echo "|"
-          echo "|  2 - Or install LibMagic by yourself running this MacPorts command on the terminal and relanch DAVE:"
-          echo "|      sudo /opt/local/bin/port install file"
-					echo "|"
-          echo "|  3 - Or run this HomeBrew installation command on a terminal and relanch DAVE:"
-          echo '|      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+					echo "|   NOTE: Copy Paste is disabled but you can Drag & Drop selected text on the terminal"
 					echo "|"
 					echo "=========================================================================="
           sendError "LibMagic is required, read the logs to proceed"
@@ -67,7 +67,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
         else
           # If we have administrator rights just install LibMagic
           echo "Installing LibMagic with MacPorts"
-          sudo /opt/local/bin/port install file
+					PORT_OUTPUT="$(sudo /opt/local/bin/port install libmagic 2>&1)"
+					PORT_INSTALL_STATUS=$?
+					if [[ $PORT_INSTALL_STATUS -ne 0 ]] ; then
+						echo $PORT_OUTPUT
+						sendError "Can´t install LibMagic using MacPorts, read the logs to proceed"
+					fi
 				fi
 
 			else
@@ -80,19 +85,26 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 				echo "Please install HomeBrew or MacPorts before continue."
 				echo "=========================================================================="
 				echo "|"
-				echo "|	 Run this HomeBrew installation command on a terminal and relanch DAVE:"
-				echo '|	 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
+				echo "|	 RECOMMENDED: Run this HomeBrew installation command on a terminal and relanch DAVE:"
+				echo '|	   /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"'
 				echo "|"
 				echo "|  Or install MacPorts with this guide:"
-				echo '|  https://www.macports.org/install.php'
+				echo '|    https://www.macports.org/install.php'
+				echo "|"
+				echo "|   NOTE: Copy Paste is disabled but you can Drag & Drop selected text on the terminal"
 				echo "|"
 				echo "=========================================================================="
-				sendError "HomeBrew or MacPorts requiered"
+				sendError "HomeBrew or MacPorts required"
     fi
 	else
-		# HomeBrew is installed
+		# HomeBrew is installed, execute brew install and get the output and return code
 		echo "Installing LibMagic with HomeBrew"
-		/usr/local/bin/brew install libmagic
+		BREW_OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1)"
+		BREW_INSTALL_STATUS=$?
+		if [[ $BREW_INSTALL_STATUS -ne 0 ]] ; then
+			echo $BREW_OUTPUT
+			sendError "Can´t install LibMagic using HomeBrew, read the logs to proceed"
+		fi
 	fi
 fi
 
