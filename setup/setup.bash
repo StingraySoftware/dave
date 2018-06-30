@@ -307,12 +307,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
        fi
    else
        echo "Installing LibMagic with HomeBrew"
-       OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1 > /dev/null)"
-	if [[ $? -ne 0 ]] ; then
-		echo "Error installing LibMagic with HomeBrew"
-		echo $OUTPUT
-		exit 1
-	fi
+       BREW_OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1)"
+			 if [[ $? -ne 0 ]] ; then
+					echo "Error installing LibMagic with HomeBrew"
+					echo $BREW_OUTPUT
+					exit 1
+			 fi
    fi
 fi
 
