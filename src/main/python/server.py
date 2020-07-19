@@ -354,7 +354,8 @@ def http_error_handler(error):
         logging.error('ERROR: http_error_handler --> EXCEPT ')
 
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
-    app.error_handler_spec[None][error] = http_error_handler
+    #app.error_handler_spec[None][error] = http_error_handler
+    app.register_error_handler(error, http_error_handler)
 
 if __name__ == '__main__':
     GeHelper.start(server_port, app)

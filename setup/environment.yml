@@ -19,3 +19,4 @@ dependencies:
   - pylru==1.2.0
   - stingray
   - hendrics
+  - python-libmagic
