@@ -2,7 +2,7 @@
 import os
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
-import magic
+import magic  # https://github.com/ahupp/python-magic/
 
 import model.dataset as DataSet
 import numpy as np

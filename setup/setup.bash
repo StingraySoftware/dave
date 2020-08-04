@@ -49,13 +49,13 @@ if [ ! -e $MINICONDA ] ; then
 			wget --quiet $MINICONDA_URL_LINUX -O $MINICONDA
 
 		elif [[ "$OSTYPE" == "darwin"* ]]; then
-                        # Mac OSX
+      # Mac OSX
 			echo "Downloading miniconda for MacOSX-x86_64"
 			MINICONDA_URL_MACOS=https://repo.continuum.io/miniconda/Miniconda2-4.2.12-MacOSX-x86_64.sh
-			curl $MINICONDA_URL_MACOS -o "$MINICONDA"
+			curl -L $MINICONDA_URL_MACOS -o "$MINICONDA"
 
 		else
-                        # Unknown
+      # Unknown
 			echo "Error downloading miniconda: Unsupported OS '$OSTYPE'"
 			return 1
 		fi
@@ -110,7 +110,7 @@ NODE_FILENAME="node-v$NODE_VERSION"
 
 		if [ ! -e $NODE_TAR ]; then
 			echo "Downloading node for Mac OSX"
-			curl $NODE_MACOS_URL -o $NODE_TAR
+			curl -L $NODE_MACOS_URL -o $NODE_TAR
 			retVal=$?
 			if [[ retVal -ne 0 ]] ; then
 				rm $NODE_TAR
@@ -139,6 +139,11 @@ fi
 
 echo "Using npm $(npm --version)"
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# Try to update conda packages, because for macOS almost every dependency in the environment.yml is missing.
+	echo "Updating conda"
+	conda update conda
+fi
 
 # Install Python dependencies
 if conda env list | grep -q "^dave[ ]\+"; then
@@ -177,7 +182,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     if [ ! -f /usr/local/bin/brew ]; then
         if [ -f /opt/local/bin/port ]; then
             echo "Installing LibMagic with MacPorts"
-            yes | sudo /opt/local/bin/port install libmagic
+            yes | sudo /opt/local/bin/port install file
         else
             echo "Please install HomeBrew or MacPorts before continue."
             echo "Run this HomeBrew installation command on a terminal and relanch DAVE:"

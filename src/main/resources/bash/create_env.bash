@@ -67,7 +67,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
         else
           # If we have administrator rights just install LibMagic
           echo "Installing LibMagic with MacPorts"
-					PORT_OUTPUT="$(sudo /opt/local/bin/port install libmagic 2>&1)"
+					PORT_OUTPUT="$(sudo /opt/local/bin/port install file 2>&1)"
 					PORT_INSTALL_STATUS=$?
 					if [[ $PORT_INSTALL_STATUS -ne 0 ]] ; then
 						echo $PORT_OUTPUT
@@ -98,12 +98,18 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 	else
 		# HomeBrew is installed, execute brew install and get the output and return code
-		echo "Installing LibMagic with HomeBrew"
-		BREW_OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1)"
-		BREW_INSTALL_STATUS=$?
-		if [[ $BREW_INSTALL_STATUS -ne 0 ]] ; then
-			echo $BREW_OUTPUT
-			sendError "Can´t install LibMagic using HomeBrew, read the logs to proceed"
+		libmagic_lines_count=`/usr/local/bin/brew list 2>/dev/null | grep libmagic | wc -l`
+		if [[ $libmagic_lines_count -eq 0 ]]; then
+			echo "Installing LibMagic with HomeBrew"
+			BREW_OUTPUT="$(/usr/local/bin/brew install libmagic 2>&1)"
+			BREW_INSTALL_STATUS=$?
+			if [[ $BREW_INSTALL_STATUS -ne 0 ]] ; then
+				echo $BREW_OUTPUT
+				sendError "Can´t install LibMagic using HomeBrew, read the logs to proceed"
+			fi
+		else
+			# LibMagic already installed with HomeBrew
+			echo "LibMagic already installed with HomeBrew"
 		fi
 	fi
 fi
@@ -141,7 +147,7 @@ if [ ! -e $MINICONDA ] ; then
       # Mac OSX
 			echo "Downloading miniconda for MacOSX-x86_64..."
 			MINICONDA_URL_MACOS=https://repo.continuum.io/miniconda/Miniconda2-4.2.12-MacOSX-x86_64.sh
-			curl $MINICONDA_URL_MACOS -o "$MINICONDA"
+			curl -L $MINICONDA_URL_MACOS -o "$MINICONDA"
 
 		else
       # Unknown OS.
@@ -162,6 +168,12 @@ if [ ! -e $INSTALL_DIR ]; then
 	checkReturnCode $? "Can´t install MINICONDA, error $?" $WORKDIR
 fi
 export PATH=${PATH}:${INSTALL_DIR}/bin
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# Try to update conda packages, because for macOS almost every dependency in the environment.yml is missing.
+	echo "Updating conda"
+	conda update -y conda
+fi
 
 # Install Python dependencies
 echo "@PROGRESS@|50|Creating Python environment|"

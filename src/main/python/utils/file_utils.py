@@ -1,6 +1,6 @@
 
 import os
-import magic
+import magic  # https://github.com/ahupp/python-magic/
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
 from shutil import copyfile
@@ -41,6 +41,7 @@ def is_valid_file(destination):
                 or (ext.find("gzip") > -1) \
                 or ((ext == "data") and (file_extension in [".p", ".nc"]))
     except:
+        logging.error(ExHelper.getException('is_valid_file'))
         return False
 
 # save_file: Upload a data file to the Flask server path
