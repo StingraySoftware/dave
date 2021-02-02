@@ -21,7 +21,7 @@ from stingray.utils import excess_variance
 from stingray.modeling import PSDLogLikelihood, PSDPosterior, PSDParEst
 from stingray.simulator import simulator
 from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
-from stingray.pulse.pulsar import z2_n_detection_level
+from stingray.stats import z2_n_detection_level
 from astropy.stats import LombScargle, poisson_conf_interval
 from config import CONFIG
 import sys
