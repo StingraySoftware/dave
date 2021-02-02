@@ -1,0 +1,16 @@
+flask
+jinja2
+numpy
+llvmlite
+numba
+pip
+python=3.8
+werkzeug
+pytest
+gevent
+astropy
+requests
+flask-session
+hypothesis
+python-magic
+pylru
