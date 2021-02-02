@@ -107,8 +107,9 @@ if ls $INSTALL_DIR | grep -q "^dave[ ]\+"; then
   echo "dave virtual Python environment already exists"
 else
   echo "Creating virtual Python environment dave"
-  packages=`cat setup/environment.txt`  
-  python3 -m venv $INSTALL_DIR/dave $packages
+  #echo @packages
+
+  python3 -m venv $INSTALL_DIR/dave
 
   retVal=$?
   if [[ retVal -ne 0 ]] ; then
@@ -117,7 +118,11 @@ else
   fi
 
 fi
-. $INSTALL_DIR/dave/bin/activate 
+
+. $INSTALL_DIR/dave/bin/activate
+
+packages=`cat setup/environment.txt`
+pip install $packages wheel setuptools_scm numba
 
 #Installing Stingray and Astropy Helpers
 STINGRAY_FOLDER=$DIR/stingray
@@ -126,8 +131,8 @@ STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Feb 2, 2021
 #STINGRAY_COMMIT_HASH=0ab2ea1a3f30d19c12a0d7f7a85fdbf6975e1bad
 STINGRAY_COMMIT_HASH=main
-LINUX_COMPILATION=lib.linux-x86_64-3.5
-DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
+# LINUX_COMPILATION=lib.linux-x86_64-3.5
+# DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
 if [ ! -e $STINGRAY_FOLDER ]; then
 
@@ -142,7 +147,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git checkout $STINGRAY_COMMIT_HASH
 
 	#Install stingray libraries
-        
+
 	retVal=$?
 	if [[ retVal -ne 0 ]] ; then
 	 	echo "Failed to install Stingray dependencies"
@@ -151,28 +156,27 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 
 	#Removes previous version of Stingray and Astropy_Helpers
 	rm -rf src/main/python/stingray
-	rm -rf src/main/python/astropy_helpers
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
 
 		#Build stingray
-		pip install .
+		pip install -e .[all]
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $STINGRAY_FOLDER/build/$LINUX_COMPILATION/stingray src/main/python
+		#cp -r $STINGRAY_FOLDER/build/lib/stingray src/main/python
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
 
 		#Build stingray
-		pip install .
+		pip install -e .[all]
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
+		#cp -r $STINGRAY_FOLDER/build/lib/stingray src/main/python
 	fi
 fi
 
@@ -195,7 +199,7 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 	git checkout $HENDRICS_COMMIT_HASH
 
 	# Install HENDRICS libraries
-        
+
 	#Removes previous version of Hendrics
 	rm -rf src/main/python/hendrics
 
@@ -204,22 +208,24 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 
 		#Build HENDRICS
 		pip install .[all]
+		#python setup.py bdist
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $HENDRICS_FOLDER/build/$LINUX_COMPILATION/hendrics src/main/python
+		#cp -r $HENDRICS_FOLDER/build/lib/hendrics src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
 
 		#Build HENDRICS
 		pip install .[all]
+		#python setup.py bdist
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $HENDRICS_FOLDER/build/$DARWIN_COMPILATION/hendrics src/main/python
+		#cp -r $HENDRICS_FOLDER/build/lib/hendrics src/main/python
 	fi
 fi
 
