@@ -36,50 +36,8 @@ cd $DIR
 DIR=$(pwd)
 cd -
 
-echo Installing in $DIR
-
-# Install miniconda
-MINICONDA=$DIR/miniconda.sh
-if [ ! -e $MINICONDA ] ; then
-
-		if [[ "$OSTYPE" == "linux"* ]]; then
-			#Linux
-			echo "Downloading miniconda for Linux-x86_64"
-			MINICONDA_URL_LINUX=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-			wget --quiet $MINICONDA_URL_LINUX -O $MINICONDA
-
-		elif [[ "$OSTYPE" == "darwin"* ]]; then
-                        # Mac OSX
-			echo "Downloading miniconda for MacOSX-x86_64"
-			MINICONDA_URL_MACOS=https://repo.continuum.io/miniconda/Miniconda2-4.2.12-MacOSX-x86_64.sh
-			curl $MINICONDA_URL_MACOS -o "$MINICONDA"
-
-		else
-                        # Unknown
-			echo "Error downloading miniconda: Unsupported OS '$OSTYPE'"
-			return 1
-		fi
-fi
-
-# Check Miniconda download result
-retVal=$?
-if [[ retVal -ne 0 ]] ; then
-	rm $MINICONDA
-	echo "Can't download miniconda!"
-	return 1
-fi
-chmod u+x $MINICONDA
-
-
-INSTALL_DIR=$DIR/miniconda
-if [ ! -e $INSTALL_DIR ]; then
-  echo Installing miniconda
-  $MINICONDA -b -p $INSTALL_DIR
-fi
-export PATH=${PATH}:${INSTALL_DIR}/bin
-
 # Install node.js
-NODE_VERSION=7.9.0
+NODE_VERSION=14.15.4
 NODE_FILENAME="node-v$NODE_VERSION"
 
 	if [[ "$OSTYPE" == "linux"* ]]; then
@@ -139,46 +97,42 @@ fi
 
 echo "Using npm $(npm --version)"
 
+echo Installing in $DIR
+
+INSTALL_DIR=$DIR/envs
+mkdir -p $INSTALL_DIR
 
 # Install Python dependencies
-if conda env list | grep -q "^dave[ ]\+"; then
+if ls $INSTALL_DIR | grep -q "^dave[ ]\+"; then
   echo "dave virtual Python environment already exists"
 else
   echo "Creating virtual Python environment dave"
-  conda env create -f setup/environment.yml
+  #echo @packages
+
+  python3 -m venv $INSTALL_DIR/dave
+
   retVal=$?
   if [[ retVal -ne 0 ]] ; then
       echo "Failed to create virtual Python environment."
       return 1
-
-# We can try to fix it by deleting the pip cache but the case so far I've seen, deleting the pip cache doens't solve it.
-#      echo "Failed to create virtual Python environment. Deleting pip cache and try again."
-#      if [[ "$OSTYPE" == "linux-gnu" ]]; then
-#          rm -rf ~/.cache/pip
-#      elif [[ "$OSTYPE" == "darwin"* ]]; then
-#          rm -rf ~/Library/Caches/pip
-#      fi
-#      # retry installing
-#      conda env remove -y -n dave
-#      conda env create -f setup/environment.yml
-#      retVal=$?
-#      if [[ retVal -ne 0 ]] ; then
-#          echo "Failed to create virtual Python environment on second attempt too. Bailing out."
-#          return 1
-#      fi
   fi
 
 fi
-source activate dave
+
+. $INSTALL_DIR/dave/bin/activate
+
+packages=`cat setup/environment.txt`
+pip install $packages wheel setuptools_scm numba
 
 #Installing Stingray and Astropy Helpers
 STINGRAY_FOLDER=$DIR/stingray
 STINGRAY_URL=https://github.com/StingraySoftware/stingray.git
 # Sets the specific commit to checkout:
-# Dic 29th, 2017 -> https://github.com/StingraySoftware/stingray/commit/ffcd4f20bc964e33ea7f0f471e308c9732919dfc
-STINGRAY_COMMIT_HASH=ffcd4f20bc964e33ea7f0f471e308c9732919dfc
-LINUX_COMPILATION=lib.linux-x86_64-3.5
-DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
+# Feb 2, 2021
+#STINGRAY_COMMIT_HASH=0ab2ea1a3f30d19c12a0d7f7a85fdbf6975e1bad
+STINGRAY_COMMIT_HASH=main
+# LINUX_COMPILATION=lib.linux-x86_64-3.5
+# DARWIN_COMPILATION=lib.macosx-10.5-x86_64-3.5
 
 if [ ! -e $STINGRAY_FOLDER ]; then
 
@@ -193,8 +147,7 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 	git checkout $STINGRAY_COMMIT_HASH
 
 	#Install stingray libraries
-        conda install statsmodels matplotlib astropy numpy numba emcee corner scipy h5py
-	pip install -r requirements.txt
+
 	retVal=$?
 	if [[ retVal -ne 0 ]] ; then
 	 	echo "Failed to install Stingray dependencies"
@@ -203,41 +156,27 @@ if [ ! -e $STINGRAY_FOLDER ]; then
 
 	#Removes previous version of Stingray and Astropy_Helpers
 	rm -rf src/main/python/stingray
-	rm -rf src/main/python/astropy_helpers
 
 	if [[ "$OSTYPE" == "linux-gnu" ]]; then
 		#Linux
 
 		#Build stingray
-		python setup.py install
-
-		cd $STINGRAY_FOLDER/astropy_helpers
-
-		#Build astropy_helpers
-		python setup.py install
+		pip install -e .[all]
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $STINGRAY_FOLDER/build/$LINUX_COMPILATION/stingray src/main/python
-		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$LINUX_COMPILATION/astropy_helpers src/main/python
-
+		#cp -r $STINGRAY_FOLDER/build/lib/stingray src/main/python
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
 
 		#Build stingray
-		python setup.py install
-
-		cd $STINGRAY_FOLDER/astropy_helpers
-
-		#Build astropy_helpers
-		python setup.py install
+		pip install -e .[all]
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $STINGRAY_FOLDER/build/$DARWIN_COMPILATION/stingray src/main/python
-		\cp -r $STINGRAY_FOLDER/astropy_helpers/build/$DARWIN_COMPILATION/astropy_helpers src/main/python
+		#cp -r $STINGRAY_FOLDER/build/lib/stingray src/main/python
 	fi
 fi
 
@@ -245,9 +184,9 @@ fi
 HENDRICS_FOLDER=$DIR/hendrics
 HENDRICS_URL=https://github.com/StingraySoftware/HENDRICS.git
 # Sets the specific commit to checkout:
-# Nov 27th, 2017 -> https://github.com/StingraySoftware/HENDRICS/commit/b2f00f03fdb400abd491ec81913bb1d9abd701c3
-HENDRICS_COMMIT_HASH=b2f00f03fdb400abd491ec81913bb1d9abd701c3
-
+# Feb 2, 2021
+#HENDRICS_COMMIT_HASH=f47de1720bf1085c376b32f9140bde89c5cdcb64
+HENDRICS_COMMIT_HASH=main
 if [ ! -e $HENDRICS_FOLDER ]; then
 
 	echo Installing HENDRICS
@@ -260,8 +199,6 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 	git checkout $HENDRICS_COMMIT_HASH
 
 	# Install HENDRICS libraries
-        conda install statsmodels matplotlib astropy numpy numba netcdf4 scipy h5py
-	pip install -r requirements.txt
 
 	#Removes previous version of Hendrics
 	rm -rf src/main/python/hendrics
@@ -270,23 +207,25 @@ if [ ! -e $HENDRICS_FOLDER ]; then
 		#Linux
 
 		#Build HENDRICS
-		python setup.py install
+		pip install .[all]
+		#python setup.py bdist
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $HENDRICS_FOLDER/build/$LINUX_COMPILATION/hendrics src/main/python
+		#cp -r $HENDRICS_FOLDER/build/lib/hendrics src/main/python
 
 	elif [[ "$OSTYPE" == "darwin"* ]]; then
 		# Mac OSX
 
 		#Build HENDRICS
-		python setup.py install
+		pip install .[all]
+		#python setup.py bdist
 
 		cd $DIR/..
 
 		# Copy built libraries to python project
-		\cp -r $HENDRICS_FOLDER/build/$DARWIN_COMPILATION/hendrics src/main/python
+		#cp -r $HENDRICS_FOLDER/build/lib/hendrics src/main/python
 	fi
 fi
 
