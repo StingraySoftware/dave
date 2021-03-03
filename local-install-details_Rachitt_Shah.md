@@ -23,6 +23,9 @@ Python for virtualenv - 3.8.6
   - python-magic==0.4.18
   - pylru==1.2.0
 
+Using node 7.9.0
+Using npm 4.2.0
+
 
 #### Original dependencies -
 
