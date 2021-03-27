@@ -4,7 +4,7 @@ import magic
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
 from shutil import copyfile
-from werkzeug.utils import secure_filename 
+from werkzeug import secure_filename
 from config import CONFIG
 
 

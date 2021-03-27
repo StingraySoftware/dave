@@ -4,7 +4,7 @@
 #
 # Make sure your gevent version is >= 1.0
 import gevent
-from gevent.pywsgi import WSGIServer
+from gevent.wsgi import WSGIServer
 from gevent.queue import Queue
 from flask import Response
 
