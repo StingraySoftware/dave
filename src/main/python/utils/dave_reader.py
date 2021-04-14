@@ -9,7 +9,7 @@ import numpy as np
 from astropy.io import fits
 
 from hendrics.io import load_events_and_gtis
-from stingray.gti import _get_gti_from_extension
+from stingray.gti import get_gti_from_all_extensions
 from hendrics.lcurve import lcurve_from_fits
 from hendrics.io import load_data
 
@@ -227,7 +227,7 @@ def get_events_fits_dataset_with_stingray(destination, hdulist, dsId='FITS',
 
 # Returns a dataset containing GTI table using Stingray library
 def get_gti_fits_dataset_with_stingray(hdulist, gtistring=CONFIG.GTI_STRING, time_offset=0):
-    st_gtis = _get_gti_from_extension(hdulist, gtistring)
+    st_gtis = get_gti_from_all_extensions(hdulist, accepted_gtistrings=[gtistring])
     if time_offset != 0:
         st_gtis[:, 0] = st_gtis[:, 0] - time_offset
         st_gtis[:, 1] = st_gtis[:, 1] - time_offset
