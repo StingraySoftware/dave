@@ -54,7 +54,7 @@ def get_dataset_header(destination):
 
 
 # append_file_to_dataset: Appends Fits data to a dataset
-#
+
 # @param: destination: file destination or dataset cache key
 # @param: next_destination: file destination of file to append
 #
