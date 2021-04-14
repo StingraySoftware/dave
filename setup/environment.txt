@@ -1,0 +1,15 @@
+flask
+jinja2
+numpy
+llvmlite
+numba
+pip
+werkzeug
+pytest
+gevent
+astropy
+requests
+flask-session
+hypothesis
+python-magic
+pylru
