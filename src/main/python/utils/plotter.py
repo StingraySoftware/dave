@@ -1,6 +1,7 @@
 import numpy as np
-import utils.dave_logger as logging
 from config import CONFIG
+
+import utils.dave_logger as logging
 
 
 def get_plotdiv_xy(dataset, axis):
@@ -64,8 +65,9 @@ def get_axis_with_gtis (axis):
 def convert_fig_to_html(fig):
   """ Convert Matplotlib figure 'fig' into a <img> tag for HTML use using base64 encoding. """
   import base64
-  from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
   from io import BytesIO
+
+  from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
   canvas = FigureCanvas(fig)
   png_output = BytesIO()

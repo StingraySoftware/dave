@@ -1,9 +1,8 @@
-from test.fixture import *
-
-from hypothesis import given
 import hypothesis.strategies as st
-
+from hypothesis import given
 from model.column import Column
+
+from test.fixture import *
 
 
 @given(st.text())

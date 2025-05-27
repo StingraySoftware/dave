@@ -1,8 +1,8 @@
-from test.fixture import *
-from hypothesis import given
 import hypothesis.strategies as st
-from model import table
+from hypothesis import given
 from model.table import Table
+
+from test.fixture import *
 
 
 @given(st.text(min_size=1))

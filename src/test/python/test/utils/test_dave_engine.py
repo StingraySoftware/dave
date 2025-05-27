@@ -1,13 +1,10 @@
-from test.fixture import *
-
-from hypothesis import given
-from hypothesis import example
-from hypothesis.strategies import text
-
 import utils.dave_engine as DaveEngine
 import utils.file_utils as FileUtils
-import utils.dave_reader as DaveReader
-import utils.filters_helper as FltHelper
+from hypothesis import example, given
+from hypothesis.strategies import text
+
+from test.fixture import *
+
 
 @given(text(min_size=1))
 @example("Test_Input_1.txt")

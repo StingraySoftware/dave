@@ -1,5 +1,6 @@
-import math
 import copy
+import math
+
 from config import CONFIG
 
 
@@ -41,10 +42,9 @@ def get_named_filter(filters, column):
 def apply_bin_size_to_filters(filters, bin_size):
 
     time_filter = get_time_filter(filters)
-    if time_filter:
-        if time_filter["from"] < time_filter["to"]:
-            time_filter["from"] = math.floor(time_filter["from"] / bin_size) * bin_size
-            time_filter["to"] = math.ceil(time_filter["to"] / bin_size) * bin_size
+    if time_filter and time_filter["from"] < time_filter["to"]:
+        time_filter["from"] = math.floor(time_filter["from"] / bin_size) * bin_size
+        time_filter["to"] = math.ceil(time_filter["to"] / bin_size) * bin_size
 
     return filters
 

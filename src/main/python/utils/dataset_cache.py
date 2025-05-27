@@ -1,8 +1,11 @@
 import hashlib
-import utils.exception_helper as ExHelper
 from random import randint
-from config import CONFIG
+
 import pylru
+from config import CONFIG
+
+import utils.dave_logger as logging
+import utils.exception_helper as ExHelper
 
 cached_datasets = pylru.lrucache(CONFIG.PYTHON_CACHE_SIZE)
 
@@ -44,7 +47,7 @@ def remove(key):
 def remove_with_prefix(key_prefix):
     try:
         remove_keys = []
-        for key in cached_datasets.keys():
+        for key in cached_datasets:
             if key.startswith(key_prefix):
                 remove_keys.append(key)
         for key in remove_keys:

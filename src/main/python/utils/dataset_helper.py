@@ -1,12 +1,13 @@
-import numpy as np
-
-from stingray.events import EventList
-from stingray import Lightcurve
-from stingray.gti import join_gtis, gti_len
-from model.table import Table
 import bisect
-import utils.dave_logger as logging
+
+import numpy as np
 from config import CONFIG
+from model.table import Table
+from stingray import Lightcurve
+from stingray.events import EventList
+from stingray.gti import gti_len, join_gtis
+
+import utils.dave_logger as logging
 
 
 # Returns an Stingray EventList from a given events dataset
@@ -18,10 +19,10 @@ def get_eventlist_from_evt_dataset(dataset):
 
     # TODO: Probably all this check can be moved to dave_reader for doing it only once
     # instead with every call to get_eventlist_from_evt_dataset
-    if not "PHA" in dataset.tables["EVENTS"].columns:
+    if "PHA" not in dataset.tables["EVENTS"].columns:
         logging.warn("get_eventlist_from_evt_dataset: PHA column not found in dataset")
         dataset.tables["EVENTS"].add_columns(["PHA"])
-        dataset.tables["EVENTS"].columns["PHA"].set_extra("FAKE_COLUMN", True);
+        dataset.tables["EVENTS"].columns["PHA"].set_extra("FAKE_COLUMN", True)
         try:
             dataset.tables["EVENTS"].columns["PHA"].values = \
                 dataset.tables["EVENTS"].columns["PI"].values
@@ -114,29 +115,19 @@ def is_lightcurve_dataset(dataset):
 
 
 def is_hdu_dataset(dataset, hduname):
-    if dataset:
-        if hduname in dataset.tables:
-            if CONFIG.TIME_COLUMN in dataset.tables[hduname].columns:
-                if "GTI" in dataset.tables:
-                    return True
-    return False
+    return (dataset and hduname in dataset.tables and
+            CONFIG.TIME_COLUMN in dataset.tables[hduname].columns and
+            "GTI" in dataset.tables)
 
 
 def is_rmf_dataset(dataset):
-    if dataset:
-        if "EBOUNDS" in dataset.tables:
-            if "CHANNEL" in dataset.tables["EBOUNDS"].columns:
-                return True
-
-    return False
+    return (dataset and "EBOUNDS" in dataset.tables and
+            "CHANNEL" in dataset.tables["EBOUNDS"].columns)
 
 
 def is_gti_dataset(dataset):
-    if dataset:
-        if "GTI" in dataset.tables:
-            if "START" in dataset.tables["GTI"].columns:
-                return True
-    return False
+    return (dataset and "GTI" in dataset.tables and
+            "START" in dataset.tables["GTI"].columns)
 
 
 def are_datasets_of_same_type(dataset1, dataset2):
@@ -218,7 +209,7 @@ def get_exposure_time (gti_table):
 #Returns True if there is a GAP in the time_vals values
 def hasGTIGaps(time_vals):
 
-    trigger_ratio = 100;  # The ratio of elapsed time versus prev elapsed for triggering a gap
+    trigger_ratio = 100  # The ratio of elapsed time versus prev elapsed for triggering a gap
 
     if len(time_vals > 1):
         prev_val = time_vals[0]
@@ -249,7 +240,7 @@ def get_splited_gti(gti, ti):
         num_gtis = int((gti[1] - gti[0]) / ti)
         new_gtis = []
 
-        for i in range(num_gtis):
+        for _ in range(num_gtis):
             end = start + ti
             new_gtis.append([start, end])
             start = end
@@ -398,7 +389,7 @@ def get_histogram (array, precision=1.0):
         if precision != 1.0:
             match_val = int(val / precision) * precision
 
-        if not match_val in histogram:
+        if match_val not in histogram:
             histogram[match_val] = 0
             values.append(match_val)
         histogram[match_val] += 1

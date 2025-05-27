@@ -1,37 +1,43 @@
-import utils.dave_reader as DaveReader
-import utils.dataset_helper as DsHelper
-import utils.filters_helper as FltHelper
-import utils.model_helper as ModelHelper
-import utils.exception_helper as ExHelper
-import utils.plotter as Plotter
 import math
+
 import numpy as np
 import scipy as sp
-import utils.dave_logger as logging
-import utils.dataset_cache as DsCache
-import model.dataset as DataSet
-from stingray.events import EventList
-from stingray.lightcurve import Lightcurve
-from stingray import Powerspectrum, AveragedPowerspectrum, DynamicalPowerspectrum
-from stingray import Crossspectrum, AveragedCrossspectrum
-from stingray import Covariancespectrum
-from stingray.varenergyspectrum import LagEnergySpectrum
-from stingray.gti import cross_two_gtis
-from stingray.utils import excess_variance
-from stingray.modeling import PSDLogLikelihood, PSDPosterior, PSDParEst
-from stingray.simulator import simulator
-from stingray.pulse.search import z_n_search, epoch_folding_search, phaseogram, search_best_peaks
-from stingray.pulse.pulsar import z2_n_detection_level
-from astropy.stats import LombScargle, poisson_conf_interval
+from astropy.stats import poisson_conf_interval
+from astropy.timeseries import LombScargle
 from config import CONFIG
-import sys
+from stingray import (
+    AveragedCrossspectrum,
+    AveragedPowerspectrum,
+    Covariancespectrum,
+    Crossspectrum,
+    DynamicalPowerspectrum,
+    Powerspectrum,
+)
+from stingray.events import EventList
+from stingray.gti import cross_two_gtis
+from stingray.lightcurve import Lightcurve
+from stingray.modeling import PSDLogLikelihood, PSDParEst, PSDPosterior
+from stingray.pulse.search import epoch_folding_search, phaseogram, search_best_peaks, z_n_search
+from stingray.simulator import simulator
+from stingray.stats import z2_n_detection_level
+from stingray.utils import excess_variance
+from stingray.varenergyspectrum import LagEnergySpectrum
+
+import utils.dataset_cache as DsCache
+import utils.dataset_helper as DsHelper
+import utils.dave_logger as logging
+import utils.dave_reader as DaveReader
+import utils.exception_helper as ExHelper
+import utils.filters_helper as FltHelper
+import utils.model_helper as ModelHelper
+import utils.plotter as Plotter
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
 #
 # @param: destination: file destination
 #
-def get_dataset_schema(destination):
+def get_dataset_schema(destination: str) -> dict:
     dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_schema()
@@ -44,7 +50,7 @@ def get_dataset_schema(destination):
 #
 # @param: destination: file destination
 #
-def get_dataset_header(destination):
+def get_dataset_header(destination: str) -> dict:
     dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
         return dataset.get_header()
@@ -58,7 +64,7 @@ def get_dataset_header(destination):
 # @param: destination: file destination or dataset cache key
 # @param: next_destination: file destination of file to append
 #
-def append_file_to_dataset(destination, next_destination):
+def append_file_to_dataset(destination: str, next_destination: str) -> str:
     dataset, cache_key = DaveReader.get_file_dataset(destination)
     if dataset:
 
@@ -70,11 +76,11 @@ def append_file_to_dataset(destination, next_destination):
 
             if DsHelper.are_datasets_of_same_type(dataset, next_dataset):
 
-                if DsHelper.is_lightcurve_dataset(dataset):
-                    if DsHelper.get_binsize_from_lightcurve_ds(dataset) == 0 \
-                       or DsHelper.get_binsize_from_lightcurve_ds(dataset) != DsHelper.get_binsize_from_lightcurve_ds(next_dataset):
-                       logging.error('append_file_to_dataset: Bin Sizes are not readables or not equal!')
-                       return ""
+                if (DsHelper.is_lightcurve_dataset(dataset) and
+                    (DsHelper.get_binsize_from_lightcurve_ds(dataset) == 0 or
+                     DsHelper.get_binsize_from_lightcurve_ds(dataset) != DsHelper.get_binsize_from_lightcurve_ds(next_dataset))):
+                    logging.error('append_file_to_dataset: Bin Sizes are not readables or not equal!')
+                    return ""
 
                 # Looks what dataset is earliest
                 next_ds_start_time = DsHelper.get_dataset_start_time(next_dataset)
@@ -118,7 +124,7 @@ def append_file_to_dataset(destination, next_destination):
 # @param: rmf_destination: file destination of file to apply
 # @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(destination, rmf_destination, column):
+def apply_rmf_file_to_dataset(destination: str, rmf_destination: str, column: str) -> dict[str, str]:
     try:
         dataset, cache_key = DaveReader.get_file_dataset(destination)
         if DsHelper.is_events_dataset(dataset):
@@ -136,7 +142,7 @@ def apply_rmf_file_to_dataset(destination, rmf_destination, column):
 
                 e_avg_data = dict((channel, (min + max)/2) for channel, min, max in zip(rmf_table.columns["CHANNEL"].values,
                                                                                     rmf_table.columns["E_MIN"].values,
-                                                                                    rmf_table.columns["E_MAX"].values))
+                                                                                    rmf_table.columns["E_MAX"].values, strict=False))
                 e_values = []
                 for i in range(len(pha_data)):
                     if pha_data[i] in e_avg_data:
@@ -274,7 +280,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 
         # Gets the baseline values
         if baseline_opts["niter"] > 0:
-            logging.debug("Preparing lightcurve baseline");
+            logging.debug("Preparing lightcurve baseline")
             lam = baseline_opts["lam"]  # 1000
             p = baseline_opts["p"]  # 0.01
             niter = baseline_opts["niter"]  # 10
@@ -283,7 +289,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
         # Gets the meanflux values
         if meanflux_opts["niter"] > 0:
             try:
-                logging.debug("Preparing lightcurve meanflux");
+                logging.debug("Preparing lightcurve meanflux")
                 lam = meanflux_opts["lam"]  # 1000
                 p = meanflux_opts["p"]  # 0.01
                 niter = meanflux_opts["niter"]  # 10
@@ -295,15 +301,15 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
 
         # Gets the Long-Term variability values
         if variance_opts and ("min_counts" in variance_opts) and (variance_opts["min_counts"] > 0):
-            logging.debug("Preparing lightcurve excess variance");
+            logging.debug("Preparing lightcurve excess variance")
             chunk_length = lc.estimate_chunk_length(variance_opts["min_counts"], variance_opts["min_bins"])
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_meancount)
             mean = nan_and_inf_to_num(res[0])
             mean_err = nan_and_inf_to_num(res[1])
 
-            chunk_times = np.array([(s + e)/2 for s, e in zip(start, stop)])
-            chunk_lengths = np.array([(e - s)/2 for s, e in zip(start, stop)]) # This will be plotted as an error bar on xAxis, soo only need the half of the values
+            chunk_times = np.array([(s + e)/2 for s, e in zip(start, stop, strict=False)])
+            chunk_lengths = np.array([(e - s)/2 for s, e in zip(start, stop, strict=False)]) # This will be plotted as an error bar on xAxis, soo only need the half of the values
 
             start, stop, res = lc.analyze_lc_chunks(chunk_length, lightcurve_excvar)
             excessvar = nan_and_inf_to_num(res[0])
@@ -312,7 +318,7 @@ def get_lightcurve(src_destination, bck_destination, gti_destination,
             mean_count = variance_opts["mean_count"]
             len_excessvar = len(excessvar)
             if mean_count > len_excessvar:
-                logging.warn("mean_count fixed to " + str(len_excessvar));
+                logging.warn("mean_count fixed to " + str(len_excessvar))
                 warnmsg = ["@WARN@Mean count fixed to " + str(len_excessvar)]
                 mean_count = len_excessvar
 
@@ -910,7 +916,6 @@ def get_covariance_spectrum(src_destination, bck_destination, gti_destination, f
 
                         band_width = energy_range[1] - energy_range[0]
                         band_step = band_width / n_bands
-                        from_val = energy_range[0]
                         band_interest = []
                         for i in range(n_bands):
                             band_interest.extend([[energy_range[0] + (i * band_step), energy_range[0] + ((i + 1) * band_step)]])
@@ -1513,10 +1518,8 @@ def get_fit_powerspectrum_result(src_destination, bck_destination, gti_destinati
     results = []
 
     try:
-        pds, lc, gti = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
+        pds, _, _ = create_power_density_spectrum(src_destination, bck_destination, gti_destination,
                                         filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
-        lc = None  # Dispose memory
-        gti = None  # Dispose memory
 
         if pds:
             results = fit_power_density_spectrum(pds, models, priors=priors, sampling_params=sampling_params)
@@ -1612,11 +1615,13 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
 
                             #sim_pds = rebin_spectrum_if_necessary(sim_pds)
 
-                            parest, res = fit_powerspectrum(sim_pds, fit_model, starting_pars,
-                                            max_post=False, priors=None, fitmethod="L-BFGS-B")
-
-                            models_params.append(res.p_opt)
-                            powers.append(sim_pds.power)
+                            # TODO: Fix fit_powerspectrum - function not defined
+                            # parest, res = fit_powerspectrum(sim_pds, fit_model, starting_pars,
+                            #                 max_post=False, priors=None, fitmethod="L-BFGS-B")
+                            # models_params.append(res.p_opt)
+                            # powers.append(sim_pds.power)
+                            logging.error("fit_powerspectrum not implemented")
+                            continue
 
                         else:
                             logging.warn(ExHelper.getException('get_bootstrap_results: cant create powerspectrum for i: ' + str(i)))
@@ -1627,7 +1632,7 @@ def get_bootstrap_results(src_destination, bck_destination, gti_destination,
                 powers = np.array(powers)
 
                 fixed = [fit_model.fixed[n] for n in fit_model.param_names]
-                parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+                parnames = [n for n, f in zip(fit_model.param_names, fixed, strict=False) \
                             if f is False]
 
                 if len(models_params) > 0 and len(powers) == len(models_params):
@@ -1925,8 +1930,7 @@ def get_phaseogram(src_destination, bck_destination, gti_destination, filters, a
         orbital_period = time_data[-1] - time_data[0]
         asini = 0
         t0 = pepoch
-        prev_t0 = 0
-        if not binary_parameters is None:
+        if binary_parameters is not None:
             if binary_parameters[0] > 0:
                 orbital_period=binary_parameters[0]
             if binary_parameters[1] > 0:
@@ -2037,10 +2041,7 @@ def push_to_results_array_with_errors (result, values, errors):
 
 
 def nan_and_inf_to_num (obj):
-    if isinstance(obj, int) \
-        or isinstance(obj, np.integer) \
-        or isinstance(obj, float) \
-        or isinstance(obj, np.floating):
+    if isinstance(obj, int | np.integer | float | np.floating):
         if obj > CONFIG.BIG_NUMBER:
             return CONFIG.BIG_NUMBER
         if obj < -CONFIG.BIG_NUMBER:
@@ -2198,7 +2199,7 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, sr
         if bck_lc:
 
             #Calculates the backscale_ratio
-            backscale_ratio = 1;
+            backscale_ratio = 1
             if src_backscale is not None:
 
                 bck_ds, bck_cache_key = DaveReader.get_file_dataset(bck_destination)
@@ -2206,9 +2207,8 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, sr
 
                     #Gets the backscale keyword value
                     table = DsHelper.get_hdutable_from_dataset(bck_ds)
-                    if table:
-                        if "BACKSCAL" in table.header:
-                            backscale_ratio = src_backscale / int(table.header["BACKSCAL"])
+                    if table and "BACKSCAL" in table.header:
+                        backscale_ratio = src_backscale / int(table.header["BACKSCAL"])
                     bck_ds = None
                     table = None
 
@@ -2330,12 +2330,12 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
 
             # Prepares the results to be returned to GUI
             fixed = [fit_model.fixed[n] for n in fit_model.param_names]
-            parnames = [n for n, f in zip(fit_model.param_names, fixed) \
+            parnames = [n for n, f in zip(fit_model.param_names, fixed, strict=False) \
                         if f is False]
 
             # Add to results the estimated parameters
             params = []
-            for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames)):
+            for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames, strict=False)):
                 param = dict()
                 param["index"] = i
                 param["name"] = p
@@ -2495,35 +2495,35 @@ def get_divided_values_and_error (values_0, values_1, error_0, error_1):
 def get_white_noise_offset (event_arr, gti, dt, pds_type, segm_size, df):
     white_noise_offset = 0.0
     evt_list = EventList(event_arr[:,0], pi=event_arr[:,1])
-    if evt_list and evt_list.ncounts > 1:
-        if (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt:
+    if (evt_list and evt_list.ncounts > 1 and
+        (evt_list.time[evt_list.ncounts - 1] - evt_list.time[0]) >= dt):
 
-            lc = evt_list.to_lc(dt)
-            if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
+        lc = evt_list.to_lc(dt)
+        if lc and np.sqrt(lc.meancounts * lc.meancounts) > 0:
 
-                if not gti:
-                    gti = lc.gti
+            if not gti:
+                gti = lc.gti
 
-                if segm_size > lc.tseg:
-                    segm_size = lc.tseg
-                    logging.warn("get_white_noise_offset: segmsize bigger than lc.duration, lc.duration applied instead.")
+            if segm_size > lc.tseg:
+                segm_size = lc.tseg
+                logging.warn("get_white_noise_offset: segmsize bigger than lc.duration, lc.duration applied instead.")
 
-                pds = None
-                if pds_type == 'Sng':
-                    pds = Powerspectrum(lc, norm='leahy', gti=gti)
-                else:
-                    pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm='leahy', gti=gti)
+            pds = None
+            if pds_type == 'Sng':
+                pds = Powerspectrum(lc, norm='leahy', gti=gti)
+            else:
+                pds = AveragedPowerspectrum(lc=lc, segment_size=segm_size, norm='leahy', gti=gti)
 
-                if pds:
+            if pds:
 
-                    if df > 0:
-                        pds = pds.rebin(df=df)
+                if df > 0:
+                    pds = pds.rebin(df=df)
 
-                    num_tries = 0
-                    while white_noise_offset <= 0.0 and num_tries < 5:
-                        amp, x0, fwhm, wno = ModelHelper.fit_data_with_lorentz_and_const(pds.freq, pds.power)
-                        white_noise_offset = wno
-                        num_tries += 1
+                num_tries = 0
+                while white_noise_offset <= 0.0 and num_tries < 5:
+                    amp, x0, fwhm, wno = ModelHelper.fit_data_with_lorentz_and_const(pds.freq, pds.power)
+                    white_noise_offset = wno
+                    num_tries += 1
 
     return white_noise_offset
 

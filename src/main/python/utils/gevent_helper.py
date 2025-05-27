@@ -4,15 +4,15 @@
 #
 # Make sure your gevent version is >= 1.0
 import gevent
-from gevent.wsgi import WSGIServer
-from gevent.queue import Queue
 from flask import Response
+from gevent.pywsgi import WSGIServer
+from gevent.queue import Queue
 
 subscriptions = []
 
 
 # SSE "protocol" is described here: http://mzl.la/UPFyxY
-class ServerSentEvent(object):
+class ServerSentEvent:
 
     def __init__(self, data):
         self.data = data

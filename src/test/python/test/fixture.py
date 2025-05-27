@@ -1,7 +1,8 @@
-import sys
 import os
+import sys
 
 import matplotlib
+
 matplotlib.use('TkAgg')  # Changes the matplotlib framework
 
 myPath = os.path.dirname(os.path.abspath(__file__))

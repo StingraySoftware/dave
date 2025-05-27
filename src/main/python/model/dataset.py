@@ -1,37 +1,39 @@
-from model.table import Table
-import utils.dataset_helper as DsHelper
-import utils.filters_helper as FltHelper
-import utils.dave_logger as logging
 from random import randint
+
 import numpy as np
+import utils.dataset_helper as DsHelper
+import utils.dave_logger as logging
+import utils.filters_helper as FltHelper
 from config import CONFIG
+
+from model.table import Table
 
 
 class DataSet:
-    id = ""
-    tables = dict()
+    id: str = ""
+    tables: dict[str, Table] = dict()
 
-    def __init__(self, id):
+    def __init__(self, id: str) -> None:
         self.id = id + str(randint(0,99999))
         self.tables = dict()
 
-    def add_table(self, table_id, column_names):
+    def add_table(self, table_id: str, column_names: list[str]) -> None:
         self.tables[table_id] = Table(table_id)
         self.tables[table_id].add_columns(column_names)
 
-    def get_schema(self):
+    def get_schema(self) -> dict[str, dict]:
         schema = dict()
         for table_id in self.tables:
             schema[table_id] = self.tables[table_id].get_schema()
         return schema
 
-    def get_header(self):
+    def get_header(self) -> dict[str, dict]:
         header = dict()
         for table_id in self.tables:
             header[table_id] = self.tables[table_id].get_header()
         return header
 
-    def clone(self, with_values=True):
+    def clone(self, with_values: bool = True) -> 'DataSet':
         dataset = DataSet(self.id)
 
         for table_id in self.tables:
@@ -40,7 +42,7 @@ class DataSet:
 
         return dataset
 
-    def apply_filters(self, filters):
+    def apply_filters(self, filters: list[dict]) -> 'DataSet':
 
         if not filters or not len(filters):
             return self
@@ -71,7 +73,7 @@ class DataSet:
 
         return joined_dataset
 
-    def apply_time_filter(self, filter, hduname='EVENTS', column=CONFIG.TIME_COLUMN):
+    def apply_time_filter(self, filter: dict, hduname: str = 'EVENTS', column: str = CONFIG.TIME_COLUMN) -> 'DataSet':
 
         if "GTI" not in self.tables:
             logging.warn("dataset.apply_time_filter: Dataset GTIs missed")
@@ -105,19 +107,19 @@ class DataSet:
 # STATIC MEHTODS
 
 # Returns a new empty dataset with the specified table_id and columns
-def get_empty_dataset(ds_id):
+def get_empty_dataset(ds_id: str) -> DataSet:
     return DataSet(ds_id)
 
 
 # Returns a new empty dataset with the specified table_id and columns
-def get_dataset(ds_id, table_id, columns):
+def get_dataset(ds_id: str, table_id: str, columns: list[str]) -> DataSet:
     dataset = get_empty_dataset(ds_id)
     dataset.add_table(table_id, columns)
     return dataset
 
 
 # Returns a new empty dataset with EVENTS and GTIs tables
-def get_hdu_type_dataset(dsId, columns, hduname="EVENTS"):
+def get_hdu_type_dataset(dsId: str, columns: list[str], hduname: str = "EVENTS") -> DataSet:
     dataset = DataSet(dsId)
 
     # Fills Hdu table
@@ -128,9 +130,12 @@ def get_hdu_type_dataset(dsId, columns, hduname="EVENTS"):
 
 
 # Returns a new dataset with EVENTS and GTIs tables
-def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ds_columns_errors, ev_list, ev_list_err,
-                            gti_start, gti_end, filter_start=None, filter_end=None,
-                            hduname="EVENTS", column=CONFIG.TIME_COLUMN):
+def get_dataset_applying_gtis(dsId: str, header: dict, header_comments: dict,
+                            ds_columns: dict[str, np.ndarray], ds_columns_errors: dict[str, np.ndarray],
+                            ev_list: np.ndarray, ev_list_err: np.ndarray,
+                            gti_start: np.ndarray, gti_end: np.ndarray,
+                            filter_start: float | None = None, filter_end: float | None = None,
+                            hduname: str = "EVENTS", column: str = CONFIG.TIME_COLUMN) -> DataSet:
 
     # Prepares additional_columns
     columns = [column]
@@ -157,7 +162,7 @@ def get_dataset_applying_gtis(dsId, header, header_comments, ds_columns, ds_colu
 
 
 # Returns a new dataset with GTIs table from Stingray Gti list
-def get_gti_dataset_from_stingray_gti(st_gtis):
+def get_gti_dataset_from_stingray_gti(st_gtis: list) -> DataSet:
     dataset = get_empty_dataset("GTI_DS")
     gti_table = DsHelper.get_gti_table_from_stingray_gti(st_gtis)
     dataset.tables["GTI"] = gti_table
@@ -192,16 +197,22 @@ def get_lightcurve_dataset_from_stingray_Lightcurve(lcurve, header=None,
 
     hdu_table = dataset.tables[hduname]
     if header is None:
-        if not hasattr(lcurve, 'header'):
-            logging.warn("Light curve has no header")
-            lcurve.header = Header()
-
-        header = Header.fromstring(lcurve.header)
         header = dict()
-        for header_column in header:
-            header[header_column] = str(header[header_column])
-            header_comments[header_column] = \
-                str(header.comments[header_column])
+    if header_comments is None:
+        header_comments = dict()
+
+    if header is not None and not header:  # header is empty dict
+        if hasattr(lcurve, 'header') and lcurve.header is not None:
+            if isinstance(lcurve.header, Header):
+                fits_header = lcurve.header
+            else:
+                fits_header = Header.fromstring(lcurve.header)
+            for header_column in fits_header:
+                header[header_column] = str(fits_header[header_column])
+                header_comments[header_column] = \
+                    str(fits_header.comments[header_column])
+        else:
+            logging.warn("Light curve has no header")
     hdu_table.set_header_info(header, header_comments)
     hdu_table.columns[column].add_values(lcurve.time)
     hdu_table.columns[hduname].add_values(lcurve.counts,
@@ -227,16 +238,22 @@ def get_eventlist_dataset_from_stingray_Eventlist(evlist, header=None,
 
     hdu_table = dataset.tables[hduname]
     if header is None:
-        if not hasattr(evlist, 'header'):
-            logging.warn("Event list has no header")
-            evlist.header = Header()
-
-        header = Header.fromstring(evlist.header)
         header = dict()
-        for header_column in header:
-            header[header_column] = str(header[header_column])
-            header_comments[header_column] = \
-                str(header.comments[header_column])
+    if header_comments is None:
+        header_comments = dict()
+
+    if header is not None and not header:  # header is empty dict
+        if hasattr(evlist, 'header') and evlist.header is not None:
+            if isinstance(evlist.header, Header):
+                fits_header = evlist.header
+            else:
+                fits_header = Header.fromstring(evlist.header)
+            for header_column in fits_header:
+                header[header_column] = str(fits_header[header_column])
+                header_comments[header_column] = \
+                    str(fits_header.comments[header_column])
+        else:
+            logging.warn("Event list has no header")
 
     hdu_table.set_header_info(header, header_comments)
     hdu_table.columns[column].add_values(evlist.time)

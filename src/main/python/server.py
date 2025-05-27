@@ -1,21 +1,21 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from flask import Flask, render_template, request, session
-
-import pkg_resources
-import sys
-import os
 import logging
+import os
+import sys
 
 import matplotlib
+from flask import Flask, Response, jsonify, render_template, request
+from flask.json.provider import DefaultJSONProvider
+
 matplotlib.use('TkAgg')  # Changes the matplotlib framework
 
-import utils.dave_endpoint as DaveEndpoint
-import utils.dataset_cache as DsCache
-import utils.gevent_helper as GeHelper
 import random
-from utils.np_encoder import NPEncoder
+
+import utils.dataset_cache as DsCache
+import utils.dave_endpoint as DaveEndpoint
+import utils.gevent_helper as GeHelper
 from config import CONFIG
+from utils.np_encoder import NPEncoder
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -46,11 +46,17 @@ UPLOADS_TARGET = os.path.join(APP_ROOT, 'uploadeddataset')
 
 app.secret_key = os.urandom(24)
 
-app.json_encoder = NPEncoder
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        encoder = NPEncoder()
+        return encoder.default(obj)
+
+app.json = CustomJSONProvider(app)
+app.json.compact = True
 
 # ------ Flask Server Profiler -----
-# from werkzeug.contrib.profiler import ProfilerMiddleware
+# from werkzeug.middleware.profiler import ProfilerMiddleware
 # app.config['PROFILE'] = True
 # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[10])
 # ------ END Flask Server Profiler -----
@@ -69,50 +75,50 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 # Routes methods
 @app.route('/upload', methods=['GET', 'POST'])
-def upload():
+def upload() -> Response:
     return DaveEndpoint.upload(request.files.getlist("file"), UPLOADS_TARGET)
 
 
 @app.route('/set_config', methods=['POST'])
-def set_config():
+def set_config() -> str:
     DsCache.clear()
     return CONFIG.set_config(request.json['CONFIG'])
 
 @app.route('/clear_cache', methods=['POST'])
-def clear_cache():
+def clear_cache() -> str:
     DsCache.clear()
     return ""
 
 
 @app.route('/get_dataset_schema', methods=['GET'])
-def get_dataset_schema():
+def get_dataset_schema() -> Response:
     return DaveEndpoint.get_dataset_schema(request.args['filename'], UPLOADS_TARGET)
 
 
 @app.route('/get_dataset_header', methods=['GET'])
-def get_dataset_header():
+def get_dataset_header() -> Response:
     return DaveEndpoint.get_dataset_header(request.args['filename'], UPLOADS_TARGET)
 
 
 @app.route('/append_file_to_dataset', methods=['POST'])
-def append_file_to_dataset():
+def append_file_to_dataset() -> Response:
     return DaveEndpoint.append_file_to_dataset(request.json['filename'], request.json['nextfile'], UPLOADS_TARGET)
 
 
 @app.route('/apply_rmf_file_to_dataset', methods=['GET'])
-def apply_rmf_file_to_dataset():
+def apply_rmf_file_to_dataset() -> Response:
     return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], request.args['column'], UPLOADS_TARGET)
 
 
 @app.route('/get_plot_data', methods=['POST'])
-def get_plot_data():
+def get_plot_data() -> Response:
     return DaveEndpoint.get_plot_data(request.json['filename'],
             request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
             request.json['filters'], request.json['styles'], request.json['axis'])
 
 
 @app.route('/get_lightcurve', methods=['POST'])
-def get_lightcurve():
+def get_lightcurve() -> Response:
     variance_opts = None
     if "variance_opts" in request.json:
         variance_opts = request.json['variance_opts']
@@ -124,7 +130,7 @@ def get_lightcurve():
 
 
 @app.route('/get_joined_lightcurves', methods=['POST'])
-def get_joined_lightcurves():
+def get_joined_lightcurves() -> Response:
     return DaveEndpoint.get_joined_lightcurves(request.json['lc0_filename'],
             request.json['lc1_filename'], request.json['lc0_bck_filename'],
             request.json['lc1_bck_filename'], UPLOADS_TARGET, request.json['filters'],
@@ -338,23 +344,23 @@ def get_version():
 
 # Shutdown flask server
 def shutdown_server():
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        logging.warn('shutdown_server: Not running with the Werkzeug Server')
-        exit()
-    func()
+    # werkzeug.server.shutdown was removed in Werkzeug 2.1+
+    # Use signal to stop the server instead
+    import signal
+    logging.info('Shutting down server...')
+    os.kill(os.getpid(), signal.SIGINT)
 
 
 # Setting error handler
 def http_error_handler(error):
     try:
         logging.error('ERROR: http_error_handler ' + str(error))
-        return json.dumps(dict(error=str(error)))
+        return jsonify(error=str(error))
     except:
         logging.error('ERROR: http_error_handler --> EXCEPT ')
 
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
-    app.error_handler_spec[None][error] = http_error_handler
+    app.register_error_handler(error, http_error_handler)
 
 if __name__ == '__main__':
     GeHelper.start(server_port, app)

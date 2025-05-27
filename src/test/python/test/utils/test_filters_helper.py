@@ -1,10 +1,10 @@
-from test.fixture import *
-import os
 
-from hypothesis import given
 import hypothesis.strategies as st
-
 import utils.filters_helper as FltHelper
+from hypothesis import given
+
+from test.fixture import *
+
 
 @given(
     st.text(min_size=1),

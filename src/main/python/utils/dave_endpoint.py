@@ -1,19 +1,18 @@
-import json
-import utils.dave_logger as logging
-import urllib
 
-import utils.session_helper as SessionHelper
-import utils.file_utils as FileUtils
-import utils.dave_engine as DaveEngine
-import utils.dave_bulk as DaveBulk
-from utils.np_encoder import NPEncoder
+from flask import Response, jsonify
+from werkzeug.datastructures import FileStorage
+
 import utils.dataset_cache as DsCache
-from config import CONFIG
+import utils.dave_bulk as DaveBulk
+import utils.dave_engine as DaveEngine
+import utils.dave_logger as logging
+import utils.file_utils as FileUtils
+import utils.session_helper as SessionHelper
 
 
 # UPLOADS THE FILE AND STORES IT ON SESSION,
 # only called if IS_LOCAL_SERVER=False configuration setted
-def upload(files, target):
+def upload(files: list[FileStorage], target: str) -> Response | dict[str, str]:
 
     if len(files) == 0:
         return common_error("No sent files")
@@ -40,18 +39,18 @@ def upload(files, target):
         SessionHelper.add_uploaded_file_to_session(file.filename)
         filenames.append(file.filename)
 
-    return json.dumps(filenames)
+    return jsonify(filenames)
 
 
 #Returns filename destination or a valid cache key, None if invalid
-def get_destination(filename, target):
+def get_destination(filename: str, target: str) -> str | None:
     if not filename:
         logging.error("No filename or cache key setted for filename %s" % filename)
         return None
 
-    if not SessionHelper.is_file_uploaded(filename):
-        if not DsCache.contains(filename):
-            if not FileUtils.file_exist(target, filename):
+    if (not SessionHelper.is_file_uploaded(filename) and
+        not DsCache.contains(filename) and
+        not FileUtils.file_exist(target, filename)):
                 logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
                 return None
 
@@ -66,22 +65,22 @@ def get_destination(filename, target):
     return destination
 
 
-def get_dataset_schema(filename, target):
+def get_dataset_schema(filename: str, target: str) -> Response | dict[str, str]:
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key, filename: %s" % filename)
 
     schema = DaveEngine.get_dataset_schema(destination)
-    return json.dumps(schema, cls=NPEncoder)
+    return jsonify(schema)
 
 
-def get_dataset_header(filename, target):
+def get_dataset_header(filename: str, target: str) -> Response | dict[str, str]:
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key, filename: %s" % filename)
 
     header = DaveEngine.get_dataset_header(destination)
-    return json.dumps(header, cls=NPEncoder)
+    return jsonify(header)
 
 
 
@@ -90,7 +89,7 @@ def get_dataset_header(filename, target):
 # @param: filename: filename or dataset cache key
 # @param: nextfile: file to append
 #
-def append_file_to_dataset(filename, nextfile, target):
+def append_file_to_dataset(filename: str, nextfile: str, target: str) -> Response | dict[str, str]:
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key")
@@ -98,10 +97,10 @@ def append_file_to_dataset(filename, nextfile, target):
     if not nextfile:
         return common_error("No nextfile setted")
 
-    if not SessionHelper.is_file_uploaded(nextfile):
-        if not FileUtils.file_exist(target, nextfile):
-            logging.error("Filename not uploaded for nextfile %s" % nextfile)
-            return common_error("Nextfile not uploaded")
+    if (not SessionHelper.is_file_uploaded(nextfile) and
+        not FileUtils.file_exist(target, nextfile)):
+        logging.error("Filename not uploaded for nextfile %s" % nextfile)
+        return common_error("Nextfile not uploaded")
 
     next_destination = FileUtils.get_destination(target, nextfile)
     if not FileUtils.is_valid_file(next_destination):
@@ -114,7 +113,7 @@ def append_file_to_dataset(filename, nextfile, target):
 
     logging.debug("append_file_to_dataset, cache_key: %s" % new_filename)
 
-    return json.dumps(new_filename)
+    return jsonify(new_filename)
 
 
 # apply_rmf_file_to_dataset: Applies and Rmf file to an events dataset
@@ -123,7 +122,7 @@ def append_file_to_dataset(filename, nextfile, target):
 # @param: rmf_filename: rmf file to apply
 # @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(filename, rmf_filename, column, target):
+def apply_rmf_file_to_dataset(filename: str, rmf_filename: str, column: str, target: str) -> Response | dict[str, str]:
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key")
@@ -136,14 +135,15 @@ def apply_rmf_file_to_dataset(filename, rmf_filename, column, target):
         return common_error("Invalid RMF file")
 
     result = DaveEngine.apply_rmf_file_to_dataset(destination, rmf_destination, column)
-    return json.dumps(result)
+    return jsonify(result)
 
 
-def common_error(error):
-    return json.dumps(dict(error=error))
+def common_error(error: str) -> Response:
+    return jsonify(error=error)
 
 
-def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, styles, axis):
+def get_plot_data(src_filename: str, bck_filename: str, gti_filename: str, target: str,
+                  filters: dict, styles: dict, axis: list) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -171,11 +171,12 @@ def get_plot_data(src_filename, bck_filename, gti_filename, target, filters, sty
 
     logging.debug("get_plot_data: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
-def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, axis, dt,
-                    baseline_opts, meanflux_opts, variance_opts):
+def get_lightcurve(src_filename: str, bck_filename: str, gti_filename: str, target: str,
+                    filters: dict, axis: list, dt: float,
+                    baseline_opts: dict, meanflux_opts: dict, variance_opts: dict) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -207,11 +208,11 @@ def get_lightcurve(src_filename, bck_filename, gti_filename, target, filters, ax
 
     logging.debug("get_lightcurve: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
-def get_joined_lightcurves(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck_filename,
-                            target, filters, axis, dt):
+def get_joined_lightcurves(lc0_filename: str, lc1_filename: str, lc0_bck_filename: str, lc1_bck_filename: str,
+                            target: str, filters: dict, axis: list, dt: float) -> Response | dict[str, str]:
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -246,10 +247,11 @@ def get_joined_lightcurves(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck
 
     logging.debug("get_joined_lightcurves: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
-def get_divided_lightcurves_from_colors(src_filename, bck_filename, gti_filename, target, filters, axis, dt):
+def get_divided_lightcurves_from_colors(src_filename: str, bck_filename: str, gti_filename: str,
+                                        target: str, filters: dict, axis: list, dt: float) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -277,10 +279,11 @@ def get_divided_lightcurves_from_colors(src_filename, bck_filename, gti_filename
 
     logging.debug("get_divided_lightcurves_from_colors: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
-def get_divided_lightcurve_ds(lc0_filename, lc1_filename, lc0_bck_filename, lc1_bck_filename, target):
+def get_divided_lightcurve_ds(lc0_filename: str, lc1_filename: str, lc0_bck_filename: str,
+                              lc1_bck_filename: str, target: str) -> Response | dict[str, str]:
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -311,7 +314,7 @@ def get_divided_lightcurve_ds(lc0_filename, lc1_filename, lc0_bck_filename, lc1_
 
     logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
 
-    return json.dumps(cache_key, cls=NPEncoder)
+    return jsonify(cache_key)
 
 
 def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
@@ -349,7 +352,7 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_power_density_spectrum: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
@@ -387,7 +390,7 @@ def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_dynamical_spectrum: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, axis1, dt1,
@@ -449,7 +452,7 @@ def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, ax
 
    logging.debug("get_cross_spectrum: Finish!")
 
-   return json.dumps(data, cls=NPEncoder)
+   return jsonify(data)
 
 
 def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, energy_range, n_bands, std):
@@ -484,7 +487,7 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
 
     logging.debug("get_covariance_spectrum: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
@@ -527,7 +530,7 @@ def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_phase_lag_spectrum: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
@@ -571,7 +574,7 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_rms_spectrum: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
@@ -611,10 +614,10 @@ def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_rms_vs_countrate: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
-def get_plot_data_from_models(models, x_values):
+def get_plot_data_from_models(models: list[dict], x_values: list[float]) -> Response:
 
     logging.debug("get_plot_data_from_models models: %s" % models)
     logging.debug("get_plot_data_from_models x_values: %s" % str(len(x_values)))
@@ -623,12 +626,14 @@ def get_plot_data_from_models(models, x_values):
 
     logging.debug("get_plot_data_from_models: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
-def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                models, priors=None, sampling_params=None):
+def get_fit_powerspectrum_result(src_filename: str, bck_filename: str, gti_filename: str, target: str,
+                                filters: dict, axis: list, dt: float, nsegm: int, segm_size: float,
+                                norm: str, pds_type: str, df: float,
+                                models: list[dict], priors: list[dict] | None = None,
+                                sampling_params: dict | None = None) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -666,7 +671,7 @@ def get_fit_powerspectrum_result(src_filename, bck_filename, gti_filename, targe
 
     logging.debug("get_fit_powerspectrum_result: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
@@ -711,7 +716,7 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_bootstrap_results: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 # Creates HENDRICS intermediate files from local absolute paths and stores them on target folder
@@ -727,7 +732,7 @@ def get_intermediate_files(filepaths, target):
             if filename:
                 filenames.append(filename)
 
-    return json.dumps(filenames, cls=NPEncoder)
+    return jsonify(filenames)
 
 
 def bulk_analisys(filenames, plot_configs, outdir, target):
@@ -739,7 +744,7 @@ def bulk_analisys(filenames, plot_configs, outdir, target):
     absolute_outdir = "/".join([target, outdir])
     bulk_data = DaveBulk.bulk_analisys(filenames, plot_configs, absolute_outdir)
     logging.debug("bulk_analisys: Finish!")
-    return json.dumps(bulk_data, cls=NPEncoder)
+    return jsonify(bulk_data)
 
 
 def get_lomb_scargle_results(src_filename, bck_filename, gti_filename, target,
@@ -779,7 +784,7 @@ def get_lomb_scargle_results(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_lomb_scargle_results: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_fit_lomb_scargle_result(src_filename, bck_filename, gti_filename, target,
@@ -822,7 +827,7 @@ def get_fit_lomb_scargle_result(src_filename, bck_filename, gti_filename, target
 
     logging.debug("get_fit_lomb_scargle_result: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_pulse_search(src_filename, bck_filename, gti_filename, target,
@@ -864,7 +869,7 @@ def get_pulse_search(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_pulse_search: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)
 
 
 def get_phaseogram(src_filename, bck_filename, gti_filename, target,
@@ -905,4 +910,4 @@ def get_phaseogram(src_filename, bck_filename, gti_filename, target,
 
     logging.debug("get_phaseogram: Finish!")
 
-    return json.dumps(data, cls=NPEncoder)
+    return jsonify(data)

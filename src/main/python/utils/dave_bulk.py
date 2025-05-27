@@ -1,12 +1,12 @@
-import utils.dave_logger as logging
-import utils.file_utils as FileUtils
-import utils.dave_reader as DaveReader
-import utils.filters_helper as FltHelper
-import utils.exception_helper as ExHelper
-from hendrics.lcurve import main as MPlcurve
-from hendrics.fspec import main as MPfspec
-from hendrics.io import HEN_FILE_EXTENSION
 from config import CONFIG
+from hendrics.io import HEN_FILE_EXTENSION
+from hendrics.lcurve import main as MPlcurve
+
+import utils.dave_logger as logging
+import utils.dave_reader as DaveReader
+import utils.exception_helper as ExHelper
+import utils.file_utils as FileUtils
+import utils.filters_helper as FltHelper
 
 
 # get_intermediate_file: Returns the filename of the intermediate file

@@ -1,6 +1,7 @@
 
-import sys
 import inspect
+import sys
+
 
 def print_full_stack():
     print ('Traceback (most recent call last):')

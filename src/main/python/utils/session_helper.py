@@ -2,7 +2,7 @@ from flask import session
 
 
 # SESSION METHODS
-def add_uploaded_file_to_session(filename):
+def add_uploaded_file_to_session(filename: str) -> None:
     if 'uploaded_filenames' not in session:
         session['uploaded_filenames'] = []
 
@@ -10,7 +10,7 @@ def add_uploaded_file_to_session(filename):
         session['uploaded_filenames'].extend([filename])
 
 
-def is_file_uploaded(filename):
+def is_file_uploaded(filename: str) -> bool:
     if 'uploaded_filenames' not in session:
         return False
 

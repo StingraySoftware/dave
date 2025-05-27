@@ -1,8 +1,10 @@
 import json
+
 import numpy
-import utils.exception_helper as ExHelper
-import utils.dave_logger as logging
 from config import CONFIG
+
+import utils.dave_logger as logging
+import utils.exception_helper as ExHelper
 
 
 class NPEncoder(json.JSONEncoder):
@@ -25,13 +27,13 @@ class NPEncoder(json.JSONEncoder):
                 if obj < -CONFIG.BIG_NUMBER:
                     return -CONFIG.BIG_NUMBER
                 return float(obj)
-            if isinstance(obj, numpy.integer):
+            if isinstance(obj, numpy.int8 | numpy.int16 | numpy.int32 | numpy.int64):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
                     return -CONFIG.BIG_NUMBER
                 return int(obj)
-            elif isinstance(obj, numpy.floating):
+            elif isinstance(obj, numpy.float16 | numpy.float32 | numpy.float64):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
@@ -42,7 +44,7 @@ class NPEncoder(json.JSONEncoder):
             elif isinstance(obj, numpy.ndarray):
                 return obj.tolist()
             else:
-                return super(NPEncoder, self).default(obj)
+                return super().default(obj)
         except:
             logging.error(ExHelper.getException('NPEncoder'))
             return None

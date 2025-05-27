@@ -1,11 +1,13 @@
 
 import os
+
 import magic
+from config import CONFIG
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
+
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
-from shutil import copyfile
-from werkzeug import secure_filename
-from config import CONFIG
 
 
 def get_destination(target, filename):
@@ -48,7 +50,7 @@ def is_valid_file(destination):
 # @param: file: file to upload
 # @param: target: folder name for upload destination
 #
-def save_file(target, file):
+def save_file(target: str, file: FileStorage) -> str:
 
     logging.debug("save_file: %s - %s" % (type(file), file))
 

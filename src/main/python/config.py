@@ -1,5 +1,4 @@
 # config.py
-import json
 
 class CONFIG:
     IS_LOCAL_SERVER = True  # If False consider that uploaded files are relatives and can have dangerous paths.

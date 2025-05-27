@@ -1,14 +1,12 @@
-from test.fixture import *
 import os
 
-from hypothesis import given
 import hypothesis.strategies as st
-from hypothesis import example
-
+import utils.dataset_helper as DsHelper
 import utils.dave_reader as DaveReader
 import utils.file_utils as FileUtils
-import utils.filters_helper as FltHelper
-import utils.dataset_helper as DsHelper
+from hypothesis import example, given
+
+from test.fixture import *
 
 
 @given(st.text(min_size=1))

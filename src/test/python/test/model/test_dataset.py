@@ -1,11 +1,13 @@
-from test.fixture import *
-from hypothesis import given
 import hypothesis.strategies as st
-from model.dataset import DataSet
-from model.dataset import get_eventlist_dataset_from_stingray_Eventlist, \
-    get_lightcurve_dataset_from_stingray_Lightcurve
-import pytest
 import numpy as np
+from hypothesis import given
+from model.dataset import (
+    DataSet,
+    get_eventlist_dataset_from_stingray_Eventlist,
+    get_lightcurve_dataset_from_stingray_Lightcurve,
+)
+
+from test.fixture import *
 
 
 @given(st.text(min_size=1))
@@ -16,8 +18,8 @@ def test_init(s):
 
 
 def test_get_lightcurve_dataset_from_stingray_Lightcurve(capsys):
-    from stingray.lightcurve import Lightcurve
     from astropy.io.fits import Header
+    from stingray.lightcurve import Lightcurve
     lc = Lightcurve([0, 1], [2, 2])
 
     ds = get_lightcurve_dataset_from_stingray_Lightcurve(lc)
@@ -37,8 +39,8 @@ def test_get_lightcurve_dataset_from_stingray_Lightcurve(capsys):
 
 
 def test_get_eventlist_dataset_from_stingray_Eventlist(capsys):
-    from stingray.events import EventList
     from astropy.io.fits import Header
+    from stingray.events import EventList
     ev = EventList(time=[0, 1], pi=[2, 2], energy=[3., 4.],
                    gti=np.array([[-0.5, 1.5]]))
 

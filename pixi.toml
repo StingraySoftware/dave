@@ -1,0 +1,48 @@
+[workspace]
+authors = ["kartikmandar <kartik4321mandar@gmail.com>"]
+channels = ["conda-forge"]
+name = "dave"
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+version = "2.0.0"
+
+[tasks]
+# Development tasks
+test = "python -m pytest src/test/python -v"
+test-coverage = "python -m pytest src/test/python --cov=src/main/python --cov-report=term-missing"
+server = "cd src/main/python && python server.py"
+electron = "cd src/main/js/electron && npm start"
+
+# Utility tasks
+install-node-deps = "cd src/main/js/electron && npm install"
+clean = "find . -type d -name '__pycache__' -exec rm -rf {} + || true"
+
+# Linting and formatting
+lint = "ruff check src/main/python src/test/python"
+lint-fix = "ruff check --fix src/main/python src/test/python"
+format = "ruff format src/main/python src/test/python"
+format-check = "ruff format --check src/main/python src/test/python"
+
+[dependencies]
+python = "3.13.*"
+flask = ">=3.1.1,<4"
+numpy = ">=2.2.6,<3"
+astropy = ">=7.0.2,<8"
+numba = ">=0.61.2,<0.62"
+pytest = ">=8.3.5,<9"
+gevent = ">=25.5.1,<26"
+scipy = ">=1.15.2,<2"
+matplotlib = ">=3.10.3,<4"
+ruff = ">=0.9.4,<1"
+
+[pypi-dependencies]
+stingray = ">=2.2.7, <3"
+hendrics = ">=8.1, <9"
+hypothesis = ">=6.131.28, <7"
+pillow = "*"
+watchdog = ">=6.0.0, <7"
+flask-cors = ">=6.0.0, <7"
+flask-session = ">=0.8.0, <0.9"
+python-magic = ">=0.4.27, <0.5"
+pylru = ">=1.2.1, <2"
+memory-profiler = ">=0.61.0, <1"
+psutil = ">=7.0.0, <8"

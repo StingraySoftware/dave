@@ -1,9 +1,9 @@
-import utils.dave_logger as logging
-from astropy.modeling.models import Const1D, Gaussian1D, Lorentz1D
-from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
-from stingray.modeling import ParameterEstimation, PSDLogLikelihood
 import scipy.stats
+from astropy.modeling.models import Const1D, Gaussian1D, Lorentz1D
+from astropy.modeling.powerlaws import BrokenPowerLaw1D, PowerLaw1D
+from stingray.modeling import ParameterEstimation, PSDLogLikelihood
 
+import utils.dave_logger as logging
 
 
 # get_astropy_model:
@@ -59,9 +59,9 @@ def get_starting_params_from_model(model, params):
     for param in params:
         if "fixed" in model:
             if param not in model["fixed"]:
-                starting_pars.extend([model[param]]);
+                starting_pars.extend([model[param]])
         else:
-            starting_pars.extend([model[param]]);
+            starting_pars.extend([model[param]])
     return starting_pars
 
 
@@ -133,7 +133,7 @@ def get_astropy_priors(dave_priors):
     for i in range(num_models):
         model_params = dave_priors[i]
 
-        for paramName in model_params.keys():
+        for paramName in model_params:
 
             if num_models > 1:
                 prior_key = str(paramName) + "_" + str(i)
