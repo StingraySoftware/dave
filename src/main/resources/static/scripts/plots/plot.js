@@ -518,8 +518,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        plotlyConfig.data.push(getCrossLine ([this.minX, this.minX], [this.minY, this.maxY]));
        plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [this.minY, this.minY]));
 
-       //Creates the plot
-       Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       //Creates the plot with migration support
+       if (typeof plotlyNewPlot === 'function') {
+         // Use migration helper if available
+         plotlyNewPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       } else {
+         // Fallback to direct Plotly call
+         Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       }
 
        this.plotElem = this.$html.find(".plot")[0];
 
@@ -568,7 +574,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
            height: $(currentObj.plotElem).height()
          };
 
-         Plotly.relayout(currentObj.plotId, size);
+         if (typeof safePlotlyCall === 'function') {
+           safePlotlyCall('relayout', currentObj.plotId, size);
+         } else {
+           Plotly.relayout(currentObj.plotId, size);
+         }
        }
      } catch (ex) {
        log("Resize plot " + currentObj.id + " error: " + ex);
@@ -878,12 +888,20 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    var update = { x: [[x, x], [this.minX, this.maxX]],
                   y: [[this.minY, this.maxY], [y, y]],
                   visible: true };
-   Plotly.restyle(this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
+   if (typeof safePlotlyCall === 'function') {
+     safePlotlyCall('restyle', this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
+   } else {
+     Plotly.restyle(this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
+   }
   }
 
   this.hideCrosses = function (){
    // hide two crosshair traces
-   Plotly.restyle(this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
+   if (typeof safePlotlyCall === 'function') {
+     safePlotlyCall('restyle', this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
+   } else {
+     Plotly.restyle(this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
+   }
   }
 
   this.showAddAnnotationDialog = function (x, y){

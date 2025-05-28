@@ -2,3 +2,6 @@ node_modules
 uploadeddataset
 templates/
 README.md
+screenshots/
+test-results/
+playwright-report/

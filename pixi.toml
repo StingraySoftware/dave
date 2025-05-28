@@ -12,8 +12,15 @@ test-coverage = "python -m pytest src/test/python --cov=src/main/python --cov-re
 server = "cd src/main/python && python server.py"
 electron = "cd src/main/js/electron && npm start"
 
+# Frontend migration tasks
+electron-5 = "cd src/main/js/electron && cp package-electron5.json package.json && npm install && cp main-electron5.js main.js && npm start"
+electron-12 = "cd src/main/js/electron && cp package-electron12.json package.json && npm install && cp main-electron12.js main.js && cp preload-electron12.js preload.js && npm start"
+electron-20 = "cd src/main/js/electron && cp package-electron20.json package.json && npm install && cp main-electron20.js main.js && cp preload-electron20.js preload.js && npm start"
+electron-36 = "cd src/main/js/electron && npm install && npm start"
+
 # Utility tasks
 install-node-deps = "cd src/main/js/electron && npm install"
+install-electron5 = "cd src/main/js/electron && cp package-electron5.json package.json && npm install"
 clean = "find . -type d -name '__pycache__' -exec rm -rf {} + || true"
 
 # Linting and formatting

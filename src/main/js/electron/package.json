@@ -1,24 +1,115 @@
 {
-  "name": "DAVE",
+  "name": "dave",
   "description": "Data Analysis for Variable Events",
   "author": "Timelab Technologies Ltd.",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": "Apache-2.0",
   "repository": "https://github.com/StingraySoftware/dave",
   "main": "main.js",
+  "engines": {
+    "node": ">=22.16.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "start": "electron .",
-    "build-linux": "electron-packager . DAVEApp --platform=linux --arch=x64 --prune=true --icon ../../resources/static/img/icon/512x512.png --overwrite --out ../../../../build",
-    "build-darwin": "electron-packager . DAVEApp --platform=darwin --arch=x64 --prune=true --icon ../../resources/static/img/icon.icns --overwrite --out ../../../../build"
+    "build": "electron-builder",
+    "build-linux": "electron-builder --linux",
+    "build-mac": "electron-builder --mac",
+    "build-win": "electron-builder --win",
+    "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
-    "config-js": "^1.1.9",
-    "electron-packager": "^10.1.1",
-    "menu": "^0.2.5",
-    "request": "^2.79.0",
-    "request-promise": "*"
+    "axios": "^1.7.9",
+    "electron-log": "^5.2.5",
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
-    "electron": "^1.7.10"
+    "electron": "^36.3.1",
+    "electron-builder": "^25.1.8",
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-deb": "^7.6.0",
+    "@electron-forge/maker-rpm": "^7.6.0",
+    "@electron-forge/maker-squirrel": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.6.0",
+    "@electron-forge/plugin-fuses": "^7.6.0",
+    "@electron/fuses": "^1.8.0",
+    "eslint": "^9.17.0",
+    "jest": "^29.7.0",
+    "playwright": "^1.49.1",
+    "@playwright/test": "^1.49.1",
+    "prettier": "^3.4.2"
+  },
+  "build": {
+    "appId": "com.stingray.dave",
+    "productName": "DAVE",
+    "directories": {
+      "output": "../../../../build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "config.js",
+      "package.json",
+      "../../resources/**/*",
+      "../../python/**/*",
+      "!**/__pycache__",
+      "!**/*.pyc"
+    ],
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "snap",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "../../resources/static/img/icon/512x512.png",
+      "category": "Science",
+      "synopsis": "Data Analysis of Variable Events",
+      "description": "A desktop GUI application for astronomical X-ray data analysis"
+    },
+    "mac": {
+      "icon": "../../resources/static/img/icon.icns",
+      "category": "public.app-category.education",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "../../resources/static/img/icon.ico",
+      "publisherName": "Timelab Technologies Ltd."
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
