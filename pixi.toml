@@ -86,7 +86,6 @@ gevent = ">=25.5.1,<26"
 scipy = ">=1.15.2,<2"
 matplotlib = ">=3.10.3,<4"
 ruff = ">=0.9.4,<1"
-libmagic = "*"
 
 [pypi-dependencies]
 stingray = ">=2.2.7, <3"
@@ -103,6 +102,7 @@ psutil = ">=7.0.0, <8"
 
 # Platform-specific dependencies
 [target.linux-64.dependencies]
+libmagic = "*"
 
 [target.osx-64.dependencies]
 libmagic = "*"
