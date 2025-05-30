@@ -194,18 +194,18 @@ Download the latest release for your platform:
 git clone https://github.com/StingraySoftware/dave.git
 cd dave
 git checkout modernization-2025  # Important: Use the modernization branch
+
+# Install Python dependencies
 pixi install
+
+# Install Node.js dependencies (required for Electron)
+pixi run install-node-deps
 
 # Start the application (automatically launches both backend and frontend)
 pixi run electron
 ```
 
-**Alternative (for debugging):**
-```bash
-# If you need to run servers separately:
-pixi run server    # Terminal 1: Flask backend only
-pixi run electron  # Terminal 2: Electron frontend (in a separate terminal)
-```
+**Note:** The `pixi run electron` command automatically starts both the Python backend server and Electron frontend, so no separate server command is needed.
 
 ### Testing
 
@@ -676,10 +676,10 @@ kubectl apply -k kubernetes/
 git clone https://github.com/StingraySoftware/dave.git
 cd dave
 pixi install
+pixi run install-node-deps  # Install Node.js dependencies
 
-# Development
-pixi run server    # Terminal 1: Flask backend (port 5000)
-pixi run electron  # Terminal 2: Electron frontend
+# Development (single command starts both backend and frontend)
+pixi run electron
 
 # Testing
 pixi run test              # All Python tests
