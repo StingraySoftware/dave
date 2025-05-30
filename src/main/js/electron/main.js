@@ -286,7 +286,7 @@ async function launchPythonServer(config) {
   };
   
   if (config.pythonEnabled) {
-    return launchProcess('python', [config.pythonPath], 'Python', spawnOptions);
+    return launchProcess('python', [config.pythonPath, '.', '.', port], 'Python', spawnOptions);
   } else if (config.envEnabled) {
     return launchProcess('/bin/bash', [config.envScriptPath], 'Environment', spawnOptions);
   }
