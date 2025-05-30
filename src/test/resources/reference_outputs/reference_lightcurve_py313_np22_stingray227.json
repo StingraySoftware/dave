@@ -1,0 +1,10 @@
+{
+  "error": "Can't create lightcurve or is empty",
+  "_metadata": {
+    "python_version": "3.13",
+    "numpy_version": "2.2",
+    "stingray_version": "2.2.7",
+    "generation_date": "2025-01-28",
+    "description": "Reference output for lightcurve analysis"
+  }
+}

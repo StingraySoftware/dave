@@ -35,7 +35,7 @@ class Table:
                 schema[column_name] = column_shema
         return schema
 
-    def clone(self, with_values: bool = True) -> 'Table':
+    def clone(self, with_values: bool = True) -> "Table":
         table = Table(self.id)
         table.header = self.header
         table.header_comments = self.header_comments
@@ -43,7 +43,7 @@ class Table:
             table.columns[column_name] = self.columns[column_name].clone(with_values)
         return table
 
-    def apply_filter(self, filter: dict) -> 'Table':
+    def apply_filter(self, filter: dict) -> "Table":
         column_name = filter["column"]
         if column_name not in self.columns:
             logging.error("table.apply_filter wrong column: %s" % column_name)
@@ -83,7 +83,7 @@ class Table:
             error = row[column_name]["error_value"]
             self.columns[column_name].add_value(value, error)
 
-    def join(self, table: 'Table') -> 'Table':
+    def join(self, table: "Table") -> "Table":
         res_table = self.clone(True)
         for column_name in table.columns:
             col_values, col_error_values = table.columns[column_name].get_values()

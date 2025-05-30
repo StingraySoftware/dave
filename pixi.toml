@@ -18,6 +18,52 @@ electron-12 = "cd src/main/js/electron && cp package-electron12.json package.jso
 electron-20 = "cd src/main/js/electron && cp package-electron20.json package.json && npm install && cp main-electron20.js main.js && cp preload-electron20.js preload.js && npm start"
 electron-36 = "cd src/main/js/electron && npm install && npm start"
 
+# Build tasks (Electron Builder)
+build = "python build.py"
+build-linux = "python build.py --platform linux"
+build-macos = "python build.py --platform macos"
+build-windows = "python build.py --platform windows"
+build-all = "python build.py --platform linux && python build.py --platform macos && python build.py --platform windows"
+build-clean = "python build.py --clean"
+
+# Build tasks (Electron Forge)
+build-forge = "python build.py --forge"
+build-forge-linux = "python build.py --platform linux --forge"
+build-forge-macos = "python build.py --platform macos --forge"
+build-forge-windows = "python build.py --platform windows --forge"
+
+# Development build (quick, no tests)
+build-dev = "python build.py --no-tests"
+build-forge-dev = "python build.py --forge --no-tests"
+
+# Distribution tasks (Electron Builder)
+dist = "cd src/main/js/electron && npm run build"
+dist-linux = "cd src/main/js/electron && npm run build-linux"
+dist-mac = "cd src/main/js/electron && npm run build-mac"
+dist-win = "cd src/main/js/electron && npm run build-win"
+
+# Electron Forge tasks
+forge-start = "cd src/main/js/electron && npm run forge:start"
+forge-package = "cd src/main/js/electron && npm run forge:package"
+forge-make = "cd src/main/js/electron && npm run forge:make"
+forge-make-linux = "cd src/main/js/electron && npm run forge:make-linux"
+forge-make-mac = "cd src/main/js/electron && npm run forge:make-mac"
+forge-make-win = "cd src/main/js/electron && npm run forge:make-win"
+forge-publish = "cd src/main/js/electron && npm run forge:publish"
+
+# E2E testing
+test-e2e = "cd src/main/js/electron && npm run test:e2e"
+
+# Development mode with auto-reload
+dev = { cmd = "python -m watchdog.auto_restart --pattern='*.py' --recursive src/main/python -- python src/main/python/server.py", env = { FLASK_DEBUG = "1" } }
+
+# Frontend bundling tasks
+build-frontend = "python scripts/build-frontend.py"
+build-frontend-legacy = "python scripts/build-frontend.py --legacy"
+frontend-dev = "npm run dev"
+frontend-install = "npm install"
+frontend-clean = "rm -rf src/main/resources/static/dist"
+
 # Utility tasks
 install-node-deps = "cd src/main/js/electron && npm install"
 install-electron5 = "cd src/main/js/electron && cp package-electron5.json package.json && npm install"

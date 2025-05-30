@@ -5,7 +5,8 @@ from config import CONFIG
 import utils.gevent_helper as GeHelper
 
 # LOGGING WRAPPED METHODS
-# ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
+# ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4
+
 
 def debug(obj):
     if CONFIG.LOG_LEVEL <= 0:

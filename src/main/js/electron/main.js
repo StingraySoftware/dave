@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const axios = require('axios');
 const log = require('electron-log/main');
 const { autoUpdater } = require('electron-updater');
+const updater = require('./updater');
 
 // Initialize logging
 log.initialize();
@@ -104,6 +105,9 @@ app.whenReady().then(async () => {
   // Create main window
   createMainWindow();
   
+  // Initialize auto-updater
+  updater.init();
+  
   // Check for updates
   if (process.env.NODE_ENV !== 'development') {
     autoUpdater.checkForUpdatesAndNotify();
@@ -124,6 +128,23 @@ ipcMain.handle('app:getVersion', () => ({
   node: process.versions.node,
   chrome: process.versions.chrome
 }));
+
+// Auto-updater IPC handlers
+ipcMain.handle('updater:check', () => {
+  updater.checkForUpdates();
+});
+
+ipcMain.handle('updater:getStatus', () => {
+  return updater.getStatus();
+});
+
+ipcMain.handle('updater:setChannel', (event, channel) => {
+  updater.setChannel(channel);
+});
+
+ipcMain.handle('updater:setAutoDownload', (event, enabled) => {
+  updater.setAutoDownload(enabled);
+});
 
 ipcMain.handle('server:launch', async () => {
   log.info('Launching Python server...');
@@ -298,7 +319,26 @@ function launchProcess(command, args, name, options) {
       
       // Handle stderr
       subpy.stderr.on('data', (data) => {
-        log.error(`${name} error:`, data.toString());
+        const messages = data.toString().split(/\r?\n/).filter(Boolean);
+        
+        messages.forEach(msg => {
+          // HTTP access logs (Flask default logs to stderr)
+          if (msg.match(/^\S+ - - \[.*\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS).*" \d{3}/)) {
+            log.info(`${name} HTTP:`, msg);
+          }
+          // Warnings (like NetCDF warning)
+          else if (msg.includes('Warning') || msg.includes('UserWarning')) {
+            log.warn(`${name} warning:`, msg);
+          }
+          // Actual errors
+          else if (msg.includes('Error') || msg.includes('Exception') || msg.includes('Traceback')) {
+            log.error(`${name} error:`, msg);
+          }
+          // Everything else as info
+          else {
+            log.info(`${name} info:`, msg);
+          }
+        });
       });
       
       // Handle spawn event

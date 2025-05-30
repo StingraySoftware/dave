@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dave
+  namespace: dave
+  labels:
+    app: dave
+spec:
+  type: ClusterIP
+  selector:
+    app: dave
+  ports:
+  - name: http
+    port: 5000
+    targetPort: http
+    protocol: TCP
+  - name: electron
+    port: 3000
+    targetPort: electron
+    protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dave-lb
+  namespace: dave
+  labels:
+    app: dave
+spec:
+  type: LoadBalancer
+  selector:
+    app: dave
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  - name: electron
+    port: 3000
+    targetPort: electron
+    protocol: TCP

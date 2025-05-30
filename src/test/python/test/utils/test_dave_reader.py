@@ -15,20 +15,24 @@ from test.fixture import *
 class TestStingrayTypes:
     @classmethod
     def setup_class(cls):
-        cls.dum = 'bubu' + HEN_FILE_EXTENSION
+        cls.dum = "bubu" + HEN_FILE_EXTENSION
 
     def test_load_and_save_events(self):
-        events = EventList([0, 2, 3.], pi=[1, 2, 3], mjdref=54385.3254923845,
-                           gti = np.longdouble([[-0.5, 3.5]]))
-        events.energy = np.array([3., 4., 5.])
+        events = EventList(
+            [0, 2, 3.0], pi=[1, 2, 3], mjdref=54385.3254923845, gti=np.longdouble([[-0.5, 3.5]])
+        )
+        events.energy = np.array([3.0, 4.0, 5.0])
         save_to_intermediate_file(events, self.dum)
         ds = load_dataset_from_intermediate_file(self.dum)
         assert ds
 
     def test_load_and_save_lcurve(self):
-        lcurve = Lightcurve(np.linspace(0, 10, 15), np.random.poisson(30, 15),
-                            mjdref=54385.3254923845,
-                            gti = np.longdouble([[-0.5, 3.5]]))
+        lcurve = Lightcurve(
+            np.linspace(0, 10, 15),
+            np.random.poisson(30, 15),
+            mjdref=54385.3254923845,
+            gti=np.longdouble([[-0.5, 3.5]]),
+        )
         save_to_intermediate_file(lcurve, self.dum)
         ds = load_dataset_from_intermediate_file(self.dum)
         assert ds
@@ -88,7 +92,7 @@ def test_get_fits_dataset_evt(s):
     # Modern Stingray may add more columns (PHA, PI, energy, etc.)
     assert len(dataset.tables[table_ids[1]].columns) >= 2
     # Check that at least TIME column exists
-    assert 'TIME' in dataset.tables[table_ids[1]].columns
+    assert "TIME" in dataset.tables[table_ids[1]].columns
 
 
 @given(text())
@@ -106,7 +110,7 @@ def test_get_events_fits_dataset_with_stingray(s):
     # Modern Stingray may add more columns (PHA, PI, energy, etc.)
     assert len(dataset.tables[table_ids[1]].columns) >= 2
     # Check that at least TIME column exists
-    assert 'TIME' in dataset.tables[table_ids[1]].columns
+    assert "TIME" in dataset.tables[table_ids[1]].columns
 
 
 @given(text())
@@ -116,8 +120,9 @@ def test_get_lightcurve_fits_dataset_with_stingray(s):
     # Opening Fits
     hdulist = fits.open(destination)
 
-    dataset = DaveReader.get_lightcurve_fits_dataset_with_stingray(destination, hdulist, hduname='RATE',
-                                                column='TIME', gtistring='GTI,STDGTI')
+    dataset = DaveReader.get_lightcurve_fits_dataset_with_stingray(
+        destination, hdulist, hduname="RATE", column="TIME", gtistring="GTI,STDGTI"
+    )
     assert dataset
 
 

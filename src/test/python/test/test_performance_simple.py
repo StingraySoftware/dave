@@ -2,6 +2,7 @@
 Simple performance tests for DAVE backend modernization.
 Compares performance between legacy and modern implementations.
 """
+
 import time
 
 import numpy as np
@@ -27,7 +28,7 @@ class TestCorePerformance:
         print("\nStingray 2.x Lightcurve Performance:")
         print(f"  Points: {n_points:,}")
         print(f"  Creation time: {creation_time:.3f} seconds")
-        print(f"  Rate: {n_points/creation_time:,.0f} points/second")
+        print(f"  Rate: {n_points / creation_time:,.0f} points/second")
 
         assert creation_time < 1.0, f"Lightcurve creation too slow: {creation_time:.3f}s"
 
@@ -46,7 +47,7 @@ class TestCorePerformance:
 
         # Measure PDS calculation
         start = time.time()
-        _ = Powerspectrum(lc, norm='leahy')
+        _ = Powerspectrum(lc, norm="leahy")
         pds_time = time.time() - start
 
         print("\nPowerspectrum Performance:")
@@ -68,7 +69,7 @@ class TestCorePerformance:
 
         # Measure averaged PDS
         start = time.time()
-        avg_ps = AveragedPowerspectrum(lc, segment_size=10, norm='leahy')
+        avg_ps = AveragedPowerspectrum(lc, segment_size=10, norm="leahy")
         avg_time = time.time() - start
 
         print("\nAveraged Powerspectrum Performance:")
@@ -112,7 +113,7 @@ class TestCorePerformance:
             _ = np.fft.fft(data)
             fft_time = time.time() - start
 
-            print(f"  Size {size:>7,}: {fft_time:.4f}s ({size/fft_time:,.0f} samples/sec)")
+            print(f"  Size {size:>7,}: {fft_time:.4f}s ({size / fft_time:,.0f} samples/sec)")
 
             # FFT should be fast even for large arrays
             if size <= 100000:
@@ -121,6 +122,7 @@ class TestCorePerformance:
     def test_memory_efficiency(self):
         """Test memory efficiency of operations."""
         import psutil
+
         process = psutil.Process()
 
         # Initial memory
@@ -155,9 +157,9 @@ class TestPerformanceSummary:
 
     def test_performance_summary(self):
         """Print performance summary."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("PHASE 2 PERFORMANCE SUMMARY")
-        print("="*60)
+        print("=" * 60)
 
         print("\nLibrary Versions:")
         print("  Python: 3.13")
@@ -174,4 +176,4 @@ class TestPerformanceSummary:
         print("\nConclusion:")
         print("  Modern libraries provide excellent performance")
         print("  All operations meet or exceed legacy performance")
-        print("="*60)
+        print("=" * 60)

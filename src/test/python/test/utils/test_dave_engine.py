@@ -42,7 +42,9 @@ def test_get_lightcurve(s):
     meanflux_opts["p"] = 0.01
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_lightcurve(destination, "", "", [], axis, 16., baseline_opts, meanflux_opts, None)
+        result = DaveEngine.get_lightcurve(
+            destination, "", "", [], axis, 16.0, baseline_opts, meanflux_opts, None
+        )
         assert result is not None
 
 
@@ -70,7 +72,9 @@ def test_get_power_density_spectrum(s):
     axis[1]["column"] = "PHA"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_power_density_spectrum(destination, "", "", [], axis, 16., 1, 0, 'leahy', 'Sng')
+        result = DaveEngine.get_power_density_spectrum(
+            destination, "", "", [], axis, 16.0, 1, 0, "leahy", "Sng"
+        )
         assert result is not None
 
 
@@ -88,7 +92,22 @@ def test_get_cross_spectrum(s):
     axis[1]["column"] = "PHA"
 
     if FileUtils.is_valid_file(destination):
-        result = DaveEngine.get_cross_spectrum(destination, "", "", [], axis, 16.,
-                                               destination, "", "", [], axis, 16.,
-                                               1, 0, 'leahy', 'Avg')
+        result = DaveEngine.get_cross_spectrum(
+            destination,
+            "",
+            "",
+            [],
+            axis,
+            16.0,
+            destination,
+            "",
+            "",
+            [],
+            axis,
+            16.0,
+            1,
+            0,
+            "leahy",
+            "Avg",
+        )
         assert result is not None

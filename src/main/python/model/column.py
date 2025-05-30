@@ -21,14 +21,14 @@ class Column:
             schema = dict()
             schema["id"] = self.id
             self.add_list_to_schema("", self.values, schema)
-            #self.add_list_to_schema("error_", self.error_values, schema)
+            # self.add_list_to_schema("error_", self.error_values, schema)
             return schema
         else:
             return None
 
     def add_list_to_schema(self, list_prefix: str, dlist: list, schema: dict) -> dict:
         count = len(dlist)
-        if (count > 0 and isinstance(dlist[0], numbers.Number)):
+        if count > 0 and isinstance(dlist[0], numbers.Number):
             schema[list_prefix + "count"] = count
             schema[list_prefix + "min_value"] = min(dlist)
             schema[list_prefix + "max_value"] = max(dlist)
@@ -38,7 +38,7 @@ class Column:
             schema[list_prefix + "max_value"] = 0
         return schema
 
-    def clone(self, with_values: bool = True) -> 'Column':
+    def clone(self, with_values: bool = True) -> "Column":
         column = Column(self.id)
         if with_values:
             column.values = list(self.values)
@@ -53,7 +53,9 @@ class Column:
         else:
             return None
 
-    def get_values(self, indexes: np.ndarray | None = None) -> tuple[list | np.ndarray, list | np.ndarray | None]:
+    def get_values(
+        self, indexes: np.ndarray | None = None
+    ) -> tuple[list | np.ndarray, list | np.ndarray | None]:
         if indexes is None:
             return self.values, self.error_values
         else:

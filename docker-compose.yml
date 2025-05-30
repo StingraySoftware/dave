@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  dave:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dave:latest
+    container_name: dave-app
+    ports:
+      - "5000:5000"  # Flask API
+      - "3000:3000"  # Electron app (if needed)
+    volumes:
+      # Mount data directory for persistence
+      - dave-data:/home/dave/app/src/main/python/uploadeddataset
+      # Mount config if needed
+      - ./config:/home/dave/app/config:ro
+    environment:
+      - DISPLAY=:99
+      - ELECTRON_DISABLE_SANDBOX=1
+      - NODE_ENV=production
+      - FLASK_ENV=production
+      # Add any other environment variables
+    networks:
+      - dave-network
+    restart: unless-stopped
+    # For GUI access via X11 forwarding (Linux hosts)
+    # Uncomment these lines if running on Linux with X11
+    # volumes:
+    #   - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    # environment:
+    #   - DISPLAY=${DISPLAY}
+
+  # Optional: Add a web-based VNC server for GUI access
+  dave-vnc:
+    build:
+      context: .
+      dockerfile: Dockerfile.vnc
+    image: dave:vnc
+    container_name: dave-vnc
+    ports:
+      - "5900:5900"  # VNC port
+      - "6080:6080"  # noVNC web port
+    volumes:
+      - dave-data:/home/dave/app/src/main/python/uploadeddataset
+    environment:
+      - VNC_PASSWORD=davevnc
+      - RESOLUTION=1280x1024
+    networks:
+      - dave-network
+    restart: unless-stopped
+    depends_on:
+      - dave
+
+volumes:
+  dave-data:
+    driver: local
+
+networks:
+  dave-network:
+    driver: bridge

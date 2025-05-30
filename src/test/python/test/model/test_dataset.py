@@ -20,6 +20,7 @@ def test_init(s):
 def test_get_lightcurve_dataset_from_stingray_Lightcurve(capsys):
     from astropy.io.fits import Header
     from stingray.lightcurve import Lightcurve
+
     lc = Lightcurve([0, 1], [2, 2])
 
     ds = get_lightcurve_dataset_from_stingray_Lightcurve(lc)
@@ -41,8 +42,8 @@ def test_get_lightcurve_dataset_from_stingray_Lightcurve(capsys):
 def test_get_eventlist_dataset_from_stingray_Eventlist(capsys):
     from astropy.io.fits import Header
     from stingray.events import EventList
-    ev = EventList(time=[0, 1], pi=[2, 2], energy=[3., 4.],
-                   gti=np.array([[-0.5, 1.5]]))
+
+    ev = EventList(time=[0, 1], pi=[2, 2], energy=[3.0, 4.0], gti=np.array([[-0.5, 1.5]]))
 
     ds = get_eventlist_dataset_from_stingray_Eventlist(ev)
     out, err = capsys.readouterr()
@@ -76,7 +77,7 @@ def test_add_table(s, t, c):
     st.text(min_size=1),
     st.text(min_size=1),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_get_schema(s, t, c, v, e):
     dataset = DataSet(s)
@@ -97,7 +98,7 @@ def test_get_schema(s, t, c, v, e):
     st.text(min_size=1),
     st.text(min_size=1),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_clone(s, t, c, v, e):
     dataset1 = DataSet(s)
@@ -115,7 +116,7 @@ def test_clone(s, t, c, v, e):
     st.text(min_size=1),
     st.lists(st.integers()),
     st.integers(),
-    st.integers()
+    st.integers(),
 )
 def test_apply_filters(s, t, c, list, min_value, max_value):
     dataset1 = DataSet(s)
@@ -156,7 +157,7 @@ def test_apply_filters(s, t, c, list, min_value, max_value):
     st.integers(),
     st.floats(allow_nan=False, allow_infinity=False),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_join(s, t, c, v0, e0, v1, e1):
     dataset1 = DataSet(s)

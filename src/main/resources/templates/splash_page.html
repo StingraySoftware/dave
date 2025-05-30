@@ -130,8 +130,14 @@
       }
 
       function sendEventToElectron (event) {
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send(event);
+        if (event === 'onBrowserReady') {
+          // Use the compatibility API from the preload script
+          if (window.daveAPI && window.daveAPI.onBrowserReady) {
+            window.daveAPI.onBrowserReady();
+          } else {
+            logErr('daveAPI not available - preload script may not have loaded');
+          }
+        }
       }
 
     </script>

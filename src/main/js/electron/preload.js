@@ -43,7 +43,11 @@ const validChannels = {
     'window:maximize',
     'window:unmaximize',
     'window:close',
-    'window:isMaximized'
+    'window:isMaximized',
+    'updater:check',
+    'updater:getStatus',
+    'updater:setChannel',
+    'updater:setAutoDownload'
   ]
 };
 
@@ -87,6 +91,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Shell operations
   shell: {
     openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+  },
+  
+  // Auto-updater
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check'),
+    getStatus: () => ipcRenderer.invoke('updater:getStatus'),
+    setChannel: (channel) => ipcRenderer.invoke('updater:setChannel', channel),
+    setAutoDownload: (enabled) => ipcRenderer.invoke('updater:setAutoDownload', enabled)
   },
   
   // Event subscription

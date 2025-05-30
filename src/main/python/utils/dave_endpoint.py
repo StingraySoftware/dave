@@ -1,4 +1,3 @@
-
 from flask import Response, jsonify
 from werkzeug.datastructures import FileStorage
 
@@ -11,16 +10,14 @@ import utils.session_helper as SessionHelper
 
 
 # UPLOADS THE FILE AND STORES IT ON SESSION,
-# only called if IS_LOCAL_SERVER=False configuration setted
+# only called if IS_LOCAL_SERVER=False configuration setted
 def upload(files: list[FileStorage], target: str) -> Response | dict[str, str]:
-
     if len(files) == 0:
         return common_error("No sent files")
 
     filenames = []
 
     for file in files:
-
         # Looks if same filename was previously uploaded
         if not FileUtils.file_exist(target, file.filename):
             destination = FileUtils.save_file(target, file)
@@ -42,17 +39,19 @@ def upload(files: list[FileStorage], target: str) -> Response | dict[str, str]:
     return jsonify(filenames)
 
 
-#Returns filename destination or a valid cache key, None if invalid
+# Returns filename destination or a valid cache key, None if invalid
 def get_destination(filename: str, target: str) -> str | None:
     if not filename:
         logging.error("No filename or cache key setted for filename %s" % filename)
         return None
 
-    if (not SessionHelper.is_file_uploaded(filename) and
-        not DsCache.contains(filename) and
-        not FileUtils.file_exist(target, filename)):
-                logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
-                return None
+    if (
+        not SessionHelper.is_file_uploaded(filename)
+        and not DsCache.contains(filename)
+        and not FileUtils.file_exist(target, filename)
+    ):
+        logging.error("Filename not uploaded or not found in cache for filename %s" % filename)
+        return None
 
     destination = FileUtils.get_destination(target, filename)
     if not FileUtils.is_valid_file(destination):
@@ -60,7 +59,7 @@ def get_destination(filename: str, target: str) -> str | None:
             logging.error("Invalid file or not found in cache filename %s" % filename)
             return None
         else:
-            destination = filename # Filename represents only a joined dataset key, not a real file
+            destination = filename  # Filename represents only a joined dataset key, not a real file
 
     return destination
 
@@ -83,7 +82,6 @@ def get_dataset_header(filename: str, target: str) -> Response | dict[str, str]:
     return jsonify(header)
 
 
-
 # append_file_to_dataset: Appends Fits data to a dataset
 #
 # @param: filename: filename or dataset cache key
@@ -97,8 +95,7 @@ def append_file_to_dataset(filename: str, nextfile: str, target: str) -> Respons
     if not nextfile:
         return common_error("No nextfile setted")
 
-    if (not SessionHelper.is_file_uploaded(nextfile) and
-        not FileUtils.file_exist(target, nextfile)):
+    if not SessionHelper.is_file_uploaded(nextfile) and not FileUtils.file_exist(target, nextfile):
         logging.error("Filename not uploaded for nextfile %s" % nextfile)
         return common_error("Nextfile not uploaded")
 
@@ -122,7 +119,9 @@ def append_file_to_dataset(filename: str, nextfile: str, target: str) -> Respons
 # @param: rmf_filename: rmf file to apply
 # @param: column: column to use for the conversion: PHA, or PI for NuSTAR
 #
-def apply_rmf_file_to_dataset(filename: str, rmf_filename: str, column: str, target: str) -> Response | dict[str, str]:
+def apply_rmf_file_to_dataset(
+    filename: str, rmf_filename: str, column: str, target: str
+) -> Response | dict[str, str]:
     destination = get_destination(filename, target)
     if not destination:
         return common_error("Invalid file or cache key")
@@ -142,8 +141,15 @@ def common_error(error: str) -> Response:
     return jsonify(error=error)
 
 
-def get_plot_data(src_filename: str, bck_filename: str, gti_filename: str, target: str,
-                  filters: dict, styles: dict, axis: list) -> Response | dict[str, str]:
+def get_plot_data(
+    src_filename: str,
+    bck_filename: str,
+    gti_filename: str,
+    target: str,
+    filters: dict,
+    styles: dict,
+    axis: list,
+) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -167,16 +173,27 @@ def get_plot_data(src_filename: str, bck_filename: str, gti_filename: str, targe
     logging.debug("get_plot_data: styles %s" % styles)
     logging.debug("get_plot_data: axis %s" % axis)
 
-    data = DaveEngine.get_plot_data(src_destination, bck_destination, gti_destination, filters, styles, axis)
+    data = DaveEngine.get_plot_data(
+        src_destination, bck_destination, gti_destination, filters, styles, axis
+    )
 
     logging.debug("get_plot_data: Finish!")
 
     return jsonify(data)
 
 
-def get_lightcurve(src_filename: str, bck_filename: str, gti_filename: str, target: str,
-                    filters: dict, axis: list, dt: float,
-                    baseline_opts: dict, meanflux_opts: dict, variance_opts: dict) -> Response | dict[str, str]:
+def get_lightcurve(
+    src_filename: str,
+    bck_filename: str,
+    gti_filename: str,
+    target: str,
+    filters: dict,
+    axis: list,
+    dt: float,
+    baseline_opts: dict,
+    meanflux_opts: dict,
+    variance_opts: dict,
+) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -203,16 +220,33 @@ def get_lightcurve(src_filename: str, bck_filename: str, gti_filename: str, targ
     logging.debug("get_lightcurve: meanflux_opts %s" % meanflux_opts)
     logging.debug("get_lightcurve: variance_opts %s" % variance_opts)
 
-    data = DaveEngine.get_lightcurve(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, baseline_opts, meanflux_opts, variance_opts)
+    data = DaveEngine.get_lightcurve(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        baseline_opts,
+        meanflux_opts,
+        variance_opts,
+    )
 
     logging.debug("get_lightcurve: Finish!")
 
     return jsonify(data)
 
 
-def get_joined_lightcurves(lc0_filename: str, lc1_filename: str, lc0_bck_filename: str, lc1_bck_filename: str,
-                            target: str, filters: dict, axis: list, dt: float) -> Response | dict[str, str]:
+def get_joined_lightcurves(
+    lc0_filename: str,
+    lc1_filename: str,
+    lc0_bck_filename: str,
+    lc1_bck_filename: str,
+    target: str,
+    filters: dict,
+    axis: list,
+    dt: float,
+) -> Response | dict[str, str]:
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -241,17 +275,30 @@ def get_joined_lightcurves(lc0_filename: str, lc1_filename: str, lc0_bck_filenam
     logging.debug("get_joined_lightcurves: axis %s" % axis)
     logging.debug("get_joined_lightcurves: dt %s" % dt)
 
-    data = DaveEngine.get_joined_lightcurves(lc0_destination, lc1_destination,
-                                             lc0_bck_destination, lc1_bck_destination,
-                                             filters, axis, dt)
+    data = DaveEngine.get_joined_lightcurves(
+        lc0_destination,
+        lc1_destination,
+        lc0_bck_destination,
+        lc1_bck_destination,
+        filters,
+        axis,
+        dt,
+    )
 
     logging.debug("get_joined_lightcurves: Finish!")
 
     return jsonify(data)
 
 
-def get_divided_lightcurves_from_colors(src_filename: str, bck_filename: str, gti_filename: str,
-                                        target: str, filters: dict, axis: list, dt: float) -> Response | dict[str, str]:
+def get_divided_lightcurves_from_colors(
+    src_filename: str,
+    bck_filename: str,
+    gti_filename: str,
+    target: str,
+    filters: dict,
+    axis: list,
+    dt: float,
+) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -275,15 +322,18 @@ def get_divided_lightcurves_from_colors(src_filename: str, bck_filename: str, gt
     logging.debug("get_divided_lightcurves_from_colors: axis %s" % axis)
     logging.debug("get_divided_lightcurves_from_colors: dt %s" % dt)
 
-    data = DaveEngine.get_divided_lightcurves_from_colors(src_destination, bck_destination, gti_destination, filters, axis, dt)
+    data = DaveEngine.get_divided_lightcurves_from_colors(
+        src_destination, bck_destination, gti_destination, filters, axis, dt
+    )
 
     logging.debug("get_divided_lightcurves_from_colors: Finish!")
 
     return jsonify(data)
 
 
-def get_divided_lightcurve_ds(lc0_filename: str, lc1_filename: str, lc0_bck_filename: str,
-                              lc1_bck_filename: str, target: str) -> Response | dict[str, str]:
+def get_divided_lightcurve_ds(
+    lc0_filename: str, lc1_filename: str, lc0_bck_filename: str, lc1_bck_filename: str, target: str
+) -> Response | dict[str, str]:
     lc0_destination = get_destination(lc0_filename, target)
     if not lc0_destination:
         return common_error("Invalid file or cache key for lc0 data")
@@ -309,16 +359,29 @@ def get_divided_lightcurve_ds(lc0_filename: str, lc1_filename: str, lc0_bck_file
     logging.debug("get_divided_lightcurve_ds lc0_bck: %s" % lc0_bck_filename)
     logging.debug("get_divided_lightcurve_ds lc1_bck: %s" % lc1_bck_filename)
 
-    cache_key = DaveEngine.get_divided_lightcurve_ds(lc0_destination, lc1_destination,
-                                                    lc0_bck_destination, lc1_bck_destination)
+    cache_key = DaveEngine.get_divided_lightcurve_ds(
+        lc0_destination, lc1_destination, lc0_bck_destination, lc1_bck_destination
+    )
 
     logging.debug("get_divided_lightcurve_ds: Finish! cache_key ->  %s" % cache_key)
 
     return jsonify(cache_key)
 
 
-def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
-                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df):
+def get_power_density_spectrum(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    nsegm,
+    segm_size,
+    norm,
+    pds_type,
+    df,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -347,16 +410,39 @@ def get_power_density_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_power_density_spectrum: type %s" % pds_type)
     logging.debug("get_power_density_spectrum: df %s" % df)
 
-    data = DaveEngine.get_power_density_spectrum(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df)
+    data = DaveEngine.get_power_density_spectrum(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        segm_size,
+        norm,
+        pds_type,
+        df,
+    )
 
     logging.debug("get_power_density_spectrum: Finish!")
 
     return jsonify(data)
 
 
-def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
-                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df):
+def get_dynamical_spectrum(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    nsegm,
+    segm_size,
+    norm,
+    freq_range,
+    df,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -385,77 +471,129 @@ def get_dynamical_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_dynamical_spectrum: freq_range %s" % freq_range)
     logging.debug("get_dynamical_spectrum: df %s" % df)
 
-    data = DaveEngine.get_dynamical_spectrum(src_destination, bck_destination, gti_destination,
-                                            filters, axis, dt, nsegm, segm_size, norm, freq_range, df)
+    data = DaveEngine.get_dynamical_spectrum(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        segm_size,
+        norm,
+        freq_range,
+        df,
+    )
 
     logging.debug("get_dynamical_spectrum: Finish!")
 
     return jsonify(data)
 
 
-def get_cross_spectrum(src_filename1, bck_filename1, gti_filename1, filters1, axis1, dt1,
-                       src_filename2, bck_filename2, gti_filename2, filters2, axis2, dt2,
-                       target, nsegm, segm_size, norm, xds_type):
+def get_cross_spectrum(
+    src_filename1,
+    bck_filename1,
+    gti_filename1,
+    filters1,
+    axis1,
+    dt1,
+    src_filename2,
+    bck_filename2,
+    gti_filename2,
+    filters2,
+    axis2,
+    dt2,
+    target,
+    nsegm,
+    segm_size,
+    norm,
+    xds_type,
+):
+    src_destination1 = get_destination(src_filename1, target)
+    if not src_destination1:
+        return common_error("Invalid file or cache key for source data 1")
 
-   src_destination1 = get_destination(src_filename1, target)
-   if not src_destination1:
-       return common_error("Invalid file or cache key for source data 1")
+    bck_destination1 = ""
+    if bck_filename1:
+        bck_destination1 = get_destination(bck_filename1, target)
+        if not bck_destination1:
+            return common_error("Invalid file or cache key for backgrund data 1")
 
-   bck_destination1 = ""
-   if bck_filename1:
-       bck_destination1 = get_destination(bck_filename1, target)
-       if not bck_destination1:
-           return common_error("Invalid file or cache key for backgrund data 1")
+    gti_destination1 = ""
+    if gti_filename1:
+        gti_destination1 = get_destination(gti_filename1, target)
+        if not gti_destination1:
+            return common_error("Invalid file or cache key for gti data 1")
 
-   gti_destination1 = ""
-   if gti_filename1:
-       gti_destination1 = get_destination(gti_filename1, target)
-       if not gti_destination1:
-           return common_error("Invalid file or cache key for gti data 1")
+    src_destination2 = get_destination(src_filename2, target)
+    if not src_destination2:
+        return common_error("Invalid file or cache key for source data 2")
 
-   src_destination2 = get_destination(src_filename2, target)
-   if not src_destination2:
-       return common_error("Invalid file or cache key for source data 2")
+    bck_destination2 = ""
+    if bck_filename2:
+        bck_destination2 = get_destination(bck_filename2, target)
+        if not bck_destination2:
+            return common_error("Invalid file or cache key for backgrund data 2")
 
-   bck_destination2 = ""
-   if bck_filename2:
-       bck_destination2 = get_destination(bck_filename2, target)
-       if not bck_destination2:
-           return common_error("Invalid file or cache key for backgrund data 2")
+    gti_destination2 = ""
+    if gti_filename2:
+        gti_destination2 = get_destination(gti_filename2, target)
+        if not gti_destination2:
+            return common_error("Invalid file or cache key for gti data 2")
 
-   gti_destination2 = ""
-   if gti_filename2:
-       gti_destination2 = get_destination(gti_filename2, target)
-       if not gti_destination2:
-           return common_error("Invalid file or cache key for gti data 2")
+    logging.debug("get_cross_spectrum src 1: %s" % src_filename1)
+    logging.debug("get_cross_spectrum bck 1: %s" % bck_filename1)
+    logging.debug("get_cross_spectrum gti 1: %s" % gti_filename1)
+    logging.debug("get_cross_spectrum: filters 1 %s" % filters1)
+    logging.debug("get_cross_spectrum: axis 1 %s" % axis1)
+    logging.debug("get_cross_spectrum: dt 1 %f" % dt1)
+    logging.debug("get_cross_spectrum src 2: %s" % src_filename2)
+    logging.debug("get_cross_spectrum bck 2: %s" % bck_filename2)
+    logging.debug("get_cross_spectrum gti 2: %s" % gti_filename2)
+    logging.debug("get_cross_spectrum: filters 2 %s" % filters2)
+    logging.debug("get_cross_spectrum: axis 2 %s" % axis2)
+    logging.debug("get_cross_spectrum: dt 2 %f" % dt2)
+    logging.debug("get_cross_spectrum: nsegm %f" % nsegm)
+    logging.debug("get_cross_spectrum: segm_size %f" % segm_size)
+    logging.debug("get_cross_spectrum: norm %s" % norm)
+    logging.debug("get_cross_spectrum: type %s" % xds_type)
 
-   logging.debug("get_cross_spectrum src 1: %s" % src_filename1)
-   logging.debug("get_cross_spectrum bck 1: %s" % bck_filename1)
-   logging.debug("get_cross_spectrum gti 1: %s" % gti_filename1)
-   logging.debug("get_cross_spectrum: filters 1 %s" % filters1)
-   logging.debug("get_cross_spectrum: axis 1 %s" % axis1)
-   logging.debug("get_cross_spectrum: dt 1 %f" % dt1)
-   logging.debug("get_cross_spectrum src 2: %s" % src_filename2)
-   logging.debug("get_cross_spectrum bck 2: %s" % bck_filename2)
-   logging.debug("get_cross_spectrum gti 2: %s" % gti_filename2)
-   logging.debug("get_cross_spectrum: filters 2 %s" % filters2)
-   logging.debug("get_cross_spectrum: axis 2 %s" % axis2)
-   logging.debug("get_cross_spectrum: dt 2 %f" % dt2)
-   logging.debug("get_cross_spectrum: nsegm %f" % nsegm)
-   logging.debug("get_cross_spectrum: segm_size %f" % segm_size)
-   logging.debug("get_cross_spectrum: norm %s" % norm)
-   logging.debug("get_cross_spectrum: type %s" % xds_type)
+    data = DaveEngine.get_cross_spectrum(
+        src_destination1,
+        bck_destination1,
+        gti_destination1,
+        filters1,
+        axis1,
+        dt1,
+        src_destination2,
+        bck_destination2,
+        gti_destination2,
+        filters2,
+        axis2,
+        dt2,
+        nsegm,
+        segm_size,
+        norm,
+        xds_type,
+    )
 
-   data = DaveEngine.get_cross_spectrum(src_destination1, bck_destination1, gti_destination1, filters1, axis1, dt1,
-                                        src_destination2, bck_destination2, gti_destination2, filters2, axis2, dt2,
-                                        nsegm, segm_size, norm, xds_type)
+    logging.debug("get_cross_spectrum: Finish!")
 
-   logging.debug("get_cross_spectrum: Finish!")
-
-   return jsonify(data)
+    return jsonify(data)
 
 
-def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, target, dt, ref_band_interest, energy_range, n_bands, std):
+def get_covariance_spectrum(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    filters,
+    target,
+    dt,
+    ref_band_interest,
+    energy_range,
+    n_bands,
+    std,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -482,17 +620,40 @@ def get_covariance_spectrum(src_filename, bck_filename, gti_filename, filters, t
     logging.debug("get_covariance_spectrum n_bands: %s" % n_bands)
     logging.debug("get_covariance_spectrum std: %s" % std)
 
-    data = DaveEngine.get_covariance_spectrum(src_destination, bck_destination, gti_destination,
-                                            filters, dt, ref_band_interest, energy_range, n_bands, std)
+    data = DaveEngine.get_covariance_spectrum(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        dt,
+        ref_band_interest,
+        energy_range,
+        n_bands,
+        std,
+    )
 
     logging.debug("get_covariance_spectrum: Finish!")
 
     return jsonify(data)
 
 
-def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands):
+def get_phase_lag_spectrum(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    nsegm,
+    segm_size,
+    norm,
+    pds_type,
+    df,
+    freq_range,
+    energy_range,
+    n_bands,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -524,18 +685,46 @@ def get_phase_lag_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_phase_lag_spectrum: energy_range %s" % energy_range)
     logging.debug("get_phase_lag_spectrum: n_bands %s" % n_bands)
 
-    data = DaveEngine.get_phase_lag_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                        freq_range, energy_range, n_bands)
+    data = DaveEngine.get_phase_lag_spectrum(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        segm_size,
+        norm,
+        pds_type,
+        df,
+        freq_range,
+        energy_range,
+        n_bands,
+    )
 
     logging.debug("get_phase_lag_spectrum: Finish!")
 
     return jsonify(data)
 
 
-def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                    freq_range, energy_range, n_bands, white_noise_offset):
+def get_rms_spectrum(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    nsegm,
+    segm_size,
+    norm,
+    pds_type,
+    df,
+    freq_range,
+    energy_range,
+    n_bands,
+    white_noise_offset,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -568,18 +757,43 @@ def get_rms_spectrum(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_spectrum: n_bands %s" % n_bands)
     logging.debug("get_rms_spectrum: white_noise_offset %s" % white_noise_offset)
 
-    data = DaveEngine.get_rms_spectrum(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                        freq_range, energy_range, n_bands, white_noise_offset)
+    data = DaveEngine.get_rms_spectrum(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        segm_size,
+        norm,
+        pds_type,
+        df,
+        freq_range,
+        energy_range,
+        n_bands,
+        white_noise_offset,
+    )
 
     logging.debug("get_rms_spectrum: Finish!")
 
     return jsonify(data)
 
 
-def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, nsegm, df, freq_range, energy_range,
-                    white_noise_offset):
+def get_rms_vs_countrate(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    nsegm,
+    df,
+    freq_range,
+    energy_range,
+    white_noise_offset,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -608,9 +822,19 @@ def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_rms_vs_countrate: energy_range %s" % energy_range)
     logging.debug("get_rms_vs_countrate: white_noise_offset %s" % white_noise_offset)
 
-    data = DaveEngine.get_rms_vs_countrate(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, nsegm, df, freq_range, energy_range,
-                                        white_noise_offset)
+    data = DaveEngine.get_rms_vs_countrate(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        df,
+        freq_range,
+        energy_range,
+        white_noise_offset,
+    )
 
     logging.debug("get_rms_vs_countrate: Finish!")
 
@@ -618,7 +842,6 @@ def get_rms_vs_countrate(src_filename, bck_filename, gti_filename, target,
 
 
 def get_plot_data_from_models(models: list[dict], x_values: list[float]) -> Response:
-
     logging.debug("get_plot_data_from_models models: %s" % models)
     logging.debug("get_plot_data_from_models x_values: %s" % str(len(x_values)))
 
@@ -629,11 +852,23 @@ def get_plot_data_from_models(models: list[dict], x_values: list[float]) -> Resp
     return jsonify(data)
 
 
-def get_fit_powerspectrum_result(src_filename: str, bck_filename: str, gti_filename: str, target: str,
-                                filters: dict, axis: list, dt: float, nsegm: int, segm_size: float,
-                                norm: str, pds_type: str, df: float,
-                                models: list[dict], priors: list[dict] | None = None,
-                                sampling_params: dict | None = None) -> Response | dict[str, str]:
+def get_fit_powerspectrum_result(
+    src_filename: str,
+    bck_filename: str,
+    gti_filename: str,
+    target: str,
+    filters: dict,
+    axis: list,
+    dt: float,
+    nsegm: int,
+    segm_size: float,
+    norm: str,
+    pds_type: str,
+    df: float,
+    models: list[dict],
+    priors: list[dict] | None = None,
+    sampling_params: dict | None = None,
+) -> Response | dict[str, str]:
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -665,18 +900,47 @@ def get_fit_powerspectrum_result(src_filename: str, bck_filename: str, gti_filen
     logging.debug("get_fit_powerspectrum_result: priors %s" % priors)
     logging.debug("get_fit_powerspectrum_result: sampling_params %s" % sampling_params)
 
-    data = DaveEngine.get_fit_powerspectrum_result(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                                models, priors, sampling_params)
+    data = DaveEngine.get_fit_powerspectrum_result(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        segm_size,
+        norm,
+        pds_type,
+        df,
+        models,
+        priors,
+        sampling_params,
+    )
 
     logging.debug("get_fit_powerspectrum_result: Finish!")
 
     return jsonify(data)
 
 
-def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
-                            filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                            models, n_iter, mean, red_noise, seed):
+def get_bootstrap_results(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    nsegm,
+    segm_size,
+    norm,
+    pds_type,
+    df,
+    models,
+    n_iter,
+    mean,
+    red_noise,
+    seed,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -710,9 +974,24 @@ def get_bootstrap_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_bootstrap_results: red_noise %s" % red_noise)
     logging.debug("get_bootstrap_results: seed %s" % seed)
 
-    data = DaveEngine.get_bootstrap_results(src_destination, bck_destination, gti_destination,
-                                            filters, axis, dt, nsegm, segm_size, norm, pds_type, df,
-                                            models, n_iter, mean, red_noise, seed)
+    data = DaveEngine.get_bootstrap_results(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        nsegm,
+        segm_size,
+        norm,
+        pds_type,
+        df,
+        models,
+        n_iter,
+        mean,
+        red_noise,
+        seed,
+    )
 
     logging.debug("get_bootstrap_results: Finish!")
 
@@ -736,7 +1015,6 @@ def get_intermediate_files(filepaths, target):
 
 
 def bulk_analisys(filenames, plot_configs, outdir, target):
-
     logging.debug("bulk_analisys filenames: %s" % filenames)
     logging.debug("bulk_analisys plot_configs: %s" % plot_configs)
     logging.debug("bulk_analisys outdir: %s" % outdir)
@@ -747,10 +1025,19 @@ def bulk_analisys(filenames, plot_configs, outdir, target):
     return jsonify(bulk_data)
 
 
-def get_lomb_scargle_results(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, freq_range, nyquist_factor,
-                    ls_norm, samples_per_peak):
-
+def get_lomb_scargle_results(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    freq_range,
+    nyquist_factor,
+    ls_norm,
+    samples_per_peak,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -778,19 +1065,40 @@ def get_lomb_scargle_results(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_lomb_scargle_results: ls_norm %s" % ls_norm)
     logging.debug("get_lomb_scargle_results: samples_per_peak %s" % samples_per_peak)
 
-    data = DaveEngine.get_lomb_scargle_results(src_destination, bck_destination, gti_destination,
-                                        filters, axis, dt, freq_range, nyquist_factor,
-                                        ls_norm, samples_per_peak)
+    data = DaveEngine.get_lomb_scargle_results(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        freq_range,
+        nyquist_factor,
+        ls_norm,
+        samples_per_peak,
+    )
 
     logging.debug("get_lomb_scargle_results: Finish!")
 
     return jsonify(data)
 
 
-def get_fit_lomb_scargle_result(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, freq_range, nyquist_factor, ls_norm, samples_per_peak,
-                    models, priors=None, sampling_params=None):
-
+def get_fit_lomb_scargle_result(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    freq_range,
+    nyquist_factor,
+    ls_norm,
+    samples_per_peak,
+    models,
+    priors=None,
+    sampling_params=None,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -821,19 +1129,42 @@ def get_fit_lomb_scargle_result(src_filename, bck_filename, gti_filename, target
     logging.debug("get_fit_lomb_scargle_result: priors %s" % priors)
     logging.debug("get_fit_lomb_scargle_result: sampling_params %s" % sampling_params)
 
-    data = DaveEngine.get_fit_lomb_scargle_result(src_destination, bck_destination, gti_destination,
-                                                filters, axis, dt, freq_range, nyquist_factor,
-                                                ls_norm, samples_per_peak, models, priors, sampling_params)
+    data = DaveEngine.get_fit_lomb_scargle_result(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        freq_range,
+        nyquist_factor,
+        ls_norm,
+        samples_per_peak,
+        models,
+        priors,
+        sampling_params,
+    )
 
     logging.debug("get_fit_lomb_scargle_result: Finish!")
 
     return jsonify(data)
 
 
-def get_pulse_search(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, freq_range, mode, oversampling,
-                    nharm, nbin, segment_size):
-
+def get_pulse_search(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    freq_range,
+    mode,
+    oversampling,
+    nharm,
+    nbin,
+    segment_size,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -863,19 +1194,41 @@ def get_pulse_search(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_pulse_search: nbin %s" % nbin)
     logging.debug("get_pulse_search: segment_size %s" % segment_size)
 
-    data = DaveEngine.get_pulse_search(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, freq_range, mode, oversampling,
-                                    nharm, nbin, segment_size)
+    data = DaveEngine.get_pulse_search(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        freq_range,
+        mode,
+        oversampling,
+        nharm,
+        nbin,
+        segment_size,
+    )
 
     logging.debug("get_pulse_search: Finish!")
 
     return jsonify(data)
 
 
-def get_phaseogram(src_filename, bck_filename, gti_filename, target,
-                    filters, axis, dt, f, nph, nt, fdot=0, fddot=0,
-                    binary_parameters=None):
-
+def get_phaseogram(
+    src_filename,
+    bck_filename,
+    gti_filename,
+    target,
+    filters,
+    axis,
+    dt,
+    f,
+    nph,
+    nt,
+    fdot=0,
+    fddot=0,
+    binary_parameters=None,
+):
     src_destination = get_destination(src_filename, target)
     if not src_destination:
         return common_error("Invalid file or cache key for source data")
@@ -905,8 +1258,20 @@ def get_phaseogram(src_filename, bck_filename, gti_filename, target,
     logging.debug("get_phaseogram: fddot %s" % fddot)
     logging.debug("get_phaseogram: binary_parameters %s" % binary_parameters)
 
-    data = DaveEngine.get_phaseogram(src_destination, bck_destination, gti_destination,
-                                    filters, axis, dt, f, nph, nt, fdot, fddot, binary_parameters)
+    data = DaveEngine.get_phaseogram(
+        src_destination,
+        bck_destination,
+        gti_destination,
+        filters,
+        axis,
+        dt,
+        f,
+        nph,
+        nt,
+        fdot,
+        fddot,
+        binary_parameters,
+    )
 
     logging.debug("get_phaseogram: Finish!")
 

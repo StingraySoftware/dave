@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dave
+  namespace: dave
+  labels:
+    app: dave
+    version: "2.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dave
+  template:
+    metadata:
+      labels:
+        app: dave
+        version: "2.0"
+    spec:
+      containers:
+      - name: dave
+        image: dave:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        - name: electron
+          containerPort: 3000
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: dave-config
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: data
+          mountPath: /app/src/main/python/uploadeddataset
+        - name: cache
+          mountPath: /app/.cache
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: dave-data-pvc
+      - name: cache
+        emptyDir:
+          sizeLimit: 1Gi

@@ -53,25 +53,25 @@ def build_data_list(dataset, axis):
     return data
 
 
-def get_axis_with_gtis (axis):
+def get_axis_with_gtis(axis):
     for i in range(len(axis)):
         # If TIME in axis append GTIs
         if axis[i]["table"] in ["EVENTS", "RATE"] and axis[i]["column"] == CONFIG.TIME_COLUMN:
-            axis = np.append(axis, [{"table":"GTI", "column":"START"}])
-            axis = np.append(axis, [{"table":"GTI", "column":"STOP"}])
+            axis = np.append(axis, [{"table": "GTI", "column": "START"}])
+            axis = np.append(axis, [{"table": "GTI", "column": "STOP"}])
     return axis
 
 
 def convert_fig_to_html(fig):
-  """ Convert Matplotlib figure 'fig' into a <img> tag for HTML use using base64 encoding. """
-  import base64
-  from io import BytesIO
+    """Convert Matplotlib figure 'fig' into a <img> tag for HTML use using base64 encoding."""
+    import base64
+    from io import BytesIO
 
-  from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-  canvas = FigureCanvas(fig)
-  png_output = BytesIO()
-  canvas.print_png(png_output)
-  data = png_output.getvalue()
+    canvas = FigureCanvas(fig)
+    png_output = BytesIO()
+    canvas.print_png(png_output)
+    data = png_output.getvalue()
 
-  return '<img src="data:image/png;base64,{}">'.format(base64.encodebytes(data).decode())
+    return '<img src="data:image/png;base64,{}">'.format(base64.encodebytes(data).decode())

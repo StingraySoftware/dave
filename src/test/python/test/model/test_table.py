@@ -23,7 +23,7 @@ def test_add_columns(s, c):
     st.text(min_size=1),
     st.text(min_size=1),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_get_shema(s, c, v, e):
     table = Table(s)
@@ -41,7 +41,7 @@ def test_get_shema(s, c, v, e):
     st.text(min_size=1),
     st.text(min_size=1),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_clone(s, c, v, e):
     table1 = Table(s)
@@ -54,11 +54,7 @@ def test_clone(s, c, v, e):
 
 
 @given(
-    st.text(min_size=1),
-    st.text(min_size=1),
-    st.lists(st.integers()),
-    st.integers(),
-    st.integers()
+    st.text(min_size=1), st.text(min_size=1), st.lists(st.integers()), st.integers(), st.integers()
 )
 def test_apply_filter(s, c, list, min_value, max_value):
     table = Table(s)
@@ -90,12 +86,7 @@ def test_apply_filter(s, c, list, min_value, max_value):
         assert schema[c]["count"] == len(list)
 
 
-@given(
-    st.text(min_size=1),
-    st.text(min_size=1),
-    st.lists(st.integers()),
-    st.integers()
-)
+@given(st.text(min_size=1), st.text(min_size=1), st.lists(st.integers()), st.integers())
 def test_get_row(s, c, list, index):
     table = Table(s)
     table.add_columns([c])
@@ -121,7 +112,7 @@ def test_get_row(s, c, list, index):
     st.text(min_size=1),
     st.text(min_size=1),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_add_row(s, c, v, e):
     table = Table(s)
@@ -143,7 +134,7 @@ def test_add_row(s, c, v, e):
     st.integers(),
     st.floats(allow_nan=False, allow_infinity=False),
     st.integers(),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_join(s, c, v0, e0, v1, e1):
     table1 = Table(s)

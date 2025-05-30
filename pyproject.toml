@@ -1,53 +1,216 @@
-[tool.ruff]
-# Python 3.13 target
-target-version = "py313"
+[build-system]
+requires = ["hatchling>=1.0"]
+build-backend = "hatchling.build"
 
-# Line length
-line-length = 100
-
-# Exclude directories
-exclude = [
-    ".git",
-    "__pycache__",
-    "build",
-    "dist",
-    ".pixi",
-    "*.egg-info",
+[project]
+name = "dave-xray"
+version = "2.0.0"
+description = "Data Analysis of Variable Events - GUI for astronomical X-ray timing analysis"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Timelab Technologies Ltd."},
+    {name = "StingRay Software Team"},
 ]
+maintainers = [
+    {name = "StingRay Software", email = "info@timelabtechnologies.com"},
+]
+keywords = [
+    "astronomy",
+    "astrophysics",
+    "x-ray",
+    "timing",
+    "spectral-timing",
+    "variability",
+    "scientific",
+    "data-analysis",
+    "time-series",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.1",
+    "numpy>=2.2.6",
+    "scipy>=1.15.2",
+    "matplotlib>=3.10.3",
+    "astropy>=7.0.2",
+    "numba>=0.61.2",
+    "stingray>=2.2.7",
+    "hendrics>=8.1",
+    "gevent>=25.5.1",
+    "pillow",
+    "python-magic>=0.4.27",
+    "pylru>=1.2.1",
+    "flask-cors>=6.0.0",
+    "flask-session>=0.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+    "hypothesis>=6.131.28",
+    "memory-profiler>=0.61.0",
+    "psutil>=7.0.0",
+    "ruff>=0.9.4",
+    "watchdog>=6.0.0",
+]
+test = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
+    "hypothesis>=6.131.28",
+    "memory-profiler>=0.61.0",
+    "psutil>=7.0.0",
+]
+security = [
+    "flask-cors>=6.0.0",
+    "flask-session>=0.8.0",
+]
+performance = [
+    "numba>=0.61.2",
+    "memory-profiler>=0.61.0",
+    "psutil>=7.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/StingraySoftware/dave"
+Documentation = "https://github.com/StingraySoftware/dave/wiki"
+Repository = "https://github.com/StingraySoftware/dave.git"
+Issues = "https://github.com/StingraySoftware/dave/issues"
+Slack = "http://slack-invite.timelabtechnologies.com"
+
+[project.scripts]
+dave-server = "dave.server:main"
+
+[tool.hatch.build]
+include = [
+    "src/main/python/**/*.py",
+    "src/main/resources/**/*",
+    "src/main/js/electron/package.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+exclude = [
+    "*.pyc",
+    "__pycache__",
+    ".pytest_cache",
+    ".coverage",
+    "*.egg-info",
+    "uploadeddataset/*",
+    "*.log",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/main/python"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest>=8.3.5",
+    "ruff>=0.9.4",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["src/test/python"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "benchmark: marks tests as performance benchmarks",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+indent-width = 4
 
 [tool.ruff.lint]
-# Enable linting rules
 select = [
-    "E",      # pycodestyle errors
-    "W",      # pycodestyle warnings
-    "F",      # pyflakes
-    "UP",     # pyupgrade
-    "B",      # flake8-bugbear
-    "SIM",    # flake8-simplify
-    "I",      # isort
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "NPY",  # NumPy-specific rules
 ]
-
-# Ignore specific rules
 ignore = [
-    "E501",   # line too long (handled by formatter)
-    "E741",   # ambiguous variable name
-    "B008",   # do not perform function calls in argument defaults
-    "B904",   # raise without from inside except
-    "SIM108", # use ternary operator
-    "E722",   # bare except
-    "E731",   # lambda assignment
-    "F403",   # star imports
-    "F405",   # undefined from star imports
-    "UP031",  # Use format specifiers (keep % formatting for now)
-    "UP032",  # Use f-strings (keep % formatting for now)
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # raise from
 ]
+fixable = ["ALL"]
+unfixable = []
 
-[tool.ruff.lint.per-file-ignores]
-# Ignore unused imports in __init__ files
-"__init__.py" = ["F401"]
-# Ignore star imports in tests
-"test_*.py" = ["F403", "F405"]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.ruff.lint.isort]
-# Combine multiple imports from same module
-combine-as-imports = true
+known-first-party = ["dave", "utils", "model", "config"]
+
+[tool.coverage.run]
+source = ["src/main/python"]
+omit = [
+    "*/test/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# Semantic versioning configuration
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+version_variables = [
+    "src/main/python/__version__.py:__version__",
+    "src/main/js/electron/package.json:version",
+]
+branch = "master"
+upload_to_pypi = false
+upload_to_release = true
+build_command = "python build.py"
+commit_message = "chore(release): v{version} [skip ci]"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+    "build",
+    "chore",
+    "ci",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "style",
+    "refactor",
+    "test",
+]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]

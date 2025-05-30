@@ -58,13 +58,19 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
          var formData = new FormData(currentObj.$html.find('form')[0]);
          currentObj.uploadFn(function (response) {
-                                         var jsonRes = JSON.parse(response);
-                                         if (!isNull(jsonRes.error)) {
-                                           currentObj.onUploadError(jsonRes.error);
-                                         } else {
-                                           currentObj.onUploadSuccess(jsonRes);
-                                           currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
-                                         };
+                                         try {
+                                           // Check if response is already parsed by jQuery
+                                           var jsonRes = (typeof response === 'string') ? JSON.parse(response) : response;
+                                           if (!isNull(jsonRes.error)) {
+                                             currentObj.onUploadError(jsonRes.error);
+                                           } else {
+                                             currentObj.onUploadSuccess(jsonRes);
+                                             currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
+                                           }
+                                         } catch (e) {
+                                           log("Upload response parse error: " + e.message + ", response: " + JSON.stringify(response));
+                                           currentObj.onUploadError("Failed to parse upload response: " + e.message);
+                                         }
                                      },
                              currentObj.onUploadProgress,
                              currentObj.onUploadError,

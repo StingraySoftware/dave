@@ -1,4 +1,3 @@
-
 import hypothesis.strategies as st
 import utils.filters_helper as FltHelper
 from hypothesis import given
@@ -10,10 +9,9 @@ from test.fixture import *
     st.text(min_size=1),
     st.text(min_size=1),
     st.floats(allow_nan=False, allow_infinity=False),
-    st.floats(allow_nan=False, allow_infinity=False)
+    st.floats(allow_nan=False, allow_infinity=False),
 )
 def test_createFilter(tn, c, f, t):
-
     filter = FltHelper.createFilter(tn, c, f, t)
     assert len(filter) == 4
     assert filter["table"] == tn
@@ -24,22 +22,20 @@ def test_createFilter(tn, c, f, t):
 
 @given(st.text(min_size=1))
 def test_get_time_filter(s):
-
     filter1 = FltHelper.createFilter("EVENTS", "1", 0, 1)
     filter2 = FltHelper.createFilter("EVENTS", "2", 0, 1)
     filter3 = FltHelper.createTimeFilter(0, 1)
-    time_filter = FltHelper.get_time_filter ([filter1, filter2, filter3])
+    time_filter = FltHelper.get_time_filter([filter1, filter2, filter3])
     assert time_filter
     assert time_filter["column"] == "TIME"
 
 
 @given(st.text(min_size=1))
 def test_get_color_keys_from_filters(s):
-
     filter1 = FltHelper.createFilter("EVENTS", "1", 0, 1)
     filter2 = FltHelper.createFilter("EVENTS", "2", 0, 1, "ColorSelector")
     filter3 = FltHelper.createFilter("EVENTS", "3", 0, 1, "ColorSelector")
     filter4 = FltHelper.createTimeFilter(0, 1)
-    color_keys = FltHelper.get_color_keys_from_filters ([filter1, filter2, filter3, filter4])
+    color_keys = FltHelper.get_color_keys_from_filters([filter1, filter2, filter3, filter4])
     assert color_keys
     assert len(color_keys) == 2

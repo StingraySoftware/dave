@@ -9,6 +9,7 @@ function Service (base_url) {
     $.ajax({
        url: thisService.base_url + "/upload",
        type: 'POST',
+       dataType: 'json',
        //Ajax events
        success: successFn,
        error: errorFn,

@@ -2,6 +2,7 @@
 Performance benchmarking tests for DAVE.
 Measures analysis speeds and memory usage with modern libraries.
 """
+
 import json
 import os
 import tempfile
@@ -46,15 +47,17 @@ class TestPerformanceBenchmarks:
             evt_data += "".join(lines)
 
         # Upload file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(evt_data)
             temp_file = f.name
 
         try:
-            with open(temp_file, 'rb') as f:
-                response = client.post('/upload',
-                                     data={'file': (f, 'large_dataset.txt')},
-                                     content_type='multipart/form-data')
+            with open(temp_file, "rb") as f:
+                response = client.post(
+                    "/upload",
+                    data={"file": (f, "large_dataset.txt")},
+                    content_type="multipart/form-data",
+                )
 
             assert response.status_code == 200
             filename = response.get_json()[0]
@@ -67,29 +70,28 @@ class TestPerformanceBenchmarks:
         filename, n_events = large_dataset
 
         params = {
-            'filename': filename,
-            'bck_filename': '',
-            'gti_filename': '',
-            'filters': [],
-            'axis': [{'table': 'EVENTS', 'column': 'TIME'},
-                    {'table': 'EVENTS', 'column': 'PI'}],
-            'dt': 1.0,  # 1 second bins
-            'baseline_opts': {},
-            'meanflux_opts': {},
-            'variance_opts': {}
+            "filename": filename,
+            "bck_filename": "",
+            "gti_filename": "",
+            "filters": [],
+            "axis": [{"table": "EVENTS", "column": "TIME"}, {"table": "EVENTS", "column": "PI"}],
+            "dt": 1.0,  # 1 second bins
+            "baseline_opts": {},
+            "meanflux_opts": {},
+            "variance_opts": {},
         }
 
         # Measure time
         start_time = time.time()
-        response = client.post('/get_lightcurve',
-                             data=json.dumps(params),
-                             content_type='application/json')
+        response = client.post(
+            "/get_lightcurve", data=json.dumps(params), content_type="application/json"
+        )
         end_time = time.time()
 
         assert response.status_code == 200
         result = response.get_json()
 
-        if 'success' in result and result['success']:
+        if "success" in result and result["success"]:
             elapsed = end_time - start_time
             events_per_sec = n_events / elapsed
 
@@ -106,31 +108,30 @@ class TestPerformanceBenchmarks:
         filename, n_events = large_dataset
 
         params = {
-            'filename': filename,
-            'bck_filename': '',
-            'gti_filename': '',
-            'filters': [],
-            'axis': [{'table': 'EVENTS', 'column': 'TIME'},
-                    {'table': 'EVENTS', 'column': 'PI'}],
-            'dt': 0.1,  # 100ms bins
-            'nsegm': 10,
-            'segment_size': 50,
-            'norm': 'leahy',
-            'type': 'Avg',
-            'df': 0
+            "filename": filename,
+            "bck_filename": "",
+            "gti_filename": "",
+            "filters": [],
+            "axis": [{"table": "EVENTS", "column": "TIME"}, {"table": "EVENTS", "column": "PI"}],
+            "dt": 0.1,  # 100ms bins
+            "nsegm": 10,
+            "segment_size": 50,
+            "norm": "leahy",
+            "type": "Avg",
+            "df": 0,
         }
 
         # Measure time
         start_time = time.time()
-        response = client.post('/get_power_density_spectrum',
-                             data=json.dumps(params),
-                             content_type='application/json')
+        response = client.post(
+            "/get_power_density_spectrum", data=json.dumps(params), content_type="application/json"
+        )
         end_time = time.time()
 
         assert response.status_code == 200
         result = response.get_json()
 
-        if 'success' in result and result['success']:
+        if "success" in result and result["success"]:
             elapsed = end_time - start_time
 
             print("\nPDS Calculation Performance:")
@@ -150,22 +151,24 @@ class TestPerformanceBenchmarks:
 
         filenames = []
         for i, times in enumerate([times1, times2]):
-            evt_data = f"# Dataset {i+1}\n"
+            evt_data = f"# Dataset {i + 1}\n"
             evt_data += "# Column 1: TIME\n"
             evt_data += "# Column 2: PI\n"
 
             for t in times[:10000]:  # Use subset for speed
                 evt_data += f"{t:.6f} {np.random.randint(20, 200)}\n"
 
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
                 f.write(evt_data)
                 temp_file = f.name
 
             try:
-                with open(temp_file, 'rb') as f:
-                    response = client.post('/upload',
-                                         data={'file': (f, f'dataset{i+1}.txt')},
-                                         content_type='multipart/form-data')
+                with open(temp_file, "rb") as f:
+                    response = client.post(
+                        "/upload",
+                        data={"file": (f, f"dataset{i + 1}.txt")},
+                        content_type="multipart/form-data",
+                    )
 
                 filenames.append(response.get_json()[0])
             finally:
@@ -173,30 +176,28 @@ class TestPerformanceBenchmarks:
 
         # Calculate cross spectrum
         params = {
-            'filename1': filenames[0],
-            'bck_filename1': '',
-            'gti_filename1': '',
-            'filters1': [],
-            'axis1': [{'table': 'EVENTS', 'column': 'TIME'},
-                     {'table': 'EVENTS', 'column': 'PI'}],
-            'dt1': 0.5,
-            'filename2': filenames[1],
-            'bck_filename2': '',
-            'gti_filename2': '',
-            'filters2': [],
-            'axis2': [{'table': 'EVENTS', 'column': 'TIME'},
-                     {'table': 'EVENTS', 'column': 'PI'}],
-            'dt2': 0.5,
-            'nsegm': 5,
-            'segment_size': 50,
-            'norm': 'leahy',
-            'type': 'Avg'
+            "filename1": filenames[0],
+            "bck_filename1": "",
+            "gti_filename1": "",
+            "filters1": [],
+            "axis1": [{"table": "EVENTS", "column": "TIME"}, {"table": "EVENTS", "column": "PI"}],
+            "dt1": 0.5,
+            "filename2": filenames[1],
+            "bck_filename2": "",
+            "gti_filename2": "",
+            "filters2": [],
+            "axis2": [{"table": "EVENTS", "column": "TIME"}, {"table": "EVENTS", "column": "PI"}],
+            "dt2": 0.5,
+            "nsegm": 5,
+            "segment_size": 50,
+            "norm": "leahy",
+            "type": "Avg",
         }
 
         start_time = time.time()
-        response = client.post('/get_cross_spectrum',
-                             data=json.dumps(params),
-                             content_type='application/json')
+        response = client.post(
+            "/get_cross_spectrum", data=json.dumps(params), content_type="application/json"
+        )
         end_time = time.time()
 
         assert response.status_code == 200
@@ -225,17 +226,19 @@ class TestPerformanceBenchmarks:
                 lc_data += f"{t:.3f} {r:.1f}\n"
 
             # Measure upload time
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
                 f.write(lc_data)
                 temp_file = f.name
                 file_size = os.path.getsize(temp_file)
 
             try:
                 start_time = time.time()
-                with open(temp_file, 'rb') as f:
-                    response = client.post('/upload',
-                                         data={'file': (f, f'test_{n_events}.txt')},
-                                         content_type='multipart/form-data')
+                with open(temp_file, "rb") as f:
+                    response = client.post(
+                        "/upload",
+                        data={"file": (f, f"test_{n_events}.txt")},
+                        content_type="multipart/form-data",
+                    )
                 upload_time = time.time() - start_time
 
                 assert response.status_code == 200
@@ -243,15 +246,15 @@ class TestPerformanceBenchmarks:
 
                 # Measure schema retrieval time
                 start_time = time.time()
-                response = client.get(f'/get_dataset_schema?filename={filename}')
+                response = client.get(f"/get_dataset_schema?filename={filename}")
                 schema_time = time.time() - start_time
 
                 assert response.status_code == 200
 
-                print(f"\nFile I/O Performance ({n_events} events, {file_size/1024:.1f} KB):")
+                print(f"\nFile I/O Performance ({n_events} events, {file_size / 1024:.1f} KB):")
                 print(f"  Upload time: {upload_time:.3f} seconds")
                 print(f"  Schema time: {schema_time:.3f} seconds")
-                print(f"  Upload speed: {file_size/upload_time/1024/1024:.1f} MB/s")
+                print(f"  Upload speed: {file_size / upload_time / 1024 / 1024:.1f} MB/s")
 
             finally:
                 os.unlink(temp_file)
@@ -271,10 +274,10 @@ class TestMemoryProfiling:
         evt_data += "# Column 1: TIME\n"
         evt_data += "# Column 2: PI\n"
         for i in range(0, n_events, 1000):
-            for j in range(i, min(i+1000, n_events)):
+            for j in range(i, min(i + 1000, n_events)):
                 evt_data += f"{times[j]:.6f} {energies[j]}\n"
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(evt_data)
             temp_file = f.name
 
@@ -284,30 +287,34 @@ class TestMemoryProfiling:
             initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
             # Upload file
-            with open(temp_file, 'rb') as f:
-                response = client.post('/upload',
-                                     data={'file': (f, 'memory_test.txt')},
-                                     content_type='multipart/form-data')
+            with open(temp_file, "rb") as f:
+                response = client.post(
+                    "/upload",
+                    data={"file": (f, "memory_test.txt")},
+                    content_type="multipart/form-data",
+                )
 
             filename = response.get_json()[0]
 
             # Create lightcurve
             params = {
-                'filename': filename,
-                'bck_filename': '',
-                'gti_filename': '',
-                'filters': [],
-                'axis': [{'table': 'EVENTS', 'column': 'TIME'},
-                        {'table': 'EVENTS', 'column': 'PI'}],
-                'dt': 1.0,
-                'baseline_opts': {},
-                'meanflux_opts': {},
-                'variance_opts': {}
+                "filename": filename,
+                "bck_filename": "",
+                "gti_filename": "",
+                "filters": [],
+                "axis": [
+                    {"table": "EVENTS", "column": "TIME"},
+                    {"table": "EVENTS", "column": "PI"},
+                ],
+                "dt": 1.0,
+                "baseline_opts": {},
+                "meanflux_opts": {},
+                "variance_opts": {},
             }
 
-            response = client.post('/get_lightcurve',
-                                 data=json.dumps(params),
-                                 content_type='application/json')
+            response = client.post(
+                "/get_lightcurve", data=json.dumps(params), content_type="application/json"
+            )
 
             # Get peak memory
             peak_memory = process.memory_info().rss / 1024 / 1024  # MB
@@ -318,7 +325,7 @@ class TestMemoryProfiling:
             print(f"  Initial memory: {initial_memory:.1f} MB")
             print(f"  Peak memory: {peak_memory:.1f} MB")
             print(f"  Memory increase: {memory_increase:.1f} MB")
-            print(f"  Memory per event: {memory_increase*1024/n_events:.2f} KB")
+            print(f"  Memory per event: {memory_increase * 1024 / n_events:.2f} KB")
 
             # Memory usage should be reasonable
             assert memory_increase < 500, f"Excessive memory usage: {memory_increase:.1f} MB"

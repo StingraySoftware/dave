@@ -17,7 +17,7 @@ def createFilter(table, column, from_val, to_val, source=None):
 
 # Creates a filter from-to in EVENTS.TIME axis
 def createTimeFilter(from_val, to_val):
-    return createFilter ("EVENTS", CONFIG.TIME_COLUMN, from_val, to_val)
+    return createFilter("EVENTS", CONFIG.TIME_COLUMN, from_val, to_val)
 
 
 # Returns the filter refered to TIME from a list of filters
@@ -40,7 +40,6 @@ def get_named_filter(filters, column):
 
 # Returns the filters applied to a passed bin size
 def apply_bin_size_to_filters(filters, bin_size):
-
     time_filter = get_time_filter(filters)
     if time_filter and time_filter["from"] < time_filter["to"]:
         time_filter["from"] = math.floor(time_filter["from"] / bin_size) * bin_size

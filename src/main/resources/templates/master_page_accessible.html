@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="DAVE - Data Analysis of Variable Events: GUI for astronomical X-ray timing analysis">
+    
+    <title>DAVE - Data Analysis of Variable Events</title>
+
+    <!-- Insert CSS below here for better page render performance -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/external/jquery-ui-1.12.1.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/external/bootstrap-3.3.7.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/external/bootstrap-theme-3.3.7.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/external/colorpicker.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='font-awesome-4.7.0/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/external/sb-admin-theme.css') }}?v={{ get_version() }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/master_page.css') }}?v={{ get_version() }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/accessibility.css') }}?v={{ get_version() }}">
+
+    <!-- Insert this line above script imports for solve Electron import issues -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/jquery-3.1.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/jquery-ui-1.12.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/bootstrap-3.3.7.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/async-2.5.0.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/colorpicker.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/waiting_dialog.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/logger.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/fingerprint2-1.5.1.min.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/ganalytics.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/config.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/service.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/schema.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/projectConfig.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/common.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/htmlControls.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/historyManager.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/accessibility.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/master_page.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/version.js') }}?v={{ get_version() }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/bulkAnalisys.js') }}?v={{ get_version() }}"></script>
+
+    <!-- Insert this line after script imports for solve Electron import issues -->
+    <script>if (window.module) module = window.module;</script>
+
+  </head>
+
+  <body>
+    <!-- Skip navigation links -->
+    <div class="skip-links">
+      <a href="#main-content" class="skip-link">Skip to main content</a>
+      <a href="#navigation" class="skip-link">Skip to navigation</a>
+      <a href="#analysis-tools" class="skip-link">Skip to analysis tools</a>
+    </div>
+
+    <!-- Static navbar -->
+    <nav id="navigation" role="navigation" aria-label="Main navigation">
+      {% include 'includes/nav_bar_accessible.html' %}
+    </nav>
+
+    <!-- Page Content -->
+    <main id="main-content" role="main" class="container fluid daveContainer" aria-label="Analysis workspace">
+      <h1 class="sr-only">DAVE Analysis Workspace</h1>
+      
+      <!-- Status region for screen readers -->
+      <div id="status-region" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+      
+      <!-- Tab panels container -->
+      <div id="tab-panels-container" role="region" aria-label="Analysis panels">
+        <!-- TAB PANELS GOES HERE -->
+      </div>
+    </main>
+
+    <!-- Accessibility controls -->
+    <aside id="accessibility-controls" role="complementary" aria-label="Accessibility options">
+      <button id="toggle-high-contrast" 
+              class="btn btn-sm btn-default" 
+              aria-label="Toggle high contrast mode"
+              title="Toggle high contrast mode (Alt+C)">
+        <i class="fa fa-adjust" aria-hidden="true"></i>
+        <span class="sr-only">Toggle high contrast</span>
+      </button>
+      
+      <div class="font-size-controls" role="group" aria-label="Font size controls">
+        <button id="decrease-font" 
+                class="btn btn-sm btn-default" 
+                aria-label="Decrease font size"
+                title="Decrease font size">
+          <i class="fa fa-minus" aria-hidden="true"></i>
+          <span class="sr-only">Decrease font size</span>
+        </button>
+        <button id="increase-font" 
+                class="btn btn-sm btn-default" 
+                aria-label="Increase font size"
+                title="Increase font size">
+          <i class="fa fa-plus" aria-hidden="true"></i>
+          <span class="sr-only">Increase font size</span>
+        </button>
+      </div>
+      
+      <button id="keyboard-help" 
+              class="btn btn-sm btn-default" 
+              aria-label="Show keyboard shortcuts"
+              title="Show keyboard shortcuts (Alt+H)">
+        <i class="fa fa-keyboard-o" aria-hidden="true"></i>
+        <span class="sr-only">Keyboard shortcuts</span>
+      </button>
+    </aside>
+
+    <!-- TabPanel Template -->
+    {% include 'includes/tab_panel_accessible.html' %}
+
+    <!-- ToolPanel Template -->
+    {% include 'includes/tool_panel_accessible.html' %}
+
+    <!-- OutputPanel Template -->
+    {% include 'includes/output_panel_accessible.html' %}
+
+    <!-- ARIA live region for announcements -->
+    <div id="aria-live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+    <!-- Initialize accessibility features -->
+    <script>
+      $(document).ready(function() {
+        // Accessibility control handlers
+        $('#toggle-high-contrast').on('click', function() {
+          AccessibilityManager.toggleHighContrast();
+        });
+        
+        $('#decrease-font').on('click', function() {
+          var sizes = ['small', 'normal', 'large', 'x-large'];
+          var current = AccessibilityManager.config.fontSize;
+          var index = sizes.indexOf(current);
+          if (index > 0) {
+            AccessibilityManager.adjustFontSize(sizes[index - 1]);
+          }
+        });
+        
+        $('#increase-font').on('click', function() {
+          var sizes = ['small', 'normal', 'large', 'x-large'];
+          var current = AccessibilityManager.config.fontSize;
+          var index = sizes.indexOf(current);
+          if (index < sizes.length - 1) {
+            AccessibilityManager.adjustFontSize(sizes[index + 1]);
+          }
+        });
+        
+        $('#keyboard-help').on('click', function() {
+          AccessibilityManager.showKeyboardHelp();
+        });
+      });
+    </script>
+
+  </body>
+
+</html>
