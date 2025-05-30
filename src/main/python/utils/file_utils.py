@@ -1,6 +1,15 @@
 import os
 
-import magic
+# Handle libmagic import gracefully
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError as e:
+    MAGIC_AVAILABLE = False
+    import mimetypes
+    import utils.dave_logger as logging
+    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
+
 from config import CONFIG
 from security_config import SecurityConfig
 from werkzeug.datastructures import FileStorage
@@ -53,17 +62,33 @@ def is_valid_file(destination):
         if not destination or not os.path.isfile(destination):
             return False
 
-        ext = magic.from_file(destination)
-
         base = os.path.basename(destination)
-        file_extension = os.path.splitext(base)[1]
+        file_extension = os.path.splitext(base)[1].lower()
 
-        return (
-            (ext.find("ASCII") == 0)
-            or (ext.find("FITS") == 0)
-            or (ext.find("gzip") > -1)
-            or ((ext == "data") and (file_extension in [".p", ".nc"]))
-        )
+        if MAGIC_AVAILABLE:
+            ext = magic.from_file(destination)
+            return (
+                (ext.find("ASCII") == 0)
+                or (ext.find("FITS") == 0)
+                or (ext.find("gzip") > -1)
+                or ((ext == "data") and (file_extension in [".p", ".nc"]))
+            )
+        else:
+            # Fallback to file extension checking
+            valid_extensions = ['.txt', '.dat', '.lc', '.evt', '.fits', '.fit', '.gz', '.p', '.nc']
+            if file_extension in valid_extensions:
+                return True
+            
+            # For files without extension, try to check if it's text
+            if file_extension == '':
+                try:
+                    with open(destination, 'r', encoding='utf-8') as f:
+                        f.read(1024)  # Try reading first 1KB as text
+                    return True
+                except:
+                    return False
+            
+            return False
     except:
         return False
 

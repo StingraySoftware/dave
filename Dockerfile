@@ -29,7 +29,7 @@ COPY src/main/resources ./src/main/resources
 
 # Install Node dependencies
 WORKDIR /app/src/main/js/electron
-RUN npm ci --production
+RUN npm ci --omit=dev --ignore-scripts
 
 # Copy Electron source
 COPY src/main/js/electron/*.js ./

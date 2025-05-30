@@ -193,11 +193,18 @@ Download the latest release for your platform:
 ```bash
 git clone https://github.com/StingraySoftware/dave.git
 cd dave
+git checkout modernization-2025  # Important: Use the modernization branch
 pixi install
 
-# Start development servers
-pixi run server    # Terminal 1: Flask backend
-pixi run electron  # Terminal 2: Electron frontend
+# Start the application (automatically launches both backend and frontend)
+pixi run electron
+```
+
+**Alternative (for debugging):**
+```bash
+# If you need to run servers separately:
+pixi run server    # Terminal 1: Flask backend only
+pixi run electron  # Terminal 2: Electron frontend (in a separate terminal)
 ```
 
 ### Testing

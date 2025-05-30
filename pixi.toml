@@ -86,6 +86,7 @@ gevent = ">=25.5.1,<26"
 scipy = ">=1.15.2,<2"
 matplotlib = ">=3.10.3,<4"
 ruff = ">=0.9.4,<1"
+libmagic = "*"
 
 [pypi-dependencies]
 stingray = ">=2.2.7, <3"
@@ -99,3 +100,15 @@ python-magic = ">=0.4.27, <0.5"
 pylru = ">=1.2.1, <2"
 memory-profiler = ">=0.61.0, <1"
 psutil = ">=7.0.0, <8"
+
+# Platform-specific dependencies
+[target.linux-64.dependencies]
+
+[target.osx-64.dependencies]
+libmagic = "*"
+
+[target.osx-arm64.dependencies]
+libmagic = "*"
+
+[target.win-64.pypi-dependencies]
+python-magic-bin = ">=0.4.14, <0.5"
