@@ -7,6 +7,7 @@ const log = require('electron-log/main');
 const { autoUpdater } = require('electron-updater');
 const updater = require('./updater');
 
+
 // Initialize logging
 log.initialize();
 log.transports.file.level = 'info';
@@ -16,7 +17,7 @@ log.transports.console.level = process.env.NODE_ENV === 'development' ? 'debug' 
 if (process.env.NODE_ENV === 'production') {
   const { FusesPlugin } = require('@electron-forge/plugin-fuses');
   const { FuseV1Options, FuseVersion } = require('@electron/fuses');
-  
+
   // These fuses disable dangerous Electron features
   FusesPlugin({
     version: FuseVersion.V1,
@@ -86,13 +87,13 @@ app.whenReady().then(async () => {
       }
     });
   });
-  
+
   // Set up permissions
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     const allowedPermissions = ['clipboard-read', 'clipboard-write'];
     callback(allowedPermissions.includes(permission));
   });
-  
+
   // Load configuration
   try {
     mainConfig = await loadConfig();
@@ -101,21 +102,21 @@ app.whenReady().then(async () => {
     log.error('Failed to load configuration:', error);
     mainConfig = { error: error.message };
   }
-  
+
   // Create main window
   createMainWindow();
-  
+
   // Initialize auto-updater
   updater.init();
-  
+
   // Check for updates
   if (process.env.NODE_ENV !== 'development') {
     autoUpdater.checkForUpdatesAndNotify();
   }
-  
+
   // Set up PYTHON_URL
   if (mainConfig.error == null) {
-    PYTHON_URL = mainConfig.pythonUrl || 'http://localhost:5000';
+    PYTHON_URL = mainConfig.pythonUrl || 'http://localhost:5001';
   }
 });
 
@@ -199,7 +200,7 @@ ipcMain.handle('dialog:open', async (event, options) => {
       { name: 'All Files', extensions: ['*'] }
     ]
   };
-  
+
   const result = await dialog.showOpenDialog(mainWindow, { ...defaultOptions, ...options });
   return result;
 });
@@ -243,18 +244,18 @@ ipcMain.handle('window:isMaximized', () => mainWindow?.isMaximized() || false);
 // Configuration loader
 async function loadConfig() {
   const configPath = path.join(__dirname, 'config.js');
-  
+
   try {
     // Clear require cache
     delete require.cache[configPath];
     const config = require(configPath);
-    
+
     return {
       envEnabled: config.environment?.enabled === "true",
       envScriptPath: path.join(__dirname, config.environment?.path || ''),
       pythonEnabled: config.python?.enabled === "true",
       pythonPath: path.join(__dirname, config.python?.path || ''),
-      pythonUrl: config.python?.url || 'http://localhost:5000',
+      pythonUrl: config.python?.url || 'http://localhost:5001',
       logDebugMode: config.logDebugMode === "true",
       splash_path: config.splash_path || '/../../resources/templates/splash_page.html',
       logsPath: config.logsPath || path.join(app.getPath('logs'), 'dave.log')
@@ -266,25 +267,25 @@ async function loadConfig() {
 
 // Python server management
 async function launchPythonServer(config) {
-  const port = config.pythonUrl.split(':')[2] || '5000';
-  
+  const port = config.pythonUrl.split(':')[2] || '5001';
+
   // Check if port is already in use
   if (await isPortInUse(port)) {
     throw new Error(`Port ${port} is already in use`);
   }
-  
+
   if (!config.pythonEnabled && !config.envEnabled) {
     log.info('Server modes disabled in configuration');
     return;
   }
-  
+
   const spawnOptions = {
     cwd: path.dirname(config.pythonPath || __dirname),
     env: { ...process.env, ELECTRON_RUN_AS_NODE: '0' },
     detached: false,
     shell: false
   };
-  
+
   if (config.pythonEnabled) {
     return launchProcess('python', [config.pythonPath, '.', '.', port], 'Python', spawnOptions);
   } else if (config.envEnabled) {
@@ -296,14 +297,14 @@ function launchProcess(command, args, name, options) {
   return new Promise((resolve, reject) => {
     try {
       log.info(`Launching ${name} process:`, { command, args });
-      
+
       subpy = cp.spawn(command, args, options);
       processRunning = true;
-      
+
       // Handle stdout
       subpy.stdout.on('data', (data) => {
         const messages = data.toString().split(/\r?\n/).filter(Boolean);
-        
+
         messages.forEach(msg => {
           if (msg.startsWith('@PROGRESS@')) {
             const [, progress, message] = msg.split('|');
@@ -316,11 +317,11 @@ function launchProcess(command, args, name, options) {
           }
         });
       });
-      
+
       // Handle stderr
       subpy.stderr.on('data', (data) => {
         const messages = data.toString().split(/\r?\n/).filter(Boolean);
-        
+
         messages.forEach(msg => {
           // HTTP access logs (Flask default logs to stderr)
           if (msg.match(/^\S+ - - \[.*\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS).*" \d{3}/)) {
@@ -340,30 +341,30 @@ function launchProcess(command, args, name, options) {
           }
         });
       });
-      
+
       // Handle spawn event
       subpy.on('spawn', () => {
         log.info(`${name} process spawned successfully`);
         resolve();
       });
-      
+
       // Handle errors
       subpy.on('error', (error) => {
         processRunning = false;
         log.error(`${name} spawn error:`, error);
         reject(error);
       });
-      
+
       // Handle exit
       subpy.on('exit', (code, signal) => {
         processRunning = false;
         connected = false;
         subpy = null;
-        
+
         log.info(`${name} process exited:`, { code, signal });
         sendToRenderer('server:disconnected', { code, signal });
       });
-      
+
     } catch (error) {
       processRunning = false;
       log.error(`Failed to launch ${name}:`, error);
@@ -375,39 +376,39 @@ function launchProcess(command, args, name, options) {
 async function waitForServerConnection() {
   const maxRetries = 30;
   const retryInterval = 1000;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     if (!processRunning) {
       throw new Error('Server process died during startup');
     }
-    
+
     try {
       await axios.get(PYTHON_URL, { timeout: 5000 });
       connected = true;
       log.info('Connected to Python server');
       sendToRenderer('server:connected', { url: PYTHON_URL });
-      
+
       // Load the main application
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.loadURL(PYTHON_URL);
       }
-      
+
       return;
     } catch (error) {
       log.debug(`Connection attempt ${i + 1}/${maxRetries} failed`);
       await new Promise(resolve => setTimeout(resolve, retryInterval));
     }
   }
-  
+
   throw new Error(`Failed to connect to server after ${maxRetries} attempts`);
 }
 
 async function stopServer() {
   if (!subpy) return;
-  
+
   connected = false;
   log.info('Stopping Python server...');
-  
+
   try {
     // Try graceful shutdown
     await axios.post(`${PYTHON_URL}/shutdown`, {}, { timeout: 5000 });
@@ -415,16 +416,16 @@ async function stopServer() {
   } catch (error) {
     log.debug('Graceful shutdown failed, forcing termination');
   }
-  
+
   if (subpy && !subpy.killed) {
     subpy.kill('SIGTERM');
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     if (subpy && !subpy.killed) {
       subpy.kill('SIGKILL');
     }
   }
-  
+
   subpy = null;
   processRunning = false;
 }
@@ -432,21 +433,22 @@ async function stopServer() {
 // Main window creation
 function createMainWindow() {
   mainWindow = new BrowserWindow(windowConfig);
-  
+  mainWindow.webContents.openDevTools()
+
   // Load splash screen
   const splashPath = mainConfig.splash_path || '/../../resources/templates/splash_page.html';
   mainWindow.loadFile(path.join(__dirname, splashPath));
-  
+
   // Set up event handlers
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-  
+
   mainWindow.on('maximize', () => sendToRenderer('window:maximized'));
   mainWindow.on('unmaximize', () => sendToRenderer('window:unmaximized'));
   mainWindow.on('enter-full-screen', () => sendToRenderer('window:fullscreen', true));
   mainWindow.on('leave-full-screen', () => sendToRenderer('window:fullscreen', false));
-  
+
   // Prevent navigation to external URLs
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (!url.startsWith('file://') && !url.startsWith(PYTHON_URL)) {
@@ -454,10 +456,10 @@ function createMainWindow() {
       shell.openExternal(url);
     }
   });
-  
+
   // Set up application menu
   createApplicationMenu();
-  
+
   // Handle window ready
   mainWindow.webContents.on('did-finish-load', () => {
     log.info('Window loaded');
@@ -467,7 +469,7 @@ function createMainWindow() {
       config: { ...mainConfig, pythonPath: undefined }
     });
   });
-  
+
   // Development tools
   if (process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
@@ -477,7 +479,7 @@ function createMainWindow() {
 // Application menu
 function createApplicationMenu() {
   const isMac = process.platform === 'darwin';
-  
+
   const template = [
     ...(isMac ? [{
       label: app.getName(),
@@ -568,7 +570,7 @@ function createApplicationMenu() {
       ]
     }
   ];
-  
+
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
@@ -582,19 +584,19 @@ function sendToRenderer(channel, data) {
 
 async function isPortInUse(port) {
   const net = require('net');
-  
+
   return new Promise((resolve) => {
     const server = net.createServer();
-    
+
     server.once('error', (err) => {
       resolve(err.code === 'EADDRINUSE');
     });
-    
+
     server.once('listening', () => {
       server.close();
       resolve(false);
     });
-    
+
     server.listen(port);
   });
 }
@@ -637,7 +639,7 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
 app.on('web-contents-created', (event, contents) => {
   contents.on('new-window', (event, navigationUrl) => {
     event.preventDefault();
-    
+
     // Open in external browser if it's a valid URL
     const allowedProtocols = ['http:', 'https:'];
     try {
@@ -674,7 +676,7 @@ autoUpdater.on('download-progress', (progress) => {
 autoUpdater.on('update-downloaded', (info) => {
   log.info('Update downloaded:', info.version);
   sendToRenderer('updater:downloaded', info);
-  
+
   // Prompt user to restart
   dialog.showMessageBox(mainWindow, {
     type: 'info',

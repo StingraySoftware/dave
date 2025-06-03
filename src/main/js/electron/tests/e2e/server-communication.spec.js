@@ -4,12 +4,12 @@ const axios = require('axios');
 
 test.describe('Server Communication', () => {
   let electronApp;
-  const serverUrl = 'http://localhost:5000';
+  const serverUrl = 'http://localhost:5001';
 
   test.beforeEach(async () => {
     electronApp = new ElectronAppHelper();
     await electronApp.launch();
-    
+
     // Wait for app and server to be ready
     await electronApp.window.waitForTimeout(3000);
   });
@@ -47,7 +47,7 @@ test.describe('Server Communication', () => {
       console.log('Version check error:', error);
       return null;
     });
-    
+
     if (version) {
       expect(version).toBeTruthy();
       console.log('Server version:', version);
@@ -66,7 +66,7 @@ test.describe('Server Communication', () => {
       }
       return null;
     });
-    
+
     expect(uploadCapability).toBeTruthy();
     if (uploadCapability) {
       expect(uploadCapability.hasUploadDataset || uploadCapability.hasUploadFile).toBe(true);
@@ -86,16 +86,16 @@ test.describe('Server Communication', () => {
           'get_dynamic_spectrum',
           'append_lightcurve'
         ];
-        
+
         plotMethods.forEach(method => {
           methods[method] = typeof window.service[method] === 'function';
         });
-        
+
         return methods;
       }
       return null;
     });
-    
+
     expect(plotServices).toBeTruthy();
     console.log('Available plot services:', plotServices);
   });
@@ -113,7 +113,7 @@ test.describe('Server Communication', () => {
       }
       return null;
     });
-    
+
     expect(datasetOps).toBeTruthy();
     if (datasetOps) {
       expect(datasetOps.hasGetDatasets).toBe(true);
@@ -132,7 +132,7 @@ test.describe('Server Communication', () => {
       }
       return { hasUid: false };
     });
-    
+
     expect(sessionInfo.hasUid).toBe(true);
     if (sessionInfo.hasUid) {
       expect(sessionInfo.uidLength).toBeGreaterThan(0);
@@ -156,7 +156,7 @@ test.describe('Server Communication', () => {
         }
       });
     });
-    
+
     expect(errorHandling.errorHandled).toBe(true);
   });
 
@@ -167,20 +167,20 @@ test.describe('Server Communication', () => {
       if (window.service && window.service.constructor.toString().includes('axios')) {
         return 'axios';
       }
-      
+
       // Check global axios
       if (typeof axios !== 'undefined') {
         return 'axios-global';
       }
-      
+
       // Check for jQuery ajax (legacy)
       if (typeof $ !== 'undefined' && $.ajax) {
         return 'jquery-ajax';
       }
-      
+
       return 'unknown';
     });
-    
+
     console.log('HTTP client:', httpClient);
     // Should be using axios or jquery-ajax (both are acceptable)
     expect(['axios', 'axios-global', 'jquery-ajax']).toContain(httpClient);

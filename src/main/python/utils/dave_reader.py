@@ -3,11 +3,13 @@ import os
 # Handle libmagic import gracefully
 try:
     import magic
+
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
     import mimetypes
     import utils.dave_logger as logging
+
     logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
 
 import model.dataset as DataSet
@@ -23,41 +25,43 @@ import utils.dataset_cache as DsCache
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
 
+print("dave_reader loaded")
+
 
 def get_file_type_from_extension(destination):
     """Fallback method to determine file type from extension when libmagic is not available."""
     ext = os.path.splitext(destination)[1].lower()
-    
+
     # Map extensions to file type strings that match the original magic output
     extension_map = {
-        '.txt': 'ASCII text',
-        '.dat': 'ASCII text',
-        '.lc': 'ASCII text',
-        '.evt': 'FITS',
-        '.fits': 'FITS',
-        '.fit': 'FITS',
-        '.gz': 'gzip compressed'
+        ".txt": "ASCII text",
+        ".dat": "ASCII text",
+        ".lc": "ASCII text",
+        ".evt": "FITS",
+        ".fits": "FITS",
+        ".fit": "FITS",
+        ".gz": "gzip compressed",
     }
-    
+
     if ext in extension_map:
         return extension_map[ext]
-    
+
     # For files without extension or unknown extensions, try to detect
-    if ext == '' or ext not in extension_map:
+    if ext == "" or ext not in extension_map:
         try:
             # Try to open as FITS first
             with fits.open(destination, memmap=True) as hdulist:
-                return 'FITS'
+                return "FITS"
         except:
             try:
                 # Try to read as text
-                with open(destination, 'r', encoding='utf-8') as f:
+                with open(destination, "r", encoding="utf-8") as f:
                     f.read(1024)
-                return 'ASCII text'
+                return "ASCII text"
             except:
-                return 'data'
-    
-    return 'data'
+                return "data"
+
+    return "data"
 
 
 def get_cache_key_for_destination(destination, time_offset):
@@ -91,7 +95,7 @@ def get_file_dataset(destination, time_offset=0):
 
             logging.debug("get_file_dataset: reading destination: " + str(destination))
             file_extension_from_file = os.path.splitext(destination)[1]
-            
+
             if MAGIC_AVAILABLE:
                 file_extension = magic.from_file(destination)
                 logging.debug("File extension from magic: %s" % file_extension)
@@ -333,12 +337,16 @@ def get_events_fits_dataset_with_stingray(
         [],
         fits_data.ev_list if hasattr(fits_data, "ev_list") else [],
         [],
-        fits_data.gti_list[:, 0]
-        if hasattr(fits_data, "gti_list") and fits_data.gti_list.size > 0
-        else [],
-        fits_data.gti_list[:, 1]
-        if hasattr(fits_data, "gti_list") and fits_data.gti_list.size > 0
-        else [],
+        (
+            fits_data.gti_list[:, 0]
+            if hasattr(fits_data, "gti_list") and fits_data.gti_list.size > 0
+            else []
+        ),
+        (
+            fits_data.gti_list[:, 1]
+            if hasattr(fits_data, "gti_list") and fits_data.gti_list.size > 0
+            else []
+        ),
         None,
         None,
         "EVENTS",

@@ -54,7 +54,7 @@ This version represents a significant modernization effort to update DAVE's tech
 ### Performance Improvements
 
 - FFT operations: ~3x faster
-- Statistical calculations: ~3x faster 
+- Statistical calculations: ~3x faster
 - Improved memory efficiency
 - Faster application startup
 - Comprehensive test suite (200+ tests)
@@ -391,7 +391,7 @@ return jsonify(data)
 from gevent.wsgi import WSGIServer
 from werkzeug import secure_filename
 
-# NEW imports  
+# NEW imports
 from gevent.pywsgi import WSGIServer
 from werkzeug.utils import secure_filename
 ```
@@ -584,7 +584,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 def not_found(error):
     return jsonify({'error': 'Not found'}), 404
 
-# NEW  
+# NEW
 def register_error_handlers(app):
     @app.errorhandler(404)
     def not_found(error):
@@ -600,7 +600,7 @@ fits_data = load_events_and_gtis(filename)
 
 # NEW
 from stingray.events import EventList
-events = EventList.read(filename, fmt='hea') 
+events = EventList.read(filename, fmt='hea')
 data = events.to_EventReadOutput()
 ```
 
@@ -655,7 +655,7 @@ CORS_ORIGINS=https://yourdomain.com
 ```bash
 # Docker
 docker build -t dave:latest .
-docker run -p 5000:5000 dave:latest
+docker run -p 5001:5001 dave:latest
 
 # Kubernetes
 kubectl apply -k kubernetes/

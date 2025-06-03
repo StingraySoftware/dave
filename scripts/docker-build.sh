@@ -51,6 +51,6 @@ echo -e "\n${YELLOW}Built images:${NC}"
 docker images | grep "dave" | grep "$TAG"
 
 echo -e "\n${YELLOW}To run the container:${NC}"
-echo "Standard: docker run -p 5000:5000 dave:$TAG"
+echo "Standard: docker run -p 5001:5001 dave:$TAG"
 echo "VNC: docker run -p 6080:6080 -p 5900:5900 dave:vnc-$TAG"
 echo "Or use: docker-compose up"

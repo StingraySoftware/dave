@@ -159,9 +159,9 @@ class TestTimingAnalysisValidation:
                     detected_freq = freqs[max_idx]
 
                     # Should detect within 1% of true frequency
-                    assert abs(detected_freq - expected_freq) / expected_freq < 0.01, (
-                        f"Expected {expected_freq} Hz, detected {detected_freq} Hz"
-                    )
+                    assert (
+                        abs(detected_freq - expected_freq) / expected_freq < 0.01
+                    ), f"Expected {expected_freq} Hz, detected {detected_freq} Hz"
 
                     # Z2n statistic should be significant
                     max_stat = stats[max_idx]
@@ -207,9 +207,9 @@ class TestTimingAnalysisValidation:
 
                         # Check detection accuracy
                         freq_error = abs(detected_freq - expected_freq) / expected_freq
-                        assert freq_error < 0.02, (
-                            f"Epoch folding: expected {expected_freq} Hz, got {detected_freq} Hz"
-                        )
+                        assert (
+                            freq_error < 0.02
+                        ), f"Epoch folding: expected {expected_freq} Hz, got {detected_freq} Hz"
 
     def test_phaseogram(self, client, pulsar_events_file):
         """Test phaseogram (pulse profile) generation."""
