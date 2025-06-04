@@ -564,7 +564,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
   this.sampleOpts.niter = { default:50, min:1, max: 500}; //The number of iterations to run the MCMC chains
   this.sampleOpts.burnin = { default:50, min:1, max: 500}; //The number of iterations to run the walkers before convergence is assumed to have occurred.
   this.sampleOpts.threads = { default:1, min:1, max: 100}; //The number of threads for parallelization. FIXED TO 1 for avoid Flask context loss
-  this.sampleOpts.nsamples = { default:500, min:1, max: 5001}; //The number of threads for parallelization.
+  this.sampleOpts.nsamples = { default:500, min:1, max: 5000}; //The number of threads for parallelization.
 
   this.sampleParams = {}; //Sample params values to be sent, initialized to default values
   this.sampleParams.nwalkers = this.sampleOpts.nwalkers.default;
