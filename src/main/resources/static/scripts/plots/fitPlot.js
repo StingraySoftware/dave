@@ -32,7 +32,6 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       }
       return; //Comes from request abort call.
     }
-
     log("onPlotDataReceived passed data!, plot" + currentObj.id);
     data = JSON.parse(JSON.stringify(data));
 

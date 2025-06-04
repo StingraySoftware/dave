@@ -63,7 +63,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     currentObj.fitCallFn(paramsData, function( jsdata ) {
 
       log("FitData received!, FitTabPanel: " + currentObj.id);
-      var data = JSON.parse(jsdata);
+      var data = JSON.parse(JSON.stringify(jsdata));
       if (!isNull(data) && data.length > 0) {
         currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;
@@ -138,7 +138,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
            currentObj.service.request_bootstrap_results( paramsData, function( jsdata ) {
 
              log("Bootstrap data received!, FitTabPanel: " + currentObj.id);
-             var data = JSON.parse(jsdata);
+             var data = JSON.parse(JSON.stringify(jsdata));
              if (!isNull(data) && data.length > 0) {
                currentObj.modelSelector.setEstimation(data[0].values, false);
                currentObj.plot.setErrorData(data[1].values, data[2].values);
@@ -369,7 +369,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       log("Bayesian Par. Est. data received!, FitTabPanel: " + currentObj.id);
       enableLogError();
 
-      var data = JSON.parse(jsdata);
+      var data = JSON.parse(JSON.stringify(jsdata));
       if (!isNull(data) && data.length > 0) {
         currentObj.modelSelector.setEstimation(data[0].values, true);
         data[1].values.count = currentObj.plot.data[0].values.length;

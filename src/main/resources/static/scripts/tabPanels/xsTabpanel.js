@@ -53,7 +53,7 @@ function XSTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }
 
       log("XSData received!, XSTabPanel: " + currentObj.id);
-      data = JSON.parse(jsdata);
+      data = JSON.parse(JSON.stringify(jsdata));
       var xsPlot = currentObj.outputPanel.plots[currentObj.xsPlotIdx];
 
       if (isNull(data)) {
