@@ -5,7 +5,7 @@
 
 var UpdateManager = (function() {
   'use strict';
-  
+
   var updateStatus = {
     checking: false,
     available: false,
@@ -13,12 +13,12 @@ var UpdateManager = (function() {
     version: null,
     progress: 0
   };
-  
+
   var settings = {
     autoDownload: true,
     channel: 'stable'
   };
-  
+
   /**
    * Initialize update manager
    */
@@ -27,22 +27,22 @@ var UpdateManager = (function() {
       log('Update manager not available in web mode');
       return;
     }
-    
+
     // Load saved settings
     loadSettings();
-    
+
     // Set up event listeners
     setupEventListeners();
-    
+
     // Add update UI to navbar
     addUpdateUI();
-    
+
     // Check initial status
     checkStatus();
-    
+
     log('Update manager initialized');
   }
-  
+
   /**
    * Set up event listeners for update events
    */
@@ -52,32 +52,32 @@ var UpdateManager = (function() {
       updateStatus.checking = true;
       updateUI();
     });
-    
+
     window.electronAPI.on('updater:available', function(event, info) {
       updateStatus.checking = false;
       updateStatus.available = true;
       updateStatus.version = info.version;
       updateUI();
-      
+
       if (settings.autoDownload) {
-        showNotification('Update Available', 
+        showNotification('Update Available',
           'Version ' + info.version + ' is being downloaded automatically.');
       } else {
         showUpdateDialog(info);
       }
     });
-    
+
     window.electronAPI.on('updater:not-available', function() {
       updateStatus.checking = false;
       updateStatus.available = false;
       updateUI();
     });
-    
+
     window.electronAPI.on('updater:progress', function(event, progress) {
       updateStatus.progress = progress.percent;
       updateProgressBar(progress);
     });
-    
+
     window.electronAPI.on('updater:downloaded', function(event, info) {
       updateStatus.downloaded = true;
       updateStatus.progress = 100;
@@ -85,7 +85,7 @@ var UpdateManager = (function() {
       showRestartDialog(info);
     });
   }
-  
+
   /**
    * Add update UI elements to navbar
    */
@@ -112,21 +112,21 @@ var UpdateManager = (function() {
           '<li><a href="#" id="update-settings">Settings</a></li>' +
         '</ul>'
       );
-    
+
     $('#right-navbar').prepend($updateIndicator);
-    
+
     // Event handlers
     $('#check-updates').on('click', function(e) {
       e.preventDefault();
       checkForUpdates();
     });
-    
+
     $('#update-settings').on('click', function(e) {
       e.preventDefault();
       showSettingsDialog();
     });
   }
-  
+
   /**
    * Update UI based on current status
    */
@@ -135,7 +135,7 @@ var UpdateManager = (function() {
     var $badge = $indicator.find('.update-badge');
     var $statusText = $indicator.find('.status-text');
     var $icon = $indicator.find('> a > i');
-    
+
     if (updateStatus.checking) {
       $statusText.text('Checking for updates...');
       $icon.removeClass().addClass('fa fa-spinner fa-spin');
@@ -154,40 +154,40 @@ var UpdateManager = (function() {
       $badge.hide();
     }
   }
-  
+
   /**
    * Update progress bar
    */
   function updateProgressBar(progress) {
     var $progress = $('.update-progress');
     var $bar = $progress.find('.progress-bar');
-    
+
     $progress.show();
     $bar.css('width', progress.percent + '%')
         .text(Math.round(progress.percent) + '%');
-    
+
     var speed = formatBytes(progress.bytesPerSecond) + '/s';
     var downloaded = formatBytes(progress.transferred) + ' / ' + formatBytes(progress.total);
-    
+
     $('.update-info').append(
       '<p class="progress-info"><small>' + downloaded + ' (' + speed + ')</small></p>'
     );
   }
-  
+
   /**
    * Check for updates
    */
   function checkForUpdates() {
     updateStatus.checking = true;
     updateUI();
-    
+
     window.electronAPI.updater.check().catch(function(err) {
       Logger.error('Failed to check for updates:', err);
       updateStatus.checking = false;
       updateUI();
     });
   }
-  
+
   /**
    * Check update status
    */
@@ -199,7 +199,7 @@ var UpdateManager = (function() {
       Logger.error('Failed to get update status:', err);
     });
   }
-  
+
   /**
    * Show update available dialog
    */
@@ -207,16 +207,16 @@ var UpdateManager = (function() {
     var content = '<p>A new version of DAVE is available!</p>' +
       '<p><strong>Current version:</strong> ' + info.currentVersion + '<br>' +
       '<strong>New version:</strong> ' + info.version + '</p>';
-    
+
     if (info.releaseNotes) {
       content += '<h5>Release Notes:</h5>' +
         '<div style="max-height: 200px; overflow-y: auto;">' +
         info.releaseNotes +
         '</div>';
     }
-    
+
     content += '<p>Would you like to download it now?</p>';
-    
+
     var $dialog = createDialog('Update Available', content, [
       {
         text: 'Download',
@@ -234,7 +234,7 @@ var UpdateManager = (function() {
       }
     ]);
   }
-  
+
   /**
    * Show restart dialog
    */
@@ -242,7 +242,7 @@ var UpdateManager = (function() {
     var content = '<p>The update has been downloaded and is ready to install.</p>' +
       '<p>DAVE will restart to apply the update.</p>' +
       '<p><strong>Make sure to save any unsaved work before restarting.</strong></p>';
-    
+
     var $dialog = createDialog('Update Ready', content, [
       {
         text: 'Restart Now',
@@ -260,7 +260,7 @@ var UpdateManager = (function() {
       }
     ]);
   }
-  
+
   /**
    * Show settings dialog
    */
@@ -285,7 +285,7 @@ var UpdateManager = (function() {
         '<span class="help-block">Download updates in the background when available</span>' +
       '</div>' +
     '</form>';
-    
+
     var $dialog = createDialog('Update Settings', content, [
       {
         text: 'Save',
@@ -294,10 +294,10 @@ var UpdateManager = (function() {
           // Save settings
           settings.channel = $('#update-channel').val();
           settings.autoDownload = $('#auto-download').is(':checked');
-          
+
           saveSettings();
           applySettings();
-          
+
           $dialog.modal('hide');
           showNotification('Settings Saved', 'Update settings have been saved.');
         }
@@ -310,19 +310,19 @@ var UpdateManager = (function() {
       }
     ]);
   }
-  
+
   /**
    * Create dialog helper
    */
   function createDialog(title, content, buttons) {
     var dialogId = 'update-dialog-' + Date.now();
-    
+
     var buttonsHtml = '';
     buttons.forEach(function(btn) {
-      buttonsHtml += '<button type="button" class="btn ' + (btn.class || 'btn-default') + 
+      buttonsHtml += '<button type="button" class="btn ' + (btn.class || 'btn-default') +
         '" data-action="' + (btn.action || '') + '">' + btn.text + '</button>';
     });
-    
+
     var $dialog = $('<div>')
       .attr('id', dialogId)
       .addClass('modal fade')
@@ -338,21 +338,21 @@ var UpdateManager = (function() {
           '</div>' +
         '</div>'
       );
-    
+
     // Attach button handlers
     buttons.forEach(function(btn, index) {
       $dialog.find('.modal-footer button').eq(index).on('click', btn.click);
     });
-    
+
     $dialog.appendTo('body').modal('show');
-    
+
     $dialog.on('hidden.bs.modal', function() {
       $dialog.remove();
     });
-    
+
     return $dialog;
   }
-  
+
   /**
    * Show notification
    */
@@ -361,14 +361,14 @@ var UpdateManager = (function() {
     var $notification = $('<div class="update-notification">')
       .html('<strong>' + title + '</strong><br>' + message)
       .appendTo('body');
-    
+
     setTimeout(function() {
       $notification.fadeOut(function() {
         $notification.remove();
       });
     }, 5000);
   }
-  
+
   /**
    * Format bytes
    */
@@ -379,7 +379,7 @@ var UpdateManager = (function() {
     var i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
-  
+
   /**
    * Load settings from localStorage
    */
@@ -393,7 +393,7 @@ var UpdateManager = (function() {
       }
     }
   }
-  
+
   /**
    * Save settings to localStorage
    */
@@ -404,7 +404,7 @@ var UpdateManager = (function() {
       Logger.error('Failed to save update settings', e);
     }
   }
-  
+
   /**
    * Apply settings to updater
    */
@@ -412,7 +412,7 @@ var UpdateManager = (function() {
     window.electronAPI.updater.setChannel(settings.channel);
     window.electronAPI.updater.setAutoDownload(settings.autoDownload);
   }
-  
+
   // Public API
   return {
     init: init,

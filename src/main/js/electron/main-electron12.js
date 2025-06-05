@@ -37,9 +37,9 @@ let PYTHON_URL = "";
 app.whenReady().then(() => {
   mainConfig = loadConfig();
   console.log('mainConfig: ' + JSON.stringify(mainConfig));
-  
+
   createWindow(mainConfig.splash_path);
-  
+
   if (mainConfig.error == null) {
     logDebugMode = mainConfig.logDebugMode;
     PYTHON_URL = mainConfig.pythonUrl;
@@ -114,21 +114,21 @@ function loadConfig() {
     const configPath = path.join(__dirname, 'config.js');
     delete require.cache[configPath]; // Clear cache for hot reload
     const config = require(configPath);
-    
+
     const configObj = { error: null };
-    
+
     configObj.envEnabled = config.environment?.enabled === "true";
     configObj.envScriptPath = path.join(__dirname, config.environment?.path || '');
-    
+
     configObj.pythonEnabled = config.python?.enabled === "true";
     configObj.pythonPath = path.join(__dirname, config.python?.path || '');
-    configObj.pythonUrl = config.python?.url || 'http://localhost:5000';
-    
+    configObj.pythonUrl = config.python?.url || 'http://localhost:5001';
+
     configObj.logDebugMode = config.logDebugMode === "true";
     configObj.splash_path = config.splash_path || '/../../resources/templates/splash_page.html';
-    
+
     configObj.logsPath = config.logsPath || '$HOME/dave.log';
-    
+
     return configObj;
   } catch (ex) {
     return { error: ex.message };
@@ -136,18 +136,18 @@ function loadConfig() {
 }
 
 async function launchPythonServer(config) {
-  const port = config.pythonUrl.split(":")[2] || "5000";
-  
+  const port = config.pythonUrl.split(":")[2] || "5001";
+
   const inUse = await checkPortInUse(port);
   if (inUse) {
     throw new Error(`Port ${port} already in use!`);
   }
-  
+
   if (!config.pythonEnabled && !config.envEnabled) {
     log('All server modes are disabled on configuration. Connecting anyways...');
     return;
   }
-  
+
   if (config.pythonEnabled) {
     launchProcess("python", [config.pythonPath, '/tmp', '..', port, 'PY_ENV'], "Python");
   } else if (config.envEnabled) {
@@ -160,20 +160,20 @@ function launchProcess(process, argument, processName) {
     if (logDebugMode) {
       log(`Launching ${processName}... </br> CMD: ${process} ${argument} </br> CWD: ${__dirname}`);
     }
-    
+
     subpy = cp.spawn(process, argument, {
       cwd: __dirname,
       env: { ...process.env }
     });
-    
+
     processRunning = true;
-    
+
     subpy.stdout.on('data', (data) => {
       const dataStr = data.toString();
       const logMsgs = dataStr.replace(/\r?\n/g, "#")
                              .replace(/\\n/g, "#")
                              .split("#");
-      
+
       for (const msg of logMsgs) {
         if (msg) {
           if (msg.startsWith("@PROGRESS@")) {
@@ -188,20 +188,20 @@ function launchProcess(process, argument, processName) {
         }
       }
     });
-    
+
     subpy.stderr.on('data', (data) => {
       if (logDebugMode) {
         log(`${processName} Error: ${data}`, "Error");
       }
     });
-    
+
     subpy.on('close', (code) => {
       processRunning = false;
       const hadConnection = connected;
       connected = false;
       subpy = null;
       retries = 0;
-      
+
       if (code === 0) {
         log(`${processName} server stopped!`);
         if (hadConnection) {
@@ -219,7 +219,7 @@ function launchProcess(process, argument, processName) {
         log(`${processName} server stopped with code: ${code}`, "Error");
       }
     });
-    
+
   } catch (ex) {
     sendErrorToWindow("Error creating environment|");
     log(`Error on launchProcess </br> ERROR: ${ex} </br> CWD: ${__dirname}`, "Error");
@@ -233,14 +233,14 @@ async function connectToServer() {
       const seconds = retries * (retryInterval / 1000);
       log(`Connecting to server..... ${Math.ceil(seconds)}s`);
     }
-    
+
     try {
       const response = await axios.get(PYTHON_URL, { timeout: 5000 });
-      
+
       connected = true;
       console.log('Server started!');
       loadDaveContents(PYTHON_URL);
-      
+
       if (!logDebugMode) {
         prepareMenu();
       }
@@ -260,10 +260,10 @@ async function connectToServer() {
 function createWindow(splash_path) {
   console.log('Creating splash: ' + splash_path);
   mainWindow = new BrowserWindow(windowParams);
-  
+
   // Enable remote for this window (deprecated, will be removed)
   require('@electron/remote/main').enable(mainWindow.webContents);
-  
+
   mainWindow.loadFile(path.join(__dirname, splash_path));
   mainWindow.on('closed', () => {
     stop();
@@ -272,11 +272,11 @@ function createWindow(splash_path) {
 
 function loadDaveContents(url) {
   mainWindow.loadURL(url);
-  
+
   if (logDebugMode) {
     mainWindow.webContents.session.clearCache();
   }
-  
+
   mainWindow.webContents.on('did-finish-load', () => {
     log(`Electron Version: ${process.versions.electron}, ` +
         `Chrome Version: ${process.versions.chrome}, ` +
@@ -333,11 +333,11 @@ function getTailFromLogFile(logFilePath) {
     log(`Getting log info from: ${logFilePath}`, "Warn");
     const tailProc = cp.spawn("tail", ["-10", logFilePath]);
     let stdout = "";
-    
+
     tailProc.stdout.on('data', (data) => {
       stdout += data;
     });
-    
+
     tailProc.on('close', () => {
       log(`LOGFILE: ${stdout}`);
     });
@@ -346,7 +346,7 @@ function getTailFromLogFile(logFilePath) {
 
 function escapeSpecialChars(text) {
   if (typeof text !== 'string') return text;
-  
+
   return text.replace(/\r?\n/g, "#")
              .replace(/\\n/g, "#")
              .replace(/\\'/g, "")
@@ -389,7 +389,7 @@ async function sendkillToServer() {
   } catch (ex) {
     console.log('Error sending shutdown request:', ex.message);
   }
-  
+
   killServer();
   setTimeout(() => {
     app.quit();
@@ -409,8 +409,8 @@ function prepareMenu() {
       submenu: [
         { label: "About DAVE", click: showAbout },
         { type: "separator" },
-        { 
-          label: "Quit", 
+        {
+          label: "Quit",
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
           click: stop
         }
@@ -434,30 +434,30 @@ function prepareMenu() {
       ]
     }
   ];
-  
+
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 }
 
 async function checkPortInUse(port) {
   const net = require('net');
-  
+
   return new Promise((resolve) => {
     const server = net.createServer();
-    
+
     server.once('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         console.log(`Port ${port} is in use!`);
         resolve(true);
       }
     });
-    
+
     server.once('listening', () => {
       server.close();
       console.log(`Port ${port} available!`);
       resolve(false);
     });
-    
+
     server.listen(port);
   });
 }

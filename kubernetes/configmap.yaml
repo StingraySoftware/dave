@@ -4,7 +4,7 @@ metadata:
   name: dave-config
   namespace: dave
 data:
-  SERVER_PORT: "5000"
+  SERVER_PORT: "5001"
   FLASK_ENV: "production"
   LOG_LEVEL: "INFO"
   MAX_UPLOAD_SIZE: "100"  # MB

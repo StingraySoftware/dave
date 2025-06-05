@@ -89,7 +89,7 @@ checkReturnCode $? "Can´t install Stingray dependencies, error $?"
 # LAUNCH PYTHON SERVER AND PREPARE FURTHER PROCESS KILL
 echo "Launching Python Server"
 echo "@PROGRESS@|90|Launching Python Server|"
-python server.py $ENVDIR . 5000 $VERSION & >> $ENVDIR/flaskserver.log 2>&1
+python server.py $ENVDIR . 5001 $VERSION & >> $ENVDIR/flaskserver.log 2>&1
 python_pid=$!
 trap stopServer SIGHUP SIGINT SIGTERM SIGKILL
 cd -

@@ -94,7 +94,7 @@ environment=DISPLAY=":1",HOME="/home/dave"\n\
 priority=400\n\
 \n\
 [program:flask]\n\
-command=/home/dave/.pixi/envs/default/bin/python /home/dave/app/src/main/python/server.py . . 5000 0\n\
+command=/home/dave/.pixi/envs/default/bin/python /home/dave/app/src/main/python/server.py . . 5001 0\n\
 directory=/home/dave/app\n\
 autorestart=true\n\
 user=dave\n\

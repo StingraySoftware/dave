@@ -91,7 +91,7 @@ RUN echo '#!/bin/bash\n\
 # Start Xvfb\n\
 Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &\n\
 # Start Flask server\n\
-cd /home/dave/app && ./.pixi/envs/default/bin/python src/main/python/server.py . . 5000 0 &\n\
+cd /home/dave/app && ./.pixi/envs/default/bin/python src/main/python/server.py . . 5001 0 &\n\
 # Wait for Flask to start\n\
 sleep 5\n\
 # Start Electron app\n\

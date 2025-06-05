@@ -19,7 +19,7 @@ logging.basicConfig = lambda **kwargs: None
 
 # Temporarily replace sys.argv to prevent server.py from parsing test arguments
 original_argv = sys.argv
-sys.argv = ["test", ".", ".", "5000", "0"]
+sys.argv = ["test", ".", ".", "5001", "0"]
 
 import utils.dataset_cache as DsCache  # noqa: E402
 from server import app  # noqa: E402

@@ -117,9 +117,9 @@ class TestBulkAnalysisValidation:
                 intermediate_files.append(intermediate_file)
 
                 # Validate intermediate file exists
-                assert os.path.exists(intermediate_file), (
-                    f"Intermediate file not created: {intermediate_file}"
-                )
+                assert os.path.exists(
+                    intermediate_file
+                ), f"Intermediate file not created: {intermediate_file}"
 
                 # Check file is not empty
                 file_size = os.path.getsize(intermediate_file)
@@ -257,9 +257,9 @@ class TestBulkAnalysisValidation:
                     assert "filterName" in filter_item, "Filter missing filterName"
 
                     if "from" in filter_item and "to" in filter_item:
-                        assert filter_item["from"] <= filter_item["to"], (
-                            "Filter 'from' should be <= 'to'"
-                        )
+                        assert (
+                            filter_item["from"] <= filter_item["to"]
+                        ), "Filter 'from' should be <= 'to'"
 
             print(f"Configuration {config['id']} validation passed")
 

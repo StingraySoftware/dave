@@ -1153,7 +1153,7 @@ def get_phase_lag_spectrum(
                 max_time = events_table.columns[CONFIG.TIME_COLUMN].values[
                     len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1
                 ]
-                duration = [(max_time - min_time)]
+                duration = [max_time - min_time]
 
                 if "E" in events_table.columns:
                     pds, lc, gti = create_power_density_spectrum(
@@ -1326,7 +1326,7 @@ def get_rms_spectrum(
                 max_time = events_table.columns[CONFIG.TIME_COLUMN].values[
                     len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1
                 ]
-                duration = [(max_time - min_time)]
+                duration = [max_time - min_time]
 
                 if "E" in events_table.columns:
                     event_list = np.column_stack(
@@ -1569,7 +1569,7 @@ def get_rms_vs_countrate(
                 max_time = events_table.columns[CONFIG.TIME_COLUMN].values[
                     len(events_table.columns[CONFIG.TIME_COLUMN].values) - 1
                 ]
-                duration = [(max_time - min_time)]
+                duration = [max_time - min_time]
 
                 if "E" in events_table.columns:
                     event_list = np.column_stack(
