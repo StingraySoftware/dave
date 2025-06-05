@@ -275,11 +275,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      }
      return; //Comes from request abort call.
    }
+   log(JSON.stringify(data))
 
    log("onPlotDataReceived passed data!, plot" + currentObj.id);
 
    currentObj.currentRequest = null;
-   data = JSON.parse(data);
+   data = JSON.parse(JSON.stringify(data));
 
    if (!isNull(data)) {
      if (isNull(data.error)) {

@@ -654,7 +654,7 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       }
 
       log("PHData received!, PhTabPanel: " + currentObj.id);
-      data = JSON.parse(jsdata);
+      data = JSON.parse(JSON.stringify(jsdata));
 
       if (isNull(data)) {
         log("onPlotReceived wrong data!, PhTabPanel: " + currentObj.id);

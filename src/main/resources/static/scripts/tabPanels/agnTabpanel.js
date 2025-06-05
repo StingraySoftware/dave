@@ -54,7 +54,7 @@ function AGNTabPanel (id, classSelector, navItemClass, service, navBarList, pane
       }
 
       log("AGNData received!, AGNTabPanel: " + currentObj.id);
-      data = JSON.parse(jsdata);
+      data = JSON.parse(JSON.stringify(jsdata));
 
       if (isNull(data)) {
         log("onPlotDataReceived wrong data!, AGNTabPanel: " + currentObj.id);
