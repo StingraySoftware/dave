@@ -11,7 +11,7 @@ export const CONFIG = {
   DEBUG_MODE: false,
   IS_DEV_ENV: import.meta.env.DEV,
   APP_VERSION: __APP_VERSION__,
-  
+
   // API endpoints
   URLS: {
     CONFIG: '/get_config',
@@ -26,7 +26,7 @@ export const CONFIG = {
     DIVIDED_LIGHTCURVE_DS: '/get_divided_lightcurve_ds',
     DATASET_SCHEMA: '/get_dataset_schema'
   },
-  
+
   // UI Configuration
   PLOTS: {
     MIN_PLOT_POINTS: 2,
@@ -34,13 +34,13 @@ export const CONFIG = {
     DEFAULT_PLOT_WIDTH: 0,
     DEFAULT_PLOT_HEIGHT: 0
   },
-  
+
   // File handling
   FILES: {
     MAX_UPLOAD_SIZE: 250 * 1024 * 1024, // 250MB
     ALLOWED_EXTENSIONS: ['.txt', '.lc', '.evt', '.fits']
   },
-  
+
   // Performance
   CACHE: {
     ENABLED: true,
@@ -61,7 +61,7 @@ export function isDevelopment() {
 }
 
 export function getApiUrl(endpoint) {
-  const baseUrl = isDevelopment() ? 'http://localhost:5000' : '';
+  const baseUrl = isDevelopment() ? 'http://localhost:5001' : '';
   return `${baseUrl}${CONFIG.URLS[endpoint] || endpoint}`;
 }
 

@@ -6,7 +6,7 @@ module.exports = {
   python : {
     enabled : 'false',
     path : '../resources/python/server.py',
-    url : 'http://localhost:5000'
+    url : 'http://localhost:5001'
   },
   logDebugMode : 'false',
   logsPath : '$HOME/.dave/flaskserver.log',

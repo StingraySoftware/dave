@@ -332,12 +332,12 @@ class TestAGNValidation:
 
         # Validate all labels are properly formatted for MathJax
         for label in expected_labels:
-            assert label.startswith("$") and label.endswith("$"), (
-                f"Label should be MathJax formatted: {label}"
-            )
-            assert "var" in label or "sigma" in label or "chi" in label, (
-                f"Label should contain AGN-related terms: {label}"
-            )
+            assert label.startswith("$") and label.endswith(
+                "$"
+            ), f"Label should be MathJax formatted: {label}"
+            assert (
+                "var" in label or "sigma" in label or "chi" in label
+            ), f"Label should contain AGN-related terms: {label}"
 
     def test_agn_parameter_bounds(self):
         """Test AGN parameter validation bounds."""
