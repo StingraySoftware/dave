@@ -1,14 +1,14 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Channel whitelist for security
-const validChannels = {
-  send: [
+// Channel whitelist for security - using Object.freeze to prevent iteration issues
+const validChannels = Object.freeze({
+  send: Object.freeze([
     'app:ready',
     'server:launch',
     'server:relaunch',
     'server:stop'
-  ],
-  receive: [
+  ]),
+  receive: Object.freeze([
     'server:connected',
     'server:disconnected',
     'server:error',
@@ -24,8 +24,8 @@ const validChannels = {
     'updater:progress',
     'updater:downloaded',
     'app:ready'
-  ],
-  invoke: [
+  ]),
+  invoke: Object.freeze([
     'app:getConfig',
     'app:getVersion',
     'server:launch',
@@ -48,8 +48,8 @@ const validChannels = {
     'updater:getStatus',
     'updater:setChannel',
     'updater:setAutoDownload'
-  ]
-};
+  ])
+});
 
 // Expose protected electron API to the renderer
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -107,8 +107,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw new Error(`Invalid channel: ${channel}`);
     }
     
-    // Create a wrapper that removes the event parameter
-    const subscription = (event, ...args) => callback(...args);
+    // Create a wrapper that removes the event parameter - avoid spread operator in sandbox
+    const subscription = function(event) {
+      const args = Array.prototype.slice.call(arguments, 1);
+      return callback.apply(null, args);
+    };
     ipcRenderer.on(channel, subscription);
     
     // Return unsubscribe function
@@ -123,7 +126,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw new Error(`Invalid channel: ${channel}`);
     }
     
-    ipcRenderer.once(channel, (event, ...args) => callback(...args));
+    ipcRenderer.once(channel, function(event) {
+      const args = Array.prototype.slice.call(arguments, 1);
+      return callback.apply(null, args);
+    });
   },
   
   // Remove all listeners for a channel
@@ -136,18 +142,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   
   // Platform information (read-only)
-  platform: {
-    os: process.platform,
-    arch: process.arch,
-    isWindows: process.platform === 'win32',
-    isMac: process.platform === 'darwin',
-    isLinux: process.platform === 'linux',
-    versions: {
-      electron: process.versions.electron,
-      chrome: process.versions.chrome,
-      node: process.version
+  platform: (() => {
+    try {
+      return {
+        os: process.platform,
+        arch: process.arch,
+        isWindows: process.platform === 'win32',
+        isMac: process.platform === 'darwin',
+        isLinux: process.platform === 'linux',
+        versions: {
+          electron: process.versions?.electron || 'unknown',
+          chrome: process.versions?.chrome || 'unknown',
+          node: process.version || 'unknown'
+        }
+      };
+    } catch (error) {
+      console.warn('Platform info access restricted in sandbox:', error.message);
+      return {
+        os: 'unknown',
+        arch: 'unknown',
+        isWindows: false,
+        isMac: false,
+        isLinux: false,
+        versions: {
+          electron: 'unknown',
+          chrome: 'unknown',
+          node: 'unknown'
+        }
+      };
     }
-  }
+  })()
 });
 
 // Expose a compatibility layer for legacy code
@@ -169,9 +193,33 @@ contextBridge.exposeInMainWorld('daveAPI', {
   }
 });
 
+// Debug: Check what objects might be causing iteration issues
+console.log('=== PRELOAD DEBUG START ===');
+try {
+  console.log('contextBridge available:', typeof contextBridge);
+  console.log('ipcRenderer available:', typeof ipcRenderer);
+  
+  // Check if validChannels arrays are properly iterable
+  console.log('validChannels.send is array:', Array.isArray(validChannels.send));
+  console.log('validChannels.receive is array:', Array.isArray(validChannels.receive));
+  console.log('validChannels.invoke is array:', Array.isArray(validChannels.invoke));
+  
+  // Test iteration on the arrays
+  console.log('Testing validChannels.send iteration...');
+  for (const channel of validChannels.send) {
+    // Just test iteration, don't log each item
+    break;
+  }
+  console.log('validChannels.send iteration OK');
+  
+} catch (error) {
+  console.error('PRELOAD DEBUG ERROR:', error);
+}
+
 // Log initialization
 console.log('DAVE preload script initialized');
 console.log('Platform:', process.platform);
 console.log('Electron:', process.versions.electron);
 console.log('Node:', process.version);
 console.log('Chrome:', process.versions.chrome);
+console.log('=== PRELOAD DEBUG END ===');

@@ -57,8 +57,8 @@ const windowConfig = {
   }
 };
 
-// Enable sandboxing for all renderers
-app.enableSandbox();
+// Sandboxing is enabled per-window in webPreferences.sandbox
+// app.enableSandbox(); // Removed global sandbox to avoid conflicts
 
 // Set application name
 app.setName('DAVE');

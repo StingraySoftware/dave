@@ -88,6 +88,7 @@ scipy = ">=1.15.2,<2"
 matplotlib = ">=3.10.3,<4"
 ruff = ">=0.9.4,<1"
 pylru = ">=1.2.1,<2"
+netcdf4 = ">=1.7.1,<2"
 
 [pypi-dependencies]
 stingray = ">=2.2.7, <3"
