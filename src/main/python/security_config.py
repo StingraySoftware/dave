@@ -26,9 +26,11 @@ class SecurityConfig:
 
     # File Upload Security
     MAX_CONTENT_LENGTH = (
-        int(os.environ.get("MAX_UPLOAD_SIZE_MB", "100")) * 1024 * 1024
-    )  # MB to bytes
-    ALLOWED_EXTENSIONS = {".txt", ".lc", ".evt", ".fits", ".fit", ".fts", ".gz", ".p", ".nc"}
+        int(os.environ.get("MAX_UPLOAD_SIZE_MB", "500")) * 1024 * 1024
+    )
+    ALLOWED_EXTENSIONS = {
+        ".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".fts", ".gz", ".p", ".nc",
+    }
     UPLOAD_FOLDER_PERMISSIONS = 0o755
 
     # Rate Limiting

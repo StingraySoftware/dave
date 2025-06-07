@@ -1,13 +1,13 @@
 import bisect
 
 import numpy as np
-from config import CONFIG
-from model.table import Table
 from stingray import Lightcurve
 from stingray.events import EventList
 from stingray.gti import gti_len, join_gtis
 
 import utils.dave_logger as logging
+from config import CONFIG
+from model.table import Table
 
 
 # Returns an Stingray EventList from a given events dataset

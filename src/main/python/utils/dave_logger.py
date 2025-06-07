@@ -1,8 +1,7 @@
 import logging
 
-from config import CONFIG
-
 import utils.gevent_helper as GeHelper
+from config import CONFIG
 
 # LOGGING WRAPPED METHODS
 # ALL = -1, DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3, NONE = 4

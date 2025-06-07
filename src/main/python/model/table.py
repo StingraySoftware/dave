@@ -1,6 +1,6 @@
 import numpy as np
-import utils.dave_logger as logging
 
+import utils.dave_logger as logging
 from model.column import Column
 
 

@@ -6,17 +6,16 @@ try:
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
-    import mimetypes
     import utils.dave_logger as logging
     logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
 
-from config import CONFIG
 from security_config import SecurityConfig
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
+from config import CONFIG
 
 
 def get_destination(target, filename):
@@ -78,16 +77,16 @@ def is_valid_file(destination):
             valid_extensions = ['.txt', '.dat', '.lc', '.evt', '.fits', '.fit', '.gz', '.p', '.nc']
             if file_extension in valid_extensions:
                 return True
-            
+
             # For files without extension, try to check if it's text
             if file_extension == '':
                 try:
-                    with open(destination, 'r', encoding='utf-8') as f:
+                    with open(destination, encoding='utf-8') as f:
                         f.read(1024)  # Try reading first 1KB as text
                     return True
                 except:
                     return False
-            
+
             return False
     except:
         return False

@@ -2,23 +2,23 @@
 Security utilities for DAVE application
 """
 
-import os
-import re
 import hashlib
 import hmac
+import os
+import re
 from functools import wraps
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any
 
-from flask import request, jsonify, abort
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
-
+from flask import jsonify, request
 from security_config import SecurityConfig
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
+
 import utils.dave_logger as logging
 
 
-def sanitize_path(filepath: str, base_path: str) -> Optional[str]:
+def sanitize_path(filepath: str, base_path: str) -> str | None:
     """
     Sanitize file path to prevent directory traversal attacks
 
@@ -46,7 +46,7 @@ def sanitize_path(filepath: str, base_path: str) -> Optional[str]:
 
 
 def validate_file_upload(
-    file: FileStorage, allowed_extensions: Optional[set] = None
+    file: FileStorage, allowed_extensions: set | None = None
 ) -> tuple[bool, str]:
     """
     Validate uploaded file
@@ -73,8 +73,14 @@ def validate_file_upload(
         allowed_extensions = SecurityConfig.ALLOWED_EXTENSIONS
 
     ext = os.path.splitext(filename)[1].lower()
-    if ext not in allowed_extensions:
-        return False, f"File type not allowed. Allowed types: {', '.join(allowed_extensions)}"
+
+    # Convert allowed_extensions to lowercase for case-insensitive comparison
+    allowed_extensions_lower = {ext.lower() for ext in allowed_extensions}
+
+    if ext not in allowed_extensions_lower:
+        # Log more detailed validation failure
+        logging.warning(f"File type validation failed for '{filename}' with extension '{ext}'. Allowed: {allowed_extensions_lower}")
+        return False, f"File type not allowed. Allowed types: {', '.join(sorted(allowed_extensions_lower))}"
 
     # Additional validation could include:
     # - Magic byte validation
@@ -118,7 +124,7 @@ def sanitize_input(data: Any, max_depth: int = 10) -> Any:
         return data
 
 
-def sanitize_log_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def sanitize_log_data(data: dict[str, Any]) -> dict[str, Any]:
     """
     Sanitize sensitive data before logging
 
@@ -143,7 +149,7 @@ def sanitize_log_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return sanitized
 
 
-def validate_request_data(schema: Dict[str, Any]):
+def validate_request_data(schema: dict[str, Any]):
     """
     Decorator to validate request data against a schema
 
@@ -255,7 +261,7 @@ def validate_csrf_token(token: str) -> bool:
     return hasattr(request, "csrf_token") and hmac.compare_digest(request.csrf_token, token)
 
 
-def hash_password(password: str, salt: Optional[bytes] = None) -> tuple[str, str]:
+def hash_password(password: str, salt: bytes | None = None) -> tuple[str, str]:
     """
     Hash password using PBKDF2
 

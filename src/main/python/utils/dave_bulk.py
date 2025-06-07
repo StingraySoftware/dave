@@ -1,4 +1,3 @@
-from config import CONFIG
 from hendrics.io import HEN_FILE_EXTENSION
 from hendrics.lcurve import main as MPlcurve
 
@@ -7,6 +6,7 @@ import utils.dave_reader as DaveReader
 import utils.exception_helper as ExHelper
 import utils.file_utils as FileUtils
 import utils.filters_helper as FltHelper
+from config import CONFIG
 
 
 # get_intermediate_file: Returns the filename of the intermediate file

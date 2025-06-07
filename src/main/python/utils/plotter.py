@@ -1,7 +1,7 @@
 import numpy as np
-from config import CONFIG
 
 import utils.dave_logger as logging
+from config import CONFIG
 
 
 def get_plotdiv_xy(dataset, axis):
@@ -74,4 +74,4 @@ def convert_fig_to_html(fig):
     canvas.print_png(png_output)
     data = png_output.getvalue()
 
-    return '<img src="data:image/png;base64,{}">'.format(base64.encodebytes(data).decode())
+    return f'<img src="data:image/png;base64,{base64.encodebytes(data).decode()}">'

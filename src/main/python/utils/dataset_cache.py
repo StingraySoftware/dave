@@ -2,10 +2,10 @@ import hashlib
 from random import randint
 
 import pylru
-from config import CONFIG
 
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
+from config import CONFIG
 
 cached_datasets = pylru.lrucache(CONFIG.PYTHON_CACHE_SIZE)
 

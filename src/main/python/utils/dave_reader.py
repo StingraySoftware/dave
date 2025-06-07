@@ -7,23 +7,22 @@ try:
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
-    import mimetypes
     import utils.dave_logger as logging
 
     logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
 
-import model.dataset as DataSet
 import numpy as np
 from astropy.io import fits
-from config import CONFIG
 from hendrics.io import load_data, load_lcurve
 from hendrics.lcurve import lcurve_from_fits
 from stingray.gti import get_gti_from_hdu
 from stingray.io import load_events_and_gtis
 
+import model.dataset as DataSet
 import utils.dataset_cache as DsCache
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
+from config import CONFIG
 
 print("dave_reader loaded")
 
@@ -55,7 +54,7 @@ def get_file_type_from_extension(destination):
         except:
             try:
                 # Try to read as text
-                with open(destination, "r", encoding="utf-8") as f:
+                with open(destination, encoding="utf-8") as f:
                     f.read(1024)
                 return "ASCII text"
             except:

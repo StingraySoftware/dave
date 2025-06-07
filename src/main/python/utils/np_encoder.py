@@ -1,10 +1,10 @@
 import json
 
 import numpy
-from config import CONFIG
 
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
+from config import CONFIG
 
 
 class NPEncoder(json.JSONEncoder):

@@ -20,10 +20,10 @@ def getException(method_name):
     lineno = tb.tb_lineno
     filename = f.f_code.co_filename
 
-    print("EXCEPTION {} IN ({}, LINE {}): {}".format(method_name, filename, lineno, exc_obj))
+    print(f"EXCEPTION {method_name} IN ({filename}, LINE {lineno}): {exc_obj}")
     print_full_stack()
 
-    return "EXCEPTION {} IN ({}, LINE {}): {}".format(method_name, filename, lineno, exc_obj)
+    return f"EXCEPTION {method_name} IN ({filename}, LINE {lineno}): {exc_obj}"
 
 
 def getWarnMsg():

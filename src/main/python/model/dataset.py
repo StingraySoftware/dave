@@ -1,11 +1,11 @@
 from random import randint
 
 import numpy as np
+
 import utils.dataset_helper as DsHelper
 import utils.dave_logger as logging
 import utils.filters_helper as FltHelper
 from config import CONFIG
-
 from model.table import Table
 
 

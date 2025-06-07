@@ -16,27 +16,52 @@ def upload(files: list[FileStorage], target: str) -> Response | dict[str, str]:
         return common_error("No sent files")
 
     filenames = []
+    upload_errors = []
 
     for file in files:
-        # Looks if same filename was previously uploaded
-        if not FileUtils.file_exist(target, file.filename):
-            destination = FileUtils.save_file(target, file)
+        try:
+            # Validate filename first
+            if not file.filename:
+                upload_errors.append(f"File {len(filenames) + 1}: No filename provided")
+                continue
 
-            if not destination:
-                return common_error("Error uploading file...")
+            # Looks if same filename was previously uploaded
+            if not FileUtils.file_exist(target, file.filename):
+                destination = FileUtils.save_file(target, file)
 
-            if not FileUtils.is_valid_file(destination):
-                return common_error("File format is not supported...")
+                if not destination:
+                    upload_errors.append(f"File '{file.filename}': Upload failed - invalid destination")
+                    continue
 
-            logging.info("Uploaded filename: %s" % destination)
-        else:
-            destination = FileUtils.get_destination(target, file.filename)
-            logging.info("Previously uploaded filename: %s" % destination)
+                if not FileUtils.is_valid_file(destination):
+                    upload_errors.append(f"File '{file.filename}': File format not supported")
+                    continue
 
-        SessionHelper.add_uploaded_file_to_session(file.filename)
-        filenames.append(file.filename)
+                logging.info("Successfully uploaded: %s" % destination)
+            else:
+                destination = FileUtils.get_destination(target, file.filename)
+                logging.info("Previously uploaded file found: %s" % destination)
 
-    return jsonify(filenames)
+            SessionHelper.add_uploaded_file_to_session(file.filename)
+            filenames.append(file.filename)
+
+        except Exception as e:
+            logging.error(f"Error processing file '{file.filename if file.filename else 'unknown'}': {str(e)}")
+            upload_errors.append(f"File '{file.filename if file.filename else 'unknown'}': {str(e)}")
+            continue
+
+    # Return results based on success/failure counts
+    if len(filenames) == 0 and len(upload_errors) > 0:
+        # All files failed
+        return common_error(f"All uploads failed: {'; '.join(upload_errors)}")
+    elif len(upload_errors) > 0:
+        # Some files failed, some succeeded
+        logging.warning(f"Partial upload success. Errors: {'; '.join(upload_errors)}")
+        # Return successful filenames but log errors
+        return jsonify({"filenames": filenames, "warnings": upload_errors})
+    else:
+        # All files succeeded
+        return jsonify(filenames)
 
 
 # Returns filename destination or a valid cache key, None if invalid
@@ -138,7 +163,9 @@ def apply_rmf_file_to_dataset(
 
 
 def common_error(error: str) -> Response:
-    return jsonify(error=error)
+    """Return a standardized error response"""
+    logging.error(f"API Error: {error}")
+    return jsonify(error=error), 400
 
 
 def get_plot_data(

@@ -4,7 +4,6 @@ import numpy as np
 import scipy as sp
 from astropy.stats import poisson_conf_interval
 from astropy.timeseries import LombScargle
-from config import CONFIG
 from stingray import (
     AveragedCrossspectrum,
     AveragedPowerspectrum,
@@ -31,6 +30,7 @@ import utils.exception_helper as ExHelper
 import utils.filters_helper as FltHelper
 import utils.model_helper as ModelHelper
 import utils.plotter as Plotter
+from config import CONFIG
 
 
 # get_dataset_schema: Returns the schema of a dataset of given file
