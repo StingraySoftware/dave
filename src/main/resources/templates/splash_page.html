@@ -125,11 +125,11 @@
 
       function sendEventToElectron (event) {
         if (event === 'onBrowserReady') {
-          // Use the compatibility API from the preload script
-          if (window.daveAPI && window.daveAPI.onBrowserReady) {
-            window.daveAPI.onBrowserReady();
+          // Use the modern secure API instead of deprecated compatibility layer
+          if (window.electronAPI && window.electronAPI.server && window.electronAPI.server.launch) {
+            window.electronAPI.server.launch();
           } else {
-            logErr('daveAPI not available - preload script may not have loaded');
+            logErr('electronAPI not available - preload script may not have loaded');
           }
         }
       }
