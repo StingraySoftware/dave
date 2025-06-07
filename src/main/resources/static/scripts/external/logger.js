@@ -66,7 +66,6 @@ function logInfo (msg) { log(msg, "LogInfo") };
 function logWarn (msg) { log(msg, "LogWarn") };
 function logErr (msg) {
   log(msg, "LogError");
-  gaTracker.sendEvent("Logger", "LogError", msg);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

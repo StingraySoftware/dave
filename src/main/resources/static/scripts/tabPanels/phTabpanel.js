@@ -241,7 +241,6 @@ function PHTabPanel (id, classSelector, navItemClass, service, navBarList, panel
     var searchBtn = $('<button class="btn btn-primary searchBtn"><i class="fa ffa-signal" aria-hidden="true"></i> Run Pulse Search</button>');
     searchBtn.click(function () {
       currentObj.onPulseSearchClick();
-      gaTracker.sendEvent("Phaseogram", "PulseSearchClick", currentObj.id);
     });
     $pulseSearchContainer.append(searchBtn);
     this.toolPanel.$html.find(".fileSelectorsContainer").append(this.pulseSearchSection);

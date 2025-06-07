@@ -35,7 +35,6 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     this.$html.find(".plotTools").append(this.btnFit);
     this.btnFit.click(function(event){
       onFitPlotClicked(currentObj);
-      gaTracker.sendEvent("Plots", "FitPlotClicked", currentObj.getTitle());
     });
   }
 

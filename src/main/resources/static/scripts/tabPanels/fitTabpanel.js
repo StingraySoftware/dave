@@ -178,7 +178,6 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     $container.append(btnBack);
     btnBack.click(function(event){
       currentObj.toolPanel.showPanel("loadPanel");
-      gaTracker.sendEvent("Fitting", "BackFromBayParamEst", currentObj.id);
     });
 
     //For each model add its parameters controls
@@ -259,7 +258,6 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     var $parEstBtn = $('<button class="btn btn-danger parEstBtn"><i class="fa fa-line-chart" aria-hidden="true"></i> BAYESIAN PAR. EST.</button>');
     $parEstBtn.click(function(event){
       currentObj.launchBayesianParEst();
-      gaTracker.sendEvent("Fitting", "launchBayesianParEst", currentObj.id);
     });
     $container.append($parEstBtn);
 

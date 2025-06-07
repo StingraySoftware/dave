@@ -57,10 +57,8 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
-        gaTracker.sendEvent("Plots", "Show", currentObj.getTitle());
       } else {
         currentObj.hide();
-        gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
       }
    });
    this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + this.getTitle());
@@ -69,7 +67,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
       currentObj.hide();
-      gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
    });
  } else {
    this.$html.find(".btnHidePlot").remove();
@@ -124,19 +121,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       buttons: {
         'Save as PNG': function() {
            currentObj.saveAsPNG();
-           gaTracker.sendEvent("Plots", "saveAsPNG", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as PDF': function() {
           currentObj.saveAsPDF();
-          gaTracker.sendEvent("Plots", "saveAsPDF", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as CSV': function() {
           currentObj.saveAsCSV();
-          gaTracker.sendEvent("Plots", "saveAsCSV", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         }
@@ -152,7 +146,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       buttons: {
         'Load CSV File': function() {
            currentObj.loadCSVFile();
-           gaTracker.sendEvent("Plots", "loadCSVFile", currentObj.getTitle());
            $(this).dialog('close');
            loadDialog.remove();
         },
@@ -169,7 +162,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.btnStyle.click(function( event ) {
    currentObj.sendPlotEvent('on_style_click', {});
-   gaTracker.sendEvent("Plots", "styleClick", currentObj.getTitle());
  });
 
  if (switchable) {
@@ -179,7 +171,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
       currentObj.refreshData();
-      gaTracker.sendEvent("Plots", "switchAxes", currentObj.getTitle());
    });
  }
 
@@ -920,13 +911,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         'Add label': function() {
            var labelText = $('#dialog_' + currentObj.id).find('input[name="labelText"]').val();
            currentObj.addAnnotation(labelText, x, y);
-           gaTracker.sendEvent("Plots", "addAnnotation", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Clear all': function() {
            currentObj.annotations = [];
            currentObj.redrawDiffered();
-           gaTracker.sendEvent("Plots", "clearAnnotations", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Cancel': function() {

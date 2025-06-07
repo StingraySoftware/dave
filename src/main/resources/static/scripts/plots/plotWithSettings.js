@@ -25,7 +25,6 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.$html.find(".plotTools").append(this.btnSettings);
   this.btnSettings.click(function(event){
     currentObj.showSettings();
-    gaTracker.sendEvent("Plots", "ShowPlotSettings", currentObj.getTitle());
   });
 
   this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '" data-toggle="tooltip" title="Close plot settings"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
@@ -34,7 +33,6 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.btnBack.click(function(event){
     currentObj.hideSettings();
     currentObj.refreshData();
-    gaTracker.sendEvent("Plots", "HidePlotSettings", currentObj.getTitle());
   });
 
   //PlotWithSettings plot methods:
@@ -254,7 +252,6 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.fitWhiteNoiseLink = this.settingsPanel.find(columnClass).find(".btnFitWNO");
       this.fitWhiteNoiseLink.click(function(event){
         currentObj.showFitWhiteNoiseDialog();
-        gaTracker.sendEvent("Plots", "FitWhiteNoiseClicked", currentObj.getTitle());
       });
       setVisibility(this.fitWhiteNoiseLink, unchecked);
 

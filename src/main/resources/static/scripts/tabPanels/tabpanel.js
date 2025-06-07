@@ -48,7 +48,6 @@ function TabPanel (id, classSelector, navItemClass, navBarList, panelContainer) 
     setTimeout(function () {
       //Sends page view metric
       if (!isNull(currentObj.getPageName())){
-        gaTracker.sendPage(currentObj.getPageName());
       }
     }, 250);
   }

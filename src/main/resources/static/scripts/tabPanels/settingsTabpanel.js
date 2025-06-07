@@ -141,7 +141,6 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
 
     showMsg("Telescops configuration", msg);
 
-    gaTracker.sendEvent("GeneralSettings", "btnTelescopConfig", currentObj.id);
   });
 
   $advSettings.append(getTextBox ("EVENTS_STRING_" + this.id, "inputEVENTS_STRING width80",
@@ -209,5 +208,4 @@ function showAboutDialog() {
           "<p>© 2016 Timelab Technologies Ltd.</p>" +
           "<p style='float: right; font-size: 0.85em;'>DAVE Version: " + version + "</p>");
 
-  gaTracker.sendEvent("GeneralSettings", "btnAboutDave", "SettingsTabPanel");
 }

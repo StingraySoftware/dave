@@ -33,11 +33,9 @@ function DynSpPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPl
     if (currentObj.plotConfig.plotStyle == "3d") {
       currentObj.plotConfig.plotStyle = "2d";
       currentObj.btnStyle.html("3D");
-      gaTracker.sendEvent("Plots", "DYN_PDS-2d", currentObj.getTitle());
     } else {
       currentObj.plotConfig.plotStyle = "3d";
       currentObj.btnStyle.html("2D");
-      gaTracker.sendEvent("Plots", "DYN_PDS-3d", currentObj.getTitle());
     }
     setVisibility(currentObj.settingsPanel.find(".AxisType"), currentObj.plotConfig.plotStyle == "3d");
     currentObj.refreshData();
