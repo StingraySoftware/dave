@@ -49,7 +49,7 @@ const windowConfig = {
   webPreferences: {
     contextIsolation: true,
     nodeIntegration: false,
-    sandbox: true,
+    sandbox: false,
     webSecurity: true,
     allowRunningInsecureContent: false,
     preload: path.join(__dirname, 'preload.js'),
