@@ -55,8 +55,8 @@ forge-make-win = "cd src/main/js/electron && npm run forge:make-win"
 forge-publish = "cd src/main/js/electron && npm run forge:publish"
 
 # E2E testing
-test-e2e = "cd tests && npx playwright test"
-test-e2e-install = "cd tests && npx playwright install"
+test-e2e = "cd tests && npm test"
+test-e2e-install = "cd tests && npm install && npx playwright install"
 
 # Development mode with auto-reload
 dev = { cmd = "python -m watchdog.auto_restart --pattern='*.py' --recursive src/main/python -- python src/main/python/server.py", env = { FLASK_DEBUG = "1" } }
