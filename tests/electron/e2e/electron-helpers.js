@@ -8,16 +8,36 @@ class ElectronAppHelper {
   }
 
   async launch(options = {}) {
-    // Launch Electron app
-    this.app = await electron.launch({
-      args: [path.join(__dirname, '../../../src/main/js/electron/main.js')],
+    // Prepare launch arguments for CI environment
+    const baseArgs = [path.join(__dirname, '../../../src/main/js/electron/main.js')];
+    
+    // Prepare Electron launch options
+    const launchOptions = {
+      args: baseArgs,
       env: {
         ...process.env,
         NODE_ENV: 'test',
         DAVE_TEST_MODE: 'true'
       },
       ...options
-    });
+    };
+    
+    // Add sandbox-disabling arguments for CI environments or Linux
+    if (process.env.CI || process.env.GITHUB_ACTIONS || process.platform === 'linux') {
+      launchOptions.executablePath = undefined; // Let Playwright find Electron
+      launchOptions.args = [
+        '--no-sandbox',
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--disable-gpu',
+        '--disable-web-security',
+        ...baseArgs
+      ];
+    }
+    
+    // Launch Electron app
+    this.app = await electron.launch(launchOptions);
 
     // Get the first window
     this.window = await this.app.firstWindow();

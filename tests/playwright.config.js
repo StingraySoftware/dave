@@ -20,8 +20,8 @@ module.exports = defineConfig({
       use: {
         // Use Playwright's Electron support
         launchOptions: {
-          args: ['main.js'],
-          executablePath: require('electron'),
+          // Let electron-helpers.js handle the launch configuration
+          // This avoids conflicts with our custom sandbox handling
         },
       },
     },
