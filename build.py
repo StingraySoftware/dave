@@ -41,7 +41,7 @@ class DaveBuilder:
             raise ValueError(f"Unsupported platform: {system}")
     
     def _generate_version(self) -> str:
-        """Generate version string from git and timestamp"""
+        """Generate semantic version string from git and timestamp"""
         try:
             # Get git commit hash
             commit = subprocess.check_output(
@@ -52,17 +52,21 @@ class DaveBuilder:
         except (subprocess.CalledProcessError, FileNotFoundError):
             commit = "unknown"
         
-        # Generate timestamp
-        timestamp = datetime.now().strftime("%Y%m%d.%H%M%S")
+        # Generate timestamp components for semantic versioning
+        now = datetime.now()
+        major = 2  # Project version
+        minor = now.year - 2020  # Years since 2020
+        patch = now.month * 100 + now.day  # MMDD format
         
         # Check for CI build number
         build_number = os.environ.get("BUILD_NUMBER")
         job_name = os.environ.get("JOB_NAME", "dave")
         
         if build_number:
-            return f"{job_name}-build{build_number}"
+            return f"{major}.{minor}.{build_number}"
         else:
-            return f"{timestamp}-{commit}"
+            # Use semantic versioning: MAJOR.MINOR.PATCH-PRERELEASE
+            return f"{major}.{minor}.{patch}-dev.{commit}"
     
     def _update_package_json(self) -> None:
         """Update version in package.json"""
@@ -159,16 +163,24 @@ class DaveBuilder:
         """Copy additional resources to build output"""
         print("Copying resources...")
         
-        # Platform-specific resource paths
+        # Detect current architecture
+        import platform
+        arch = platform.machine().lower()
+        if arch == 'aarch64':
+            arch = 'arm64'
+        elif arch in ['x86_64', 'amd64']:
+            arch = 'x64'
+        
+        # Platform-specific resource paths (using actual electron-builder output structure)
         if self.platform_name == "linux":
-            resources_dir = self.electron_dir / "build" / "DAVEApp-linux-x64" / "resources"
+            resources_dir = self.project_root / "build" / f"linux-{arch}" / "resources"
         elif self.platform_name == "macos":
             resources_dir = (
-                self.electron_dir / "build" / "DAVEApp-darwin-x64" / 
-                "DAVEApp.app" / "Contents" / "Resources"
+                self.project_root / "build" / f"mac-{arch}" / 
+                "DAVE.app" / "Contents" / "Resources"
             )
         elif self.platform_name == "windows":
-            resources_dir = self.electron_dir / "build" / "DAVEApp-win32-x64" / "resources"
+            resources_dir = self.project_root / "build" / f"win-{arch}" / "resources"
         else:
             raise ValueError(f"Unknown platform: {self.platform_name}")
         
@@ -219,16 +231,24 @@ class DaveBuilder:
         # Ensure dist directory exists
         self.dist_dir.mkdir(exist_ok=True)
         
-        # Determine build output directory
+        # Detect current architecture
+        import platform
+        arch = platform.machine().lower()
+        if arch == 'aarch64':
+            arch = 'arm64'
+        elif arch in ['x86_64', 'amd64']:
+            arch = 'x64'
+        
+        # Determine build output directory (using actual electron-builder output structure)
         if self.platform_name == "linux":
-            build_output = self.electron_dir / "build" / "DAVEApp-linux-x64"
-            archive_name = f"DAVEApp-{self.version}-linux-x64.zip"
+            build_output = self.project_root / "build" / f"linux-{arch}"
+            archive_name = f"DAVE-{self.version}-linux-{arch}.zip"
         elif self.platform_name == "macos":
-            build_output = self.electron_dir / "build" / "DAVEApp-darwin-x64"
-            archive_name = f"DAVEApp-{self.version}-darwin-x64.zip"
+            build_output = self.project_root / "build" / f"mac-{arch}"
+            archive_name = f"DAVE-{self.version}-darwin-{arch}.zip"
         elif self.platform_name == "windows":
-            build_output = self.electron_dir / "build" / "DAVEApp-win32-x64"
-            archive_name = f"DAVEApp-{self.version}-win32-x64.zip"
+            build_output = self.project_root / "build" / f"win-{arch}"
+            archive_name = f"DAVE-{self.version}-win32-{arch}.zip"
         else:
             raise ValueError(f"Unknown platform: {self.platform_name}")
         
@@ -271,16 +291,11 @@ class DaveBuilder:
         print("\nRunning Python tests...")
         self._run_command(["pixi", "run", "test"])
         
-        # Run Electron tests if they exist
-        test_script = self.electron_dir / "package.json"
-        with open(test_script) as f:
-            package_data = json.load(f)
-        
-        if "test" in package_data.get("scripts", {}):
-            print("\nRunning Electron tests...")
-            self._run_command(["npm", "test"], cwd=self.electron_dir)
+        # Run E2E tests using pixi
+        print("\nRunning Electron E2E tests...")
+        self._run_command(["pixi", "run", "test-e2e"])
     
-    def full_build(self, use_forge: bool = False) -> Path:
+    def full_build(self, use_forge: bool = True) -> Path:
         """Execute full build pipeline"""
         print(f"Starting full build for {self.platform_name}")
         print(f"Version: {self.version}")
@@ -325,9 +340,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python build.py                    # Full build for current platform
+  python build.py                    # Full build for current platform (uses Forge)
   python build.py --platform linux   # Build for specific platform
-  python build.py --forge            # Use Electron Forge instead of Builder
+  python build.py --legacy           # Use legacy Electron Builder instead of Forge
   python build.py --clean            # Clean build artifacts
   python build.py --test             # Run tests only
         """
@@ -341,7 +356,13 @@ Examples:
     parser.add_argument(
         "--forge",
         action="store_true",
-        help="Use Electron Forge instead of Electron Builder"
+        default=True,
+        help="Use Electron Forge (default: True)"
+    )
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Use legacy Electron Builder instead of Forge"
     )
     parser.add_argument(
         "--clean",
@@ -375,7 +396,8 @@ Examples:
                 builder.run_tests()
             
             # Execute full build
-            builder.full_build(use_forge=args.forge)
+            use_forge = not args.legacy  # Use Forge unless --legacy is specified
+            builder.full_build(use_forge=use_forge)
             
     except KeyboardInterrupt:
         print("\nBuild interrupted by user")

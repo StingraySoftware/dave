@@ -5,7 +5,7 @@ from config import CONFIG
 
 
 def createFilter(table, column, from_val, to_val, source=None):
-    filter = dict()
+    filter = {}
     filter["table"] = table
     filter["column"] = column
     filter["from"] = from_val

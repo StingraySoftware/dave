@@ -79,8 +79,13 @@ def validate_file_upload(
 
     if ext not in allowed_extensions_lower:
         # Log more detailed validation failure
-        logging.warning(f"File type validation failed for '{filename}' with extension '{ext}'. Allowed: {allowed_extensions_lower}")
-        return False, f"File type not allowed. Allowed types: {', '.join(sorted(allowed_extensions_lower))}"
+        logging.warning(
+            f"File type validation failed for '{filename}' with extension '{ext}'. Allowed: {allowed_extensions_lower}"
+        )
+        return (
+            False,
+            f"File type not allowed. Allowed types: {', '.join(sorted(allowed_extensions_lower))}",
+        )
 
     # Additional validation could include:
     # - Magic byte validation
@@ -184,7 +189,7 @@ def validate_request_data(schema: dict[str, Any]):
                         ), 400
 
                     # Min/max validation for numbers
-                    if isinstance(value, (int, float)):
+                    if isinstance(value, int | float):
                         min_val = rules.get("min")
                         max_val = rules.get("max")
 

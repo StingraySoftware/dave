@@ -22,20 +22,27 @@ class ServerSentEvent:
     def encode(self):
         if not self.data:
             return ""
-        lines = ["%s: %s" % (v, k) for k, v in self.desc_map.items() if k]
+        lines = [f"{v}: {k}" for k, v in self.desc_map.items() if k]
 
-        return "%s\n\n" % "\n".join(lines)
+        return "{}\n\n".format("\n".join(lines))
 
 
 def start(server_port, app):
     server = WSGIServer(("", server_port), app)
     try:
+        print(f"Starting server on port {server_port}")
         server.serve_forever()
     except KeyboardInterrupt:
+        print("Server interrupted by KeyboardInterrupt")
         pass
+    except Exception as e:
+        print(f"Server error: {e}")
+        raise
     finally:
+        print("Cleaning up server...")
         # Clean-up server (close socket, etc.)
         server.close()
+        print("Server cleanup completed")
 
 
 def subscribe():

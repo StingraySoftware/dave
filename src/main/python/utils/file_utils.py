@@ -3,10 +3,12 @@ import os
 # Handle libmagic import gracefully
 try:
     import magic
+
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
     import utils.dave_logger as logging
+
     logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
 
 from security_config import SecurityConfig
@@ -47,7 +49,7 @@ def get_destination(target, filename):
                 logging.error(f"Invalid filename: {filename}")
                 return ""
             return os.path.join(target, safe_filename)
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_destination"))
         return ""
 
@@ -74,21 +76,21 @@ def is_valid_file(destination):
             )
         else:
             # Fallback to file extension checking
-            valid_extensions = ['.txt', '.dat', '.lc', '.evt', '.fits', '.fit', '.gz', '.p', '.nc']
+            valid_extensions = [".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".gz", ".p", ".nc"]
             if file_extension in valid_extensions:
                 return True
 
             # For files without extension, try to check if it's text
-            if file_extension == '':
+            if file_extension == "":
                 try:
-                    with open(destination, encoding='utf-8') as f:
+                    with open(destination, encoding="utf-8") as f:
                         f.read(1024)  # Try reading first 1KB as text
                     return True
-                except:
+                except (UnicodeDecodeError, OSError):
                     return False
 
             return False
-    except:
+    except Exception:
         return False
 
 
@@ -98,7 +100,7 @@ def is_valid_file(destination):
 # @param: target: folder name for upload destination
 #
 def save_file(target: str, file: FileStorage) -> str:
-    logging.debug("save_file: %s - %s" % (type(file), file))
+    logging.debug(f"save_file: {type(file)} - {file}")
 
     # Import security utils
     from utils.security_utils import validate_file_upload

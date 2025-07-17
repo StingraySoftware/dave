@@ -13,3 +13,21 @@ flaskserver.log
 # pixi environments
 .pixi
 *.egg-info
+
+# Test files
+.coverage
+temp_docs/
+test-results/
+.DS_Store
+CLAUDE.md
+
+# Build outputs
+src/main/js/electron/out/
+src/main/js/electron/node_modules/
+dist/
+*.dmg
+*.zip
+*.deb
+*.rpm
+*.exe
+*.AppImage

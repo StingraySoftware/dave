@@ -1,6 +1,75 @@
 // Plotly.js Migration Helper Functions
 // For migrating from Plotly 1.30.1 to 2.35.2
 
+// Fix for Electron context isolation - ensure Plotly is available globally
+(function() {
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePlotly);
+  } else {
+    initializePlotly();
+  }
+  
+  function initializePlotly() {
+    // In Electron with context isolation, Plotly might not expose itself to window
+    // This ensures it's available globally for our application
+    var attempts = 0;
+    var maxAttempts = 50; // 5 seconds max
+    
+    function checkPlotly() {
+      attempts++;
+      
+      // Check if Plotly is already available
+      if (typeof window.Plotly !== 'undefined') {
+        console.log('Plotly already available globally');
+        return;
+      }
+      
+      // Try to find Plotly in various locations
+      var plotlyObj = null;
+      
+      // Check if it's in a module context
+      if (typeof Plotly !== 'undefined') {
+        plotlyObj = Plotly;
+      }
+      
+      // Check if it was loaded but not exposed
+      try {
+        // Some versions expose themselves differently
+        if (typeof require !== 'undefined') {
+          // This won't work in browser context, but we're checking anyway
+          plotlyObj = require('plotly.js');
+        }
+      } catch (e) {
+        // Expected in browser context
+      }
+      
+      // If we found Plotly, expose it to window
+      if (plotlyObj && typeof plotlyObj.newPlot === 'function') {
+        window.Plotly = plotlyObj;
+        console.log('Plotly exposed to window object, version:', plotlyObj.version || 'unknown');
+        return;
+      }
+      
+      // If not found and we haven't exceeded attempts, try again
+      if (attempts < maxAttempts) {
+        setTimeout(checkPlotly, 100);
+      } else {
+        console.warn('Failed to initialize Plotly after', maxAttempts, 'attempts');
+        // Create a placeholder to prevent errors
+        window.Plotly = {
+          version: 'not-loaded',
+          newPlot: function() { console.error('Plotly not properly loaded'); },
+          react: function() { console.error('Plotly not properly loaded'); }
+        };
+      }
+    }
+    
+    // Start checking for Plotly
+    checkPlotly();
+  }
+})();
+
 // Add migration defaults to maintain backward compatibility
 function addPlotlyMigrationDefaults(layout) {
   // Ensure layout object exists

@@ -12,12 +12,13 @@ def get_plotdiv_xy(dataset, axis):
 def get_plotdiv_xyz(dataset, axis):
     data = build_data_list(dataset, axis)
 
-    color_array = np.random.uniform(-5, 5, size=len(data[0]["values"]))
-    color_data = dict()
+    rng = np.random.default_rng()
+    color_array = rng.uniform(-5, 5, size=len(data[0]["values"]))
+    color_data = {}
     color_data["values"] = color_array
     data = np.append(data, [color_data])
 
-    ramdom_values = np.random.uniform(-8, 8, size=len(data[0]["values"]))
+    ramdom_values = rng.uniform(-8, 8, size=len(data[0]["values"]))
     data[2]["error_values"] = ramdom_values
 
     return data
@@ -25,8 +26,9 @@ def get_plotdiv_xyz(dataset, axis):
 
 def get_plotdiv_scatter(dataset, axis):
     data = build_data_list(dataset, axis)
-    amplitude_array = np.random.uniform(-5, 5, size=len(data[0]["values"]))
-    amplitude_data = dict()
+    rng = np.random.default_rng()
+    amplitude_array = rng.uniform(-5, 5, size=len(data[0]["values"]))
+    amplitude_data = {}
     amplitude_data["values"] = amplitude_array
     data = np.append(data, [amplitude_data])
 
@@ -42,14 +44,14 @@ def build_data_list(dataset, axis):
             column_name = axis[i]["column"]
             if column_name in dataset.tables[table_name].columns:
                 column = dataset.tables[table_name].columns[column_name]
-                column_data = dict()
+                column_data = {}
                 column_data["values"] = column.values
                 column_data["error_values"] = column.error_values
                 data = np.append(data, [column_data])
             else:
-                logging.error("Accessing unknown column: %s" % column_name)
+                logging.error(f"Accessing unknown column: {column_name}")
         else:
-            logging.error("Accessing unknown table: %s" % table_name)
+            logging.error(f"Accessing unknown table: {table_name}")
     return data
 
 

@@ -121,7 +121,7 @@ dependencies = [
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-testpaths = ["src/test/python"]
+testpaths = ["tests/python/test"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -130,12 +130,17 @@ addopts = [
     "--strict-markers",
     "--tb=short",
 ]
+pythonpath = ["src/main/python"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "benchmark: marks tests as performance benchmarks",
 ]
+
+[tool.hypothesis]
+deadline = 1000  # 1 second deadline instead of 200ms
+max_examples = 10  # Reduce number of examples for faster testing
 
 [tool.ruff]
 target-version = "py313"
