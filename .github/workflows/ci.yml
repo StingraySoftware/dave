@@ -20,7 +20,7 @@ jobs:
     - name: Setup Pixi
       uses: prefix-dev/setup-pixi@v0.6.0
       with:
-        pixi-version: v0.34.0
+        pixi-version: v0.40.0
         cache: true
         
     - name: Install dependencies
@@ -60,7 +60,7 @@ jobs:
     - name: Setup Pixi
       uses: prefix-dev/setup-pixi@v0.6.0
       with:
-        pixi-version: v0.34.0
+        pixi-version: v0.40.0
         cache: true
         
     - name: Install dependencies
