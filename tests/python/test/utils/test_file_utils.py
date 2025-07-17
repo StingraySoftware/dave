@@ -72,7 +72,10 @@ def test_get_intermediate_filename():
         result = FileUtils.get_intermediate_filename(temp_dir, filepath, ".tmp")
 
         assert result.endswith(".tmp")
-        assert temp_dir in result
+        # Use realpath to resolve Windows short/long path name differences
+        temp_dir_real = os.path.realpath(temp_dir)
+        result_real = os.path.realpath(result)
+        assert temp_dir_real in result_real
         assert "test" in result
 
 

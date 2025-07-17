@@ -18,11 +18,12 @@ MAGIC_AVAILABLE = False
 try:
     # On Windows CI, python-magic often causes access violations during import
     # Skip magic import in CI environments to prevent hanging
-    if os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS'):
-        if os.name == 'nt':  # Windows
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        if os.name == "nt":  # Windows
             raise ImportError("Skipping python-magic on Windows CI to prevent access violations")
 
     import magic
+
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
@@ -105,7 +106,9 @@ def get_file_dataset(destination, time_offset=0):
                     logging.debug(f"File extension from magic: {file_extension}")
                 except Exception as e:
                     # Handle Windows access violations and other magic runtime errors
-                    logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
+                    logging.warn(
+                        f"python-magic runtime error, falling back to extension check: {e}"
+                    )
                     file_extension = get_file_type_from_extension(destination)
                     logging.debug(f"File extension from fallback: {file_extension}")
             else:
