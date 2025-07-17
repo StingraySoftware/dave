@@ -26,7 +26,7 @@ try:
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
-    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
+    logging.warn("python-magic not available, falling back to mimetypes: " + str(e))
 
 print("dave_reader loaded")
 
@@ -105,7 +105,7 @@ def get_file_dataset(destination, time_offset=0):
                     logging.debug(f"File extension from magic: {file_extension}")
                 except Exception as e:
                     # Handle Windows access violations and other magic runtime errors
-                    logging.warning(f"python-magic runtime error, falling back to extension check: {e}")
+                    logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
                     file_extension = get_file_type_from_extension(destination)
                     logging.debug(f"File extension from fallback: {file_extension}")
             else:
@@ -539,7 +539,7 @@ def get_stingray_object(destination, time_offset=0):
             logging.debug(f"File extension from magic: {file_extension}")
         except Exception as e:
             # Handle Windows access violations and other magic runtime errors
-            logging.warning(f"python-magic runtime error, falling back to extension check: {e}")
+            logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
             file_extension = get_file_type_from_extension(destination)
             logging.debug(f"File extension from fallback: {file_extension}")
     else:

@@ -21,7 +21,7 @@ try:
     MAGIC_AVAILABLE = True
 except ImportError as e:
     MAGIC_AVAILABLE = False
-    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
+    logging.warn("python-magic not available, falling back to mimetypes: " + str(e))
 
 
 def get_destination(target, filename):
@@ -81,7 +81,7 @@ def is_valid_file(destination):
                 )
             except Exception as e:
                 # Handle Windows access violations and other magic runtime errors
-                logging.warning(f"python-magic runtime error, falling back to extension check: {e}")
+                logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
                 # Fall through to extension-based fallback
         else:
             # Fallback to file extension checking
