@@ -39,7 +39,7 @@ def get_file_type_from_extension(destination):
     extension_map = {
         ".txt": "ASCII text",
         ".dat": "ASCII text",
-        ".lc": "ASCII text",
+        ".lc": "FITS",  # .lc files are typically FITS format lightcurves
         ".evt": "FITS",
         ".fits": "FITS",
         ".fit": "FITS",
