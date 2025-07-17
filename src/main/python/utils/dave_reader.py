@@ -1,22 +1,5 @@
 import os
 
-# Handle libmagic import gracefully
-MAGIC_AVAILABLE = False
-try:
-    # On Windows CI, python-magic often causes access violations during import
-    # Skip magic import in CI environments to prevent hanging
-    import os
-    if os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS'):
-        if os.name == 'nt':  # Windows
-            raise ImportError("Skipping python-magic on Windows CI to prevent access violations")
-    
-    import magic
-    MAGIC_AVAILABLE = True
-except ImportError as e:
-    MAGIC_AVAILABLE = False
-    import utils.dave_logger as logging
-    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
-
 import numpy as np
 from astropy.io import fits
 from hendrics.io import load_data, load_lcurve
@@ -29,6 +12,21 @@ import utils.dataset_cache as DsCache
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
 from config import CONFIG
+
+# Handle libmagic import gracefully - must be after other imports
+MAGIC_AVAILABLE = False
+try:
+    # On Windows CI, python-magic often causes access violations during import
+    # Skip magic import in CI environments to prevent hanging
+    if os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS'):
+        if os.name == 'nt':  # Windows
+            raise ImportError("Skipping python-magic on Windows CI to prevent access violations")
+
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError as e:
+    MAGIC_AVAILABLE = False
+    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
 
 print("dave_reader loaded")
 
