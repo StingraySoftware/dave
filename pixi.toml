@@ -24,6 +24,12 @@ build = "python build.py"
 build-linux = "python build.py --platform linux"
 build-macos = "python build.py --platform macos"
 build-windows = "python build.py --platform windows"
+
+# Legacy workflow compatibility commands
+dist = "python build.py --legacy"
+dist-linux = "python build.py --platform linux --legacy"
+dist-mac = "python build.py --platform macos --legacy"
+dist-win = "python build.py --platform windows --legacy"
 build-all = "python build.py --platform linux && python build.py --platform macos && python build.py --platform windows"
 build-clean = "python build.py --clean"
 
@@ -37,11 +43,7 @@ build-forge-windows = "python build.py --platform windows --forge"
 build-dev = "python build.py --no-tests"
 build-forge-dev = "python build.py --forge --no-tests"
 
-# Distribution tasks (Electron Builder)
-dist = "cd src/main/js/electron && npm run build"
-dist-linux = "cd src/main/js/electron && npm run build-linux"
-dist-mac = "cd src/main/js/electron && npm run build-mac"
-dist-win = "cd src/main/js/electron && npm run build-win"
+# Distribution tasks (Electron Builder) - removed duplicates, see legacy compatibility commands above
 
 # Electron Forge tasks
 forge-start = "cd src/main/js/electron && npm run forge:start"

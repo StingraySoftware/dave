@@ -116,7 +116,7 @@ class DaveBuilder:
     def install_dependencies(self) -> None:
         """Install Node.js dependencies"""
         print("Installing Node.js dependencies...")
-        self._run_command(["npm", "ci"], cwd=self.electron_dir)
+        self._run_command(["npm", "install"], cwd=self.electron_dir)
     
     def build_electron(self, use_forge: bool = False) -> None:
         """Build Electron application"""
@@ -311,11 +311,8 @@ class DaveBuilder:
             self.build_electron(use_forge=use_forge)
             
             if not use_forge:
-                # Only copy resources for Electron Builder
-                # Forge handles this automatically
-                self.copy_resources()
-                
-                # Create distribution
+                # Electron Builder handles resource copying automatically via package.json
+                # Create distribution from build output
                 dist_path = self.create_distribution()
             else:
                 # For Forge, return the output directory
