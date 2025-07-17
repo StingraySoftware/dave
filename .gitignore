@@ -1,5 +1,4 @@
-*~
-work*
+# .gitignore for Python and related environments
 build
 __pycache__
 flaskserver.log
@@ -18,13 +17,20 @@ flaskserver.log
 .coverage
 temp_docs/
 test-results/
+playwright-report/
+screenshots/
+tests/playwright-report/
+tests/screenshots/
 .DS_Store
 CLAUDE.md
 
 # Build outputs
 src/main/js/electron/out/
-src/main/js/electron/node_modules/
 dist/
+
+# Node.js dependencies
+node_modules/
+src/main/js/electron/node_modules/
 *.dmg
 *.zip
 *.deb
