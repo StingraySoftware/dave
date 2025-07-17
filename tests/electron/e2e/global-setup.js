@@ -4,9 +4,53 @@ const fs = require('fs').promises;
 const http = require('http');
 
 let pythonServer;
+let xvfbProcess;
+
+async function startXvfb() {
+  // Start Xvfb for headless GUI testing in CI environments
+  if (process.env.CI || process.env.GITHUB_ACTIONS || (!process.env.DISPLAY && process.platform === 'linux')) {
+    console.log('Starting Xvfb for headless testing...');
+    
+    return new Promise((resolve, reject) => {
+      xvfbProcess = spawn('Xvfb', [':99', '-screen', '0', '1024x768x24'], {
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+      
+      xvfbProcess.on('error', (err) => {
+        if (err.code === 'ENOENT') {
+          console.log('Xvfb not found, proceeding without virtual display (tests may fail)');
+          resolve();
+        } else {
+          console.error('Xvfb error:', err);
+          reject(err);
+        }
+      });
+      
+      xvfbProcess.on('spawn', () => {
+        console.log('Xvfb started successfully');
+        // Set DISPLAY environment variable for child processes
+        process.env.DISPLAY = ':99';
+        global.__XVFB_PROCESS__ = xvfbProcess;
+        // Give Xvfb time to initialize
+        setTimeout(resolve, 1000);
+      });
+      
+      xvfbProcess.stdout.on('data', (data) => {
+        console.log(`Xvfb: ${data}`);
+      });
+      
+      xvfbProcess.stderr.on('data', (data) => {
+        console.log(`Xvfb stderr: ${data}`);
+      });
+    });
+  }
+}
 
 module.exports = async function globalSetup() {
   console.log('Starting Python Flask server for E2E tests...');
+  
+  // Start virtual display first if needed
+  await startXvfb();
   
   // Clean up any existing server processes before starting
   console.log('Cleaning up any existing server processes...');

@@ -25,15 +25,41 @@ class ElectronAppHelper {
     // Add sandbox-disabling arguments for CI environments or Linux
     if (process.env.CI || process.env.GITHUB_ACTIONS || process.platform === 'linux') {
       launchOptions.executablePath = undefined; // Let Playwright find Electron
-      launchOptions.args = [
+      
+      // Base headless args for CI
+      const ciArgs = [
         '--no-sandbox',
         '--disable-setuid-sandbox', 
         '--disable-dev-shm-usage',
         '--disable-extensions',
         '--disable-gpu',
         '--disable-web-security',
-        ...baseArgs
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
       ];
+      
+      // Platform-specific headless configuration
+      if (process.platform === 'linux' && (process.env.CI || process.env.GITHUB_ACTIONS)) {
+        // Linux CI needs additional headless flags
+        ciArgs.push(
+          '--headless=new',
+          '--use-gl=swiftshader',
+          '--disable-software-rasterizer',
+          '--virtual-time-budget=5000'
+        );
+        
+        // Set DISPLAY for Linux CI
+        launchOptions.env = {
+          ...launchOptions.env,
+          DISPLAY: process.env.DISPLAY || ':99'
+        };
+      } else if (process.env.CI || process.env.GITHUB_ACTIONS) {
+        // Non-Linux CI (macOS, Windows)
+        ciArgs.push('--headless');
+      }
+      
+      launchOptions.args = [...ciArgs, ...baseArgs];
     }
     
     // Launch Electron app
