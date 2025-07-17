@@ -67,13 +67,18 @@ def is_valid_file(destination):
         file_extension = os.path.splitext(base)[1].lower()
 
         if MAGIC_AVAILABLE:
-            ext = magic.from_file(destination)
-            return (
-                (ext.find("ASCII") == 0)
-                or (ext.find("FITS") == 0)
-                or (ext.find("gzip") > -1)
-                or ((ext == "data") and (file_extension in [".p", ".nc"]))
-            )
+            try:
+                ext = magic.from_file(destination)
+                return (
+                    (ext.find("ASCII") == 0)
+                    or (ext.find("FITS") == 0)
+                    or (ext.find("gzip") > -1)
+                    or ((ext == "data") and (file_extension in [".p", ".nc"]))
+                )
+            except Exception as e:
+                # Handle Windows access violations and other magic runtime errors
+                logging.warning(f"python-magic runtime error, falling back to extension check: {e}")
+                # Fall through to extension-based fallback
         else:
             # Fallback to file extension checking
             valid_extensions = [".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".gz", ".p", ".nc"]

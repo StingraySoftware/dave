@@ -96,8 +96,14 @@ def get_file_dataset(destination, time_offset=0):
             file_extension_from_file = os.path.splitext(destination)[1]
 
             if MAGIC_AVAILABLE:
-                file_extension = magic.from_file(destination)
-                logging.debug(f"File extension from magic: {file_extension}")
+                try:
+                    file_extension = magic.from_file(destination)
+                    logging.debug(f"File extension from magic: {file_extension}")
+                except Exception as e:
+                    # Handle Windows access violations and other magic runtime errors
+                    logging.warning(f"python-magic runtime error, falling back to extension check: {e}")
+                    file_extension = get_file_type_from_extension(destination)
+                    logging.debug(f"File extension from fallback: {file_extension}")
             else:
                 # Fallback to extension-based detection
                 file_extension = get_file_type_from_extension(destination)
@@ -523,8 +529,18 @@ def get_stingray_object(destination, time_offset=0):
     if not destination:
         return None
 
-    file_extension = magic.from_file(destination)
-    logging.debug(f"File extension: {file_extension}")
+    if MAGIC_AVAILABLE:
+        try:
+            file_extension = magic.from_file(destination)
+            logging.debug(f"File extension from magic: {file_extension}")
+        except Exception as e:
+            # Handle Windows access violations and other magic runtime errors
+            logging.warning(f"python-magic runtime error, falling back to extension check: {e}")
+            file_extension = get_file_type_from_extension(destination)
+            logging.debug(f"File extension from fallback: {file_extension}")
+    else:
+        file_extension = get_file_type_from_extension(destination)
+        logging.debug(f"File extension from fallback: {file_extension}")
 
     if file_extension.find("FITS") == 0:
         # Opening Fits
