@@ -3,7 +3,7 @@ import sys
 
 import matplotlib
 
-matplotlib.use("TkAgg")  # Changes the matplotlib framework
+matplotlib.use("Agg")  # Use non-interactive backend for headless CI
 
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + "/../../../main/python")
