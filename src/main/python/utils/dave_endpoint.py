@@ -62,7 +62,7 @@ def upload(files: list[FileStorage], target: str) -> Response | dict[str, str]:
         return common_error(f"All uploads failed: {'; '.join(upload_errors)}")
     elif len(upload_errors) > 0:
         # Some files failed, some succeeded
-        logging.warning(f"Partial upload success. Errors: {'; '.join(upload_errors)}")
+        logging.warn(f"Partial upload success. Errors: {'; '.join(upload_errors)}")
         # Return successful filenames but log errors
         return jsonify({"filenames": filenames, "warnings": upload_errors})
     else:

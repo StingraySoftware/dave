@@ -27,7 +27,7 @@ try:
     CORS_AVAILABLE = True
 except ImportError:
     CORS_AVAILABLE = False
-    logging.warning("flask-cors not installed. CORS support disabled.")
+    logging.warn("flask-cors not installed. CORS support disabled.")
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -583,7 +583,7 @@ def shutdown():
         password = data.get("password")
 
         if not password or password != SecurityConfig.SHUTDOWN_PASSWORD:
-            logging.warning("Unauthorized shutdown attempt")
+            logging.warn("Unauthorized shutdown attempt")
             return jsonify(error="Unauthorized"), 401
 
     logging.info("Server shutting down...")

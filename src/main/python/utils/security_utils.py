@@ -38,7 +38,7 @@ def sanitize_path(filepath: str, base_path: str) -> str | None:
         if base in file_path.parents or file_path == base:
             return str(file_path)
         else:
-            logging.warning(f"Path traversal attempt detected: {filepath}")
+            logging.warn(f"Path traversal attempt detected: {filepath}")
             return None
     except Exception as e:
         logging.error(f"Error sanitizing path: {e}")
@@ -79,7 +79,7 @@ def validate_file_upload(
 
     if ext not in allowed_extensions_lower:
         # Log more detailed validation failure
-        logging.warning(
+        logging.warn(
             f"File type validation failed for '{filename}' with extension '{ext}'. Allowed: {allowed_extensions_lower}"
         )
         return (

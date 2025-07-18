@@ -37,7 +37,7 @@ def get_destination(target, filename):
                 if sanitized:
                     return sanitized
                 else:
-                    logging.warning(f"Invalid absolute path: {filename}")
+                    logging.warn(f"Invalid absolute path: {filename}")
                     return ""
             else:
                 # Relative path - must be within target directory
@@ -45,7 +45,7 @@ def get_destination(target, filename):
                 if sanitized:
                     return sanitized
                 else:
-                    logging.warning(f"Invalid relative path: {filename}")
+                    logging.warn(f"Invalid relative path: {filename}")
                     return ""
         else:
             # Always use secure filename for uploads
