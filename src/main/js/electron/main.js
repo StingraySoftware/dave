@@ -3,15 +3,13 @@ const path = require('path');
 const cp = require('child_process');
 const fs = require('fs').promises;
 const axios = require('axios');
-const log = require('electron-log/main');
+const logger = require('./logger');
 const { autoUpdater } = require('electron-updater');
 const updater = require('./updater');
 
 
-// Initialize logging
-log.initialize();
-log.transports.file.level = 'info';
-log.transports.console.level = process.env.NODE_ENV === 'development' ? 'debug' : 'info';
+// Initialize DAVE logger
+logger.section('DAVE Application Startup');
 
 // Security: Set up Electron fuses for enhanced security
 if (process.env.NODE_ENV === 'production') {
@@ -64,6 +62,7 @@ const windowConfig = {
 app.setName('DAVE');
 
 // Configure auto-updater
+const log = require('electron-log/main');
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 
@@ -97,9 +96,9 @@ app.whenReady().then(async () => {
   // Load configuration
   try {
     mainConfig = await loadConfig();
-    log.info('Configuration loaded:', { ...mainConfig, pythonPath: '***' });
+    logger.logConfig({ ...mainConfig, pythonPath: '***' });
   } catch (error) {
-    log.error('Failed to load configuration:', error);
+    logger.error('CONFIG', 'Failed to load configuration', { error: error.message });
     mainConfig = { error: error.message };
   }
 
@@ -148,26 +147,26 @@ ipcMain.handle('updater:setAutoDownload', (event, enabled) => {
 });
 
 ipcMain.handle('server:launch', async () => {
-  log.info('Launching Python server...');
+  logger.process('PYTHON', 'Launching Python server...');
   try {
     await launchPythonServer(mainConfig);
     await waitForServerConnection();
     return { success: true };
   } catch (error) {
-    log.error('Failed to launch Python server:', error);
+    logger.error('PYTHON', 'Failed to launch Python server', { error: error.message });
     return { success: false, error: error.message };
   }
 });
 
 ipcMain.handle('server:relaunch', async () => {
-  log.info('Relaunching Python server...');
+  logger.process('PYTHON', 'Relaunching Python server...');
   try {
     await stopServer();
     await launchPythonServer(mainConfig);
     await waitForServerConnection();
     return { success: true };
   } catch (error) {
-    log.error('Failed to relaunch server:', error);
+    logger.error('PYTHON', 'Failed to relaunch server', { error: error.message });
     return { success: false, error: error.message };
   }
 });
@@ -275,7 +274,7 @@ async function launchPythonServer(config) {
   }
 
   if (!config.pythonEnabled && !config.envEnabled) {
-    log.info('Server modes disabled in configuration');
+    logger.info('CONFIG', 'Server modes disabled in configuration');
     return;
   }
 
@@ -296,7 +295,7 @@ async function launchPythonServer(config) {
 function launchProcess(command, args, name, options) {
   return new Promise((resolve, reject) => {
     try {
-      log.info(`Launching ${name} process:`, { command, args });
+      logger.process(name.toUpperCase(), `Initializing process launch`, { command, args });
 
       subpy = cp.spawn(command, args, options);
       processRunning = true;
@@ -313,7 +312,7 @@ function launchProcess(command, args, name, options) {
             const [, error] = msg.split('|');
             sendToRenderer('server:error', { error });
           } else {
-            log.info(`${name}:`, msg);
+            logger.debug(name.toUpperCase(), msg);
           }
         });
       });
@@ -325,33 +324,40 @@ function launchProcess(command, args, name, options) {
         messages.forEach(msg => {
           // HTTP access logs (Flask default logs to stderr)
           if (msg.match(/^\S+ - - \[.*\] "(GET|POST|PUT|DELETE|HEAD|OPTIONS).*" \d{3}/)) {
-            log.info(`${name} HTTP:`, msg);
+            // Parse HTTP log for cleaner display
+            const match = msg.match(/^(\S+) - - \[.*\] "(\w+) (\S+).*" (\d+) (\d+)?/);
+            if (match) {
+              const [, ip, method, url, status, size] = match;
+              logger.logHttpRequest(method, url, status, 'N/A');
+            } else {
+              logger.http(msg);
+            }
           }
           // Warnings (like NetCDF warning)
           else if (msg.includes('Warning') || msg.includes('UserWarning')) {
-            log.warn(`${name} warning:`, msg);
+            logger.warn(name.toUpperCase(), msg);
           }
           // Actual errors
           else if (msg.includes('Error') || msg.includes('Exception') || msg.includes('Traceback')) {
-            log.error(`${name} error:`, msg);
+            logger.error(name.toUpperCase(), msg);
           }
           // Everything else as info
           else {
-            log.info(`${name} info:`, msg);
+            logger.info(name.toUpperCase(), msg);
           }
         });
       });
 
       // Handle spawn event
       subpy.on('spawn', () => {
-        log.info(`${name} process spawned successfully`);
+        logger.processEvent(name.toLowerCase(), 'spawn');
         resolve();
       });
 
       // Handle errors
       subpy.on('error', (error) => {
         processRunning = false;
-        log.error(`${name} spawn error:`, error);
+        logger.processEvent(name.toLowerCase(), 'error', { error: error.message });
         reject(error);
       });
 
@@ -361,13 +367,13 @@ function launchProcess(command, args, name, options) {
         connected = false;
         subpy = null;
 
-        log.info(`${name} process exited:`, { code, signal });
+        logger.processEvent(name.toLowerCase(), 'exit', { code, signal });
         sendToRenderer('server:disconnected', { code, signal });
       });
 
     } catch (error) {
       processRunning = false;
-      log.error(`Failed to launch ${name}:`, error);
+      logger.error(name.toUpperCase(), `Failed to launch ${name}`, { error: error.message });
       reject(error);
     }
   });
@@ -385,7 +391,7 @@ async function waitForServerConnection() {
     try {
       await axios.get(PYTHON_URL, { timeout: 5000 });
       connected = true;
-      log.info('Connected to Python server');
+      logger.processEvent('python', 'connect', { url: PYTHON_URL });
       sendToRenderer('server:connected', { url: PYTHON_URL });
 
       // Load the main application
@@ -395,7 +401,9 @@ async function waitForServerConnection() {
 
       return;
     } catch (error) {
-      log.debug(`Connection attempt ${i + 1}/${maxRetries} failed`);
+      if (i < 3) { // Only show first few connection attempts
+        logger.debug('PYTHON', `Connection attempt ${i + 1}/${maxRetries} failed`);
+      }
       await new Promise(resolve => setTimeout(resolve, retryInterval));
     }
   }
@@ -407,14 +415,14 @@ async function stopServer() {
   if (!subpy) return;
 
   connected = false;
-  log.info('Stopping Python server...');
+  logger.process('PYTHON', 'Stopping Python server...');
 
   try {
     // Try graceful shutdown
     await axios.post(`${PYTHON_URL}/shutdown`, {}, { timeout: 5000 });
     await new Promise(resolve => setTimeout(resolve, 1000));
   } catch (error) {
-    log.debug('Graceful shutdown failed, forcing termination');
+    logger.debug('PYTHON', 'Graceful shutdown failed, forcing termination');
   }
 
   if (subpy && !subpy.killed) {
@@ -433,7 +441,7 @@ async function stopServer() {
 // Main window creation
 function createMainWindow() {
   mainWindow = new BrowserWindow(windowConfig);
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools() // Commented out to eliminate DevTools warnings
 
   // Load splash screen
   const splashPath = mainConfig.splash_path || '/../../resources/templates/splash_page.html';
@@ -462,7 +470,7 @@ function createMainWindow() {
 
   // Handle window ready
   mainWindow.webContents.on('did-finish-load', () => {
-    log.info('Window loaded');
+    logger.startup('Application window loaded successfully');
     sendToRenderer('app:ready', {
       version: app.getVersion(),
       platform: process.platform,
@@ -472,7 +480,7 @@ function createMainWindow() {
 
   // Development tools
   if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools(); // Commented out to eliminate DevTools warnings
   }
 }
 
@@ -648,33 +656,39 @@ app.on('web-contents-created', (event, contents) => {
         shell.openExternal(navigationUrl);
       }
     } catch (error) {
-      log.error('Invalid URL:', navigationUrl);
+      logger.error('SECURITY', 'Invalid URL blocked', { url: navigationUrl });
     }
   });
 });
 
 // Auto-updater events
 autoUpdater.on('checking-for-update', () => {
-  log.info('Checking for updates...');
+  logger.updater('Checking for application updates...');
   sendToRenderer('updater:checking');
 });
 
 autoUpdater.on('update-available', (info) => {
-  log.info('Update available:', info.version);
+  logger.success('UPDATER', `Update available: v${info.version}`, {
+    currentVersion: app.getVersion(),
+    availableVersion: info.version
+  });
   sendToRenderer('updater:available', info);
 });
 
 autoUpdater.on('update-not-available', (info) => {
-  log.info('No updates available');
+  logger.updater('Application is up to date', { currentVersion: app.getVersion() });
   sendToRenderer('updater:not-available', info);
 });
 
 autoUpdater.on('download-progress', (progress) => {
+  if (progress.percent && Math.floor(progress.percent) % 25 === 0) {
+    logger.updater(`Download progress: ${Math.floor(progress.percent)}%`);
+  }
   sendToRenderer('updater:progress', progress);
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  log.info('Update downloaded:', info.version);
+  logger.success('UPDATER', `Update downloaded successfully: v${info.version}`);
   sendToRenderer('updater:downloaded', info);
 
   // Prompt user to restart
@@ -685,6 +699,7 @@ autoUpdater.on('update-downloaded', (info) => {
     buttons: ['Restart Now', 'Later']
   }).then(result => {
     if (result.response === 0) {
+      logger.updater('Restarting to apply update...');
       autoUpdater.quitAndInstall();
     }
   });

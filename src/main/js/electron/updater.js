@@ -5,12 +5,13 @@
 
 const { autoUpdater } = require('electron-updater');
 const { dialog, BrowserWindow } = require('electron');
-const log = require('electron-log');
+const logger = require('./logger');
+const log = require('electron-log'); // Keep for file logging
 
 // Configure logging
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
-log.info('Auto-updater starting...');
+logger.updater('Auto-updater initializing...');
 
 class AppUpdater {
   constructor() {
@@ -37,7 +38,7 @@ class AppUpdater {
   init() {
     // Don't run auto-updater in development
     if (process.env.NODE_ENV === 'development') {
-      log.info('Auto-updater disabled in development mode');
+      logger.info('UPDATER', 'Auto-updater disabled in development mode');
       return;
     }
     
@@ -54,7 +55,7 @@ class AppUpdater {
   setupEventHandlers() {
     // Update available
     autoUpdater.on('update-available', (info) => {
-      log.info('Update available:', info);
+      logger.success('UPDATER', `Update available: v${info.version}`);
       this.updateAvailable = true;
       
       dialog.showMessageBox(BrowserWindow.getFocusedWindow(), {
@@ -74,7 +75,7 @@ class AppUpdater {
     
     // No update available
     autoUpdater.on('update-not-available', (info) => {
-      log.info('No update available');
+      logger.updater('No updates available');
       this.updateAvailable = false;
     });
     
