@@ -1,14 +1,5 @@
 import os
 
-# Handle libmagic import gracefully
-try:
-    import magic
-    MAGIC_AVAILABLE = True
-except ImportError as e:
-    MAGIC_AVAILABLE = False
-    import utils.dave_logger as logging
-    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
-
 from security_config import SecurityConfig
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
@@ -16,6 +7,22 @@ from werkzeug.utils import secure_filename
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
 from config import CONFIG
+
+# Handle libmagic import gracefully - must be after other imports
+MAGIC_AVAILABLE = False
+try:
+    # On Windows CI, python-magic often causes access violations during import
+    # Skip magic import in CI environments to prevent hanging
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        if os.name == "nt":  # Windows
+            raise ImportError("Skipping python-magic on Windows CI to prevent access violations")
+
+    import magic
+
+    MAGIC_AVAILABLE = True
+except ImportError as e:
+    MAGIC_AVAILABLE = False
+    logging.warn("python-magic not available, falling back to mimetypes: " + str(e))
 
 
 def get_destination(target, filename):
@@ -30,7 +37,7 @@ def get_destination(target, filename):
                 if sanitized:
                     return sanitized
                 else:
-                    logging.warning(f"Invalid absolute path: {filename}")
+                    logging.warn(f"Invalid absolute path: {filename}")
                     return ""
             else:
                 # Relative path - must be within target directory
@@ -38,7 +45,7 @@ def get_destination(target, filename):
                 if sanitized:
                     return sanitized
                 else:
-                    logging.warning(f"Invalid relative path: {filename}")
+                    logging.warn(f"Invalid relative path: {filename}")
                     return ""
         else:
             # Always use secure filename for uploads
@@ -47,7 +54,7 @@ def get_destination(target, filename):
                 logging.error(f"Invalid filename: {filename}")
                 return ""
             return os.path.join(target, safe_filename)
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_destination"))
         return ""
 
@@ -65,30 +72,35 @@ def is_valid_file(destination):
         file_extension = os.path.splitext(base)[1].lower()
 
         if MAGIC_AVAILABLE:
-            ext = magic.from_file(destination)
-            return (
-                (ext.find("ASCII") == 0)
-                or (ext.find("FITS") == 0)
-                or (ext.find("gzip") > -1)
-                or ((ext == "data") and (file_extension in [".p", ".nc"]))
-            )
+            try:
+                ext = magic.from_file(destination)
+                return (
+                    (ext.find("ASCII") == 0)
+                    or (ext.find("FITS") == 0)
+                    or (ext.find("gzip") > -1)
+                    or ((ext == "data") and (file_extension in [".p", ".nc"]))
+                )
+            except Exception as e:
+                # Handle Windows access violations and other magic runtime errors
+                logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
+                # Fall through to extension-based fallback
         else:
             # Fallback to file extension checking
-            valid_extensions = ['.txt', '.dat', '.lc', '.evt', '.fits', '.fit', '.gz', '.p', '.nc']
+            valid_extensions = [".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".gz", ".p", ".nc"]
             if file_extension in valid_extensions:
                 return True
 
             # For files without extension, try to check if it's text
-            if file_extension == '':
+            if file_extension == "":
                 try:
-                    with open(destination, encoding='utf-8') as f:
+                    with open(destination, encoding="utf-8") as f:
                         f.read(1024)  # Try reading first 1KB as text
                     return True
-                except:
+                except (UnicodeDecodeError, OSError):
                     return False
 
             return False
-    except:
+    except Exception:
         return False
 
 
@@ -98,7 +110,7 @@ def is_valid_file(destination):
 # @param: target: folder name for upload destination
 #
 def save_file(target: str, file: FileStorage) -> str:
-    logging.debug("save_file: %s - %s" % (type(file), file))
+    logging.debug(f"save_file: {type(file)} - {file}")
 
     # Import security utils
     from utils.security_utils import validate_file_upload

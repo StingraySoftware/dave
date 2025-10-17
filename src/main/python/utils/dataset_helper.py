@@ -27,7 +27,7 @@ def get_eventlist_from_evt_dataset(dataset):
                 dataset.tables["EVENTS"].columns["PI"].values
             )
             logging.warn("Using PI instead of PHA")
-        except:
+        except Exception:
             dataset.tables["EVENTS"].columns["PHA"].values = np.zeros(
                 len(dataset.tables["EVENTS"].columns[CONFIG.TIME_COLUMN].values), dtype=int
             )
@@ -267,7 +267,7 @@ def get_additional_column_names(columns, column):
 
 # Returns a dictionary with the values of the table columns values
 def get_columns_as_dict(columns, column):
-    ds_columns = dict()
+    ds_columns = {}
     for column_name in columns:
         if column_name != column:
             ds_columns[column_name] = columns[column_name].values
@@ -276,7 +276,7 @@ def get_columns_as_dict(columns, column):
 
 # Returns a dictionary with the error_values of the table columns values
 def get_columns_errors_as_dict(columns, column):
-    ds_columns_errors = dict()
+    ds_columns_errors = {}
     for column_name in columns:
         if column_name != column:
             ds_columns_errors[column_name] = columns[column_name].error_values
@@ -405,8 +405,7 @@ def update_dataset_filtering_by_gti(
                     hdu_table.columns[ad_column].add_values(values, error_values)
             else:
                 logging.info(
-                    "No data point in GTI # %s: GTI (from, to)=(%f, %f); event list (from, to)=(%d, %d)"
-                    % (gti_index, start, end, start_event_idx, end_event_idx)
+                    f"No data point in GTI # {gti_index}: GTI (from, to)=({start:.6f}, {end:.6f}); event list (from, to)=({start_event_idx}, {end_event_idx})"
                 )
 
 
@@ -418,7 +417,7 @@ def update_dataset_filtering_by_gti(
 #         default will be 1.0 but is set as 0.01 will have a two decimal
 #         binning for example
 def get_histogram(array, precision=1.0):
-    histogram = dict()
+    histogram = {}
     values = []
     for val in array:
         match_val = val

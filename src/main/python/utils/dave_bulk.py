@@ -20,7 +20,7 @@ def get_intermediate_file(filepath, target):
             filename = FileUtils.get_intermediate_filename(target, filepath, HEN_FILE_EXTENSION)
             if DaveReader.save_to_intermediate_file(stingray_object, filename):
                 return filename
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_intermediate_file"))
 
     return None
@@ -33,7 +33,7 @@ def get_intermediate_file(filepath, target):
 #
 def bulk_analisys(filenames, plot_configs, outdir):
     try:
-        results = dict()
+        results = {}
         results["outdir"] = outdir
         results["plot_configs"] = []
 
@@ -95,13 +95,13 @@ def bulk_analisys(filenames, plot_configs, outdir):
 
         return results
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("bulk_analisys"))
         return None
 
 
 def push_plotconfig_results(plot_configs, plot_id, outdir):
-    plot_config_results = dict()
+    plot_config_results = {}
     plot_config_results["plotId"] = plot_id
     plot_config_results["filenames"] = FileUtils.get_files_in_dir(outdir)
     plot_configs.extend([plot_config_results])

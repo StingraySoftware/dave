@@ -18,7 +18,7 @@ class Column:
 
     def get_schema(self) -> dict[str, Any] | None:
         if not self.has_extra("FAKE_COLUMN"):
-            schema = dict()
+            schema = {}
             schema["id"] = self.id
             self.add_list_to_schema("", self.values, schema)
             # self.add_list_to_schema("error_", self.error_values, schema)
@@ -88,7 +88,7 @@ class Column:
 
     def set_extra(self, key: str, value: Any) -> None:
         if self.extra is None:
-            self.extra = dict()
+            self.extra = {}
         self.extra[key] = value
 
     def get_extra(self, key: str) -> Any:

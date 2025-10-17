@@ -11,24 +11,24 @@ from model.table import Table
 
 class DataSet:
     id: str = ""
-    tables: dict[str, Table] = dict()
+    tables: dict[str, Table] = {}
 
     def __init__(self, id: str) -> None:
         self.id = id + str(randint(0, 99999))
-        self.tables = dict()
+        self.tables = {}
 
     def add_table(self, table_id: str, column_names: list[str]) -> None:
         self.tables[table_id] = Table(table_id)
         self.tables[table_id].add_columns(column_names)
 
     def get_schema(self) -> dict[str, dict]:
-        schema = dict()
+        schema = {}
         for table_id in self.tables:
             schema[table_id] = self.tables[table_id].get_schema()
         return schema
 
     def get_header(self) -> dict[str, dict]:
-        header = dict()
+        header = {}
         for table_id in self.tables:
             header[table_id] = self.tables[table_id].get_header()
         return header
@@ -64,7 +64,7 @@ class DataSet:
                         table_id
                     ].apply_filter(filter)
                 else:
-                    logging.error("dataset.apply_filters wrong table_id: %s" % table_id)
+                    logging.error(f"dataset.apply_filters wrong table_id: {table_id}")
 
         return filtered_dataset
 
@@ -89,8 +89,8 @@ class DataSet:
             logging.warn("dataset.apply_time_filter: Dataset no valid GTIs")
             return self
 
-        columns_values = dict()
-        columns_error_values = dict()
+        columns_values = {}
+        columns_error_values = {}
         for column_name in self.tables[hduname].columns:
             if column_name != column:
                 columns_values[column_name] = self.tables[hduname].columns[column_name].values
@@ -234,9 +234,9 @@ def get_lightcurve_dataset_from_stingray_Lightcurve(
 
     hdu_table = dataset.tables[hduname]
     if header is None:
-        header = dict()
+        header = {}
     if header_comments is None:
-        header_comments = dict()
+        header_comments = {}
 
     if header is not None and not header:  # header is empty dict
         if hasattr(lcurve, "header") and lcurve.header is not None:
@@ -271,9 +271,9 @@ def get_eventlist_dataset_from_stingray_Eventlist(
 
     hdu_table = dataset.tables[hduname]
     if header is None:
-        header = dict()
+        header = {}
     if header_comments is None:
-        header_comments = dict()
+        header_comments = {}
 
     if header is not None and not header:  # header is empty dict
         if hasattr(evlist, "header") and evlist.header is not None:

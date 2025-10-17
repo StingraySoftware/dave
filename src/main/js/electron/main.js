@@ -149,9 +149,36 @@ ipcMain.handle('updater:setAutoDownload', (event, enabled) => {
 ipcMain.handle('server:launch', async () => {
   logger.process('PYTHON', 'Launching Python server...');
   try {
-    await launchPythonServer(mainConfig);
-    await waitForServerConnection();
-    return { success: true };
+    // Check if we're in test mode
+    const isTestMode = process.env.DAVE_TEST_MODE === 'true';
+    
+    if (isTestMode) {
+      // In test mode, server should already be running from test setup
+      log.info('Test mode detected - checking for existing server...');
+      
+      // Try to connect to existing server
+      try {
+        await axios.get(PYTHON_URL, { timeout: 5000 });
+        connected = true;
+        log.info('Connected to existing test server');
+        
+        // Load the main application
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(PYTHON_URL);
+        }
+        
+        sendToRenderer('server:connected', { url: PYTHON_URL });
+        return { success: true };
+      } catch (error) {
+        log.error('Test server not available:', error.message);
+        return { success: false, error: 'Test server not available at ' + PYTHON_URL };
+      }
+    } else {
+      // Production mode - launch our own server
+      await launchPythonServer(mainConfig);
+      await waitForServerConnection();
+      return { success: true };
+    }
   } catch (error) {
     logger.error('PYTHON', 'Failed to launch Python server', { error: error.message });
     return { success: false, error: error.message };
@@ -249,10 +276,13 @@ async function loadConfig() {
     delete require.cache[configPath];
     const config = require(configPath);
 
+    // Disable Python server startup in test mode
+    const isTestMode = process.env.DAVE_TEST_MODE === 'true';
+    
     return {
-      envEnabled: config.environment?.enabled === "true",
+      envEnabled: config.environment?.enabled === "true" && !isTestMode,
       envScriptPath: path.join(__dirname, config.environment?.path || ''),
-      pythonEnabled: config.python?.enabled === "true",
+      pythonEnabled: config.python?.enabled === "true" && !isTestMode,
       pythonPath: path.join(__dirname, config.python?.path || ''),
       pythonUrl: config.python?.url || 'http://localhost:5001',
       logDebugMode: config.logDebugMode === "true",
@@ -441,7 +471,9 @@ async function stopServer() {
 // Main window creation
 function createMainWindow() {
   mainWindow = new BrowserWindow(windowConfig);
-  // mainWindow.webContents.openDevTools() // Commented out to eliminate DevTools warnings
+
+  // DevTools commented out to eliminate console warnings
+  // mainWindow.webContents.openDevTools()
 
   // Load splash screen
   const splashPath = mainConfig.splash_path || '/../../resources/templates/splash_page.html';
@@ -477,11 +509,6 @@ function createMainWindow() {
       config: { ...mainConfig, pythonPath: undefined }
     });
   });
-
-  // Development tools
-  if (process.env.NODE_ENV === 'development') {
-    // mainWindow.webContents.openDevTools(); // Commented out to eliminate DevTools warnings
-  }
 }
 
 // Application menu

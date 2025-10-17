@@ -25,11 +25,18 @@ class SecurityConfig:
     CORS_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 
     # File Upload Security
-    MAX_CONTENT_LENGTH = (
-        int(os.environ.get("MAX_UPLOAD_SIZE_MB", "500")) * 1024 * 1024
-    )
+    MAX_CONTENT_LENGTH = int(os.environ.get("MAX_UPLOAD_SIZE_MB", "500")) * 1024 * 1024
     ALLOWED_EXTENSIONS = {
-        ".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".fts", ".gz", ".p", ".nc",
+        ".txt",
+        ".dat",
+        ".lc",
+        ".evt",
+        ".fits",
+        ".fit",
+        ".fts",
+        ".gz",
+        ".p",
+        ".nc",
     }
     UPLOAD_FOLDER_PERMISSIONS = 0o755
 

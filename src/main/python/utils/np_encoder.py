@@ -27,7 +27,9 @@ class NPEncoder(json.JSONEncoder):
                 if obj < -CONFIG.BIG_NUMBER:
                     return -CONFIG.BIG_NUMBER
                 return float(obj)
-            if isinstance(obj, numpy.int8 | numpy.int16 | numpy.int32 | numpy.int64 | numpy.longlong):
+            if isinstance(
+                obj, numpy.int8 | numpy.int16 | numpy.int32 | numpy.int64 | numpy.longlong
+            ):
                 if obj > CONFIG.BIG_NUMBER:
                     return CONFIG.BIG_NUMBER
                 if obj < -CONFIG.BIG_NUMBER:
@@ -48,6 +50,6 @@ class NPEncoder(json.JSONEncoder):
                 return obj.item()
             else:
                 return super().default(obj)
-        except:
+        except Exception:
             logging.error(ExHelper.getException("NPEncoder"))
             return None

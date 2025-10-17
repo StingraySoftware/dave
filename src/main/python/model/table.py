@@ -6,13 +6,13 @@ from model.column import Column
 
 class Table:
     id: str = ""
-    header: dict = dict()
-    header_comments: dict = dict()
-    columns: dict[str, Column] = dict()
+    header: dict = {}
+    header_comments: dict = {}
+    columns: dict[str, Column] = {}
 
     def __init__(self, id: str) -> None:
         self.id = id
-        self.columns = dict()
+        self.columns = {}
 
     def add_columns(self, column_names: list[str]) -> None:
         for i in range(len(column_names)):
@@ -26,7 +26,7 @@ class Table:
         return self.header
 
     def get_schema(self) -> dict:
-        schema = dict()
+        schema = {}
         schema["HEADER"] = self.header
         schema["HEADER_COMMENTS"] = self.header_comments
         for column_name in self.columns:
@@ -46,11 +46,11 @@ class Table:
     def apply_filter(self, filter: dict) -> "Table":
         column_name = filter["column"]
         if column_name not in self.columns:
-            logging.error("table.apply_filter wrong column: %s" % column_name)
+            logging.error(f"table.apply_filter wrong column: {column_name}")
             return self
 
         if filter["from"] > filter["to"]:
-            logging.error("table.apply_filter wrong from-to: %s" % column_name)
+            logging.error(f"table.apply_filter wrong from-to: {column_name}")
             return self
 
         filtered_table = Table(self.id)
@@ -69,10 +69,10 @@ class Table:
         return filtered_table
 
     def get_row(self, index: int) -> dict[str, dict[str, float]]:
-        row = dict()
+        row = {}
         for column_name in self.columns:
             column = self.columns[column_name]
-            row[column_name] = dict()
+            row[column_name] = {}
             row[column_name]["value"] = column.get_value(index)
             row[column_name]["error_value"] = column.get_error_value(index)
         return row

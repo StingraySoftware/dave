@@ -1,0 +1,163 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create release'
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: dave-linux
+          - os: macos-latest
+            platform: macos
+            artifact_name: dave-macos
+          - os: windows-latest
+            platform: windows
+            artifact_name: dave-windows
+            
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.6.0
+      with:
+        pixi-version: v0.40.0
+        cache: true
+        
+    - name: Install dependencies
+      run: |
+        pixi install
+        pixi run install-node-deps
+        
+    - name: Run tests (quick)
+      run: pixi run test
+      
+    - name: Build application
+      run: python build.py --platform ${{ matrix.platform }} --legacy --no-tests
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: |
+          dist/
+          build/
+        retention-days: 30
+        
+    - name: Package artifacts for release
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        # Legacy builder creates zip files in dist/
+        if [ "${{ matrix.platform }}" = "linux" ]; then
+          cp dist/*.zip dave-${{ matrix.platform }}.zip 2>/dev/null || echo "No zip files found for Linux"
+          find build/ -name "*.deb" -exec cp {} dave-${{ matrix.platform }}.deb \; 2>/dev/null || echo "No deb files found"
+          find build/ -name "*.rpm" -exec cp {} dave-${{ matrix.platform }}.rpm \; 2>/dev/null || echo "No rpm files found"
+        elif [ "${{ matrix.platform }}" = "macos" ]; then
+          cp dist/*.zip dave-${{ matrix.platform }}.zip 2>/dev/null || echo "No zip files found for macOS"
+          find build/ -name "*.dmg" -exec cp {} dave-${{ matrix.platform }}.dmg \; 2>/dev/null || echo "No dmg files found"
+        elif [ "${{ matrix.platform }}" = "windows" ]; then
+          cp dist/*.zip dave-${{ matrix.platform }}.zip 2>/dev/null || echo "No zip files found for Windows"
+          find build/ -name "*.exe" -exec cp {} dave-${{ matrix.platform }}.exe \; 2>/dev/null || echo "No exe files found"
+        fi
+      shell: bash
+      
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v4
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        name: release-${{ matrix.artifact_name }}
+        path: |
+          dave-${{ matrix.platform }}.*
+        retention-days: 90
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+        
+    - name: Display structure of downloaded files
+      run: ls -la ./artifacts/
+      
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: DAVE ${{ github.ref_name }}
+        body: |
+          ## DAVE ${{ github.ref_name }}
+          
+          ### Changes
+          - See commit history for detailed changes
+          
+          ### Downloads
+          - **Linux**: dave-linux.zip
+          - **macOS**: dave-macos.zip  
+          - **Windows**: dave-windows.zip
+          
+          ### Installation
+          1. Download the appropriate package for your platform
+          2. Extract the archive
+          3. Follow the installation instructions in the README
+          
+          ### Requirements
+          - Python 3.13+
+          - 8GB RAM minimum
+          - 10GB disk space
+        draft: false
+        prerelease: false
+        
+    - name: Upload Linux Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/release-dave-linux/dave-linux.zip
+        asset_name: dave-linux.zip
+        asset_content_type: application/zip
+        
+    - name: Upload macOS Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/release-dave-macos/dave-macos.zip
+        asset_name: dave-macos.zip
+        asset_content_type: application/zip
+        
+    - name: Upload Windows Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./artifacts/release-dave-windows/dave-windows.zip
+        asset_name: dave-windows.zip
+        asset_content_type: application/zip

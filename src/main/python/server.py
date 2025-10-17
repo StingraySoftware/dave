@@ -11,9 +11,12 @@ matplotlib.use("TkAgg")  # Changes the matplotlib framework
 
 import random
 
+from security_config import SecurityConfig
+
 import utils.dataset_cache as DsCache
 import utils.dave_endpoint as DaveEndpoint
 import utils.gevent_helper as GeHelper
+import utils.security_utils as Security
 from config import CONFIG
 from utils.np_encoder import NPEncoder
 
@@ -24,7 +27,7 @@ try:
     CORS_AVAILABLE = True
 except ImportError:
     CORS_AVAILABLE = False
-    logging.warning("flask-cors not installed. CORS support disabled.")
+    logging.warn("flask-cors not installed. CORS support disabled.")
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -55,10 +58,6 @@ app = Flask(
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 UPLOADS_TARGET = os.path.join(APP_ROOT, "uploadeddataset")
 
-# Import security configuration
-from security_config import SecurityConfig
-
-import utils.security_utils as Security
 
 # Apply security configuration
 app.secret_key = SecurityConfig.SECRET_KEY
@@ -584,7 +583,7 @@ def shutdown():
         password = data.get("password")
 
         if not password or password != SecurityConfig.SHUTDOWN_PASSWORD:
-            logging.warning("Unauthorized shutdown attempt")
+            logging.warn("Unauthorized shutdown attempt")
             return jsonify(error="Unauthorized"), 401
 
     logging.info("Server shutting down...")
@@ -614,15 +613,17 @@ def http_error_handler(error):
     try:
         logging.error("ERROR: http_error_handler " + str(error))
         return jsonify(error=str(error))
-    except:
-        logging.error("ERROR: http_error_handler --> EXCEPT ")
+    except Exception as e:
+        logging.error(f"ERROR: http_error_handler --> EXCEPT {str(e)}")
 
 
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
     app.register_error_handler(error, http_error_handler)
 
 if __name__ == "__main__":
-    GeHelper.start(server_port, app)
-    app.run(
-        debug=CONFIG.DEBUG_MODE, threaded=True
-    )  # Use app.run(host='0.0.0.0') for listen on all interfaces
+    try:
+        GeHelper.start(server_port, app)
+    except KeyboardInterrupt:
+        print("Server shutdown requested")
+        sys.exit(0)
+    # Note: app.run() is not needed as GeHelper.start() handles the server

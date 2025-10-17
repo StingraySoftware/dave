@@ -1,4 +1,4 @@
-[workspace]
+[project]
 
 authors = ["kartikmandar <kartik4321mandar@gmail.com>"]
 channels = ["conda-forge"]
@@ -8,9 +8,9 @@ version = "2.0.0"
 
 [tasks]
 # Development tasks
-test = "python -m pytest src/test/python -v"
-test-coverage = "python -m pytest src/test/python --cov=src/main/python --cov-report=term-missing"
-server = "cd src/main/python && python server.py"
+test = "python -m pytest tests/python/test -v"
+test-coverage = "python -m pytest tests/python/test --cov=src/main/python --cov-report=term-missing"
+server = "cd src/main/python && python server.py . . 5001"
 electron = "cd src/main/js/electron && npm start"
 
 # Frontend migration tasks
@@ -24,6 +24,12 @@ build = "python build.py"
 build-linux = "python build.py --platform linux"
 build-macos = "python build.py --platform macos"
 build-windows = "python build.py --platform windows"
+
+# Legacy workflow compatibility commands
+dist = "python build.py --legacy"
+dist-linux = "python build.py --platform linux --legacy"
+dist-mac = "python build.py --platform macos --legacy"
+dist-win = "python build.py --platform windows --legacy"
 build-all = "python build.py --platform linux && python build.py --platform macos && python build.py --platform windows"
 build-clean = "python build.py --clean"
 
@@ -37,11 +43,7 @@ build-forge-windows = "python build.py --platform windows --forge"
 build-dev = "python build.py --no-tests"
 build-forge-dev = "python build.py --forge --no-tests"
 
-# Distribution tasks (Electron Builder)
-dist = "cd src/main/js/electron && npm run build"
-dist-linux = "cd src/main/js/electron && npm run build-linux"
-dist-mac = "cd src/main/js/electron && npm run build-mac"
-dist-win = "cd src/main/js/electron && npm run build-win"
+# Distribution tasks (Electron Builder) - removed duplicates, see legacy compatibility commands above
 
 # Electron Forge tasks
 forge-start = "cd src/main/js/electron && npm run forge:start"
@@ -53,7 +55,8 @@ forge-make-win = "cd src/main/js/electron && npm run forge:make-win"
 forge-publish = "cd src/main/js/electron && npm run forge:publish"
 
 # E2E testing
-test-e2e = "cd src/main/js/electron && npm run test:e2e"
+test-e2e = "cd tests && npm test"
+test-e2e-install = "cd tests && npm install && npx playwright install"
 
 # Development mode with auto-reload
 dev = { cmd = "python -m watchdog.auto_restart --pattern='*.py' --recursive src/main/python -- python src/main/python/server.py", env = { FLASK_DEBUG = "1" } }
@@ -71,10 +74,10 @@ install-electron5 = "cd src/main/js/electron && cp package-electron5.json packag
 clean = "find . -type d -name '__pycache__' -exec rm -rf {} + || true"
 
 # Linting and formatting
-lint = "ruff check src/main/python src/test/python"
-lint-fix = "ruff check --fix src/main/python src/test/python"
-format = "ruff format src/main/python src/test/python"
-format-check = "ruff format --check src/main/python src/test/python"
+lint = "ruff check src/main/python tests/python"
+lint-fix = "ruff check --fix src/main/python tests/python"
+format = "ruff format src/main/python tests/python"
+format-check = "ruff format --check src/main/python tests/python"
 
 [dependencies]
 python = "3.13.*"
@@ -89,6 +92,7 @@ matplotlib = ">=3.10.3,<4"
 ruff = ">=0.9.4,<1"
 pylru = ">=1.2.1,<2"
 netcdf4 = ">=1.7.1,<2"
+pytest-cov = ">=6.2.1,<7"
 
 [pypi-dependencies]
 stingray = ">=2.2.7, <3"

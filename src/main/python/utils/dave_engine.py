@@ -147,15 +147,15 @@ def apply_rmf_file_to_dataset(
 
                 pha_data = events_table.columns[column].values
 
-                e_avg_data = dict(
-                    (channel, (min + max) / 2)
+                e_avg_data = {
+                    channel: (min + max) / 2
                     for channel, min, max in zip(
                         rmf_table.columns["CHANNEL"].values,
                         rmf_table.columns["E_MIN"].values,
                         rmf_table.columns["E_MAX"].values,
                         strict=False,
                     )
-                )
+                }
                 e_values = []
                 for i in range(len(pha_data)):
                     if pha_data[i] in e_avg_data:
@@ -175,7 +175,7 @@ def apply_rmf_file_to_dataset(
                 DsCache.add(cache_key, dataset)  # Stores dataset on cache
                 if len(events_table.columns["E"].values) == len(pha_data):
                     return list(e_avg_data.values())
-    except:
+    except Exception:
         logging.error(ExHelper.getException("apply_rmf_file_to_dataset"))
 
     return []
@@ -220,7 +220,7 @@ def get_plot_data(src_destination, bck_destination, gti_destination, filters, st
         else:
             return common_error("Wrong plot type specified on styles")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_plot_data"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -319,7 +319,7 @@ def get_lightcurve(
                 meanflux = (
                     lc.baseline(lam, p, niter, offset_correction=True) / dt
                 )  # Baseline from count, divide by dt to get countrate
-            except:
+            except Exception:
                 logging.error(ExHelper.getException("get_lightcurve: Cant estimate Mean Flux"))
                 warnmsg = ["@WARN@Can't estimate Mean Flux, check GTIs"]
                 meanflux = []
@@ -362,7 +362,7 @@ def get_lightcurve(
             fvarmean_err = get_means_from_array(fvar_err, mean_count)
 
             chunk_mean_times = get_means_from_array(chunk_times, mean_count)
-            chunk_mean_lengths = np.array([l * mean_count for l in chunk_lengths])
+            chunk_mean_lengths = np.array([length * mean_count for length in chunk_lengths])
 
             confidences += mean_confidence_interval(excessvar, confidence=0.90)
             confidences += mean_confidence_interval(excessvar, confidence=0.99)
@@ -372,7 +372,7 @@ def get_lightcurve(
 
         lc = None  # Dispose memory
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_lightcurve"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -443,7 +443,7 @@ def get_joined_lightcurves(
         else:
             return common_warn("Lightcurves have different durations.")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_joined_lightcurves"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -546,7 +546,7 @@ def get_divided_lightcurves_from_colors(
         else:
             return common_warn("Cant create the colors filtered ligthcurves")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_divided_lightcurves_from_colors"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -595,7 +595,7 @@ def get_divided_lightcurve_ds(
             logging.warn("Lightcurves have different shapes.")
             return ""
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_divided_lightcurve_ds"))
 
     return ""
@@ -667,7 +667,7 @@ def get_power_density_spectrum(
             lc = None  # Dispose memory
             gti = None  # Dispose memory
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_power_density_spectrum"))
         help_msg = ""
         if len(freq) == 0 and pds_type != "Sng":
@@ -784,7 +784,7 @@ def get_dynamical_spectrum(
 
         lc = None  # Dispose memory
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_dynamical_spectrum"))
         warnmsg = [ExHelper.getWarnMsg()]
 
@@ -909,9 +909,11 @@ def get_cross_spectrum(
         logging.debug("Create cross spectrum")
 
         if xds_type == "Sng":
-            xs = Crossspectrum(lc1=lc1, lc2=lc2, norm=norm, gti=gti)
+            xs = Crossspectrum(data1=lc1, data2=lc2, norm=norm, gti=gti)
         else:
-            xs = AveragedCrossspectrum(lc1=lc1, lc2=lc2, segment_size=segm_size, norm=norm, gti=gti)
+            xs = AveragedCrossspectrum(
+                data1=lc1, data2=lc2, segment_size=segm_size, norm=norm, gti=gti
+            )
 
         if xs:
             if not hasattr(xs, "pds1"):
@@ -956,7 +958,7 @@ def get_cross_spectrum(
         lc1 = None  # Dispose memory
         lc2 = None  # Dispose memory
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_cross_spectrum"))
         help_msg = ""
         if len(freq) == 0 and xds_type != "Sng":
@@ -1073,7 +1075,7 @@ def get_covariance_spectrum(
             logging.warn("get_covariance_spectrum: Wrong dataset type!")
             return common_error("Wrong dataset type")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_covariance_spectrum"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -1235,7 +1237,7 @@ def get_phase_lag_spectrum(
             logging.warn("get_phase_lag_spectrum: Wrong dataset type!")
             warnmsg = ["Wrong dataset type"]
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_phase_lag_spectrum"))
         warnmsg = [ExHelper.getWarnMsg()]
 
@@ -1472,7 +1474,7 @@ def get_rms_spectrum(
                                     + str(energy_high)
                                     + " has no events"
                                 )
-                        except:
+                        except Exception:
                             logging.warn(
                                 ExHelper.getException(
                                     "get_rms_spectrum: Energy range: "
@@ -1494,7 +1496,7 @@ def get_rms_spectrum(
             logging.warn("get_rms_spectrum: Wrong dataset type!")
             warnmsg = ["Wrong dataset type"]
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_rms_spectrum"))
         warnmsg = [ExHelper.getWarnMsg()]
 
@@ -1701,7 +1703,7 @@ def get_rms_vs_countrate(
                                     + str(time_high)
                                     + " has no events"
                                 )
-                        except:
+                        except Exception:
                             logging.warn(
                                 ExHelper.getException(
                                     "get_rms_vs_countrate: Time range: "
@@ -1727,7 +1729,7 @@ def get_rms_vs_countrate(
             logging.warn("get_rms_vs_countrate: Wrong dataset type!")
             warnmsg = ["Wrong dataset type"]
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_rms_vs_countrate"))
         warnmsg = [ExHelper.getWarnMsg()]
 
@@ -1770,7 +1772,7 @@ def get_plot_data_from_models(models, x_values):
 
         models_arr = push_to_results_array(models_arr, sum_values)
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_plot_data_from_models"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -1841,7 +1843,7 @@ def get_fit_powerspectrum_result(
         else:
             logging.warn("get_fit_powerspectrum_result: can't create power density spectrum.")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_fit_powerspectrum_result"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -1969,7 +1971,7 @@ def get_bootstrap_results(
                                     + str(i)
                                 )
                             )
-                    except:
+                    except Exception:
                         logging.error(
                             ExHelper.getException("get_bootstrap_results for i: " + str(i))
                         )
@@ -1993,7 +1995,7 @@ def get_bootstrap_results(
                         x = np.array(list(counts.keys()))
                         y = np.array(list(counts.values()))
                         amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(x, y)
-                        param = dict()
+                        param = {}
                         param["index"] = i
                         param["name"] = parnames[i]
                         param["err"] = nan_and_inf_to_num([stddev])
@@ -2027,7 +2029,7 @@ def get_bootstrap_results(
         else:
             logging.warn("get_bootstrap_results: can't create power density spectrum.")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_bootstrap_results"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -2100,7 +2102,7 @@ def get_lomb_scargle_results(
             warnmsg = ["@WARN@GTI gaps found on LC"]
         lc = None  # Dispose memory
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_lomb_scargle_results"))
         warnmsg = [ExHelper.getWarnMsg()]
 
@@ -2181,7 +2183,7 @@ def get_fit_lomb_scargle_result(
         else:
             logging.warn("get_fit_lomb_scargle_result: can't create power spectrum.")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_fit_lomb_scargle_result"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -2276,7 +2278,7 @@ def get_pulse_search(
         z_detlev = z2_n_detection_level(n=1, epsilon=0.001, ntrial=len(freq))
         cand_freqs_z, cand_stat_z = search_best_peaks(freq, zstat, z_detlev)
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_pulse_search"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -2387,7 +2389,7 @@ def get_phaseogram(
         )
         error_dist = [err_low, err_high]
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_phaseogram"))
         return common_error(ExHelper.getWarnMsg())
 
@@ -2461,17 +2463,17 @@ def split_dataset_with_color_filters(src_destination, filters, color_keys, gti_d
 
 
 def push_to_results_array(result, values):
-    column = dict()
+    column = {}
     try:
         column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISION)
-    except:
+    except Exception:
         column["values"] = nan_and_inf_to_num(values)
     result.append(column)
     return result
 
 
 def push_to_results_array_with_errors(result, values, errors):
-    column = dict()
+    column = {}
     column["values"] = np.around(nan_and_inf_to_num(values), decimals=CONFIG.PRECISION)
     column["error_values"] = np.around(nan_and_inf_to_num(errors), decimals=CONFIG.PRECISION)
     result.append(column)
@@ -2500,7 +2502,7 @@ def nan_and_inf_to_num(obj):
 
 
 def get_color_axis_for_ds():
-    color_axis = [dict() for i in range(2)]
+    color_axis = [{} for i in range(2)]
     color_axis[0]["table"] = "EVENTS"
     color_axis[0]["column"] = CONFIG.TIME_COLUMN
     color_axis[1]["table"] = "EVENTS"
@@ -2819,7 +2821,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
             # Add to results the estimated parameters
             params = []
             for i, (x, y, p) in enumerate(zip(res.p_opt, res.err, parnames, strict=False)):
-                param = dict()
+                param = {}
                 param["index"] = i
                 param["name"] = p
                 param["opt"] = nan_and_inf_to_num(x)
@@ -2829,7 +2831,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
             results = push_to_results_array(results, params)
 
             # Add to results the estimation statistics
-            stats = dict()
+            stats = {}
             try:
                 stats["deviance"] = nan_and_inf_to_num(res.deviance)
                 stats["aic"] = nan_and_inf_to_num(res.aic)
@@ -2851,7 +2853,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
 
             # If there is sampling data add it to results
             if sample:
-                sample_stats = dict()
+                sample_stats = {}
                 try:
                     sample_stats["acceptance"] = sample.acceptance
                     sample_stats["rhat"] = sample.rhat
@@ -2869,7 +2871,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
                     try:
                         fig = sample.plot_results(nsamples=sampling_params["nsamples"])
                         sample_stats["img"] = Plotter.convert_fig_to_html(fig)
-                    except:
+                    except Exception:
                         sample_stats["img"] = "ERROR"
                         logging.error(
                             ExHelper.getException(
@@ -2884,7 +2886,7 @@ def fit_power_density_spectrum(pds, models, priors=None, sampling_params=None):
                     )
 
                 results = push_to_results_array(results, sample_stats)
-    except:
+    except Exception:
         logging.error(ExHelper.getException("fit_power_density_spectrum"))
 
     return results
@@ -3046,12 +3048,12 @@ def get_white_noise_offset(event_arr, gti, dt, pds_type, segm_size, df):
 
 def common_error(error):
     logging.error(error)
-    return dict(error=error)
+    return {"error": error}
 
 
 def common_warn(warn):
     logging.warn(warn)
-    return dict(error="@WARN@" + warn)
+    return {"error": "@WARN@" + warn}
 
 
 # ----- Long-Term variability FUNCTIONS.. NOT EXPOSED  -------------

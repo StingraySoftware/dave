@@ -1,16 +1,5 @@
 import os
 
-# Handle libmagic import gracefully
-try:
-    import magic
-
-    MAGIC_AVAILABLE = True
-except ImportError as e:
-    MAGIC_AVAILABLE = False
-    import utils.dave_logger as logging
-
-    logging.warning("python-magic not available, falling back to mimetypes: " + str(e))
-
 import numpy as np
 from astropy.io import fits
 from hendrics.io import load_data, load_lcurve
@@ -24,6 +13,22 @@ import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
 from config import CONFIG
 
+# Handle libmagic import gracefully - must be after other imports
+MAGIC_AVAILABLE = False
+try:
+    # On Windows CI, python-magic often causes access violations during import
+    # Skip magic import in CI environments to prevent hanging
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        if os.name == "nt":  # Windows
+            raise ImportError("Skipping python-magic on Windows CI to prevent access violations")
+
+    import magic
+
+    MAGIC_AVAILABLE = True
+except ImportError as e:
+    MAGIC_AVAILABLE = False
+    logging.warn("python-magic not available, falling back to mimetypes: " + str(e))
+
 print("dave_reader loaded")
 
 
@@ -35,7 +40,7 @@ def get_file_type_from_extension(destination):
     extension_map = {
         ".txt": "ASCII text",
         ".dat": "ASCII text",
-        ".lc": "ASCII text",
+        ".lc": "FITS",  # .lc files are typically FITS format lightcurves
         ".evt": "FITS",
         ".fits": "FITS",
         ".fit": "FITS",
@@ -49,15 +54,15 @@ def get_file_type_from_extension(destination):
     if ext == "" or ext not in extension_map:
         try:
             # Try to open as FITS first
-            with fits.open(destination, memmap=True) as hdulist:
+            with fits.open(destination, memmap=True):
                 return "FITS"
-        except:
+        except (OSError, ValueError):
             try:
                 # Try to read as text
                 with open(destination, encoding="utf-8") as f:
                     f.read(1024)
                 return "ASCII text"
-            except:
+            except (OSError, UnicodeDecodeError):
                 return "data"
 
     return "data"
@@ -96,12 +101,20 @@ def get_file_dataset(destination, time_offset=0):
             file_extension_from_file = os.path.splitext(destination)[1]
 
             if MAGIC_AVAILABLE:
-                file_extension = magic.from_file(destination)
-                logging.debug("File extension from magic: %s" % file_extension)
+                try:
+                    file_extension = magic.from_file(destination)
+                    logging.debug(f"File extension from magic: {file_extension}")
+                except Exception as e:
+                    # Handle Windows access violations and other magic runtime errors
+                    logging.warn(
+                        f"python-magic runtime error, falling back to extension check: {e}"
+                    )
+                    file_extension = get_file_type_from_extension(destination)
+                    logging.debug(f"File extension from fallback: {file_extension}")
             else:
                 # Fallback to extension-based detection
                 file_extension = get_file_type_from_extension(destination)
-                logging.debug("File extension from fallback: %s" % file_extension)
+                logging.debug(f"File extension from fallback: {file_extension}")
 
             if file_extension.find("ASCII") == 0:
                 table_id = "EVENTS"
@@ -111,7 +124,8 @@ def get_file_dataset(destination, time_offset=0):
                 table = dataset.tables[table_id]
                 table.add_columns(["AMPLITUDE"])
                 numValues = len(table.columns[CONFIG.TIME_COLUMN].values)
-                random_values = np.random.uniform(-1, 1, size=numValues)
+                rng = np.random.default_rng()
+                random_values = rng.uniform(-1, 1, size=numValues)
                 table.columns["AMPLITUDE"].values = random_values
 
             elif file_extension.find("FITS") == 0 or file_extension.find("gzip") > -1:
@@ -181,7 +195,7 @@ def get_file_dataset(destination, time_offset=0):
         else:
             logging.error("get_file_dataset: Destination is empty")
 
-    except:
+    except Exception:
         logging.error(ExHelper.getException("get_file_dataset"))
 
     return dataset, cache_key
@@ -198,7 +212,7 @@ def get_txt_dataset(destination, table_id, header_names):
         column.values = data[0 : len(data), i * 2]
         column.error_values = data[0 : len(data), (i * 2) + 1]
 
-    logging.debug("Read txt file successfully: %s" % destination)
+    logging.debug(f"Read txt file successfully: {destination}")
 
     return dataset
 
@@ -225,14 +239,14 @@ def get_fits_dataset(hdulist, dsId, table_ids):
                         np.nan_to_num(tbdata.field(i))
                     )
             else:
-                logging.warn("Ignored table data: %s" % hdulist[t].name)
+                logging.warn(f"Ignored table data: {hdulist[t].name}")
         else:
-            logging.warn("No valid data on: %s" % t)
-            logging.warn("Type of Data: %s" % type(hdulist[t]))
+            logging.warn(f"No valid data on: {t}")
+            logging.warn(f"Type of Data: {type(hdulist[t])}")
 
     hdulist.close()
 
-    logging.debug("Read fits file successfully: %s" % dsId)
+    logging.debug(f"Read fits file successfully: {dsId}")
 
     return dataset
 
@@ -384,7 +398,7 @@ def get_lightcurve_fits_dataset_with_stingray(
     gtistring=CONFIG.GTI_STRING,
     time_offset=0,
 ):
-    supported_rate_columns = set(["RATE", "RATE1", "COUNTS"])
+    supported_rate_columns = {"RATE", "RATE1", "COUNTS"}
     found_rate_columns = set(hdulist[hduname].data.names)
     intersection_columns = supported_rate_columns.intersection(found_rate_columns)
 
@@ -509,8 +523,8 @@ def substract_tstart_from_lcurve(lcurve, time_offset=0):
 
 # Gets FITS header properties
 def get_header(hdulist, hduname):
-    header = dict()
-    header_comments = dict()
+    header = {}
+    header_comments = {}
     for header_column in hdulist[hduname].header:
         header[header_column] = str(hdulist[hduname].header[header_column])
         header_comments[header_column] = str(hdulist[hduname].header.comments[header_column])
@@ -522,8 +536,18 @@ def get_stingray_object(destination, time_offset=0):
     if not destination:
         return None
 
-    file_extension = magic.from_file(destination)
-    logging.debug("File extension: %s" % file_extension)
+    if MAGIC_AVAILABLE:
+        try:
+            file_extension = magic.from_file(destination)
+            logging.debug(f"File extension from magic: {file_extension}")
+        except Exception as e:
+            # Handle Windows access violations and other magic runtime errors
+            logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
+            file_extension = get_file_type_from_extension(destination)
+            logging.debug(f"File extension from fallback: {file_extension}")
+    else:
+        file_extension = get_file_type_from_extension(destination)
+        logging.debug(f"File extension from fallback: {file_extension}")
 
     if file_extension.find("FITS") == 0:
         # Opening Fits
@@ -557,7 +581,7 @@ def get_stingray_object(destination, time_offset=0):
             logging.error("Unsupported FITS type!")
 
     else:
-        logging.error("Unknown file extension: %s" % file_extension)
+        logging.error(f"Unknown file extension: {file_extension}")
         return None
 
 
@@ -577,7 +601,7 @@ def save_to_intermediate_file(stingray_object, fname):
         save_pds(stingray_object, fname)
     else:
         logging.error(
-            "save_to_intermediate_file: Unknown object type: %s" % type(stingray_object).__name__
+            f"save_to_intermediate_file: Unknown object type: {type(stingray_object).__name__}"
         )
         return False
 
@@ -598,7 +622,7 @@ def load_dataset_from_intermediate_file(fname):
     # depending on the contents of the file
     try:
         ftype, contents = get_file_type(fname)
-    except:
+    except (AttributeError, ImportError):
         # Modern Stingray doesn't have _retrieve_pickle_object, use pickle directly
         with open(fname, "rb") as f:
             contents = pickle.load(f)
@@ -614,6 +638,6 @@ def load_dataset_from_intermediate_file(fname):
         logging.error("Unsupported intermediate file type: Crossspectrum")
 
     else:
-        logging.error("Unsupported intermediate file type: %s" % type(contents).__name__)
+        logging.error(f"Unsupported intermediate file type: {type(contents).__name__}")
 
     return None
