@@ -37,6 +37,10 @@ class SecurityConfig:
         ".gz",
         ".p",
         ".nc",
+        ".rmf",  # Response Matrix File (FITS format)
+        ".arf",  # Ancillary Response File (FITS format)
+        ".pha",  # Pulse Height Analyzer spectrum (FITS format)
+        ".rsp",  # Response file (FITS format)
     }
     UPLOAD_FOLDER_PERMISSIONS = 0o755
 

@@ -44,6 +44,11 @@ def get_file_type_from_extension(destination):
         ".evt": "FITS",
         ".fits": "FITS",
         ".fit": "FITS",
+        ".fts": "FITS",
+        ".rmf": "FITS",  # Response Matrix File
+        ".arf": "FITS",  # Ancillary Response File
+        ".pha": "FITS",  # Pulse Height Analyzer spectrum
+        ".rsp": "FITS",  # Response file
         ".gz": "gzip compressed",
     }
 
@@ -381,7 +386,19 @@ def get_events_fits_dataset_with_stingray(
 
 # Returns a dataset containing GTI table using Stingray library
 def get_gti_fits_dataset_with_stingray(hdulist, gtistring=CONFIG.GTI_STRING, time_offset=0):
-    st_gtis = get_gti_from_hdu(hdulist, gtistring)
+    # Find the GTI HDU from the hdulist using the gtistring pattern
+    gti_hdu_name = get_hdu_string_from_hdulist(gtistring, hdulist)
+    if not gti_hdu_name:
+        logging.error(f"GTI HDU not found matching pattern: {gtistring}")
+        return None
+
+    # Modern Stingray's get_gti_from_hdu() takes only the HDU object, not hdulist+string
+    gti_hdu = hdulist[gti_hdu_name]
+    st_gtis = get_gti_from_hdu(gti_hdu)
+
+    # Close the hdulist after reading
+    hdulist.close()
+
     if time_offset != 0:
         st_gtis[:, 0] = st_gtis[:, 0] - time_offset
         st_gtis[:, 1] = st_gtis[:, 1] - time_offset
