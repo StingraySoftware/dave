@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  PIXI_VERSION: "0.39.0"
+  NODE_VERSION: "22.16.0"
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact_pattern: "*.AppImage"
+          - os: macos-latest
+            platform: macos
+            artifact_pattern: "*.dmg"
+          - os: windows-latest
+            platform: windows
+            artifact_pattern: "*.exe"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v${{ env.PIXI_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pixi install
+          pixi run install-node-deps
+
+      - name: Build application
+        run: pixi run build-dev
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+          JOB_NAME: "dave-release"
+
+      - name: Package application
+        run: pixi run dist
+
+      - name: Find built artifact
+        id: find_artifact
+        shell: bash
+        run: |
+          if [ "${{ matrix.platform }}" == "linux" ]; then
+            ARTIFACT=$(find dist -name "*.AppImage" -type f | head -1)
+          elif [ "${{ matrix.platform }}" == "macos" ]; then
+            ARTIFACT=$(find dist -name "*.dmg" -type f | head -1)
+          elif [ "${{ matrix.platform }}" == "windows" ]; then
+            ARTIFACT=$(find dist -name "*.exe" -type f | head -1)
+          fi
+
+          if [ -z "$ARTIFACT" ]; then
+            echo "No artifact found!"
+            ls -la dist/ || echo "dist directory not found"
+            exit 1
+          fi
+
+          echo "artifact_path=$ARTIFACT" >> $GITHUB_OUTPUT
+          echo "artifact_name=$(basename $ARTIFACT)" >> $GITHUB_OUTPUT
+          echo "Found artifact: $ARTIFACT"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dave-${{ matrix.platform }}
+          path: ${{ steps.find_artifact.outputs.artifact_path }}
+          retention-days: 5
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-files
+          find release-artifacts -type f \( -name "*.AppImage" -o -name "*.dmg" -o -name "*.exe" \) -exec cp {} release-files/ \;
+          ls -la release-files/
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "## What's Changed in v${{ steps.get_version.outputs.version }}" > changelog.md
+          echo "" >> changelog.md
+
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "### Commits" >> changelog.md
+            git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD >> changelog.md
+          else
+            echo "### Commits" >> changelog.md
+            git log --pretty=format:"- %s (%h)" -20 >> changelog.md
+          fi
+
+          echo "" >> changelog.md
+          echo "" >> changelog.md
+          echo "---" >> changelog.md
+          echo "*Full changelog: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${{ steps.get_version.outputs.version }}*" >> changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DAVE v${{ steps.get_version.outputs.version }}
+          body_path: changelog.md
+          draft: true
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+          files: release-files/*
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
