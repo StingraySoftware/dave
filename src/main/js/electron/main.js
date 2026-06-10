@@ -410,7 +410,14 @@ function launchProcess(command, args, name, options) {
 }
 
 async function waitForServerConnection() {
-  const maxRetries = 30;
+  // The Python backend imports a heavy scientific stack (numpy/scipy/astropy/
+  // matplotlib/numba/stingray). On a cold OS file cache - especially when the
+  // repo and its environment live on a slow or external disk - the first import
+  // can take 1-3 minutes, versus ~15s once the cache is warm. Allow generous
+  // headroom so first launch does not false-fail. This is safe: the loop below
+  // throws immediately if the backend process dies, so a real crash still fails
+  // fast rather than waiting out the full timeout.
+  const maxRetries = 180;
   const retryInterval = 1000;
 
   for (let i = 0; i < maxRetries; i++) {
