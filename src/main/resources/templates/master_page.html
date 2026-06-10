@@ -16,6 +16,16 @@
     <!-- Insert this line above script imports for solve Electron import issues -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 
+    <!-- On macOS the Electron window uses titleBarStyle: hiddenInset, so the
+         traffic-light controls overlay the top-left. Flag that case (set the
+         class before body renders to avoid a flash) so master_page.css can
+         inset the DAVE brand clear of the controls. -->
+    <script>
+      if (/Electron/.test(navigator.userAgent) && /Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('electron-mac');
+      }
+    </script>
+
     <script type=text/javascript src="{{ url_for('static', filename='scripts/external/jquery-4.0.0.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/jquery-ui-1.14.1.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/external/bootstrap-5.3.8.min.js') }}"></script>
