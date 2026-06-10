@@ -118,7 +118,6 @@ module.exports = {
         name: 'DAVE',
         title: 'DAVE Data Analysis',
         icon: path.join(__dirname, '../../resources/static/img/icon.icns'),
-        background: path.join(__dirname, '../../resources/static/img/bg.jpg'),
         format: 'ULFO',
         additionalDMGOptions: {
           window: {

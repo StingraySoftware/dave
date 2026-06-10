@@ -11,11 +11,38 @@
     <link rel= "stylesheet" type= "text/css" href= "../static/font-awesome-4.7.0/css/font-awesome.min.css">
     <style>
       body {
-        background: url(../static/img/bg.jpg);
-        background-position: center bottom;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
+        background-color: #000;
+      }
+
+      @font-face {
+        font-family: Archangelsk;
+        src: url("../static/fonts/Archangelsk.ttf");
+      }
+
+      .splashLogo {
+        position: fixed;
+        top: 50%;
+        left: 0;
+        right: 0;
+        transform: translateY(-50%);
+        text-align: center;
+        pointer-events: none;
+      }
+
+      .splashLogo .daveTitle {
+        font-family: Archangelsk, Arial, sans-serif;
+        color: #FE3200;
+        font-size: 96px;
+        line-height: 1;
+        letter-spacing: 6px;
+      }
+
+      .splashLogo .daveSubtitle {
+        color: #888888;
+        font-family: Arial, sans-serif;
+        font-size: 18px;
+        margin-top: 6px;
+        letter-spacing: 1px;
       }
 
       .mainProgress {
@@ -138,6 +165,11 @@
   </head>
 
   <body>
+
+    <div class="splashLogo">
+      <div class="daveTitle">DAVE</div>
+      <div class="daveSubtitle">Data Analysis of Variable Events</div>
+    </div>
 
     <!-- Page Content-->
     <div class="container fluid">
