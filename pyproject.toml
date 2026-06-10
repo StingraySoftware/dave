@@ -139,7 +139,8 @@ markers = [
 ]
 
 [tool.hypothesis]
-deadline = 1000  # 1 second deadline instead of 200ms
+# deadline is disabled in tests/python/test/conftest.py: file-I/O test duration
+# varies with disk speed and OS cache state, which is not a code regression.
 max_examples = 10  # Reduce number of examples for faster testing
 
 [tool.ruff]
