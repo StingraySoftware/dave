@@ -117,8 +117,7 @@
         {
           "target": "nsis",
           "arch": [
-            "x64",
-            "ia32"
+            "x64"
           ]
         },
         {
@@ -128,8 +127,7 @@
           ]
         }
       ],
-      "icon": "../../resources/static/img/icon.ico",
-      "publisherName": "Timelab Technologies Ltd."
+      "icon": "../../resources/static/img/icon.ico"
     },
     "nsis": {
       "oneClick": false,
