@@ -67,10 +67,30 @@ class ElectronAppHelper {
 
     // Get the first window
     this.window = await this.app.firstWindow();
-    
+
     // Wait for the window to be ready
     await this.window.waitForLoadState('domcontentloaded');
-    
+
+    // The first window is the splash page (file://), which immediately
+    // navigates to the Flask app (http://localhost:5001). That cross-origin
+    // navigation swaps renderer processes, and the CDP target taken on the
+    // splash can detach mid-swap - any handle held across it dies (screenshot
+    // protocol errors, "Target page closed" in waits). Wait for the handoff
+    // and re-acquire the live window so callers never hold a pre-swap handle.
+    const appUrl = (launchOptions.env && launchOptions.env.PYTHON_URL) || 'http://localhost:5001';
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      const appPage = this.app.windows().find(
+        w => !w.isClosed() && w.url().startsWith(appUrl)
+      );
+      if (appPage) {
+        this.window = appPage;
+        break;
+      }
+      await new Promise(resolve => setTimeout(resolve, 250));
+    }
+    await this.window.waitForLoadState('domcontentloaded').catch(() => {});
+
     return { app: this.app, window: this.window };
   }
 
