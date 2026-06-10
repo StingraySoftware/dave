@@ -11,6 +11,10 @@ export default defineConfig({
     emptyOutDir: true,
 
     rollupOptions: {
+      // 'electron' is a runtime module provided by the Electron host, not an
+      // npm package, so it must be externalized rather than bundled.
+      external: ['electron'],
+
       input: {
         main: resolve(__dirname, 'src/main/resources/static/scripts/master_page.js'),
         config: resolve(__dirname, 'src/main/resources/static/scripts/config.js'),
@@ -31,18 +35,19 @@ export default defineConfig({
           mathjax: 'MathJax'
         },
 
-        // Manual chunks for better caching
-        manualChunks: {
-          'vendor-jquery': ['jquery', 'jquery-ui'],
-          'vendor-bootstrap': ['bootstrap'],
-          'vendor-plotly': ['plotly.js'],
-          'vendor-utils': ['async', 'fingerprint2', 'html2canvas', 'jspdf']
+        // Manual chunks for better caching.
+        // Vite 8 (Rolldown) requires the function form; the object form is gone.
+        manualChunks(id) {
+          if (id.includes('node_modules/jquery')) return 'vendor-jquery';
+          if (id.includes('node_modules/bootstrap')) return 'vendor-bootstrap';
+          if (id.includes('node_modules/plotly')) return 'vendor-plotly';
+          if (/node_modules\/(async|html2canvas|jspdf)/.test(id)) return 'vendor-utils';
         }
       }
     },
 
-    // Keep legacy browser support
-    target: 'es2015',
+    // Legacy browser support is handled by @vitejs/plugin-legacy's `targets`
+    // option below; in Vite 8 setting build.target here conflicts with it.
 
     // Minification settings
     minify: 'terser',
@@ -106,8 +111,7 @@ export default defineConfig({
       'jquery',
       'bootstrap',
       'plotly.js/dist/plotly',
-      'async',
-      'fingerprint2'
+      'async'
     ],
     exclude: [
       'electron'
