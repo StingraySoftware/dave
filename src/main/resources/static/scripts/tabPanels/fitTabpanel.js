@@ -174,7 +174,7 @@ function FitTabPanel (id, classSelector, navItemClass, service, navBarList, pane
     $container.html("");
 
     //Adds the back button to panel
-    var btnBack = $('<button class="btn btn-default btnBack' + currentObj.id + '" data-toggle="tooltip" title="Go back to Fit"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back</button>');
+    var btnBack = $('<button class="btn btn-default btnBack' + currentObj.id + '" data-bs-toggle="tooltip" title="Go back to Fit"><i class="fa fa-arrow-left" aria-hidden="true"></i> Back</button>');
     $container.append(btnBack);
     btnBack.click(function(event){
       currentObj.toolPanel.showPanel("loadPanel");

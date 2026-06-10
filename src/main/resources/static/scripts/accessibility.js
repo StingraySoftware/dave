@@ -318,14 +318,12 @@ var AccessibilityManager = (function() {
         '<div class="modal-dialog">' +
           '<div class="modal-content">' +
             '<div class="modal-header">' +
-              '<button type="button" class="close" data-dismiss="modal" aria-label="Close">' +
-                '<span aria-hidden="true">&times;</span>' +
-              '</button>' +
               '<h4 class="modal-title" id="' + dialogId + '-title">' + title + '</h4>' +
+              '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
             '</div>' +
             '<div class="modal-body">' + content + '</div>' +
             '<div class="modal-footer">' +
-              '<button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>' +
+              '<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>' +
             '</div>' +
           '</div>' +
         '</div>'
@@ -343,9 +341,17 @@ var AccessibilityManager = (function() {
       $dialog.remove();
     });
     
-    $dialog.modal('show');
+    bsModal($dialog).show();
   }
-  
+
+  /**
+   * Bootstrap 5 modal helper: BS5 replaced the jQuery plugin with the
+   * bootstrap.Modal class, so resolve (or create) the instance for a $element.
+   */
+  function bsModal($el) {
+    return bootstrap.Modal.getOrCreateInstance($el[0]);
+  }
+
   /**
    * Trap focus within element
    */
@@ -386,7 +392,11 @@ var AccessibilityManager = (function() {
    * Close active dialog
    */
   function closeActiveDialog() {
-    $('.modal.in').modal('hide');
+    // BS5 marks an open modal with .show (BS3 used .in)
+    document.querySelectorAll('.modal.show').forEach(function(el) {
+      var inst = bootstrap.Modal.getInstance(el);
+      if (inst) { inst.hide(); }
+    });
   }
   
   /**

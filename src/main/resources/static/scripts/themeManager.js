@@ -89,20 +89,20 @@ var ThemeManager = (function() {
    * Add theme switcher to navbar
    */
   function addThemeSwitcher() {
-    var $themeSwitcher = $('<li id="theme-switcher" class="dropdown">')
+    var $themeSwitcher = $('<li id="theme-switcher" class="nav-item dropdown">')
       .html(
-        '<a href="#" class="dropdown-toggle" data-toggle="dropdown" title="Switch theme">' +
+        '<a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" title="Switch theme">' +
           '<i class="fa fa-adjust" aria-hidden="true"></i>' +
         '</a>' +
-        '<ul class="dropdown-menu theme-menu">' +
+        '<ul class="dropdown-menu dropdown-menu-end theme-menu">' +
           '<li class="theme-option" data-theme="light">' +
-            '<a href="#"><i class="fa fa-sun-o"></i> Light</a>' +
+            '<a class="dropdown-item" href="#"><i class="fa fa-sun-o"></i> Light</a>' +
           '</li>' +
           '<li class="theme-option" data-theme="dark">' +
-            '<a href="#"><i class="fa fa-moon-o"></i> Dark</a>' +
+            '<a class="dropdown-item" href="#"><i class="fa fa-moon-o"></i> Dark</a>' +
           '</li>' +
           '<li class="theme-option" data-theme="auto">' +
-            '<a href="#"><i class="fa fa-adjust"></i> Auto</a>' +
+            '<a class="dropdown-item" href="#"><i class="fa fa-adjust"></i> Auto</a>' +
           '</li>' +
         '</ul>'
       );

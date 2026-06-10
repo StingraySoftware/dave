@@ -102,6 +102,17 @@ ul#right-navbar li {
   height: 100%;
 }
 
+/* Bootstrap 5 makes .row display:flex, which collapses DAVE's legacy
+   float-based, full-height tab layout (the .container:before height hack plus
+   float:left;height:100% panels). Keep the tab-panel row as a block box so the
+   float layout continues to work. Scoped to .TabPanel so the Bootstrap grid
+   still applies elsewhere (e.g. the settings two-column .row). */
+.daveContainer .TabPanel.row
+{
+  display: block;
+  margin: 0;
+}
+
 .wfSelectorContainer, .toolPanelContainer, .outputPanelContainer, .height_100
 {
   float: left;

@@ -93,7 +93,7 @@ var UpdateManager = (function() {
     // Add update indicator to navbar
     var $updateIndicator = $('<li id="update-indicator" class="dropdown">')
       .html(
-        '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' +
+        '<a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">' +
           '<i class="fa fa-download" aria-hidden="true"></i>' +
           '<span class="update-badge" style="display:none;"></span>' +
         '</a>' +
@@ -223,13 +223,13 @@ var UpdateManager = (function() {
         class: 'btn-primary',
         click: function() {
           // Download will start automatically
-          $dialog.modal('hide');
+          bsModal($dialog).hide();
         }
       },
       {
         text: 'Later',
         click: function() {
-          $dialog.modal('hide');
+          bsModal($dialog).hide();
         }
       }
     ]);
@@ -249,13 +249,13 @@ var UpdateManager = (function() {
         class: 'btn-primary',
         click: function() {
           // The main process will handle the restart
-          $dialog.modal('hide');
+          bsModal($dialog).hide();
         }
       },
       {
         text: 'Later',
         click: function() {
-          $dialog.modal('hide');
+          bsModal($dialog).hide();
         }
       }
     ]);
@@ -298,17 +298,25 @@ var UpdateManager = (function() {
           saveSettings();
           applySettings();
 
-          $dialog.modal('hide');
+          bsModal($dialog).hide();
           showNotification('Settings Saved', 'Update settings have been saved.');
         }
       },
       {
         text: 'Cancel',
         click: function() {
-          $dialog.modal('hide');
+          bsModal($dialog).hide();
         }
       }
     ]);
+  }
+
+  /**
+   * Bootstrap 5 modal helper: BS5 dropped the jQuery plugin in favour of the
+   * bootstrap.Modal class, so resolve (or create) the instance for a $element.
+   */
+  function bsModal($el) {
+    return bootstrap.Modal.getOrCreateInstance($el[0]);
   }
 
   /**
@@ -330,7 +338,7 @@ var UpdateManager = (function() {
         '<div class="modal-dialog">' +
           '<div class="modal-content">' +
             '<div class="modal-header">' +
-              '<button type="button" class="close" data-dismiss="modal">&times;</button>' +
+              '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>' +
               '<h4 class="modal-title">' + title + '</h4>' +
             '</div>' +
             '<div class="modal-body">' + content + '</div>' +
@@ -344,7 +352,8 @@ var UpdateManager = (function() {
       $dialog.find('.modal-footer button').eq(index).on('click', btn.click);
     });
 
-    $dialog.appendTo('body').modal('show');
+    $dialog.appendTo('body');
+    bsModal($dialog).show();
 
     $dialog.on('hidden.bs.modal', function() {
       $dialog.remove();

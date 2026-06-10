@@ -37,13 +37,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '</div>' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
-                    '<button class="btn btn-default btnHidePlot" data-toggle="tooltip" title="Hide plot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnFullScreen" data-toggle="tooltip" title="Maximize/Minimize">' +
+                    '<button class="btn btn-default btnHidePlot" data-bs-toggle="tooltip" title="Hide plot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnFullScreen" data-bs-toggle="tooltip" title="Maximize/Minimize">' +
                       '<i class="fa ' + ((this.cssClass.indexOf("full") > -1) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
-                    '<button class="btn btn-default btnLoad" data-toggle="tooltip" title="Load external data"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnSave" data-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnStyle" data-toggle="tooltip" title="Plot style"><i class="fa fa-paint-brush" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnLoad" data-bs-toggle="tooltip" title="Load external data"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnSave" data-bs-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnStyle" data-bs-toggle="tooltip" title="Plot style"><i class="fa fa-paint-brush" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="hoverinfo"></div>' +
                 '</div>');
@@ -53,7 +53,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  if (!isNull(toolbar)) {
-   this.btnShow = $('<button class="btn btn-default btnShow" plotId="' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow = $('<button class="btn btn-default btnShow" plotId="' + this.id + '" data-bs-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
@@ -166,7 +166,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  if (switchable) {
    //If switchable adds Switch button to plot
-   this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
+   this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-bs-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
    this.$html.find(".plotTools").append(this.btnSwitch);
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
@@ -1220,7 +1220,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getStyleJQElem = function () {
       var $style = $('<div class="plotStyle marginTop">' +
                       '<div class="floatingContainer">' +
-                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnClear" data-bs-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
                       '</div>' +
                     '</div>');
 

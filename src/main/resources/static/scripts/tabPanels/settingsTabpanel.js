@@ -30,14 +30,14 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                           '<h2>' +
                             'General Settings:' +
                           '</h2>' +
-                          '<div class="col-xs-6">' +
+                          '<div class="col-6">' +
                             '<h3>' +
                               'Main settings:' +
                             '</h3>' +
                             '<div class="settingsContainer mainSettings">' +
                             '</div>' +
                           '</div>' +
-                          '<div class="col-xs-6">' +
+                          '<div class="col-6">' +
                             '<h3>' +
                               'Power density spectrum settings:' +
                             '</h3>' +
@@ -179,7 +179,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     },
                                     "smallTextStyle"));
 
-  var $btnClearCache = $('<button class="btn btn-default btnClearCache" style="padding-right: 10px; padding-left: 10px; margin-top: 14px;" data-toggle="tooltip" title="Clear server cache"><i class="fa fa-refresh" aria-hidden="true"></i> Clear server cache</button>');
+  var $btnClearCache = $('<button class="btn btn-default btnClearCache" style="padding-right: 10px; padding-left: 10px; margin-top: 14px;" data-bs-toggle="tooltip" title="Clear server cache"><i class="fa fa-refresh" aria-hidden="true"></i> Clear server cache</button>');
   $btnClearCache.click(function(event){
     theService.clear_cache(function (res) {
       logInfo("Server cache clean!");

@@ -16,11 +16,11 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
                   '<div class="floatingContainer">' +
-                    '<button class="btn button btnClear" data-toggle="tooltip" title="Clear actions"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnUndo" data-toggle="tooltip" title="Undo last"><i class="fa fa-history" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnLoad" data-toggle="tooltip" title="Load models"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnSave" data-toggle="tooltip" title="Save models"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnCopy" data-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnClear" data-bs-toggle="tooltip" title="Clear actions"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnUndo" data-bs-toggle="tooltip" title="Undo last"><i class="fa fa-history" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnLoad" data-bs-toggle="tooltip" title="Load models"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnSave" data-bs-toggle="tooltip" title="Save models"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnCopy" data-bs-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="buttonsContainer">' +
                     '<button class="btn btn-info btnConst"><i class="fa fa-plus" aria-hidden="true"></i> Const</button>' +

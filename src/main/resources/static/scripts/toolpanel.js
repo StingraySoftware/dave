@@ -970,9 +970,9 @@ function ToolPanel (id,
       var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
       var $style = $('<div class="plotStyle marginTop">' +
                       '<div class="floatingContainer">' +
-                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
-                        '<button class="btn button btnLoad" data-toggle="tooltip" title="Load style"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                        '<button class="btn button btnSave" data-toggle="tooltip" title="Save style"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnClear" data-bs-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnLoad" data-bs-toggle="tooltip" title="Load style"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnSave" data-bs-toggle="tooltip" title="Save style"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                       '</div>' +
                     '</div>');
 
