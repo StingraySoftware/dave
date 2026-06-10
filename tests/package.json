@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
-    "electron": "^36.3.1",
+    "electron": "^42.3.2",
     "axios": "^1.6.0"
   }
 }

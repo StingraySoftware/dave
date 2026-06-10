@@ -679,9 +679,9 @@ app.on('certificate-error', (event, webContents, url, error, certificate, callba
 
 // Security: Prevent new window creation
 app.on('web-contents-created', (event, contents) => {
-  contents.on('new-window', (event, navigationUrl) => {
-    event.preventDefault();
-
+  // The 'new-window' event was removed from Electron; setWindowOpenHandler is
+  // the supported way to intercept window.open/target=_blank navigation.
+  contents.setWindowOpenHandler(({ url: navigationUrl }) => {
     // Open in external browser if it's a valid URL
     const allowedProtocols = ['http:', 'https:'];
     try {
@@ -692,6 +692,7 @@ app.on('web-contents-created', (event, contents) => {
     } catch (error) {
       logger.error('SECURITY', 'Invalid URL blocked', { url: navigationUrl });
     }
+    return { action: 'deny' };
   });
 });
 

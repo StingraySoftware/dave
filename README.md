@@ -7,7 +7,7 @@
 A modern desktop GUI application for astronomical X-ray timing analysis built on the Stingray library. DAVE provides an intuitive interface for analyzing variable X-ray sources with enterprise-grade performance and security.
 
 ![Python](https://img.shields.io/badge/python-3.13-blue.svg)
-![Electron](https://img.shields.io/badge/electron-36.3.1-blue.svg)
+![Electron](https://img.shields.io/badge/electron-42.3.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Quick Start
