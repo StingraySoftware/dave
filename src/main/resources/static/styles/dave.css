@@ -569,3 +569,10 @@ body {
 .ui-dialog-content .row {
   display: block;
 }
+
+/* BS5's .row > * also forces width:100% on the (inline-block) labels,
+ * pushing the floated input to a second line. Label only — a .row > *
+ * selector would out-specify the 60px input width in master_page.css. */
+.ui-dialog-content .row > label {
+  width: auto;
+}
