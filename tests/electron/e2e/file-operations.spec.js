@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
 const { ElectronAppHelper } = require('./electron-helpers');
 const path = require('path');
-const fs = require('fs').promises;
+const fs = require('fs');
 
 test.describe('File Operations', () => {
   let electronApp;
-  const testDataDir = path.join(__dirname, '../../../../test/resources/datasets');
+  const testDataDir = path.join(__dirname, '../../../data');
 
   test.beforeEach(async () => {
     electronApp = new ElectronAppHelper();
@@ -57,33 +57,37 @@ test.describe('File Operations', () => {
   });
 
   test('should handle text file upload', async () => {
+    // App launch plus backend FITS parsing needs more than the default budget
+    test.setTimeout(90000);
+
     // Navigate to main interface
     await electronApp.window.waitForTimeout(2000);
     
-    const testFile = path.join(testDataDir, 'test.evt');
-    
-    // Check if test file exists
-    try {
-      await fs.access(testFile);
-    } catch {
-      console.log('Test file not found, skipping test');
-      return;
-    }
-    
-    // Try to find file upload mechanism
+    const testFile = path.join(testDataDir, 'monol_testA.evt');
+
+    // The sample file ships with the repo - fail hard instead of skipping
+    expect(fs.existsSync(testFile)).toBe(true);
+
+    // Try to find file upload mechanism (the input is hidden;
+    // Playwright handles setInputFiles on hidden inputs fine)
     const fileInput = await electronApp.window.locator('input[type="file"]').first();
-    
-    if (await fileInput.count() > 0) {
-      // Upload file
-      await fileInput.setInputFiles(testFile);
-      
-      // Wait for processing
-      await electronApp.window.waitForTimeout(2000);
-      
-      // Check for any error messages
-      const errorVisible = await electronApp.window.locator('.error-message').count() > 0;
-      expect(errorVisible).toBe(false);
-    }
+    expect(await fileInput.count()).toBeGreaterThan(0);
+
+    // Upload file
+    await fileInput.setInputFiles(testFile);
+
+    // The rail's filter button (.filterBtn, class wfSelectorDisableable) stays
+    // hidden until a dataset loads, then fades in. Generous timeout: the Flask
+    // backend has to parse the FITS file first.
+    await expect(electronApp.window.locator('.filterBtn').first())
+      .toBeVisible({ timeout: 30000 });
+
+    // The waiting dialog must be gone once the dataset has loaded
+    await expect(electronApp.window.locator('.waitingDialog')).not.toBeVisible();
+
+    // Check for any error messages
+    const errorVisible = await electronApp.window.locator('.error-message').count() > 0;
+    expect(errorVisible).toBe(false);
   });
 
   test('should display file information after upload', async () => {
@@ -112,24 +116,20 @@ test.describe('File Operations', () => {
 
   test('should handle multiple file formats', async () => {
     const testFiles = [
-      'Input1.txt',
-      'test.evt',
-      'PN_source_lightcurve_raw.lc'
+      'monol_testA.evt',
+      'monol_testA_calib.evt'
     ];
-    
+
     for (const fileName of testFiles) {
       const filePath = path.join(testDataDir, fileName);
-      
-      try {
-        await fs.access(filePath);
-        console.log(`Testing file format: ${fileName}`);
-        
-        // Test file exists - would upload and verify here
-        // This is a placeholder for actual upload testing
-        expect(true).toBe(true);
-      } catch {
-        console.log(`Test file ${fileName} not found, skipping`);
-      }
+
+      // The sample files ship with the repo - fail hard instead of skipping
+      expect(fs.existsSync(filePath)).toBe(true);
+      console.log(`Testing file format: ${fileName}`);
+
+      // Test file exists - would upload and verify here
+      // This is a placeholder for actual upload testing
+      expect(true).toBe(true);
     }
   });
 
