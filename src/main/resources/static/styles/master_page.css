@@ -16,7 +16,7 @@ html, body {
 /* The app shell fills the viewport below the 44px navbar. Scoped to
  * .daveContainer so the navbar's own .container keeps normal sizing. */
 .daveContainer.container {
-  height: calc(100% - 44px);
+  height: calc(100% - var(--navbar-h));
   width: 100%;
   max-width: 100%;
   margin: 0;
@@ -122,6 +122,9 @@ ul#right-navbar {
 {
   display: block;
   margin: 0;
+  /* Bootstrap 5 row gutters pad .row > * children; the full-bleed app shell
+   * must reach the window edges. */
+  --bs-gutter-x: 0;
 }
 
 .wfSelectorContainer, .toolPanelContainer, .outputPanelContainer, .height_100
@@ -161,6 +164,7 @@ ul#right-navbar {
    * the old col-8 (66.7%) left a dead strip on the right. */
   width: calc(75% - 90px);
   min-width: 0;
+  scrollbar-gutter: stable;
 }
 
 .daveContainer .columnDivider
