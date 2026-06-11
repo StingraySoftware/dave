@@ -1,3 +1,6 @@
+/* NOTE: this stylesheet depends on the design tokens defined in dave.css,
+   which master_page.html links immediately before it. Any page using these
+   rules must link dave.css first. */
 
 @font-face {
   font-family: Archangelsk;
@@ -51,10 +54,6 @@ h3 {
 
 .side-nav a {
   color: var(--text-muted);
-}
-
-.side-nav li.active {
-  background-color: transparent;
 }
 
 ul#right-navbar {
