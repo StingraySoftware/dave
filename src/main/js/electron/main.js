@@ -42,7 +42,7 @@ const windowConfig = {
   minWidth: 1024,
   minHeight: 600,
   icon: path.join(__dirname, "../../resources/static/img/icon.png"),
-  backgroundColor: '#ffffff',
+  backgroundColor: '#15161a',
   titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
   webPreferences: {
     contextIsolation: true,

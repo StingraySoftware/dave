@@ -11,7 +11,7 @@
     <link rel= "stylesheet" type= "text/css" href= "../static/font-awesome-4.7.0/css/font-awesome.min.css">
     <style>
       body {
-        background-color: #000;
+        background-color: #15161a;
       }
 
       @font-face {
@@ -38,8 +38,8 @@
       }
 
       .splashLogo .daveSubtitle {
-        color: #888888;
-        font-family: Arial, sans-serif;
+        color: #8a8f99;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         font-size: 18px;
         margin-top: 6px;
         letter-spacing: 1px;
@@ -50,30 +50,157 @@
         width: 43%;
         position: fixed;
         bottom: 50px;
+        height: 8px;
+        background-color: #2c2f36;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .mainProgress .progress-bar {
+        background-color: #ff4828;
+        font-size: 0;
+      }
+
+      .progress-bar-warning {
+        background-color: #d9a03f;
       }
 
       .build_version {
         position: fixed;
         top: 1%;
         left: 1%;
-        color: #666666;
+        color: #6e737d;
         font-size: 0.65em;
       }
 
       .LogDebug, .LogServerDebug {
-        color: #AAAAAA;
+        color: #8a8f99;
       }
 
       .LogInfo, .LogServerInfo {
-        color: #007fff;
+        color: #58a6ff;
       }
 
       .LogWarn, .LogServerWarn {
-        color: #ff7d1b;
+        color: #d9a03f;
       }
 
       .LogError, .LogServerError {
-        color: #FF0000;
+        color: #e5484d;
+      }
+
+      /* Logger panel (logger.js no longer carries inline styles; these mirror
+         the dave.css rules with literal values since this page doesn't load it) */
+      #loggerContainer {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        position: fixed;
+        left: 0;
+        z-index: 9999;
+      }
+
+      #loggerTab {
+        width: 44px;
+        box-sizing: border-box;
+        overflow: hidden;
+        font: 600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        letter-spacing: 1px;
+        color: #c6c9cf;
+        position: absolute;
+        left: 20px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        border: 1px solid #3a3e46;
+        border-bottom: none;
+        background: rgba(13, 14, 17, 0.95);
+        border-top-left-radius: 7px;
+        border-top-right-radius: 7px;
+        cursor: pointer;
+      }
+
+      #loggerTab:hover {
+        color: #ffffff;
+      }
+
+      #logger {
+        font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        box-sizing: border-box;
+        color: #c6c9cf;
+        overflow-x: hidden;
+        overflow-y: auto;
+        position: relative;
+        bottom: 0;
+        margin: 0;
+        padding: 8px 10px;
+        background: rgba(13, 14, 17, 0.95);
+        border-top: 1px solid #3a3e46;
+      }
+
+      #logger .loggerTime {
+        color: #6e737d;
+        float: left;
+      }
+
+      #logger .loggerMsg {
+        word-wrap: break-word;
+        margin-left: 6em;
+      }
+
+      #logger .loggerRow {
+        width: 97%;
+      }
+
+      /* Error waiting-dialog (waiting_dialog.js no longer carries inline styles) */
+      .waitingDialog {
+        padding-top: 15%;
+        overflow-y: visible;
+      }
+
+      .waitingDialog .modal-content {
+        background-color: #232529;
+        border: 1px solid #3a3e46;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        color: #c6c9cf;
+      }
+
+      .waitingDialog .waitingDialogClose {
+        align-self: flex-end;
+        margin: 6px 8px 0;
+        padding: 2px 6px;
+        background: transparent;
+        border: none;
+        color: #8a8f99;
+      }
+
+      .waitingDialog .waitingDialogClose:hover {
+        color: #e8e9eb;
+      }
+
+      .waitingDialog .modal-header {
+        border-bottom: none;
+        padding: 14px 16px 4px;
+      }
+
+      .waitingDialog .modal-header h3 {
+        margin: 0;
+        font-size: 13.5px;
+        color: #e8e9eb;
+      }
+
+      .waitingDialog .progress {
+        margin-bottom: 0;
+        height: 8px;
+        background-color: #2c2f36;
+        border-radius: 4px;
+      }
+
+      .waitingDialog .progress-bar {
+        width: 100%;
+        background-color: #ff4828;
       }
 
     </style>
