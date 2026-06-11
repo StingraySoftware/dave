@@ -374,8 +374,8 @@ ul#right-navbar {
 }
 
 .sliderSelector .ui-slider-horizontal {
-  background-color: #6a6a6a;
-  border: 1px solid #222;
+  background-color: var(--border);
+  border: none;
 }
 
 .sliderSelector .selectorFrom, .sliderSelector .selectorTo {
@@ -389,7 +389,7 @@ ul#right-navbar {
 }
 
 .sliderSelector input::-webkit-input-placeholder {
-  color: #6e6e6e;
+  color: var(--text-faint);
 }
 
 .sliderSelector .selectorSlider {
