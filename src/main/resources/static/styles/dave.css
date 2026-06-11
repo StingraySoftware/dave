@@ -434,7 +434,7 @@ body {
   gap: 2px;
 }
 
-.ui-checkboxradio-label {
+.ui-controlgroup .ui-checkboxradio-label {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -444,12 +444,12 @@ body {
   font-family: var(--font-ui);
 }
 
-.ui-checkboxradio-label:hover {
+.ui-controlgroup .ui-checkboxradio-label:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary);
 }
 
-.ui-checkboxradio-label.ui-state-active {
+.ui-controlgroup .ui-checkboxradio-label.ui-state-active {
   background: var(--accent-tint);
   color: var(--text-primary);
 }
