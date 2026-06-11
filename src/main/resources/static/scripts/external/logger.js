@@ -161,75 +161,27 @@ var Logger = (function()
                 // container
                 containerDiv = document.createElement("div");
                 containerDiv.id = CONTAINER_DIV;
-                containerDiv.setAttribute("style", "width:100%; " +
-                                                   "margin:0; " +
-                                                   "padding:0; " +
-                                                   "box-sizing:border-box; " +
-                                                   "position:fixed; " +
-                                                   "left:0; " +
-                                                   "z-index:" + Z_INDEX + "; " +
-                                                   "bottom:" + (-logHeight) + "px; ");  /* hide it initially */
+                /* static styles live in dave.css; bottom stays inline because
+                   open()/close() animate it */
+                containerDiv.setAttribute("style", "bottom:" + (-logHeight) + "px;");  /* hide it initially */
 
-                // tab
+                // tab (visuals in dave.css; hover handled by CSS :hover)
                 tabDiv = document.createElement("div");
                 tabDiv.id = TAB_DIV;
                 tabDiv.appendChild(document.createTextNode("LOG"));
-                tabDiv.setAttribute("style", "width:40px; " +
-                                             "box-sizing:border-box; " +
-                                             "overflow:hidden; " +
-                                             "font:bold 10px verdana,helvetica,sans-serif; " +
-                                             "line-height:" + (tabHeight-1) + "px; " +  /* subtract top-border */
-                                             "color:#fff; " +
-                                             "position:absolute; " +
-                                             "left:20px; " +
-                                             "top:" + -tabHeight + "px; " +
-                                             "margin:0; padding:0; " +
-                                             "text-align:center; " +
-                                             "border:1px solid #aaa; " +
-                                             "border-bottom:none; " +
-                                             /*"background:#333; " + */
-                                             "background:rgba(0,0,0,0.8); " +
-                                             "-webkit-border-top-right-radius:8px; " +
-                                             "-webkit-border-top-left-radius:8px; " +
-                                             "-khtml-border-radius-topright:8px; " +
-                                             "-khtml-border-radius-topleft:8px; " +
-                                             "-moz-border-radius-topright:8px; " +
-                                             "-moz-border-radius-topleft:8px; " +
-                                             "border-top-right-radius:8px; " +
-                                             "border-top-left-radius:8px; ");
-                // add mouse event handlers
-                tabDiv.onmouseover = function()
-                {
-                    this.style.cursor = "pointer";
-                    this.style.textShadow = "0 0 1px #fff, 0 0 2px #0f0, 0 0 6px #0f0";
-                };
-                tabDiv.onmouseout = function()
-                {
-                    this.style.cursor = "auto";
-                    this.style.textShadow = "none";
-                };
+                tabDiv.setAttribute("style", "line-height:" + (tabHeight-1) + "px; " +  /* subtract top-border */
+                                             "top:" + -tabHeight + "px;");
                 tabDiv.onclick = function()
                 {
                     Logger.toggle();
                 };
 
-                // log message
+                // log message (visuals in dave.css; visibility is toggled by
+                // open()/close() so it stays inline)
                 logDiv = document.createElement("div");
                 logDiv.id = LOG_DIV;
-                logDiv.setAttribute("style", "font:12px monospace; " +
-                                             "height: " + logHeight + "px; " +
-                                             "box-sizing:border-box; " +
-                                             "color:#fff; " +
-                                             "overflow-x:hidden; " +
-                                             "overflow-y:scroll; " +
-                                             "visibility:hidden; " +
-                                             "position:relative; " +
-                                             "bottom:0px; " +
-                                             "margin:0px; " +
-                                             "padding:5px; " +
-                                             /*"background:#333; " + */
-                                             "background:rgba(0, 0, 0, 0.8); " +
-                                             "border-top:1px solid #aaa; ");
+                logDiv.setAttribute("style", "height: " + logHeight + "px; " +
+                                             "visibility:hidden;");
 
                 // style for log message
                 var span = document.createElement("span");  // for coloring text
@@ -293,21 +245,19 @@ var Logger = (function()
             {
                 // format time and put the text node to inline element
                 var timeDiv = document.createElement("div");            // color for time
-                timeDiv.setAttribute("style", "color:#999;" +
-                                              "float:left;");
+                timeDiv.setAttribute("class", "loggerTime");
 
                 var timeNode = document.createTextNode(getTime() + "\u00a0");
                 timeDiv.appendChild(timeNode);
 
                 // create message span
                 var msgDiv = document.createElement("div");
-                msgDiv.setAttribute("style", "word-wrap:break-word;" +  // wrap msg
-                                             "margin-left:6.0em;");     // margin-left = 9 * ?
+                msgDiv.setAttribute("class", "loggerMsg");
                 if(!msgDefined)
                     msgDiv.style.color = "#afa"; // override color if msg is not defined
 
                 if (!((cssClass === undefined) || (cssClass == null)))
-                  msgDiv.setAttribute("class", cssClass);
+                  msgDiv.setAttribute("class", "loggerMsg " + cssClass);
 
                 // put message into a text node
                 var line = lines[i].replace(/ /g, "\u00a0");
@@ -317,7 +267,6 @@ var Logger = (function()
                 // new line div with clearing css float property
                 var newLineDiv = document.createElement("div");
                 newLineDiv.setAttribute("class", "loggerRow");
-                newLineDiv.setAttribute("style", "width:97%;");
 
                 newLineDiv.appendChild(timeDiv);            // add time
                 newLineDiv.appendChild(msgDiv);             // add message

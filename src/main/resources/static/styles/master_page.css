@@ -790,19 +790,19 @@ input.wrongValue {
 }
 
 .LogDebug, .LogServerDebug {
-  color: #AAAAAA;
+  color: var(--text-muted);
 }
 
 .LogInfo, .LogServerInfo {
-  color: #007fff;
+  color: var(--info);
 }
 
 .LogWarn, .LogServerWarn, .Orange {
-  color: #ff7d1b;
+  color: var(--warn);
 }
 
 .LogError, .LogServerError {
-  color: #FF0000;
+  color: var(--danger);
 }
 
 .settingsContainer {

@@ -667,3 +667,67 @@ body {
 .progress-bar-success {
   background-color: var(--success) !important;
 }
+
+/* ===================== Logger ===================== */
+
+#loggerContainer {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  z-index: 9999;
+}
+
+#loggerTab {
+  width: 44px;
+  box-sizing: border-box;
+  overflow: hidden;
+  font: 600 10px var(--font-ui);
+  letter-spacing: 1px;
+  color: var(--text-body);
+  position: absolute;
+  left: 20px;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: rgba(13, 14, 17, 0.95);
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  cursor: pointer;
+}
+
+#loggerTab:hover {
+  color: #ffffff;
+}
+
+#logger {
+  font: 11px var(--font-mono);
+  box-sizing: border-box;
+  color: var(--text-body);
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  bottom: 0;
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(13, 14, 17, 0.95);
+  border-top: 1px solid var(--border);
+}
+
+#logger .loggerTime {
+  color: var(--text-faint);
+  float: left;
+}
+
+#logger .loggerMsg {
+  word-wrap: break-word;
+  margin-left: 6em;
+}
+
+#logger .loggerRow {
+  width: 97%;
+}
