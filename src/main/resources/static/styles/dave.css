@@ -373,3 +373,21 @@ body {
 .selectorsContainer .btnWarn {
   color: var(--warn);
 }
+
+/* file selector chip states: hide when empty, wrap injected warning chips */
+.fileSelector .fileName:empty {
+  display: none;
+}
+
+.fileSelector .fileName .btnWarn {
+  white-space: normal;
+}
+
+.fileSelector .btnWarn {
+  color: var(--warn);
+}
+
+/* keep the MODELS: title clear of the right-floated icon-button row */
+.modelSelector h3 {
+  margin-right: 180px;
+}

@@ -476,7 +476,8 @@ ul#right-navbar {
   cursor: pointer;
 }
 
-.HlSection>h3 {
+/* must out-specify the .toolPanelContainer .Section > h3 label rule in dave.css */
+.toolPanelContainer .HlSection > h3 {
   color: var(--accent-hover);
 }
 
@@ -755,10 +756,6 @@ input.wrongValue {
 .BayesianParEst .Section {
     margin-left: 0px;
     font-size: 1.1em;
-}
-
-.BayesianParEst .Section h3 {
-    font-size: 18px;
 }
 
 .BayesianParEst div {
