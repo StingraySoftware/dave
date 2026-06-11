@@ -731,3 +731,15 @@ body {
 #logger .loggerRow {
   width: 97%;
 }
+
+/* ===================== Settings tab ===================== */
+
+.TabPanel.Settings .settingsRow {
+  margin: 24px;
+}
+
+.btnClearCache {
+  padding-right: 10px;
+  padding-left: 10px;
+  margin-top: 14px;
+}

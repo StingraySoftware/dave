@@ -730,14 +730,15 @@ input.wrongValue {
 
 .TabPanel.Settings h2
 {
-  color: rgb(245, 243, 243);
-  font-size: 1.5em;
+  color: var(--text-primary);
+  font-size: 16px;
   margin-top: 0px;
 }
 
 .TabPanel.Settings h3
 {
-  color: #e68f4d;
+  color: var(--text-primary);
+  font-weight: 600;
   clear: both;
   margin-top: 0px;
 }
@@ -810,7 +811,7 @@ input.wrongValue {
 }
 
 .serverLogLevel h3, .defaultChannelColumn h3 {
-  color: #9d9d9d !important;
+  color: var(--text-muted) !important;
 }
 
 .smallTextStyle h3 {
