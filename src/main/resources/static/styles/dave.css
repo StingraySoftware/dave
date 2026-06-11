@@ -607,3 +607,63 @@ body {
 .plotContainer .plot {
   border-radius: var(--radius-card) var(--radius-card) 0 0;
 }
+
+/* ===================== Waiting dialog ===================== */
+
+.waitingDialog {
+  padding-top: 15%;
+  overflow-y: visible;
+}
+
+.waitingDialog .modal-content {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-body);
+}
+
+.waitingDialog .waitingDialogClose {
+  float: right;
+  margin: 6px 8px;
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+}
+
+.waitingDialog .waitingDialogClose:hover {
+  color: var(--text-primary);
+}
+
+.waitingDialog .modal-header {
+  border-bottom: none;
+  padding: 14px 16px 4px;
+}
+
+.waitingDialog .modal-header h3 {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.waitingDialog .progress {
+  margin-bottom: 0;
+  height: 8px;
+  background-color: var(--bg-raised);
+  border-radius: 4px;
+}
+
+.waitingDialog .progress-bar {
+  width: 100%;
+  background-color: var(--accent);
+}
+
+/* Bootstrap 3 contextual progress classes still used by showError()/setProgress() */
+.progress-bar-warning {
+  background-color: var(--warn) !important;
+}
+
+.progress-bar-success {
+  background-color: var(--success) !important;
+}
