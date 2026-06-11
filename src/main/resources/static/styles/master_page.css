@@ -7,14 +7,25 @@
   src: url("../fonts/Archangelsk.ttf");
 }
 
-html,body,.container {
+html, body {
   height: 100%;
   width: 100%;
   margin: 0;
 }
 
+/* The app shell fills the viewport below the 44px navbar. Scoped to
+ * .daveContainer so the navbar's own .container keeps normal sizing. */
+.daveContainer.container {
+  height: calc(100% - 44px);
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-app);
+}
+
 body {
-  min-width: 1090px;
+  min-width: 1000px;
 }
 
 h2 {
@@ -120,7 +131,7 @@ ul#right-navbar {
   height: 100%;
   max-height: 100% !important;
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .wfSelectorContainer
@@ -144,16 +155,17 @@ ul#right-navbar {
 .outputPanelContainer
 {
   margin: 0;
-  padding: 0;
-  padding-left: 15px;
-  padding-bottom: 60px;
-  background-color: #ffffff;
-  min-width: 720px;
+  padding: 12px 14px 60px;
+  background-color: var(--canvas);
+  /* rail (90px) + tool panel (col-3 = 25%) + this = exactly 100%;
+   * the old col-8 (66.7%) left a dead strip on the right. */
+  width: calc(75% - 90px);
+  min-width: 0;
 }
 
 .daveContainer .columnDivider
 {
-  border-right: 1px solid black;
+  border-right: 1px solid var(--border-subtle);
 }
 
 .infoPanel
