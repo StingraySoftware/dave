@@ -130,3 +130,117 @@ body {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-tint);
 }
+
+/* ===================== Navbar ===================== */
+
+.navbar.navbar-static-top {
+  min-height: 44px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* beat Bootstrap's .bg-dark utility (it carries !important) */
+.navbar.navbar-static-top.bg-dark {
+  background-color: var(--bg-navbar) !important;
+}
+
+/* the navbar wraps its content in a .container; span the full width */
+.navbar.navbar-static-top > .container {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tab anchors are created by tabpanel.js with per-tab classes (NavItem_0,
+ * NavItem_1, ...), so style through the list structure. */
+#navbar .navbar-nav.me-auto > li > a {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  margin: 7px 4px 7px 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-ctl);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#navbar .navbar-nav.me-auto > li > a:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+#navbar .navbar-nav.me-auto > li.active > a {
+  background-color: var(--bg-raised);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+/* "+" new-tab button and the right-side workspace/settings icons */
+#navbar .navbar-nav.me-auto > li.addTabPanelLi > a,
+#navbar #right-navbar > li > a {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 8px 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-ctl);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+#navbar .navbar-nav.me-auto > li.addTabPanelLi > a:hover,
+#navbar #right-navbar > li > a:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ===================== Workflow rail ===================== */
+
+.wfSelectorContainer {
+  background-color: var(--bg-rail);
+  padding: 8px 6px;
+}
+
+/* the rail markup nests a .navbar div; neutralize Bootstrap's navbar box */
+.wfSelectorContainer .navbar {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.side-nav li {
+  list-style: none;
+  margin-bottom: 4px;
+}
+
+.side-nav li > a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 2px;
+  border-radius: 7px;
+  text-decoration: none;
+}
+
+.side-nav li > a .fa {
+  font-size: 14px;
+}
+
+.side-nav li > a:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.side-nav li.active > a {
+  background-color: var(--accent-tint);
+  color: var(--accent-hover);
+}
