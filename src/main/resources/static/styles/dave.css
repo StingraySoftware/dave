@@ -413,7 +413,7 @@ body {
   border-radius: 50%;
   background: #ffffff;
   border: none;
-  top: -5px;
+  top: -4.5px;
   margin-left: -6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
   cursor: grab;
@@ -472,6 +472,15 @@ body {
   color: var(--accent);
 }
 
+.switch-btn.fa-minus-square:hover {
+  color: var(--accent-hover);
+}
+
+/* checkbox-style toggles: checked state matches the expanded-section accent */
+.switch-btn.fa-check-square-o {
+  color: var(--accent);
+}
+
 /* dialogs */
 .ui-dialog {
   background: var(--bg-panel);
@@ -482,6 +491,12 @@ body {
   font-family: var(--font-ui);
   font-size: 12.5px;
   color: var(--text-body);
+}
+
+/* the dialog root also carries .ui-widget-content; the vendored
+ * .ui-widget.ui-widget-content border (0,2,0) beats .ui-dialog alone */
+.ui-dialog.ui-widget-content {
+  border-color: var(--border);
 }
 
 .ui-dialog .ui-dialog-titlebar {
@@ -499,6 +514,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
+  text-indent: 0;
 }
 
 .ui-dialog .ui-dialog-titlebar-close:hover {
@@ -516,6 +532,7 @@ body {
   border-radius: 5px;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  font-family: inherit;
 }
 
 .ui-dialog .ui-dialog-buttonpane {
@@ -532,13 +549,23 @@ body {
   color: var(--text-primary);
   font-size: 12px;
   padding: 3px 10px;
+  background-image: none;
+  font-family: inherit;
 }
 
 .ui-dialog .ui-dialog-buttonpane button:hover:enabled {
   background-color: var(--bg-raised-hover);
+  background-image: none;
 }
 
 .ui-widget-overlay {
   background: rgba(0, 0, 0, 0.5);
   opacity: 1;
+}
+
+/* Bootstrap 5 makes .row a flex container, which ignores the float-based
+ * label/input layout inside legacy dialog forms (same fallout as the
+ * .TabPanel.row patch in master_page.css). Keep dialog rows as block boxes. */
+.ui-dialog-content .row {
+  display: block;
 }
