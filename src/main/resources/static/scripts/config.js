@@ -39,12 +39,12 @@ CONFIG = {
   PLOT_CONFIG: {
 
     DEFAULT_TITLE_FONT: {
-                          family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+                          family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
                           size: 12,
                           color: '#3a3f47'
                         },
 
-    SUPPORTED_FONTS : ['-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+    SUPPORTED_FONTS : ['-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
                         'Arial', 'Arial Black', 'Comic Sans MS',
                         'Courier New', 'Georgia', 'Impact',
                         'Lucida Console', 'Lucida Sans Unicode', 'Palatino Linotype',
