@@ -61,7 +61,9 @@
         font-size: 0;
       }
 
-      .progress-bar-warning {
+      /* scoped above .waitingDialog .progress-bar; deliberately NOT applied to
+         .mainProgress, whose legacy markup also carries this class */
+      .waitingDialog .progress-bar.progress-bar-warning {
         background-color: #d9a03f;
       }
 
