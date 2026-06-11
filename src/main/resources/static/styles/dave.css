@@ -602,7 +602,8 @@ body {
   --bs-btn-active-color: var(--warn);
 }
 
-/* plot canvas overflow clipping for rounded corners */
+/* the plot canvas owns the card's TOP corners (the toolbar sits below it);
+ * .plot has overflow:hidden so this clips the Plotly svg cleanly */
 .plotContainer .plot {
-  border-radius: 0 0 var(--radius-card) var(--radius-card);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
 }
