@@ -59,8 +59,9 @@ var waitingDialog = waitingDialog || (function ($) {
         $dialog.find('.ui-dialog-titlebar-close').html('<i class="fa fa-times" aria-hidden="true"></i>').click(function(event){
            $dialog.modal('hide');
         });
-  			// Opening dialog
-  			$dialog.modal();
+  			// Opening dialog (Bootstrap 5: bare $.modal() no longer shows; the
+  			// BS3 data-backdrop/data-keyboard attrs are ignored, so pass config)
+  			bootstrap.Modal.getOrCreateInstance($dialog[0], { backdrop: 'static', keyboard: false }).show();
       }
 
       if (settings.ignoreCalls) {
