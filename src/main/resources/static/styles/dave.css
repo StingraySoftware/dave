@@ -387,7 +387,8 @@ body {
   color: var(--warn);
 }
 
-/* keep the MODELS: title clear of the right-floated icon-button row */
-.modelSelector h3 {
-  margin-right: 180px;
+/* keep the MODELS: title clear of the right-floated icon-button row by
+ * tightening the row itself (h3 margins can't move an earlier line box) */
+.modelSelector .floatingContainer .btn {
+  padding: 3px 5px;
 }
