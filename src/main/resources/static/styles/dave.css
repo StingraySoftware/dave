@@ -334,3 +334,42 @@ body {
   font-size: 11.5px;
   padding: 2px 4px;
 }
+
+/* ===================== Tool panel ===================== */
+
+/* Collapsible section headers read as quiet uppercase labels; individual
+ * control titles (e.g. slider labels) keep sentence case via the h3 base. */
+.toolPanelContainer .Section > h3 {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+
+.toolPanelContainer .Section > h3:hover {
+  color: var(--text-body);
+}
+
+.toolPanelContainer h3 {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 12px 0 6px;
+}
+
+.fileSelector h3 {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+.fileSelector input[type="file"] {
+  width: 100%;
+}
+
+/* "needs refresh" warning chips on the dark side */
+.selectorsContainer .btnWarn {
+  color: var(--warn);
+}

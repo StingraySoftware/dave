@@ -21,7 +21,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                     '<button class="btn btn-primary btnChoose">' + this.btnText + '</button>' +
                     '<button class="btn btn-warning btnChange">Change</button>' +
                     '<form action="" method="POST" enctype="multipart/form-data">' +
-                      '<input id="' + this.uploadInputId + '" name="file" type="file" style="width:100%" multiple/>' +
+                      '<input id="' + this.uploadInputId + '" name="file" type="file" multiple/>' +
                     '</form>' +
                   '</div>');
 

@@ -29,11 +29,11 @@ body {
 }
 
 h2 {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 h3 {
-  font-size: 1.2em;
+  font-size: 12.5px;
 }
 
 .navbar-static-top {
@@ -144,9 +144,9 @@ ul#right-navbar {
 
 .toolPanelContainer
 {
-  padding-top: 14px;
-  background-color: rgb(47, 47, 47);
-  color: #9d9d9d;
+  padding: 14px 12px;
+  background-color: var(--bg-panel);
+  color: var(--text-body);
 }
 
 .toolPanelContainer input[type="text"] {
@@ -406,7 +406,8 @@ ul#right-navbar {
   margin-top: 8px;
   padding-left: 12px;
   padding-right: 12px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
 }
 
 .btn {
@@ -441,8 +442,14 @@ ul#right-navbar {
 }
 
 .fileSelector .fileName {
-  margin-right: 10px;
-  color: #ececec;
+  display: block;
+  margin: 4px 0 8px;
+  padding: 3px 8px;
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-primary);
+  word-break: break-all;
 }
 
 .fileSelector .btnChange {
@@ -450,18 +457,19 @@ ul#right-navbar {
 }
 
 .InfoText {
-  color: #2e6da4;
+  color: var(--info);
   font-size: 0.85em;
 }
 
 .btnRefreshFloating {
   position: fixed;
   right: 16px;
-  top: 60px;
+  top: 56px;
   z-index: 1020;
-  width: 120px;
-  height: 40px;
-  font-size: 1.4em;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .Section h3 {
@@ -469,7 +477,7 @@ ul#right-navbar {
 }
 
 .HlSection>h3 {
-  color: #ff7d1b;
+  color: var(--accent-hover);
 }
 
 .Section>.sectionContainer, .plotFilenames {
@@ -489,7 +497,7 @@ ul#right-navbar {
 .analyzePanel .sectionContainer .btn, .dialogContainer .btn {
   display: block;
   background: none;
-  color: #d4a34a;
+  color: var(--text-body);
   border: none;
   box-shadow: none;
   text-shadow: none;
@@ -503,15 +511,15 @@ ul#right-navbar {
 }
 
 .analyzePanel .sectionContainer .btn:hover, .dialogContainer .btn:hover, .BulkAnalisysSection:hover {
-  color: #ffcf78 !important;
+  color: var(--accent-hover) !important;
 }
 
 .analyzePanel .sectionContainer .btn.plotHidden, .toolPanelContainer .Section.Disabled h3, .plotFilenames .btn.plotHidden {
-  color: gray;
+  color: var(--text-faint);
 }
 
 .analyzePanel .sectionContainer .btn.ExtraButton {
-  color: #d47d47;
+  color: var(--text-muted);
 }
 
 .analyzePanel .sectionContainer .btn.ExtraButton.periodogramBtn {
@@ -559,7 +567,7 @@ ul#right-navbar {
 }
 
 .paramContainer .fixed {
-  color: #121212;
+  color: var(--text-faint);
 }
 
 .paramContainer .estimation, .paramContainer .error {
@@ -771,7 +779,7 @@ input.wrongValue {
 
 .rangeBoxSpan {
   font-size:0.8em;
-  color:#777777;
+  color: var(--text-muted);
 }
 
 .LogDebug, .LogServerDebug {
