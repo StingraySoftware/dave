@@ -37,3 +37,6 @@ src/main/js/electron/node_modules/
 *.rpm
 *.exe
 *.AppImage
+# Brainstorming companion artifacts
+.superpowers/
+docs/superpowers/
