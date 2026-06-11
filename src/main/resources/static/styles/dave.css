@@ -65,6 +65,7 @@
   --bs-emphasis-color: var(--text-primary);
   --bs-secondary-color: var(--text-muted);
   --bs-tertiary-bg: var(--bg-raised);
+  --bs-secondary-bg: var(--bg-panel); /* disabled form controls */
   --bs-focus-ring-color: var(--accent-tint);
 }
 
@@ -249,4 +250,81 @@ body {
 .side-nav li.active > a {
   background-color: var(--accent-tint);
   color: var(--accent-hover);
+}
+
+/* ===================== Buttons ===================== */
+
+.btn {
+  border-radius: var(--radius-ctl);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.btn:disabled, .btn[disabled] {
+  opacity: 0.45;
+}
+
+/* primary: accent fill (Choose file, FIT, Refresh) */
+.btn-primary, .btn-success {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover, .btn-success:hover,
+.btn-primary:focus, .btn-success:focus,
+.btn-primary:active, .btn-success:active,
+.btn-primary.active, .btn-success.active {
+  background-color: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+  color: #ffffff !important;
+}
+
+/* secondary: raised dark (Change, model buttons, plot chips, dialog buttons) */
+.btn-default, .btn-warning, .btn-info, .btn-danger {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-default:hover, .btn-warning:hover, .btn-info:hover, .btn-danger:hover,
+.btn-default:focus, .btn-warning:focus, .btn-info:focus, .btn-danger:focus,
+.btn-default:active, .btn-warning:active, .btn-info:active, .btn-danger:active {
+  background-color: var(--bg-raised-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+/* heavy-compute emphasis without alarm red */
+.btn-danger {
+  color: var(--accent-hover);
+}
+
+/* APPLY ALL sits next to FIT; keep one accent button per group */
+.actionsContainer .applyBtn {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.actionsContainer .applyBtn:hover,
+.actionsContainer .applyBtn:focus,
+.actionsContainer .applyBtn:active {
+  background-color: var(--bg-raised-hover) !important;
+  border-color: var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ===================== Inputs ===================== */
+
+.toolPanelContainer select,
+.ui-dialog select {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  padding: 2px 4px;
 }
