@@ -160,6 +160,10 @@ ul#right-navbar {
   margin-left: 8px;
 }
 
+.toolPanelContainer input[type="text"]:disabled {
+  opacity: 0.5;
+}
+
 .outputPanelContainer
 {
   margin: 0;

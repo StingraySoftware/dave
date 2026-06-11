@@ -25,6 +25,7 @@
   /* accent + semantics */
   --accent: #ff4828;
   --accent-hover: #ff6a45;
+  --accent-down: #e23a1c; /* hover/pressed state for accent-FILLED controls (darker, keeps white text legible) */
   --accent-tint: rgba(255, 72, 40, 0.13);
   --brand: #fe3200; /* wordmark only — every other accent use goes through --accent */
   --danger: #e5484d;
@@ -260,61 +261,66 @@ body {
   line-height: 1.5;
   box-shadow: none;
   text-shadow: none;
+  --bs-btn-disabled-opacity: 0.45;
 }
 
-.btn:disabled, .btn[disabled] {
-  opacity: 0.45;
-}
-
-/* primary: accent fill (Choose file, FIT, Refresh) */
+/* primary: accent fill (Choose file, FIT, Refresh).
+ * Restyled via Bootstrap 5's per-variant button variables so every state
+ * (hover, active, disabled, .show) follows the accent without !important. */
 .btn-primary, .btn-success {
-  background-color: var(--accent);
-  border-color: var(--accent);
-  color: #ffffff;
-}
-
-.btn-primary:hover, .btn-success:hover,
-.btn-primary:focus, .btn-success:focus,
-.btn-primary:active, .btn-success:active,
-.btn-primary.active, .btn-success.active {
-  background-color: var(--accent-hover) !important;
-  border-color: var(--accent-hover) !important;
-  color: #ffffff !important;
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-color: #ffffff;
+  --bs-btn-hover-bg: var(--accent-down);
+  --bs-btn-hover-border-color: var(--accent-down);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-active-bg: var(--accent-down);
+  --bs-btn-active-border-color: var(--accent-down);
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-disabled-bg: var(--accent);
+  --bs-btn-disabled-border-color: var(--accent);
+  --bs-btn-disabled-color: #ffffff;
+  --bs-btn-focus-shadow-rgb: 255, 72, 40;
 }
 
 /* secondary: raised dark (Change, model buttons, plot chips, dialog buttons) */
 .btn-default, .btn-warning, .btn-info, .btn-danger {
-  background-color: var(--bg-raised);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
+  --bs-btn-bg: var(--bg-raised);
+  --bs-btn-border-color: var(--border);
+  --bs-btn-color: var(--text-primary);
+  --bs-btn-hover-bg: var(--bg-raised-hover);
+  --bs-btn-hover-border-color: var(--border);
+  --bs-btn-hover-color: var(--text-primary);
+  --bs-btn-active-bg: var(--bg-raised-hover);
+  --bs-btn-active-border-color: var(--border);
+  --bs-btn-active-color: var(--text-primary);
+  --bs-btn-disabled-bg: var(--bg-raised);
+  --bs-btn-disabled-border-color: var(--border);
+  --bs-btn-disabled-color: var(--text-muted);
+  --bs-btn-focus-shadow-rgb: 255, 72, 40;
 }
 
-.btn-default:hover, .btn-warning:hover, .btn-info:hover, .btn-danger:hover,
-.btn-default:focus, .btn-warning:focus, .btn-info:focus, .btn-danger:focus,
-.btn-default:active, .btn-warning:active, .btn-info:active, .btn-danger:active {
-  background-color: var(--bg-raised-hover) !important;
-  border-color: var(--border) !important;
-  color: var(--text-primary) !important;
-}
-
-/* heavy-compute emphasis without alarm red */
+/* heavy-compute emphasis without alarm red — keeps its accent text in every state */
 .btn-danger {
-  color: var(--accent-hover);
+  --bs-btn-color: var(--accent-hover);
+  --bs-btn-hover-color: var(--accent-hover);
+  --bs-btn-active-color: var(--accent-hover);
 }
 
 /* APPLY ALL sits next to FIT; keep one accent button per group */
 .actionsContainer .applyBtn {
-  background-color: var(--bg-raised);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-}
-
-.actionsContainer .applyBtn:hover,
-.actionsContainer .applyBtn:focus,
-.actionsContainer .applyBtn:active {
-  background-color: var(--bg-raised-hover) !important;
-  border-color: var(--border) !important;
-  color: var(--text-primary) !important;
+  --bs-btn-bg: var(--bg-raised);
+  --bs-btn-border-color: var(--border);
+  --bs-btn-color: var(--text-primary);
+  --bs-btn-hover-bg: var(--bg-raised-hover);
+  --bs-btn-hover-border-color: var(--border);
+  --bs-btn-hover-color: var(--text-primary);
+  --bs-btn-active-bg: var(--bg-raised-hover);
+  --bs-btn-active-border-color: var(--border);
+  --bs-btn-active-color: var(--text-primary);
+  --bs-btn-disabled-bg: var(--bg-raised);
+  --bs-btn-disabled-border-color: var(--border);
+  --bs-btn-disabled-color: var(--text-muted);
 }
 
 /* ===================== Inputs ===================== */
