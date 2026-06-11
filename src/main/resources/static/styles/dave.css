@@ -576,3 +576,33 @@ body {
 .ui-dialog-content .row > label {
   width: auto;
 }
+
+/* ===================== Light-side (plot card) controls ===================== */
+
+.plotContainer .btn-default,
+.plotTools .btn,
+.infoPanel .btn {
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: transparent;
+  --bs-btn-color: var(--card-muted);
+  --bs-btn-hover-bg: #f0f1f3;
+  --bs-btn-hover-border-color: var(--card-border);
+  --bs-btn-hover-color: var(--card-ink);
+  --bs-btn-active-bg: #f0f1f3;
+  --bs-btn-active-border-color: var(--card-border);
+  --bs-btn-active-color: var(--card-ink);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: transparent;
+  --bs-btn-disabled-color: var(--card-muted);
+}
+
+.plotTools .btnWarn {
+  --bs-btn-color: var(--warn);
+  --bs-btn-hover-color: var(--warn);
+  --bs-btn-active-color: var(--warn);
+}
+
+/* plot canvas overflow clipping for rounded corners */
+.plotContainer .plot {
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
+}

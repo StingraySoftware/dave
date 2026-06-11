@@ -186,13 +186,17 @@ ul#right-navbar {
   float:left;
   width: 98%;
   height: 305px;
-  border: 1px solid #afafaf;
+  background-color: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  color: var(--card-ink);
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
   padding: 12px;
   padding-top: 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .infoPanel .property {
@@ -208,12 +212,12 @@ ul#right-navbar {
 
 .infoPanel .posteriorTable {
   width: 80%;
-  border: 1px solid lightgrey;
+  border: 1px solid var(--card-border);
 }
 
 .posteriorTable td {
   padding: 6px;
-  border: 1px solid lightgrey;
+  border: 1px solid var(--card-border);
 }
 
 .infoPanel img {
@@ -236,7 +240,7 @@ ul#right-navbar {
 
 .property .comment {
   width: 48%;
-  color: #999999;
+  color: var(--card-muted);
   vertical-align: top;
 }
 
@@ -245,7 +249,10 @@ ul#right-navbar {
   position: relative;
   float:left;
   width: 48%;
-  border: 1px solid #afafaf;
+  background-color: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -254,17 +261,18 @@ ul#right-navbar {
 
 .plotSelected, .plotSelected.plotHover
 {
-  border: 1px solid #ff0000 !important;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 1px 8px rgba(255, 72, 40, 0.18);
 }
 
 .btnSelect.plotSelected {
-    background-color: rgba(253, 0, 0, 0.08) !important;
-    color: #8a4f01 !important;
+    background-color: var(--accent-tint) !important;
+    color: var(--accent) !important;
 }
 
 .plotHover
 {
-  border: 1px solid #222222 !important;
+  border: 1px solid var(--card-border-hover) !important;
 }
 
 .plotContainer .plot{
@@ -273,8 +281,8 @@ ul#right-navbar {
 }
 
 .plot .modebar {
-    background: rgba(255, 255, 255, 1.0) !important;
-    border: lightgrey 1px solid !important;
+    background: transparent !important;
+    border: none !important;
     padding: 4px !important;
 }
 
@@ -284,7 +292,8 @@ ul#right-navbar {
   margin-right: 6px;
   margin-top: 0px;
   float: left;
-  font-size: 0.7em;
+  font-size: 10.5px;
+  color: var(--card-muted);
   max-width: 55%;
   max-height: 24px;
   overflow: hidden;
@@ -322,7 +331,8 @@ ul#right-navbar {
   top: 0;
   left: 0;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.71);
+  border-radius: var(--radius-card);
+  background-color: rgba(255, 255, 255, 0.75);
 }
 
 .loadingGif {
