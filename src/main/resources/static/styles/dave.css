@@ -738,7 +738,9 @@ body {
   margin: 24px;
 }
 
-.btnClearCache {
+/* scoped: the blanket .btn padding rule in master_page.css loads later and
+ * would tie-and-win against a bare single-class selector */
+.TabPanel.Settings .btnClearCache {
   padding-right: 10px;
   padding-left: 10px;
   margin-top: 14px;
