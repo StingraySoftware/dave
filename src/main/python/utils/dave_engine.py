@@ -765,7 +765,9 @@ def get_dynamical_spectrum(
 
         if pds:
             if df > 0:
-                pds.rebin_frequency(df)
+                # Modern Stingray returns the rebinned spectrum instead of
+                # mutating in place.
+                pds = pds.rebin_frequency(df)
 
             filtered_indexes = np.where((pds.freq >= freq_range[0]) & (pds.freq <= freq_range[1]))[
                 0
@@ -2680,14 +2682,15 @@ def apply_background_to_lc(lc, bck_destination, filters, gti_destination, dt, sr
                     table = None
 
             if backscale_ratio != 1:
-                # Applies the backscale_ratio to background lightcurve
+                # Applies the backscale_ratio to background lightcurve.
+                # Multiply out-of-place: events-derived lightcurves have
+                # integer counts and an in-place float multiply raises a
+                # numpy casting error.
                 logging.debug("Applying backscale_ratio: " + str(backscale_ratio))
-                bck_lc.counts *= backscale_ratio
-                bck_lc.counts_err *= backscale_ratio
                 bck_lc = Lightcurve(
                     bck_lc.time,
-                    bck_lc.counts,
-                    err=bck_lc.counts_err,
+                    bck_lc.counts * backscale_ratio,
+                    err=bck_lc.counts_err * backscale_ratio,
                     gti=bck_lc.gti,
                     mjdref=bck_lc.mjdref,
                 )
