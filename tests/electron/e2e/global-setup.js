@@ -171,12 +171,14 @@ module.exports = async function globalSetup() {
     // Store server process globally so teardown can access it
     global.__PYTHON_SERVER__ = pythonServer;
     
-    // Add overall timeout for setup
+    // Add overall timeout for setup. Cold CI runners need ~10s just to
+    // import the scientific stack (stingray/hendrics/numba), which left the
+    // 15s budget with no room for the health-check retries and fallback.
     setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        reject(new Error('Server setup timed out after 15 seconds'));
+        reject(new Error('Server setup timed out after 60 seconds'));
       }
-    }, 15000);
+    }, 60000);
   });
 };
