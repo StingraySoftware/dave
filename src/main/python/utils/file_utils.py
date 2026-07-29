@@ -84,22 +84,22 @@ def is_valid_file(destination):
                 # Handle Windows access violations and other magic runtime errors
                 logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
                 # Fall through to extension-based fallback
-        else:
-            # Fallback to file extension checking
-            valid_extensions = [".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".gz", ".p", ".nc"]
-            if file_extension in valid_extensions:
+
+        # Fallback to file extension checking (magic unavailable or errored)
+        valid_extensions = [".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".gz", ".p", ".nc"]
+        if file_extension in valid_extensions:
+            return True
+
+        # For files without extension, try to check if it's text
+        if file_extension == "":
+            try:
+                with open(destination, encoding="utf-8") as f:
+                    f.read(1024)  # Try reading first 1KB as text
                 return True
+            except (UnicodeDecodeError, OSError):
+                return False
 
-            # For files without extension, try to check if it's text
-            if file_extension == "":
-                try:
-                    with open(destination, encoding="utf-8") as f:
-                        f.read(1024)  # Try reading first 1KB as text
-                    return True
-                except (UnicodeDecodeError, OSError):
-                    return False
-
-            return False
+        return False
     except Exception:
         return False
 

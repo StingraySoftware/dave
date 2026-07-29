@@ -22,6 +22,20 @@ def test_is_valid_file(s):
         assert not FileUtils.is_valid_file(destination)
 
 
+def test_is_valid_file_falls_back_when_magic_errors(monkeypatch):
+    """A runtime failure inside python-magic must fall back to the extension
+    check instead of rejecting every file (implicit None return)."""
+    if FileUtils.MAGIC_AVAILABLE:
+
+        def raise_runtime_error(_destination):
+            raise RuntimeError("could not find any valid magic files!")
+
+        monkeypatch.setattr(FileUtils.magic, "from_file", raise_runtime_error)
+
+    destination = FileUtils.get_destination(TEST_RESOURCES, "test.evt")
+    assert FileUtils.is_valid_file(destination) is True
+
+
 def test_get_destination():
     """Test get_destination function with various inputs."""
     # Test with valid filename
