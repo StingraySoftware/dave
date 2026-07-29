@@ -12,3 +12,4 @@ print(f"Syspath: {sys.path}")
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 TEST_RESOURCES = os.path.join(APP_ROOT, "../resources/pytest")
+DATA_RESOURCES = os.path.join(APP_ROOT, "../../../data")
