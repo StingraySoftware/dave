@@ -16,11 +16,11 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
   this.$html = $('<div class="modelSelector ' + this.id + '">' +
                   '<h3>MODELS:</h3>' +
                   '<div class="floatingContainer">' +
-                    '<button class="btn button btnClear" data-toggle="tooltip" title="Clear actions"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnUndo" data-toggle="tooltip" title="Undo last"><i class="fa fa-history" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnLoad" data-toggle="tooltip" title="Load models"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnSave" data-toggle="tooltip" title="Save models"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn button btnCopy" data-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnClear" data-bs-toggle="tooltip" title="Clear actions"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnUndo" data-bs-toggle="tooltip" title="Undo last"><i class="fa fa-history" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnLoad" data-bs-toggle="tooltip" title="Load models"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnSave" data-bs-toggle="tooltip" title="Save models"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn button btnCopy" data-bs-toggle="tooltip" title="Copy to clipboard"><i class="fa fa-clipboard" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="buttonsContainer">' +
                     '<button class="btn btn-info btnConst"><i class="fa fa-plus" aria-hidden="true"></i> Const</button>' +
@@ -41,73 +41,59 @@ function ModelSelector(id, onModelsChangedFn, onFitClickedFn, applyBootstrapFn, 
 
   this.$html.find(".btnClear").click(function () {
     currentObj.historyManager.resetHistory();
-    gaTracker.sendEvent("Fitting", "resetHistory", currentObj.filename);
   });
 
   this.$html.find(".btnUndo").click(function () {
     currentObj.historyManager.undoHistory();
-    gaTracker.sendEvent("Fitting", "undoHistory", currentObj.filename);
   });
 
   this.$html.find(".btnLoad").click(function () {
     currentObj.loadModels();
-    gaTracker.sendEvent("Fitting", "loadModels", currentObj.filename);
   });
 
   this.$html.find(".btnSave").click(function () {
     currentObj.saveModels();
-    gaTracker.sendEvent("Fitting", "saveModels", currentObj.filename);
   });
 
   this.$html.find(".btnCopy").click(function () {
     copyToClipboard(currentObj.modelsToLaTeX());
-    gaTracker.sendEvent("Fitting", "copyToClipboard", currentObj.filename);
   });
 
   this.$html.find(".btnConst").click(function () {
     currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Const", color:getRandomColor() }));
-    gaTracker.sendEvent("Fitting", "addConst", currentObj.filename);
   });
 
   this.$html.find(".btnGaussian").click(function () {
     currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Gaussian", color:getRandomColor() }));
-    gaTracker.sendEvent("Fitting", "addGaussian", currentObj.filename);
   });
 
   this.$html.find(".btnLorentz").click(function () {
     currentObj.addModel(currentObj.getModelFromDaveModel({ type:"Lorentz", color:getRandomColor() }));
-    gaTracker.sendEvent("Fitting", "addLorentz", currentObj.filename);
   });
 
   this.$html.find(".btnPowerLaw").click(function () {
     currentObj.addModel(currentObj.getModelFromDaveModel({ type:"PowerLaw", color:getRandomColor() }));
-    gaTracker.sendEvent("Fitting", "addPowerLaw", currentObj.filename);
   });
 
   this.$html.find(".btnBrokenPowerLaw").click(function () {
     currentObj.addModel(currentObj.getModelFromDaveModel({ type:"BrokenPowerLaw", color:getRandomColor() }));
-    gaTracker.sendEvent("Fitting", "addBrokenPowerLaw", currentObj.filename);
   });
 
   this.$html.find(".fitBtn").click(function () {
     currentObj.onFitClickedFn();
-    gaTracker.sendEvent("Fitting", "FitModel", currentObj.filename);
   }).hide();
 
   this.$html.find(".applyBtn").click(function () {
     currentObj.applyAllEstimations();
-    gaTracker.sendEvent("Fitting", "applyAll", currentObj.filename);
     $(this).hide();
   }).hide();
 
   this.$html.find(".bayesianParEstBtn").click(function () {
     currentObj.applyBayesianParEstFn();
-    gaTracker.sendEvent("Fitting", "BayesianParEst", currentObj.filename);
   }).hide();
 
   this.$html.find(".bootstrapBtn").click(function () {
     currentObj.applyBootstrapFn();
-    gaTracker.sendEvent("Fitting", "Bootstrap", currentObj.filename);
   }).hide();
 
   this.getModelFromDaveModel = function (daveModel) {
@@ -408,7 +394,6 @@ function Model(idx, title, type, color, onModelsChangedFn) {
             currentObj.applyEstimation($(this).attr("param"));
             currentObj.setInputs();
             currentObj.onModelsChangedFn();
-            gaTracker.sendEvent("Fitting", "applySng", currentObj.filename);
           });
           $paramHtml.append($estimationHtml);
         }

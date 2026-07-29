@@ -1,35 +1,36 @@
-import numpy as np
-
-from stingray.events import EventList
-from stingray import Lightcurve
-from stingray.gti import join_gtis, gti_len
-from model.table import Table
 import bisect
+
+import numpy as np
+from stingray import Lightcurve
+from stingray.events import EventList
+from stingray.gti import gti_len, join_gtis
+
 import utils.dave_logger as logging
 from config import CONFIG
+from model.table import Table
 
 
 # Returns an Stingray EventList from a given events dataset
 def get_eventlist_from_evt_dataset(dataset):
-
     if not is_events_dataset(dataset):
         logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
 
     # TODO: Probably all this check can be moved to dave_reader for doing it only once
     # instead with every call to get_eventlist_from_evt_dataset
-    if not "PHA" in dataset.tables["EVENTS"].columns:
+    if "PHA" not in dataset.tables["EVENTS"].columns:
         logging.warn("get_eventlist_from_evt_dataset: PHA column not found in dataset")
         dataset.tables["EVENTS"].add_columns(["PHA"])
-        dataset.tables["EVENTS"].columns["PHA"].set_extra("FAKE_COLUMN", True);
+        dataset.tables["EVENTS"].columns["PHA"].set_extra("FAKE_COLUMN", True)
         try:
-            dataset.tables["EVENTS"].columns["PHA"].values = \
+            dataset.tables["EVENTS"].columns["PHA"].values = (
                 dataset.tables["EVENTS"].columns["PI"].values
+            )
             logging.warn("Using PI instead of PHA")
-        except:
-            dataset.tables["EVENTS"].columns["PHA"].values = \
-                np.zeros(len(dataset.tables["EVENTS"].columns[CONFIG.TIME_COLUMN].values),
-                         dtype=int)
+        except Exception:
+            dataset.tables["EVENTS"].columns["PHA"].values = np.zeros(
+                len(dataset.tables["EVENTS"].columns[CONFIG.TIME_COLUMN].values), dtype=int
+            )
             logging.warn("PHA column will be empty")
 
     # Extract axis values
@@ -37,7 +38,7 @@ def get_eventlist_from_evt_dataset(dataset):
     pha_data = np.array(dataset.tables["EVENTS"].columns["PHA"].values)
 
     # Extract GTIs
-    gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
+    gti = get_stingray_gti_from_gti_table(dataset.tables["GTI"])
 
     # Returns the EventList
     if len(gti) > 0:
@@ -48,7 +49,6 @@ def get_eventlist_from_evt_dataset(dataset):
 
 # Returns an Stingray Lightcurve from a given lightcurve dataset
 def get_lightcurve_from_lc_dataset(dataset, gti=None):
-
     if not is_lightcurve_dataset(dataset):
         logging.warn("get_eventlist_from_evt_dataset: dataset is not a events dataset instance")
         return None
@@ -60,7 +60,7 @@ def get_lightcurve_from_lc_dataset(dataset, gti=None):
 
     # Extract GTIs
     if not gti:
-        gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
+        gti = get_stingray_gti_from_gti_table(dataset.tables["GTI"])
 
     # Returns the EventList
     if len(gti) > 0:
@@ -89,9 +89,10 @@ def get_gti_table(from_val, to_val):
 
 # Finds the idx of the nearest value on the array, array must be sorted
 def find_idx_nearest_val(array, value):
-
     # idx = np.searchsorted(array, value, side="left")
-    idx = bisect.bisect_left(array, value) #  Looks like bisec is faster with structured data than searchsorted
+    idx = bisect.bisect_left(
+        array, value
+    )  #  Looks like bisec is faster with structured data than searchsorted
 
     if idx >= len(array):
         idx_nearest = len(array) - 1
@@ -114,29 +115,22 @@ def is_lightcurve_dataset(dataset):
 
 
 def is_hdu_dataset(dataset, hduname):
-    if dataset:
-        if hduname in dataset.tables:
-            if CONFIG.TIME_COLUMN in dataset.tables[hduname].columns:
-                if "GTI" in dataset.tables:
-                    return True
-    return False
+    return (
+        dataset
+        and hduname in dataset.tables
+        and CONFIG.TIME_COLUMN in dataset.tables[hduname].columns
+        and "GTI" in dataset.tables
+    )
 
 
 def is_rmf_dataset(dataset):
-    if dataset:
-        if "EBOUNDS" in dataset.tables:
-            if "CHANNEL" in dataset.tables["EBOUNDS"].columns:
-                return True
-
-    return False
+    return (
+        dataset and "EBOUNDS" in dataset.tables and "CHANNEL" in dataset.tables["EBOUNDS"].columns
+    )
 
 
 def is_gti_dataset(dataset):
-    if dataset:
-        if "GTI" in dataset.tables:
-            if "START" in dataset.tables["GTI"].columns:
-                return True
-    return False
+    return dataset and "GTI" in dataset.tables and "START" in dataset.tables["GTI"].columns
 
 
 def are_datasets_of_same_type(dataset1, dataset2):
@@ -180,15 +174,17 @@ def get_binsize_from_lightcurve_ds(dataset):
         elif "FRMTIME" in table.header:
             return float(table.header["FRMTIME"]) / 1000
     else:
-        logging.warn("get_binsize_from_lightcurve_ds: Couldn't read TIMEDEL or FRMTIME from RATE HEADER!")
+        logging.warn(
+            "get_binsize_from_lightcurve_ds: Couldn't read TIMEDEL or FRMTIME from RATE HEADER!"
+        )
         return 0
 
-def get_stingray_gti_from_gti_table (gti_table):
-    return np.column_stack((gti_table.columns["START"].values,
-                           gti_table.columns["STOP"].values))
+
+def get_stingray_gti_from_gti_table(gti_table):
+    return np.column_stack((gti_table.columns["START"].values, gti_table.columns["STOP"].values))
 
 
-def get_gti_table_from_stingray_gti (gti):
+def get_gti_table_from_stingray_gti(gti):
     gti_table = get_empty_gti_table()
     gti_table.columns["START"].add_values(gti[:, 0])
     gti_table.columns["STOP"].add_values(gti[:, 1])
@@ -204,21 +200,20 @@ def join_gti_tables(gti_table_0, gti_table_1):
         logging.warn("join_gti_tables: gti_table_1 is None, returned gti_table_0")
         return gti_table_0
 
-    gti_0 = get_stingray_gti_from_gti_table (gti_table_0)
-    gti_1 = get_stingray_gti_from_gti_table (gti_table_1)
+    gti_0 = get_stingray_gti_from_gti_table(gti_table_0)
+    gti_1 = get_stingray_gti_from_gti_table(gti_table_1)
     joined_gti = join_gtis(gti_0, gti_1)
 
     return get_gti_table_from_stingray_gti(joined_gti)
 
 
-def get_exposure_time (gti_table):
+def get_exposure_time(gti_table):
     return gti_len(get_stingray_gti_from_gti_table(gti_table))
 
 
-#Returns True if there is a GAP in the time_vals values
+# Returns True if there is a GAP in the time_vals values
 def hasGTIGaps(time_vals):
-
-    trigger_ratio = 100;  # The ratio of elapsed time versus prev elapsed for triggering a gap
+    trigger_ratio = 100  # The ratio of elapsed time versus prev elapsed for triggering a gap
 
     if len(time_vals > 1):
         prev_val = time_vals[0]
@@ -241,15 +236,15 @@ def hasGTIGaps(time_vals):
     return False
 
 
-#Returns Gtis from an unique gti splited by time_interval
+# Returns Gtis from an unique gti splited by time_interval
 def get_splited_gti(gti, ti):
-    if ti <= (gti[1] - gti[0])/2:
-        #If the gti is splitable by ti
+    if ti <= (gti[1] - gti[0]) / 2:
+        # If the gti is splitable by ti
         start = gti[0]
         num_gtis = int((gti[1] - gti[0]) / ti)
         new_gtis = []
 
-        for i in range(num_gtis):
+        for _ in range(num_gtis):
             end = start + ti
             new_gtis.append([start, end])
             start = end
@@ -272,7 +267,7 @@ def get_additional_column_names(columns, column):
 
 # Returns a dictionary with the values of the table columns values
 def get_columns_as_dict(columns, column):
-    ds_columns = dict()
+    ds_columns = {}
     for column_name in columns:
         if column_name != column:
             ds_columns[column_name] = columns[column_name].values
@@ -281,7 +276,7 @@ def get_columns_as_dict(columns, column):
 
 # Returns a dictionary with the error_values of the table columns values
 def get_columns_errors_as_dict(columns, column):
-    ds_columns_errors = dict()
+    ds_columns_errors = {}
     for column_name in columns:
         if column_name != column:
             ds_columns_errors[column_name] = columns[column_name].error_values
@@ -289,10 +284,13 @@ def get_columns_errors_as_dict(columns, column):
 
 
 # Returns a new dataset filtered by a GTI_Dataset
-def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS", column=CONFIG.TIME_COLUMN):
-
+def get_dataset_applying_gti_dataset(
+    src_dataset, gti_dataset, hduname="EVENTS", column=CONFIG.TIME_COLUMN
+):
     if not is_events_dataset(src_dataset):
-        logging.warn("get_dataset_applying_gti_dataset: src_dataset is not a events dataset instance")
+        logging.warn(
+            "get_dataset_applying_gti_dataset: src_dataset is not a events dataset instance"
+        )
         return None
 
     if not is_gti_dataset(gti_dataset):
@@ -307,8 +305,8 @@ def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS",
     st_gtis = get_stingray_gti_from_gti_table(gti_dataset.tables["GTI"])
     ev_list = hdu_table.columns[column].values
     ev_list_err = hdu_table.columns[column].error_values
-    ds_columns = get_columns_as_dict (src_dataset.tables[hduname].columns, column)
-    ds_columns_errors = get_columns_errors_as_dict (src_dataset.tables[hduname].columns, column)
+    ds_columns = get_columns_as_dict(src_dataset.tables[hduname].columns, column)
+    ds_columns_errors = get_columns_errors_as_dict(src_dataset.tables[hduname].columns, column)
 
     # Gets start time of observation
     events_start_time = 0
@@ -318,27 +316,47 @@ def get_dataset_applying_gti_dataset(src_dataset, gti_dataset, hduname="EVENTS",
     gti_start = st_gtis[:, 0] - events_start_time
     gti_end = st_gtis[:, 1] - events_start_time
 
-    update_dataset_filtering_by_gti (dataset.tables[hduname], dataset.tables["GTI"],
-                                ev_list, ev_list_err, ds_columns, ds_columns_errors,
-                                gti_start, gti_end, additional_columns, column)
+    update_dataset_filtering_by_gti(
+        dataset.tables[hduname],
+        dataset.tables["GTI"],
+        ev_list,
+        ev_list_err,
+        ds_columns,
+        ds_columns_errors,
+        gti_start,
+        gti_end,
+        additional_columns,
+        column,
+    )
     return dataset
 
 
 # Returns a Dataset filtered by Gtis
-def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, ds_columns, ds_columns_errors,
-                                    gti_start, gti_end, additional_columns, column=CONFIG.TIME_COLUMN,
-                                    filter_start=None, filter_end=None, must_filter=False):
+def update_dataset_filtering_by_gti(
+    hdu_table,
+    gti_table,
+    ev_list,
+    ev_list_err,
+    ds_columns,
+    ds_columns_errors,
+    gti_start,
+    gti_end,
+    additional_columns,
+    column=CONFIG.TIME_COLUMN,
+    filter_start=None,
+    filter_end=None,
+    must_filter=False,
+):
     start_event_idx = 0
     end_event_idx = 0
 
     for gti_index in range(len(gti_start)):
-
         start = gti_start[gti_index]
         end = gti_end[gti_index]
 
         is_valid_gti = True
         if must_filter:
-            is_valid_gti = ((filter_start <= start) and (filter_end >= end))
+            is_valid_gti = (filter_start <= start) and (filter_end >= end)
             if not is_valid_gti:
                 if (filter_start < end) and (filter_end > end):
                     start = filter_start
@@ -353,11 +371,11 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, 
 
         if is_valid_gti:
             start_event_idx = find_idx_nearest_val(ev_list, start)
-            if (ev_list[start_event_idx] < start and start_event_idx < len(ev_list) - 1):
+            if ev_list[start_event_idx] < start and start_event_idx < len(ev_list) - 1:
                 start_event_idx = start_event_idx + 1
 
             end_event_idx = find_idx_nearest_val(ev_list, end)
-            if (ev_list[end_event_idx] > end and end_event_idx > 0):
+            if ev_list[end_event_idx] > end and end_event_idx > 0:
                 end_event_idx = end_event_idx - 1
 
             if end_event_idx >= start_event_idx:
@@ -369,17 +387,26 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, 
                 gti_table.columns["END_EVENT_IDX"].add_value(end_event_idx)
 
                 # Insert values at range on dataset
-                hdu_table.columns[column].add_values(ev_list[start_event_idx:end_event_idx],
-                                                     ev_list_err[start_event_idx:end_event_idx])
+                hdu_table.columns[column].add_values(
+                    ev_list[start_event_idx:end_event_idx],
+                    ev_list_err[start_event_idx:end_event_idx],
+                )
                 for i in range(len(additional_columns)):
-                    ad_column=additional_columns[i]
-                    values=np.nan_to_num(ds_columns[ad_column][start_event_idx:end_event_idx])
-                    error_values=[]
-                    if ad_column in ds_columns_errors and len(ds_columns_errors[ad_column]) > end_event_idx:
-                        error_values=np.nan_to_num(ds_columns_errors[ad_column][start_event_idx:end_event_idx])
+                    ad_column = additional_columns[i]
+                    values = np.nan_to_num(ds_columns[ad_column][start_event_idx:end_event_idx])
+                    error_values = []
+                    if (
+                        ad_column in ds_columns_errors
+                        and len(ds_columns_errors[ad_column]) > end_event_idx
+                    ):
+                        error_values = np.nan_to_num(
+                            ds_columns_errors[ad_column][start_event_idx:end_event_idx]
+                        )
                     hdu_table.columns[ad_column].add_values(values, error_values)
             else:
-                logging.info("No data point in GTI # %s: GTI (from, to)=(%f, %f); event list (from, to)=(%d, %d)" % (gti_index, start, end, start_event_idx, end_event_idx))
+                logging.info(
+                    f"No data point in GTI # {gti_index}: GTI (from, to)=({start:.6f}, {end:.6f}); event list (from, to)=({start_event_idx}, {end_event_idx})"
+                )
 
 
 # Returns a tuple with the counts and the key values
@@ -389,16 +416,15 @@ def update_dataset_filtering_by_gti(hdu_table, gti_table, ev_list, ev_list_err, 
 # @param: precision: the precision for matching/bining values of array,
 #         default will be 1.0 but is set as 0.01 will have a two decimal
 #         binning for example
-def get_histogram (array, precision=1.0):
-    histogram = dict()
+def get_histogram(array, precision=1.0):
+    histogram = {}
     values = []
     for val in array:
-
         match_val = val
         if precision != 1.0:
             match_val = int(val / precision) * precision
 
-        if not match_val in histogram:
+        if match_val not in histogram:
             histogram[match_val] = 0
             values.append(match_val)
         histogram[match_val] += 1
@@ -408,16 +434,22 @@ def get_histogram (array, precision=1.0):
 
 def add_time_offset_to_dataset(dataset, time_offset):
     if time_offset != 0:
+        logging.debug(
+            "add_time_offset_to_dataset: dataset: "
+            + str(dataset.id)
+            + ", time_offset: "
+            + str(time_offset)
+        )
 
-        logging.debug("add_time_offset_to_dataset: dataset: " + str(dataset.id) + ", time_offset: " + str(time_offset))
-
-        ds_gti = get_stingray_gti_from_gti_table (dataset.tables["GTI"])
+        ds_gti = get_stingray_gti_from_gti_table(dataset.tables["GTI"])
         ds_gti[:, 0] = ds_gti[:, 0] + time_offset
         ds_gti[:, 1] = ds_gti[:, 1] + time_offset
         dataset.tables["GTI"] = get_gti_table_from_stingray_gti(ds_gti)
 
         hdutable = get_hdutable_from_dataset(dataset)
         if hdutable:
-            hdutable.columns[CONFIG.TIME_COLUMN].values = hdutable.columns[CONFIG.TIME_COLUMN].values + time_offset
+            hdutable.columns[CONFIG.TIME_COLUMN].values = (
+                hdutable.columns[CONFIG.TIME_COLUMN].values + time_offset
+            )
 
     return dataset

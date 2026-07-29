@@ -1,0 +1,33 @@
+{
+  "name": "dave-xray-frontend",
+  "version": "2.0.0",
+  "description": "Frontend assets for DAVE - Data Analysis of Variable Events",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:legacy": "npm run build -- --mode legacy",
+    "bundle-report": "vite build --mode analyze",
+    "clean": "rm -rf src/main/resources/static/dist"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-legacy": "^8.0.2",
+    "terser": "^5.26.0",
+    "vite": "^8.0.16",
+    "vite-plugin-html": "^3.2.2",
+    "rollup-plugin-visualizer": "^7.0.1"
+  },
+  "dependencies": {
+    "async": "^3.2.5",
+    "bootstrap": "^3.4.1",
+    "html2canvas": "^1.4.1",
+    "jquery": "^3.7.1",
+    "jquery-ui": "^1.13.2",
+    "jspdf": "^2.5.1",
+    "plotly.js": "^3.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

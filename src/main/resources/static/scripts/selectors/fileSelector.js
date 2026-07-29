@@ -21,7 +21,7 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
                     '<button class="btn btn-primary btnChoose">' + this.btnText + '</button>' +
                     '<button class="btn btn-warning btnChange">Change</button>' +
                     '<form action="" method="POST" enctype="multipart/form-data">' +
-                      '<input id="' + this.uploadInputId + '" name="file" type="file" style="width:100%" multiple/>' +
+                      '<input id="' + this.uploadInputId + '" name="file" type="file" multiple/>' +
                     '</form>' +
                   '</div>');
 
@@ -58,13 +58,19 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
          var formData = new FormData(currentObj.$html.find('form')[0]);
          currentObj.uploadFn(function (response) {
-                                         var jsonRes = JSON.parse(response);
-                                         if (!isNull(jsonRes.error)) {
-                                           currentObj.onUploadError(jsonRes.error);
-                                         } else {
-                                           currentObj.onUploadSuccess(jsonRes);
-                                           currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
-                                         };
+                                         try {
+                                           // Check if response is already parsed by jQuery
+                                           var jsonRes = (typeof response === 'string') ? JSON.parse(response) : response;
+                                           if (!isNull(jsonRes.error)) {
+                                             currentObj.onUploadError(jsonRes.error);
+                                           } else {
+                                             currentObj.onUploadSuccess(jsonRes);
+                                             currentObj.onFileChangedFn(jsonRes, currentObj.selectorKey);
+                                           }
+                                         } catch (e) {
+                                           log("Upload response parse error: " + e.message + ", response: " + JSON.stringify(response));
+                                           currentObj.onUploadError("Failed to parse upload response: " + e.message);
+                                         }
                                      },
                              currentObj.onUploadProgress,
                              currentObj.onUploadError,
@@ -139,7 +145,6 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
 
    this.$html.find(".btn").click(function () {
      currentObj.showSelectFile();
-     gaTracker.sendEvent("FileSelector", "SelectFile", currentObj.selectorKey);
    });
 
    this.showSelectFile = function () {
@@ -162,7 +167,6 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
      } else {
        this.btnChoose.hide();
        this.btnChange.show();
-       gaTracker.sendEvent("FileSelector", "UploadSuccess", currentObj.selectorKey);
      }
    }
 
@@ -179,7 +183,6 @@ function fileSelector(id, label, selectorKey, uploadFn, onFileChangedFn) {
        showError();
        logErr("onUploadError: " + JSON.stringify(error));
        currentObj.$input.val("");
-       gaTracker.sendEvent("FileSelector", "UploadError", currentObj.selectorKey);
      }
    }
 

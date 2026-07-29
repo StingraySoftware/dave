@@ -6,17 +6,43 @@
     <title>DAVE</title>
 
     <!-- Insert CSS below here for better page render performance -->
-    <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/jquery-ui-1.12.1.min.css">
-    <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/bootstrap-3.3.7.min.css">
+    <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/jquery-ui-1.14.1.min.css">
+    <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/bootstrap-5.3.8.min.css">
     <link rel= "stylesheet" type= "text/css" href= "../static/font-awesome-4.7.0/css/font-awesome.min.css">
-    <link rel= "stylesheet" type= "text/css" href= "../static/styles/external/bootstrap-theme-3.3.7.min.css">
     <style>
       body {
-        background: url(../static/img/bg.jpg);
-        background-position: center bottom;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
+        background-color: #15161a;
+      }
+
+      @font-face {
+        font-family: Archangelsk;
+        src: url("../static/fonts/Archangelsk.ttf");
+      }
+
+      .splashLogo {
+        position: fixed;
+        top: 50%;
+        left: 0;
+        right: 0;
+        transform: translateY(-50%);
+        text-align: center;
+        pointer-events: none;
+      }
+
+      .splashLogo .daveTitle {
+        font-family: Archangelsk, Arial, sans-serif;
+        color: #FE3200;
+        font-size: 96px;
+        line-height: 1;
+        letter-spacing: 6px;
+      }
+
+      .splashLogo .daveSubtitle {
+        color: #8a8f99;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 18px;
+        margin-top: 6px;
+        letter-spacing: 1px;
       }
 
       .mainProgress {
@@ -24,30 +50,159 @@
         width: 43%;
         position: fixed;
         bottom: 50px;
+        height: 8px;
+        background-color: #2c2f36;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .mainProgress .progress-bar {
+        background-color: #ff4828;
+        font-size: 0;
+      }
+
+      /* scoped above .waitingDialog .progress-bar; deliberately NOT applied to
+         .mainProgress, whose legacy markup also carries this class */
+      .waitingDialog .progress-bar.progress-bar-warning {
+        background-color: #d9a03f;
       }
 
       .build_version {
         position: fixed;
         top: 1%;
         left: 1%;
-        color: #666666;
+        color: #6e737d;
         font-size: 0.65em;
       }
 
       .LogDebug, .LogServerDebug {
-        color: #AAAAAA;
+        color: #8a8f99;
       }
 
       .LogInfo, .LogServerInfo {
-        color: #007fff;
+        color: #58a6ff;
       }
 
       .LogWarn, .LogServerWarn {
-        color: #ff7d1b;
+        color: #d9a03f;
       }
 
       .LogError, .LogServerError {
-        color: #FF0000;
+        color: #e5484d;
+      }
+
+      /* Logger panel (logger.js no longer carries inline styles; these mirror
+         the dave.css rules with literal values since this page doesn't load it) */
+      #loggerContainer {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        position: fixed;
+        left: 0;
+        z-index: 9999;
+      }
+
+      #loggerTab {
+        width: 44px;
+        box-sizing: border-box;
+        overflow: hidden;
+        font: 600 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        letter-spacing: 1px;
+        color: #c6c9cf;
+        position: absolute;
+        left: 20px;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        border: 1px solid #3a3e46;
+        border-bottom: none;
+        background: rgba(13, 14, 17, 0.95);
+        border-top-left-radius: 7px;
+        border-top-right-radius: 7px;
+        cursor: pointer;
+      }
+
+      #loggerTab:hover {
+        color: #ffffff;
+      }
+
+      #logger {
+        font: 11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        box-sizing: border-box;
+        color: #c6c9cf;
+        overflow-x: hidden;
+        overflow-y: auto;
+        position: relative;
+        bottom: 0;
+        margin: 0;
+        padding: 8px 10px;
+        background: rgba(13, 14, 17, 0.95);
+        border-top: 1px solid #3a3e46;
+      }
+
+      #logger .loggerTime {
+        color: #6e737d;
+        float: left;
+      }
+
+      #logger .loggerMsg {
+        word-wrap: break-word;
+        margin-left: 6em;
+      }
+
+      #logger .loggerRow {
+        width: 97%;
+      }
+
+      /* Error waiting-dialog (waiting_dialog.js no longer carries inline styles) */
+      .waitingDialog {
+        padding-top: 15%;
+        overflow-y: visible;
+      }
+
+      .waitingDialog .modal-content {
+        background-color: #232529;
+        border: 1px solid #3a3e46;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        color: #c6c9cf;
+      }
+
+      .waitingDialog .waitingDialogClose {
+        align-self: flex-end;
+        margin: 6px 8px 0;
+        padding: 2px 6px;
+        background: transparent;
+        border: none;
+        color: #8a8f99;
+      }
+
+      .waitingDialog .waitingDialogClose:hover {
+        color: #e8e9eb;
+      }
+
+      .waitingDialog .modal-header {
+        border-bottom: none;
+        padding: 14px 16px 4px;
+      }
+
+      .waitingDialog .modal-header h3 {
+        margin: 0;
+        font-size: 13.5px;
+        color: #e8e9eb;
+      }
+
+      .waitingDialog .progress {
+        margin-bottom: 0;
+        height: 8px;
+        background-color: #2c2f36;
+        border-radius: 4px;
+      }
+
+      .waitingDialog .progress-bar {
+        width: 100%;
+        background-color: #ff4828;
       }
 
     </style>
@@ -55,13 +210,11 @@
     <!-- Insert this line above script imports for solve Electron import issues -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 
-    <script type=text/javascript src="../static/scripts/external/jquery-3.1.1.min.js"></script>
-    <script type="text/javascript" src="../static/scripts/external/jquery-ui-1.12.1.min.js"></script>
-    <script type="text/javascript" src="../static/scripts/external/bootstrap-3.3.7.min.js"></script>
+    <script type=text/javascript src="../static/scripts/external/jquery-4.0.0.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/external/jquery-ui-1.14.1.min.js"></script>
+    <script type="text/javascript" src="../static/scripts/external/bootstrap-5.3.8.min.js"></script>
     <script type="text/javascript" src="../static/scripts/external/waiting_dialog.js"></script>
     <script type="text/javascript" src="../static/scripts/external/logger.js"></script>
-    <script type="text/javascript" src="../static/scripts/external/fingerprint2-1.5.1.min.js"></script>
-    <script type="text/javascript" src="../static/scripts/ganalytics.js"></script>
     <script type="text/javascript" src="../static/scripts/version.js"></script>
 
     <!-- Insert this line after script imports for solve Electron import issues -->
@@ -83,8 +236,6 @@
         $(".build_version").text("Version: " + version);
         setProgress("Initializing", "...", 0);
 
-        gaTracker.sendPage("SplashPage");
-        gaTracker.sendEvent("SplashPage", "Version", version);
 
         logInfo("App started!! Version: " + version);
 
@@ -108,9 +259,7 @@
         if (errorArr[1].trim() != ""){
           logErr("PYTHON SERVER LOG:");
           logError(errorArr[1], "LogError");
-          gaTracker.sendEvent("SplashPage", "LogError", JSON.stringify(errorArr[1]));
         }
-        gaTracker.sendEvent("SplashPage", "showError", JSON.stringify(errorArr[0]));
         Logger.open();
       }
 
@@ -130,8 +279,14 @@
       }
 
       function sendEventToElectron (event) {
-        const { ipcRenderer } = require('electron');
-        ipcRenderer.send(event);
+        if (event === 'onBrowserReady') {
+          // Use the modern secure API instead of deprecated compatibility layer
+          if (window.electronAPI && window.electronAPI.server && window.electronAPI.server.launch) {
+            window.electronAPI.server.launch();
+          } else {
+            logErr('electronAPI not available - preload script may not have loaded');
+          }
+        }
       }
 
     </script>
@@ -139,6 +294,11 @@
   </head>
 
   <body>
+
+    <div class="splashLogo">
+      <div class="daveTitle">DAVE</div>
+      <div class="daveSubtitle">Data Analysis of Variable Events</div>
+    </div>
 
     <!-- Page Content-->
     <div class="container fluid">

@@ -633,7 +633,7 @@ function WfOutputPanel (id, classSelector, container, service, onFiltersChangedF
     log("OutputPanel getDividedLightCurvesFromColorsDataFromServer...");
 
     currentObj.service.request_divided_lightcurves_from_colors(paramsData, function( jsdata ) {
-      data = JSON.parse(jsdata);
+      data = JSON.parse(JSON.stringify(jsdata));
 
 
       var joinedLcPlot = currentObj.getPlotById(paramsData.id);

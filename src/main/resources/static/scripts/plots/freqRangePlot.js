@@ -58,8 +58,8 @@ function FreqRangePlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, 
     plotlyConfig = this.prepareAxis(plotlyConfig);
 
     if (this.plotConfig.plotType == "X*Y") {
-      plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots
-      plotlyConfig.layout.yaxis.titlefont.size *= 0.75;
+      plotlyConfig.layout.yaxis.title = $.extend(true, {}, plotlyConfig.layout.yaxis.title); //Avoid change text size of all plots
+      plotlyConfig.layout.yaxis.title.font.size *= 0.75;
     }
 
     return plotlyConfig;

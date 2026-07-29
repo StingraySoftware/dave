@@ -1,7 +1,7 @@
 
 // General config file:
 CONFIG = {
-  DOMAIN_URL: "http://localhost:5000", //Set as Dave Server Ip:Port
+  DOMAIN_URL: "http://localhost:5001", //Set as Dave Server Ip:Port
   IS_LOCAL_SERVER: true, //If false server considers running as remote server (diferent machine that Dave GUI client), remote server is not fully tested.
   INITIAL_VISIBLE_PLOTS: 1,
   MIN_PLOT_POINTS: 2,
@@ -39,18 +39,19 @@ CONFIG = {
   PLOT_CONFIG: {
 
     DEFAULT_TITLE_FONT: {
-                          family: 'Arial',
-                          size: 15,
-                          color: '#3d3d3d'
+                          family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                          size: 12,
+                          color: '#3a3f47'
                         },
 
-    SUPPORTED_FONTS : ['Arial', 'Arial Black', 'Comic Sans MS',
+    SUPPORTED_FONTS : ['-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+                        'Arial', 'Arial Black', 'Comic Sans MS',
                         'Courier New', 'Georgia', 'Impact',
                         'Lucida Console', 'Lucida Sans Unicode', 'Palatino Linotype',
                         'Tahoma', 'Times New Roman', 'Trebuchet MS',
                         'Verdana', 'MS Sans Serif', 'MS Serif'],
 
-    DEFAULT_MARGINS: { b: 38, r: 8, l: 56, t: 38 },
+    DEFAULT_MARGINS: { b: 36, r: 8, l: 52, t: 36 },
 
     DEFAULT_LINE_WIDTH: { default: 2, min: 1, max: 9 },
     DEFAULT_MARKER_SIZE: { default: 6, min: 1, max: 20 },

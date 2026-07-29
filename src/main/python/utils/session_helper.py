@@ -2,16 +2,16 @@ from flask import session
 
 
 # SESSION METHODS
-def add_uploaded_file_to_session(filename):
-    if 'uploaded_filenames' not in session:
-        session['uploaded_filenames'] = []
+def add_uploaded_file_to_session(filename: str) -> None:
+    if "uploaded_filenames" not in session:
+        session["uploaded_filenames"] = []
 
-    if filename not in session['uploaded_filenames']:
-        session['uploaded_filenames'].extend([filename])
+    if filename not in session["uploaded_filenames"]:
+        session["uploaded_filenames"].extend([filename])
 
 
-def is_file_uploaded(filename):
-    if 'uploaded_filenames' not in session:
+def is_file_uploaded(filename: str) -> bool:
+    if "uploaded_filenames" not in session:
         return False
 
-    return filename in session['uploaded_filenames']
+    return filename in session["uploaded_filenames"]

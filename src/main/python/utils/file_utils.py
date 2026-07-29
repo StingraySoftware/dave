@@ -1,62 +1,153 @@
-
 import os
-import magic
+
+from security_config import SecurityConfig
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
+
 import utils.dave_logger as logging
 import utils.exception_helper as ExHelper
-from shutil import copyfile
-from werkzeug import secure_filename
 from config import CONFIG
+
+# Handle libmagic import gracefully - must be after other imports
+MAGIC_AVAILABLE = False
+try:
+    # On Windows CI, python-magic often causes access violations during import
+    # Skip magic import in CI environments to prevent hanging
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        if os.name == "nt":  # Windows
+            raise ImportError("Skipping python-magic on Windows CI to prevent access violations")
+
+    import magic
+
+    MAGIC_AVAILABLE = True
+except ImportError as e:
+    MAGIC_AVAILABLE = False
+    logging.warn("python-magic not available, falling back to mimetypes: " + str(e))
 
 
 def get_destination(target, filename):
     try:
         if CONFIG.IS_LOCAL_SERVER:
-            if filename.startswith('/') and os.path.isfile(filename):
-                # This is supposed to be an absolute path
-                return filename
+            # Import security utils
+            from utils.security_utils import sanitize_path
+
+            if filename.startswith("/") and os.path.isfile(filename):
+                # Validate absolute path
+                sanitized = sanitize_path(filename, "/")
+                if sanitized:
+                    return sanitized
+                else:
+                    logging.warn(f"Invalid absolute path: {filename}")
+                    return ""
             else:
-                # Relative path
-                return "/".join([target, filename])
+                # Relative path - must be within target directory
+                sanitized = sanitize_path(filename, target)
+                if sanitized:
+                    return sanitized
+                else:
+                    logging.warn(f"Invalid relative path: {filename}")
+                    return ""
         else:
-            return "/".join([target, secure_filename(filename)])
-    except:
-        logging.error(ExHelper.getException('get_destination'))
+            # Always use secure filename for uploads
+            safe_filename = secure_filename(filename)
+            if not safe_filename:
+                logging.error(f"Invalid filename: {filename}")
+                return ""
+            return os.path.join(target, safe_filename)
+    except Exception:
+        logging.error(ExHelper.getException("get_destination"))
         return ""
+
 
 def file_exist(target, filename):
     return os.path.isfile(get_destination(target, filename))
+
 
 def is_valid_file(destination):
     try:
         if not destination or not os.path.isfile(destination):
             return False
 
-        ext = magic.from_file(destination)
+        base = os.path.basename(destination)
+        file_extension = os.path.splitext(base)[1].lower()
 
-        base=os.path.basename(destination)
-        file_extension = os.path.splitext(base)[1]
+        if MAGIC_AVAILABLE:
+            try:
+                ext = magic.from_file(destination)
+                return (
+                    (ext.find("ASCII") == 0)
+                    or (ext.find("FITS") == 0)
+                    or (ext.find("gzip") > -1)
+                    or ((ext == "data") and (file_extension in [".p", ".nc"]))
+                )
+            except Exception as e:
+                # Handle Windows access violations and other magic runtime errors
+                logging.warn(f"python-magic runtime error, falling back to extension check: {e}")
+                # Fall through to extension-based fallback
 
-        return (ext.find("ASCII") == 0) \
-                or (ext.find("FITS") == 0) \
-                or (ext.find("gzip") > -1) \
-                or ((ext == "data") and (file_extension in [".p", ".nc"]))
-    except:
+        # Fallback to file extension checking (magic unavailable or errored)
+        valid_extensions = [
+            ".txt",
+            ".dat",
+            ".lc",
+            ".evt",
+            ".fits",
+            ".fit",
+            ".fts",
+            ".gz",
+            ".p",
+            ".nc",
+            ".rmf",
+            ".arf",
+            ".pha",
+            ".rsp",
+        ]
+        if file_extension in valid_extensions:
+            return True
+
+        # For files without extension, try to check if it's text
+        if file_extension == "":
+            try:
+                with open(destination, encoding="utf-8") as f:
+                    f.read(1024)  # Try reading first 1KB as text
+                return True
+            except (UnicodeDecodeError, OSError):
+                return False
+
         return False
+    except Exception:
+        return False
+
 
 # save_file: Upload a data file to the Flask server path
 #            Only called if not IS_LOCAL_SERVER
 # @param: file: file to upload
 # @param: target: folder name for upload destination
 #
-def save_file(target, file):
+def save_file(target: str, file: FileStorage) -> str:
+    logging.debug(f"save_file: {type(file)} - {file}")
 
-    logging.debug("save_file: %s - %s" % (type(file), file))
+    # Import security utils
+    from utils.security_utils import validate_file_upload
+
+    # Validate file before saving
+    is_valid, error_msg = validate_file_upload(file)
+    if not is_valid:
+        logging.error(f"File validation failed: {error_msg}")
+        return ""
 
     if not os.path.isdir(target):
-        os.mkdir(target)
+        os.mkdir(target, SecurityConfig.UPLOAD_FOLDER_PERMISSIONS)
 
     destination = get_destination(target, file.filename)
+    if not destination:
+        logging.error("Failed to get valid destination path")
+        return ""
+
     file.save(destination)
+
+    # Set secure file permissions
+    os.chmod(destination, 0o644)
 
     return destination
 
@@ -67,11 +158,10 @@ def save_file(target, file):
 # @param: target: folder name for upload destination
 #
 def get_intermediate_filename(target, filepath, extension):
-
     if not os.path.isdir(target):
         os.mkdir(target)
 
-    base=os.path.basename(filepath)
+    base = os.path.basename(filepath)
     filename = os.path.splitext(base)[0]
     destination = get_destination(target, filename + extension)
 

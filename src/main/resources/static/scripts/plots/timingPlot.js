@@ -18,7 +18,6 @@ function TimingPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onP
       }
       currentObj.setReadyState(true);
       currentObj.onPlotReady();
-      gaTracker.sendEvent("Plots", "HidePlotSettings", currentObj.getTitle());
   });
 
   //TimingPlot plot methods:

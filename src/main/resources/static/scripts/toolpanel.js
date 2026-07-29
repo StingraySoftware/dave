@@ -171,7 +171,6 @@ function ToolPanel (id,
               "<p><strong>*.wsp:</strong> Workspace file format.</p>" +
               "<p><strong>*.flt:</strong> Filters file format.</p>" +
               "<p><strong>*.mdl:</strong> Fit models file format.</p>");
-      gaTracker.sendEvent("LoadPage", "SupportedFormats", currentObj.id);
     });
     this.$html.find(".fileSelectorsContainer").append(btnSupportedFormats);
   }
@@ -376,7 +375,6 @@ function ToolPanel (id,
       this.colorFilterTypeRadios.find("fieldset").controlgroup();
       $typeRadios.change(function() {
         currentObj.onColorFilterTypeChanged(this.value);
-        gaTracker.sendEvent("LoadPage", "colorFilterTypeRadios_" + this.value, currentObj.id);
       });
 
       //Adds color selectors, Channel filters
@@ -576,7 +574,6 @@ function ToolPanel (id,
           selectorsContainer.append(rmfFileDiv);
         }
         rmfFileDiv.show();
-        gaTracker.sendEvent("LoadPage", "ShowRMFRequiered", currentObj.id);
 
       } else {
         //Show ENERGY color selectors
@@ -973,9 +970,9 @@ function ToolPanel (id,
       var plotDefaultConfig = currentObj.getDefaultPlotlyConfig();
       var $style = $('<div class="plotStyle marginTop">' +
                       '<div class="floatingContainer">' +
-                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
-                        '<button class="btn button btnLoad" data-toggle="tooltip" title="Load style"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                        '<button class="btn button btnSave" data-toggle="tooltip" title="Save style"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnClear" data-bs-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnLoad" data-bs-toggle="tooltip" title="Load style"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnSave" data-bs-toggle="tooltip" title="Save style"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
                       '</div>' +
                     '</div>');
 
@@ -984,7 +981,6 @@ function ToolPanel (id,
             currentObj.tabPanel.plotDefaultConfig = null;
             currentObj.onPlotStyleSelected("all");
             currentObj.redrawPlots();
-            gaTracker.sendEvent("LoadPage", "ClearGeneralStyles", currentObj.id);
         }
       });
 
@@ -993,7 +989,6 @@ function ToolPanel (id,
             currentObj.tabPanel.loadDefaultPlotlyConfig(function () {
               currentObj.onPlotStyleSelected("all");
               currentObj.redrawPlots();
-              gaTracker.sendEvent("LoadPage", "LoadGeneralStyles", currentObj.id);
             });
         }
       });
@@ -1001,7 +996,6 @@ function ToolPanel (id,
       $style.find(".btnSave").click(function () {
         if (!isNull(currentObj.tabPanel)){
             currentObj.tabPanel.saveDefaultPlotlyConfig();
-            gaTracker.sendEvent("LoadPage", "SaveGeneralStyles", currentObj.id);
         }
       });
 
@@ -1225,22 +1219,18 @@ function ToolPanel (id,
   //Filter tab buttons
   this.clearBtn.click(function () {
       currentObj.historyManager.resetHistory();
-      gaTracker.sendEvent("LoadPage", "resetHistory", currentObj.id);
   });
 
   this.undoBtn.click(function () {
       currentObj.historyManager.undoHistory();
-      gaTracker.sendEvent("LoadPage", "undoHistory", currentObj.id);
   });
 
   this.loadBtn.click(function () {
       currentObj.loadFilters();
-      gaTracker.sendEvent("LoadPage", "loadFilters", currentObj.id);
   });
 
   this.saveBtn.click(function () {
       currentObj.saveFilters();
-      gaTracker.sendEvent("LoadPage", "saveFilters", currentObj.id);
   });
 
   this.refreshBtn.click(function () {
@@ -1256,7 +1246,6 @@ function ToolPanel (id,
       currentObj.dragDropBtn.toggleClass("btn-success");
       currentObj.dragDropEnabled = currentObj.dragDropBtn.hasClass("btn-success");
       currentObj.onDragDropChanged(currentObj.dragDropEnabled);
-      gaTracker.sendEvent("LoadPage", "reorganizePlots", currentObj.id);
   });
 
   log("ToolPanel ready! classSelector: " + this.classSelector);

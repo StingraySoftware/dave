@@ -1,21 +1,33 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from flask import Flask, render_template, request, session
-
-import pkg_resources
-import sys
-import os
 import logging
+import os
+import sys
 
 import matplotlib
-matplotlib.use('TkAgg')  # Changes the matplotlib framework
+from flask import Flask, Response, jsonify, render_template, request
+from flask.json.provider import DefaultJSONProvider
 
-import utils.dave_endpoint as DaveEndpoint
-import utils.dataset_cache as DsCache
-import utils.gevent_helper as GeHelper
+matplotlib.use("TkAgg")  # Changes the matplotlib framework
+
 import random
-from utils.np_encoder import NPEncoder
+
+from security_config import SecurityConfig
+
+import utils.dataset_cache as DsCache
+import utils.dave_endpoint as DaveEndpoint
+import utils.gevent_helper as GeHelper
+import utils.security_utils as Security
 from config import CONFIG
+from utils.np_encoder import NPEncoder
+
+# Import Flask extensions
+try:
+    from flask_cors import CORS
+
+    CORS_AVAILABLE = True
+except ImportError:
+    CORS_AVAILABLE = False
+    logging.warn("flask-cors not installed. CORS support disabled.")
 
 logsdir = "."
 if len(sys.argv) > 1 and sys.argv[1] != "":
@@ -33,283 +45,491 @@ build_version = "0"
 if len(sys.argv) > 4 and sys.argv[4] != "":
     build_version = sys.argv[4]
 
-logging.basicConfig(filename=logsdir + '/flaskserver.log', level=logging.DEBUG)
+logging.basicConfig(filename=logsdir + "/flaskserver.log", level=logging.DEBUG)
 logging.info("Logs file is " + logsdir + "/flaskserver.log")
 logging.info("Templates dir is " + scriptdir + "/../resources/templates")
 
-app = Flask("dave_srv",
-            template_folder=scriptdir + "/../resources/templates",
-            static_folder=scriptdir + "/../resources/static")
+app = Flask(
+    "dave_srv",
+    template_folder=scriptdir + "/../resources/templates",
+    static_folder=scriptdir + "/../resources/static",
+)
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-UPLOADS_TARGET = os.path.join(APP_ROOT, 'uploadeddataset')
+UPLOADS_TARGET = os.path.join(APP_ROOT, "uploadeddataset")
 
-app.secret_key = os.urandom(24)
 
-app.json_encoder = NPEncoder
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+# Apply security configuration
+app.secret_key = SecurityConfig.SECRET_KEY
+app.config["SESSION_COOKIE_SECURE"] = SecurityConfig.SESSION_COOKIE_SECURE
+app.config["SESSION_COOKIE_HTTPONLY"] = SecurityConfig.SESSION_COOKIE_HTTPONLY
+app.config["SESSION_COOKIE_SAMESITE"] = SecurityConfig.SESSION_COOKIE_SAMESITE
+app.config["PERMANENT_SESSION_LIFETIME"] = SecurityConfig.PERMANENT_SESSION_LIFETIME
+app.config["MAX_CONTENT_LENGTH"] = SecurityConfig.MAX_CONTENT_LENGTH
+
+# Set debug mode from environment
+app.debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+
+# Configure CORS if available
+if CORS_AVAILABLE and SecurityConfig.CORS_ENABLED:
+    CORS(
+        app,
+        origins=SecurityConfig.CORS_ORIGINS,
+        allow_headers=SecurityConfig.CORS_ALLOW_HEADERS,
+        methods=SecurityConfig.CORS_METHODS,
+        supports_credentials=True,
+    )
+
+
+# Apply security headers
+@app.after_request
+def after_request(response):
+    return Security.apply_security_headers(response)
+
+
+class CustomJSONProvider(DefaultJSONProvider):
+    def default(self, obj):
+        encoder = NPEncoder()
+        return encoder.default(obj)
+
+
+app.json = CustomJSONProvider(app)
+app.json.compact = True
 
 # ------ Flask Server Profiler -----
-# from werkzeug.contrib.profiler import ProfilerMiddleware
+# from werkzeug.middleware.profiler import ProfilerMiddleware
 # app.config['PROFILE'] = True
 # app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[10])
 # ------ END Flask Server Profiler -----
 
 # ------ Configure HTTP Compression -----
 # Tested on DAVE but the doesn't improves performance,
-# sure is a good choice for improving DAVE if runs on a remote server
+# sure is a good choice for improving DAVE if runs on a remote server
 # Change environment.yml to add to pip: "- flask-compress==1.4.0"
-# Add import: "from flask_compress import Compress",
-# Uncomment following code:
+# Add import: "from flask_compress import Compress",
+# Uncomment following code:
 # COMPRESS_MIMETYPES = ['text/html', 'text/css', 'text/xml', 'application/json', 'application/javascript']
 # COMPRESS_LEVEL = 6
 # COMPRESS_MIN_SIZE = 500
-# Compress(app)
+# Compress(app)
 # ------ END Configure HTTP Compression -----
 
+
 # Routes methods
-@app.route('/upload', methods=['GET', 'POST'])
-def upload():
+@app.route("/upload", methods=["GET", "POST"])
+def upload() -> Response:
     return DaveEndpoint.upload(request.files.getlist("file"), UPLOADS_TARGET)
 
 
-@app.route('/set_config', methods=['POST'])
-def set_config():
+@app.route("/set_config", methods=["POST"])
+def set_config() -> str:
     DsCache.clear()
-    return CONFIG.set_config(request.json['CONFIG'])
+    return CONFIG.set_config(request.json["CONFIG"])
 
-@app.route('/clear_cache', methods=['POST'])
-def clear_cache():
+
+@app.route("/clear_cache", methods=["POST"])
+def clear_cache() -> str:
     DsCache.clear()
     return ""
 
 
-@app.route('/get_dataset_schema', methods=['GET'])
-def get_dataset_schema():
-    return DaveEndpoint.get_dataset_schema(request.args['filename'], UPLOADS_TARGET)
+@app.route("/get_dataset_schema", methods=["GET"])
+def get_dataset_schema() -> Response:
+    return DaveEndpoint.get_dataset_schema(request.args["filename"], UPLOADS_TARGET)
 
 
-@app.route('/get_dataset_header', methods=['GET'])
-def get_dataset_header():
-    return DaveEndpoint.get_dataset_header(request.args['filename'], UPLOADS_TARGET)
+@app.route("/get_dataset_header", methods=["GET"])
+def get_dataset_header() -> Response:
+    return DaveEndpoint.get_dataset_header(request.args["filename"], UPLOADS_TARGET)
 
 
-@app.route('/append_file_to_dataset', methods=['POST'])
-def append_file_to_dataset():
-    return DaveEndpoint.append_file_to_dataset(request.json['filename'], request.json['nextfile'], UPLOADS_TARGET)
+@app.route("/append_file_to_dataset", methods=["POST"])
+def append_file_to_dataset() -> Response:
+    return DaveEndpoint.append_file_to_dataset(
+        request.json["filename"], request.json["nextfile"], UPLOADS_TARGET
+    )
 
 
-@app.route('/apply_rmf_file_to_dataset', methods=['GET'])
-def apply_rmf_file_to_dataset():
-    return DaveEndpoint.apply_rmf_file_to_dataset(request.args['filename'], request.args['rmf_filename'], request.args['column'], UPLOADS_TARGET)
+@app.route("/apply_rmf_file_to_dataset", methods=["GET"])
+def apply_rmf_file_to_dataset() -> Response:
+    return DaveEndpoint.apply_rmf_file_to_dataset(
+        request.args["filename"],
+        request.args["rmf_filename"],
+        request.args["column"],
+        UPLOADS_TARGET,
+    )
 
 
-@app.route('/get_plot_data', methods=['POST'])
-def get_plot_data():
-    return DaveEndpoint.get_plot_data(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['styles'], request.json['axis'])
+@app.route("/get_plot_data", methods=["POST"])
+def get_plot_data() -> Response:
+    return DaveEndpoint.get_plot_data(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["styles"],
+        request.json["axis"],
+    )
 
 
-@app.route('/get_lightcurve', methods=['POST'])
-def get_lightcurve():
+@app.route("/get_lightcurve", methods=["POST"])
+def get_lightcurve() -> Response:
     variance_opts = None
     if "variance_opts" in request.json:
-        variance_opts = request.json['variance_opts']
+        variance_opts = request.json["variance_opts"]
 
-    return DaveEndpoint.get_lightcurve(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['baseline_opts'], request.json['meanflux_opts'], variance_opts)
+    return DaveEndpoint.get_lightcurve(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        request.json["baseline_opts"],
+        request.json["meanflux_opts"],
+        variance_opts,
+    )
 
 
-@app.route('/get_joined_lightcurves', methods=['POST'])
-def get_joined_lightcurves():
-    return DaveEndpoint.get_joined_lightcurves(request.json['lc0_filename'],
-            request.json['lc1_filename'], request.json['lc0_bck_filename'],
-            request.json['lc1_bck_filename'], UPLOADS_TARGET, request.json['filters'],
-            request.json['axis'], float(request.json['dt']))
+@app.route("/get_joined_lightcurves", methods=["POST"])
+def get_joined_lightcurves() -> Response:
+    return DaveEndpoint.get_joined_lightcurves(
+        request.json["lc0_filename"],
+        request.json["lc1_filename"],
+        request.json["lc0_bck_filename"],
+        request.json["lc1_bck_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+    )
 
 
-@app.route('/get_divided_lightcurves_from_colors', methods=['POST'])
+@app.route("/get_divided_lightcurves_from_colors", methods=["POST"])
 def get_divided_lightcurves_from_colors():
-    return DaveEndpoint.get_divided_lightcurves_from_colors(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']))
+    return DaveEndpoint.get_divided_lightcurves_from_colors(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+    )
 
 
-@app.route('/get_divided_lightcurve_ds', methods=['POST'])
+@app.route("/get_divided_lightcurve_ds", methods=["POST"])
 def get_divided_lightcurve_ds():
-    return DaveEndpoint.get_divided_lightcurve_ds(request.json['lc0_filename'],
-            request.json['lc1_filename'], request.json['lc0_bck_filename'],
-            request.json['lc1_bck_filename'], UPLOADS_TARGET)
+    return DaveEndpoint.get_divided_lightcurve_ds(
+        request.json["lc0_filename"],
+        request.json["lc1_filename"],
+        request.json["lc0_bck_filename"],
+        request.json["lc1_bck_filename"],
+        UPLOADS_TARGET,
+    )
 
 
-@app.route('/get_power_density_spectrum', methods=['POST'])
+@app.route("/get_power_density_spectrum", methods=["POST"])
 def get_power_density_spectrum():
-    return DaveEndpoint.get_power_density_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], float(request.json['df']))
+    return DaveEndpoint.get_power_density_spectrum(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["type"],
+        float(request.json["df"]),
+    )
 
 
-@app.route('/get_dynamical_spectrum', methods=['POST'])
+@app.route("/get_dynamical_spectrum", methods=["POST"])
 def get_dynamical_spectrum():
-    return DaveEndpoint.get_dynamical_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['freq_range'], float(request.json['df']))
+    return DaveEndpoint.get_dynamical_spectrum(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["freq_range"],
+        float(request.json["df"]),
+    )
 
 
-@app.route('/get_cross_spectrum', methods=['POST'])
+@app.route("/get_cross_spectrum", methods=["POST"])
 def get_cross_spectrum():
-    return DaveEndpoint.get_cross_spectrum(request.json['filename1'],
-            request.json['bck_filename1'], request.json['gti_filename1'],
-            request.json['filters1'], request.json['axis1'], float(request.json['dt1']),
-            request.json['filename2'], request.json['bck_filename2'], request.json['gti_filename2'],
-            request.json['filters2'], request.json['axis2'], float(request.json['dt2']),
-            UPLOADS_TARGET, float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'])
+    return DaveEndpoint.get_cross_spectrum(
+        request.json["filename1"],
+        request.json["bck_filename1"],
+        request.json["gti_filename1"],
+        request.json["filters1"],
+        request.json["axis1"],
+        float(request.json["dt1"]),
+        request.json["filename2"],
+        request.json["bck_filename2"],
+        request.json["gti_filename2"],
+        request.json["filters2"],
+        request.json["axis2"],
+        float(request.json["dt2"]),
+        UPLOADS_TARGET,
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["type"],
+    )
 
 
-@app.route('/get_covariance_spectrum', methods=['POST'])
+@app.route("/get_covariance_spectrum", methods=["POST"])
 def get_covariance_spectrum():
-    return DaveEndpoint.get_covariance_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], request.json['filters'],
-            UPLOADS_TARGET, float(request.json['dt']), request.json['ref_band_interest'],
-            request.json['energy_range'], int(request.json['n_bands']), float(request.json['std']))
+    return DaveEndpoint.get_covariance_spectrum(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        request.json["filters"],
+        UPLOADS_TARGET,
+        float(request.json["dt"]),
+        request.json["ref_band_interest"],
+        request.json["energy_range"],
+        int(request.json["n_bands"]),
+        float(request.json["std"]),
+    )
 
 
-@app.route('/get_phase_lag_spectrum', methods=['POST'])
+@app.route("/get_phase_lag_spectrum", methods=["POST"])
 def get_phase_lag_spectrum():
-    return DaveEndpoint.get_phase_lag_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], float(request.json['df']),
-            request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']))
+    return DaveEndpoint.get_phase_lag_spectrum(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["type"],
+        float(request.json["df"]),
+        request.json["freq_range"],
+        request.json["energy_range"],
+        int(request.json["n_bands"]),
+    )
 
 
-@app.route('/get_rms_spectrum', methods=['POST'])
+@app.route("/get_rms_spectrum", methods=["POST"])
 def get_rms_spectrum():
-    return DaveEndpoint.get_rms_spectrum(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], float(request.json['df']),
-            request.json['freq_range'], request.json['energy_range'], int(request.json['n_bands']),
-            float(request.json['white_noise']))
+    return DaveEndpoint.get_rms_spectrum(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["type"],
+        float(request.json["df"]),
+        request.json["freq_range"],
+        request.json["energy_range"],
+        int(request.json["n_bands"]),
+        float(request.json["white_noise"]),
+    )
 
 
-@app.route('/get_rms_vs_countrate', methods=['POST'])
+@app.route("/get_rms_vs_countrate", methods=["POST"])
 def get_rms_vs_countrate():
-    return DaveEndpoint.get_rms_vs_countrate(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            int(request.json['n_bands']), float(request.json['df']),
-            request.json['freq_range'], request.json['energy_range'], float(request.json['white_noise']))
+    return DaveEndpoint.get_rms_vs_countrate(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        int(request.json["n_bands"]),
+        float(request.json["df"]),
+        request.json["freq_range"],
+        request.json["energy_range"],
+        float(request.json["white_noise"]),
+    )
 
 
-@app.route('/get_plot_data_from_models', methods=['POST'])
+@app.route("/get_plot_data_from_models", methods=["POST"])
 def get_plot_data_from_models():
-    return DaveEndpoint.get_plot_data_from_models(request.json['models'], request.json['x_values'])
+    return DaveEndpoint.get_plot_data_from_models(request.json["models"], request.json["x_values"])
 
 
-@app.route('/get_fit_powerspectrum_result', methods=['POST'])
+@app.route("/get_fit_powerspectrum_result", methods=["POST"])
 def get_fit_powerspectrum_result():
     priors = None
     if "priors" in request.json:
-        priors = request.json['priors']
+        priors = request.json["priors"]
 
     sampling_params = None
     if "sampling_params" in request.json:
-        sampling_params = request.json['sampling_params']
+        sampling_params = request.json["sampling_params"]
 
-    return DaveEndpoint.get_fit_powerspectrum_result(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], float(request.json['df']),
-            request.json['models'], priors, sampling_params)
+    return DaveEndpoint.get_fit_powerspectrum_result(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["type"],
+        float(request.json["df"]),
+        request.json["models"],
+        priors,
+        sampling_params,
+    )
 
 
-@app.route('/get_bootstrap_results', methods=['POST'])
+@app.route("/get_bootstrap_results", methods=["POST"])
 def get_bootstrap_results():
-    return DaveEndpoint.get_bootstrap_results(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['nsegm']), float(request.json['segment_size']),
-            request.json['norm'], request.json['type'], float(request.json['df']),
-            request.json['models'], int(request.json['n_iter']), float(request.json['mean']),
-            int(request.json['red_noise']), int(request.json['seed']))
+    return DaveEndpoint.get_bootstrap_results(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["nsegm"]),
+        float(request.json["segment_size"]),
+        request.json["norm"],
+        request.json["type"],
+        float(request.json["df"]),
+        request.json["models"],
+        int(request.json["n_iter"]),
+        float(request.json["mean"]),
+        int(request.json["red_noise"]),
+        int(request.json["seed"]),
+    )
 
 
-@app.route('/get_intermediate_files', methods=['POST'])
+@app.route("/get_intermediate_files", methods=["POST"])
 def get_intermediate_files():
-    return DaveEndpoint.get_intermediate_files(request.json['filepaths'], UPLOADS_TARGET)
+    return DaveEndpoint.get_intermediate_files(request.json["filepaths"], UPLOADS_TARGET)
 
 
-@app.route('/bulk_analisys', methods=['POST'])
+@app.route("/bulk_analisys", methods=["POST"])
 def bulk_analisys():
-    return DaveEndpoint.bulk_analisys(request.json['filenames'], request.json['plotConfigs'],
-            request.json['outdir'], UPLOADS_TARGET)
+    return DaveEndpoint.bulk_analisys(
+        request.json["filenames"],
+        request.json["plotConfigs"],
+        request.json["outdir"],
+        UPLOADS_TARGET,
+    )
 
 
-@app.route('/get_lomb_scargle_results', methods=['POST'])
+@app.route("/get_lomb_scargle_results", methods=["POST"])
 def get_lomb_scargle_results():
-    return DaveEndpoint.get_lomb_scargle_results(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
-            int(request.json['samples_per_peak']))
+    return DaveEndpoint.get_lomb_scargle_results(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        request.json["freq_range"],
+        int(request.json["nyquist_factor"]),
+        request.json["ls_norm"],
+        int(request.json["samples_per_peak"]),
+    )
 
 
-@app.route('/get_fit_lomb_scargle_result', methods=['POST'])
+@app.route("/get_fit_lomb_scargle_result", methods=["POST"])
 def get_fit_lomb_scargle_result():
     priors = None
     if "priors" in request.json:
-        priors = request.json['priors']
+        priors = request.json["priors"]
 
     sampling_params = None
     if "sampling_params" in request.json:
-        sampling_params = request.json['sampling_params']
+        sampling_params = request.json["sampling_params"]
 
-    return DaveEndpoint.get_fit_lomb_scargle_result(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['freq_range'], int(request.json['nyquist_factor']), request.json['ls_norm'],
-            int(request.json['samples_per_peak']), request.json['models'], priors, sampling_params)
+    return DaveEndpoint.get_fit_lomb_scargle_result(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        request.json["freq_range"],
+        int(request.json["nyquist_factor"]),
+        request.json["ls_norm"],
+        int(request.json["samples_per_peak"]),
+        request.json["models"],
+        priors,
+        sampling_params,
+    )
 
 
-@app.route('/get_pulse_search', methods=['POST'])
+@app.route("/get_pulse_search", methods=["POST"])
 def get_pulse_search():
-    return DaveEndpoint.get_pulse_search(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            request.json['freq_range'], request.json['mode'], int(request.json['oversampling']),
-            int(request.json['nharm']), int(request.json['nbin']), float(request.json['segment_size']))
+    return DaveEndpoint.get_pulse_search(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        request.json["freq_range"],
+        request.json["mode"],
+        int(request.json["oversampling"]),
+        int(request.json["nharm"]),
+        int(request.json["nbin"]),
+        float(request.json["segment_size"]),
+    )
 
 
-@app.route('/get_phaseogram', methods=['POST'])
+@app.route("/get_phaseogram", methods=["POST"])
 def get_phaseogram():
-
-    binary_params= None
+    binary_params = None
     if "binary_params" in request.json:
-        binary_params = request.json['binary_params']
+        binary_params = request.json["binary_params"]
 
-    return DaveEndpoint.get_phaseogram(request.json['filename'],
-            request.json['bck_filename'], request.json['gti_filename'], UPLOADS_TARGET,
-            request.json['filters'], request.json['axis'], float(request.json['dt']),
-            float(request.json['f']), int(request.json['nph']), int(request.json['nt']),
-            float(request.json['fdot']), float(request.json['fddot']), binary_params)
+    return DaveEndpoint.get_phaseogram(
+        request.json["filename"],
+        request.json["bck_filename"],
+        request.json["gti_filename"],
+        UPLOADS_TARGET,
+        request.json["filters"],
+        request.json["axis"],
+        float(request.json["dt"]),
+        float(request.json["f"]),
+        int(request.json["nph"]),
+        int(request.json["nt"]),
+        float(request.json["fdot"]),
+        float(request.json["fddot"]),
+        binary_params,
+    )
 
 
 # Receives a message from client and send it to all subscribers
-@app.route("/publish", methods=['POST'])
+@app.route("/publish", methods=["POST"])
 def publish():
-    return GeHelper.publish(request.json['message'])
+    return GeHelper.publish(request.json["message"])
 
 
 @app.route("/subscribe")
@@ -317,16 +537,58 @@ def subscribe():
     return GeHelper.subscribe()
 
 
-@app.route('/')
+@app.route("/")
 def root():
     return render_template("master_page.html", get_version=get_version)
 
 
-@app.route('/shutdown')
+@app.route("/health")
+def health():
+    """Basic health check endpoint for Kubernetes liveness probe"""
+    return jsonify(status="healthy", version=build_version)
+
+
+@app.route("/ready")
+def ready():
+    """Readiness check endpoint for Kubernetes readiness probe"""
+    # Check if critical services are available
+    try:
+        # Simple check to ensure imports are working
+        import hendrics  # noqa: F401
+        import numpy as np
+        import stingray  # noqa: F401
+
+        # Check if uploads directory is accessible
+        if not os.path.exists(UPLOADS_TARGET):
+            os.makedirs(UPLOADS_TARGET, exist_ok=True)
+
+        return jsonify(
+            status="ready",
+            version=build_version,
+            numpy_version=np.__version__,
+            stingray_available=True,
+            hendrics_available=True,
+            uploads_dir_accessible=True,
+        )
+    except Exception as e:
+        return jsonify(status="not ready", error=str(e)), 503
+
+
+@app.route("/shutdown", methods=["POST"])
 def shutdown():
-    logging.info('Server shutting down...')
+    """Protected shutdown endpoint"""
+    if SecurityConfig.PROTECT_SHUTDOWN:
+        # Require password for shutdown
+        data = request.get_json() or {}
+        password = data.get("password")
+
+        if not password or password != SecurityConfig.SHUTDOWN_PASSWORD:
+            logging.warn("Unauthorized shutdown attempt")
+            return jsonify(error="Unauthorized"), 401
+
+    logging.info("Server shutting down...")
     shutdown_server()
-    return 'Server shutting down...'
+    return "Server shutting down..."
 
 
 def get_version():
@@ -338,24 +600,30 @@ def get_version():
 
 # Shutdown flask server
 def shutdown_server():
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        logging.warn('shutdown_server: Not running with the Werkzeug Server')
-        exit()
-    func()
+    # werkzeug.server.shutdown was removed in Werkzeug 2.1+
+    # Use signal to stop the server instead
+    import signal
+
+    logging.info("Shutting down server...")
+    os.kill(os.getpid(), signal.SIGINT)
 
 
 # Setting error handler
 def http_error_handler(error):
     try:
-        logging.error('ERROR: http_error_handler ' + str(error))
-        return json.dumps(dict(error=str(error)))
-    except:
-        logging.error('ERROR: http_error_handler --> EXCEPT ')
+        logging.error("ERROR: http_error_handler " + str(error))
+        return jsonify(error=str(error))
+    except Exception as e:
+        logging.error(f"ERROR: http_error_handler --> EXCEPT {str(e)}")
+
 
 for error in (400, 401, 403, 404, 500):  # or with other http code you consider as error
-    app.error_handler_spec[None][error] = http_error_handler
+    app.register_error_handler(error, http_error_handler)
 
-if __name__ == '__main__':
-    GeHelper.start(server_port, app)
-    app.run(debug=CONFIG.DEBUG_MODE, threaded=True)  # Use app.run(host='0.0.0.0') for listen on all interfaces
+if __name__ == "__main__":
+    try:
+        GeHelper.start(server_port, app)
+    except KeyboardInterrupt:
+        print("Server shutdown requested")
+        sys.exit(0)
+    # Note: app.run() is not needed as GeHelper.start() handles the server

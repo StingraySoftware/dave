@@ -12,8 +12,8 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
                        "OBS_ID", "OBS_MODE", "EXP_ID", "MJDREF", "MJDREFF", "MJDREFI" ];
 
   this.$html = $('<div class="infoPanel ' + this.id + '">' +
-                   '<button class="btn btn-default btnShowAll"  data-toggle="tooltip" title="Show/Hide all info"><i class="fa fa-plus-square-o" aria-hidden="true"></i></button>' +
-                   '<button class="btn btn-default btnHide"  data-toggle="tooltip" title="Hide info panel"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                   '<button class="btn btn-default btnShowAll"  data-bs-toggle="tooltip" title="Show/Hide all info"><i class="fa fa-plus-square-o" aria-hidden="true"></i></button>' +
+                   '<button class="btn btn-default btnHide"  data-bs-toggle="tooltip" title="Hide info panel"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
                    '<h3>' + title + ':</h3>' +
                    '<table class="properties"></table>' +
                  '</div>');
@@ -21,14 +21,12 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
   this.container = this.$html.find(".properties");
 
   if (!isNull(toolbar)){
-    this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '" data-toggle="tooltip" title="Show info panel"><i class="fa fa-eye" aria-hidden="true"></i> ' + title + '</button>');
+    this.btnShow = $('<button class="btn btn-default btnShow ' + this.id + '" data-bs-toggle="tooltip" title="Show info panel"><i class="fa fa-eye" aria-hidden="true"></i> ' + title + '</button>');
     this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
-        gaTracker.sendEvent("InfoPanel", "Show", currentObj.id);
       } else {
         currentObj.hide();
-        gaTracker.sendEvent("InfoPanel", "Hide", currentObj.id);
       }
     });
     toolbar.append(this.btnShow);
@@ -36,7 +34,6 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
     this.btnHide = this.$html.find(".btnHide");
     this.btnHide.click(function(event){
        currentObj.hide();
-       gaTracker.sendEvent("InfoPanel", "Hide", currentObj.id);
     });
 
     this.btnShowAll = this.$html.find(".btnShowAll");
@@ -48,7 +45,6 @@ function InfoPanel(id, title, header, headerComments, toolbar) {
         currentObj.btnShowAll.find("i").switchClass("fa-minus-square-o", "fa-plus-square-o");
       }
       currentObj.redraw();
-      gaTracker.sendEvent("InfoPanel", "ShowAll", currentObj.id);
     });
 
   } else {

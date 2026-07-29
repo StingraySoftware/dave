@@ -1,0 +1,120 @@
+{
+  "appName": "DAVEApp",
+  "productName": "DAVE - Data Analysis of Variable Events",
+  "description": "Desktop GUI application for astronomical X-ray data analysis",
+  "copyright": "Copyright © 2025 StingRay Software",
+  "homepage": "https://github.com/StingraySoftware/dave",
+  
+  "platforms": {
+    "linux": {
+      "target": "AppImage",
+      "category": "Science",
+      "icon": "src/main/resources/static/img/icon.png",
+      "desktop": {
+        "Name": "DAVE",
+        "Comment": "Astronomical X-ray data analysis",
+        "Categories": "Science;Astronomy;DataVisualization;",
+        "Keywords": "astronomy;x-ray;data;analysis;stingray;"
+      }
+    },
+    "macos": {
+      "target": "dmg",
+      "category": "public.app-category.education",
+      "icon": "src/main/resources/static/img/icon.icns",
+      "bundleId": "science.stingray.dave",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "windows": {
+      "target": ["nsis", "portable"],
+      "icon": "src/main/resources/static/img/icon.ico",
+      "publisherName": "StingRay Software",
+      "verifyUpdateCodeSignature": false,
+      "requestedExecutionLevel": "asInvoker"
+    }
+  },
+  
+  "directories": {
+    "output": "build",
+    "buildResources": "build-resources"
+  },
+  
+  "files": [
+    "**/*",
+    "!**/*.ts",
+    "!*.code-workspace",
+    "!LICENSE",
+    "!README.md",
+    "!**/__pycache__",
+    "!**/node_modules/*",
+    "!src/test",
+    "!setup",
+    "!kubernetes",
+    "!.github",
+    "!scripts",
+    "!docs"
+  ],
+  
+  "python": {
+    "version": "3.13",
+    "packages": [
+      "flask>=3.1",
+      "numpy>=2.2", 
+      "astropy>=7.0",
+      "numba>=0.61",
+      "stingray>=2.2.7",
+      "hendrics>=8.1",
+      "scipy>=1.15",
+      "matplotlib>=3.10",
+      "gevent>=25.5",
+      "pillow",
+      "python-magic>=0.4.27",
+      "pylru>=1.2.1",
+      "flask-cors>=6.0.0",
+      "flask-session>=0.8.0"
+    ],
+    "bundleMethod": "pixi"
+  },
+  
+  "publish": {
+    "provider": "github",
+    "owner": "StingraySoftware",
+    "repo": "dave",
+    "releaseType": "release"
+  },
+  
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "license": "LICENSE",
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  },
+  
+  "dmg": {
+    "contents": [
+      {
+        "x": 110,
+        "y": 150
+      },
+      {
+        "x": 480,
+        "y": 150,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  
+  "appImage": {
+    "license": "LICENSE",
+    "category": "Science",
+    "desktop": {
+      "Name": "DAVE",
+      "Comment": "Astronomical X-ray data analysis"
+    }
+  }
+}

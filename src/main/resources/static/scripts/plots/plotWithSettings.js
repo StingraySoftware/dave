@@ -12,29 +12,27 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
   this.settingsPanel = $('<div class="settings">' +
                             '<div class="row title"><h3>Settings:</h3></div>' +
                             '<div class="row">' +
-                              '<div class="settingsCol leftCol col-xs-6">' +
+                              '<div class="settingsCol leftCol col-6">' +
                               '</div>' +
-                              '<div class="settingsCol rightCol col-xs-6">' +
+                              '<div class="settingsCol rightCol col-6">' +
                               '</div>' +
                             '</div>' +
                           '</div>');
   this.settingsPanel.hide();
   this.$html.prepend(this.settingsPanel);
 
-  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '" data-toggle="tooltip" title="Open plot settings"><i class="fa fa-cog" aria-hidden="true"></i></button>');
+  this.btnSettings = $('<button class="btn btn-default btnSettings' + this.id + '" data-bs-toggle="tooltip" title="Open plot settings"><i class="fa fa-cog" aria-hidden="true"></i></button>');
   this.$html.find(".plotTools").append(this.btnSettings);
   this.btnSettings.click(function(event){
     currentObj.showSettings();
-    gaTracker.sendEvent("Plots", "ShowPlotSettings", currentObj.getTitle());
   });
 
-  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '" data-toggle="tooltip" title="Close plot settings"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
+  this.btnBack = $('<button class="btn btn-default btnBack' + this.id + '" data-bs-toggle="tooltip" title="Close plot settings"><i class="fa fa-arrow-left" aria-hidden="true"></i></button>');
   this.btnBack.hide();
   this.$html.find(".plotTools").append(this.btnBack);
   this.btnBack.click(function(event){
     currentObj.hideSettings();
     currentObj.refreshData();
-    gaTracker.sendEvent("Plots", "HidePlotSettings", currentObj.getTitle());
   });
 
   //PlotWithSettings plot methods:
@@ -65,12 +63,12 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       if (!this.$html.hasClass("fullWidth") && this.settingsPanel.find(".rightCol").children().length == 0){
 
         // If not is fullWidth and rightCol has no elements sets the width of cols to 100%
-        this.settingsPanel.find(".settingsCol").switchClass("col-xs-6", "col-xs-12");
+        this.settingsPanel.find(".settingsCol").switchClass("col-6", "col-12");
 
       } else if (this.$html.hasClass("fullWidth")){
 
         // If is fullWidth sets the width of cols to 50%
-        this.settingsPanel.find(".settingsCol").switchClass("col-xs-12", "col-xs-6");
+        this.settingsPanel.find(".settingsCol").switchClass("col-12", "col-6");
       }
 
       this.btnBack.show();
@@ -254,7 +252,6 @@ function PlotWithSettings(id, plotConfig, getDataFromServerFn, onFiltersChangedF
       this.fitWhiteNoiseLink = this.settingsPanel.find(columnClass).find(".btnFitWNO");
       this.fitWhiteNoiseLink.click(function(event){
         currentObj.showFitWhiteNoiseDialog();
-        gaTracker.sendEvent("Plots", "FitWhiteNoiseClicked", currentObj.getTitle());
       });
       setVisibility(this.fitWhiteNoiseLink, unchecked);
 

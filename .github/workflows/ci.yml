@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ modernization-2025, master ]
+  pull_request:
+    branches: [ modernization-2025, master ]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.13']
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.6.0
+      with:
+        pixi-version: v0.40.0
+        cache: true
+        
+    - name: Install dependencies
+      run: |
+        pixi install
+        pixi run install-node-deps
+        
+    - name: Run Python linting
+      run: pixi run lint
+      
+    - name: Run Python tests
+      run: pixi run test
+      
+    - name: Run Python tests with coverage
+      run: pixi run test-coverage
+      
+    - name: Install Playwright browsers
+      run: pixi run test-e2e-install
+      
+    - name: Run E2E tests
+      run: pixi run test-e2e
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      if: matrix.os == 'ubuntu-latest'
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Pixi
+      uses: prefix-dev/setup-pixi@v0.6.0
+      with:
+        pixi-version: v0.40.0
+        cache: true
+        
+    - name: Install dependencies
+      run: pixi install
+      
+    - name: Run security checks
+      run: |
+        pixi run lint
+        # Additional security checks can be added here
+        
+    - name: Check for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified

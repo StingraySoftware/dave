@@ -1,0 +1,748 @@
+/*
+ * DAVE design system (2026 reskin).
+ * Tokens + base chrome. Loaded after Bootstrap (so it can override its
+ * defaults) and before master_page.css (so page rules can refine it).
+ * NOTE: the dormant, unlinked themes.css defines the same token names with
+ * different values. It must not be linked while dave.css is in use.
+ */
+
+:root {
+  /* dark chrome */
+  --bg-app: #15161a;
+  --bg-rail: #17181c;
+  --bg-navbar: #1b1d22;
+  --bg-panel: #232529;
+  --bg-raised: #2c2f36;
+  --bg-raised-hover: #343842;
+  --border: #3a3e46;
+  --border-subtle: #2e3138;
+  --border-strong: #4a4f58;
+  --text-primary: #e8e9eb;
+  --text-body: #c6c9cf;
+  --text-muted: #8a8f99;
+  --text-faint: #6e737d;
+
+  /* accent + semantics */
+  --accent: #ff4828;
+  --accent-hover: #ff6a45;
+  --accent-down: #e23a1c; /* hover/pressed state for accent-FILLED controls (darker, keeps white text legible) */
+  --accent-tint: rgba(255, 72, 40, 0.13);
+  --brand: #fe3200; /* wordmark only — every other accent use goes through --accent */
+  --danger: #e5484d;
+  --success: #4cae5f;
+  --warn: #d9a03f;
+  --info: #58a6ff;
+
+  /* light plot canvas */
+  --canvas: #f3f4f6;
+  --card: #ffffff;
+  --card-border: #e3e5e8;
+  --card-border-hover: #b9bec6;
+  --card-ink: #3a3f47;
+  --card-muted: var(--text-muted);
+
+  /* type + shape */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius-ctl: 6px;
+  --radius-card: 8px;
+  --navbar-h: 44px;
+  --shadow-card: 0 1px 3px rgba(15, 18, 25, 0.07);
+  --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.45);
+
+  /* Bridge DAVE tokens into Bootstrap 5.3's variable system so BS components
+   * (modals, tooltips, dropdowns, links, form controls) inherit the dark
+   * chrome by default. Light-side plot cards opt back out with their own
+   * rules in later sections. */
+  --bs-body-bg: var(--bg-app);
+  --bs-body-bg-rgb: 21, 22, 26;
+  --bs-body-color: var(--text-body);
+  --bs-body-color-rgb: 198, 201, 207;
+  --bs-border-color: var(--border);
+  --bs-link-color: var(--accent);
+  --bs-link-color-rgb: 255, 72, 40;
+  --bs-link-hover-color: var(--accent-hover);
+  --bs-link-hover-color-rgb: 255, 106, 69;
+  --bs-emphasis-color: var(--text-primary);
+  --bs-secondary-color: var(--text-muted);
+  --bs-tertiary-bg: var(--bg-raised);
+  --bs-secondary-bg: var(--bg-panel); /* disabled form controls */
+  --bs-focus-ring-color: var(--accent-tint);
+}
+
+/* Rebase the rem: every Bootstrap 5 rem-derived size (text, buttons,
+ * paddings) lands at compact density instead of the 16px default. */
+html {
+  font-size: 13px;
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: 12.5px; /* intentionally 0.5px under 1rem: labels sit slightly tighter than control text */
+  background-color: var(--bg-app);
+  color: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Bootstrap 3 class still used by tool_panel.html containers; BS5 dropped it. */
+.hidden {
+  display: none !important;
+}
+
+/* Thin dark scrollbars instead of permanent native gutters. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Keyboard focus */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Bootstrap hard-codes blue focus rings on its components; restate in accent. */
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+/* ===================== Navbar ===================== */
+
+.navbar.navbar-static-top {
+  height: var(--navbar-h);
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* beat Bootstrap's .bg-dark utility (it carries !important) */
+.navbar.navbar-static-top.bg-dark {
+  background-color: var(--bg-navbar) !important;
+}
+
+/* the navbar wraps its content in a .container; span the full width */
+.navbar.navbar-static-top > .container {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tab anchors are created by tabpanel.js with per-tab classes (NavItem_0,
+ * NavItem_1, ...), so style through the list structure. */
+#navbar .navbar-nav.me-auto > li > a {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  margin: 7px 4px 7px 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-ctl);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#navbar .navbar-nav.me-auto > li > a:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+#navbar .navbar-nav.me-auto > li.active > a {
+  background-color: var(--bg-raised);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+#navbar .navbar-nav.me-auto > li > a:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+/* "+" new-tab button and the right-side workspace/settings icons */
+#navbar .navbar-nav.me-auto > li.addTabPanelLi > a,
+#navbar #right-navbar > li > a {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 8px 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-ctl);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+#navbar .navbar-nav.me-auto > li.addTabPanelLi > a:hover,
+#navbar #right-navbar > li > a:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ===================== Workflow rail ===================== */
+
+.wfSelectorContainer {
+  background-color: var(--bg-rail);
+  padding: 8px 6px;
+}
+
+/* the rail markup nests a .navbar div; neutralize Bootstrap's navbar box */
+.wfSelectorContainer .navbar {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.side-nav li {
+  list-style: none;
+  margin-bottom: 4px;
+}
+
+.side-nav li > a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 2px;
+  border-radius: 7px;
+  text-decoration: none;
+}
+
+.side-nav li > a .fa {
+  font-size: 14px;
+}
+
+.side-nav li > a:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.side-nav li.active > a {
+  background-color: var(--accent-tint);
+  color: var(--accent-hover);
+}
+
+/* ===================== Buttons ===================== */
+
+.btn {
+  border-radius: var(--radius-ctl);
+  font-size: 12px;
+  line-height: 1.5;
+  box-shadow: none;
+  text-shadow: none;
+  --bs-btn-disabled-opacity: 0.45;
+}
+
+/* primary: accent fill (Choose file, FIT, Refresh).
+ * Restyled via Bootstrap 5's per-variant button variables so every state
+ * (hover, active, disabled, .show) follows the accent without !important. */
+.btn-primary, .btn-success {
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: var(--accent);
+  --bs-btn-color: #ffffff;
+  --bs-btn-hover-bg: var(--accent-down);
+  --bs-btn-hover-border-color: var(--accent-down);
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-active-bg: var(--accent-down);
+  --bs-btn-active-border-color: var(--accent-down);
+  --bs-btn-active-color: #ffffff;
+  --bs-btn-disabled-bg: var(--accent);
+  --bs-btn-disabled-border-color: var(--accent);
+  --bs-btn-disabled-color: #ffffff;
+  --bs-btn-focus-shadow-rgb: 255, 72, 40;
+}
+
+/* secondary: raised dark (Change, model buttons, plot chips, dialog buttons) */
+.btn-default, .btn-warning, .btn-info, .btn-danger {
+  --bs-btn-bg: var(--bg-raised);
+  --bs-btn-border-color: var(--border);
+  --bs-btn-color: var(--text-primary);
+  --bs-btn-hover-bg: var(--bg-raised-hover);
+  --bs-btn-hover-border-color: var(--border);
+  --bs-btn-hover-color: var(--text-primary);
+  --bs-btn-active-bg: var(--bg-raised-hover);
+  --bs-btn-active-border-color: var(--border);
+  --bs-btn-active-color: var(--text-primary);
+  --bs-btn-disabled-bg: var(--bg-raised);
+  --bs-btn-disabled-border-color: var(--border);
+  --bs-btn-disabled-color: var(--text-muted);
+  --bs-btn-focus-shadow-rgb: 255, 72, 40;
+}
+
+/* heavy-compute emphasis without alarm red — keeps its accent text in every state */
+.btn-danger {
+  --bs-btn-color: var(--accent-hover);
+  --bs-btn-hover-color: var(--accent-hover);
+  --bs-btn-active-color: var(--accent-hover);
+}
+
+/* APPLY ALL sits next to FIT; keep one accent button per group */
+.actionsContainer .applyBtn {
+  --bs-btn-bg: var(--bg-raised);
+  --bs-btn-border-color: var(--border);
+  --bs-btn-color: var(--text-primary);
+  --bs-btn-hover-bg: var(--bg-raised-hover);
+  --bs-btn-hover-border-color: var(--border);
+  --bs-btn-hover-color: var(--text-primary);
+  --bs-btn-active-bg: var(--bg-raised-hover);
+  --bs-btn-active-border-color: var(--border);
+  --bs-btn-active-color: var(--text-primary);
+  --bs-btn-disabled-bg: var(--bg-raised);
+  --bs-btn-disabled-border-color: var(--border);
+  --bs-btn-disabled-color: var(--text-muted);
+}
+
+/* ===================== Inputs ===================== */
+
+.toolPanelContainer select,
+.ui-dialog select {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  padding: 2px 4px;
+}
+
+/* ===================== Tool panel ===================== */
+
+/* Collapsible section headers read as quiet uppercase labels; individual
+ * control titles (e.g. slider labels) keep sentence case via the h3 base. */
+.toolPanelContainer .Section > h3 {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+
+.toolPanelContainer .Section > h3:hover {
+  color: var(--text-body);
+}
+
+.toolPanelContainer h3 {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 12px 0 6px;
+}
+
+.fileSelector h3 {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+}
+
+.fileSelector input[type="file"] {
+  width: 100%;
+}
+
+/* "needs refresh" warning chips on the dark side */
+.selectorsContainer .btnWarn {
+  color: var(--warn);
+}
+
+/* file selector chip states: hide when empty, wrap injected warning chips */
+.fileSelector .fileName:empty {
+  display: none;
+}
+
+.fileSelector .fileName .btnWarn {
+  white-space: normal;
+}
+
+.fileSelector .btnWarn {
+  color: var(--warn);
+}
+
+/* keep the MODELS: title clear of the right-floated icon-button row by
+ * tightening the row itself (h3 margins can't move an earlier line box) */
+.modelSelector .floatingContainer .btn {
+  padding: 3px 5px;
+}
+
+/* ===================== jQuery UI reskin ===================== */
+
+/* sliders */
+.ui-slider-horizontal {
+  height: 3px;
+  border: none;
+  border-radius: 2px;
+}
+
+.ui-slider .ui-slider-range {
+  background: var(--accent);
+  border: none;
+}
+
+.ui-slider .ui-slider-handle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: none;
+  top: -4.5px;
+  margin-left: -6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+}
+
+.ui-slider .ui-slider-handle.ui-state-active {
+  background: var(--accent-hover);
+  cursor: grabbing;
+}
+
+/* checkboxradio groups become segmented controls */
+.ui-controlgroup-horizontal {
+  display: inline-flex;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
+  padding: 2px;
+  gap: 2px;
+}
+
+.ui-controlgroup .ui-checkboxradio-label {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+}
+
+.ui-controlgroup .ui-checkboxradio-label:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.ui-controlgroup .ui-checkboxradio-label.ui-state-active {
+  background: var(--accent-tint);
+  color: var(--text-primary);
+}
+
+.ui-checkboxradio-label .ui-checkboxradio-icon,
+.ui-checkboxradio-label .ui-checkboxradio-icon-space {
+  display: none;
+}
+
+/* section collapse toggles (fa plus/minus squares) */
+.switch-btn {
+  color: var(--text-muted);
+}
+
+.switch-btn:hover {
+  color: var(--text-primary);
+}
+
+.switch-btn.fa-minus-square {
+  color: var(--accent);
+}
+
+.switch-btn.fa-minus-square:hover {
+  color: var(--accent-hover);
+}
+
+/* checkbox-style toggles: checked state matches the expanded-section accent */
+.switch-btn.fa-check-square-o {
+  color: var(--accent);
+}
+
+/* dialogs */
+.ui-dialog {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--text-body);
+}
+
+/* the dialog root also carries .ui-widget-content; the vendored
+ * .ui-widget.ui-widget-content border (0,2,0) beats .ui-dialog alone */
+.ui-dialog.ui-widget-content {
+  border-color: var(--border);
+}
+
+.ui-dialog .ui-dialog-titlebar {
+  background: var(--bg-navbar);
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+}
+
+.ui-dialog .ui-dialog-titlebar-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  text-indent: 0;
+}
+
+.ui-dialog .ui-dialog-titlebar-close:hover {
+  color: var(--text-primary);
+}
+
+.ui-dialog .ui-dialog-content {
+  background: transparent;
+  color: var(--text-body);
+}
+
+.ui-dialog .ui-dialog-content input {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-family: inherit;
+}
+
+.ui-dialog .ui-dialog-buttonpane {
+  background: transparent;
+  border-top: 1px solid var(--border-subtle);
+  margin: 0;
+  padding: 8px 14px;
+}
+
+.ui-dialog .ui-dialog-buttonpane button {
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-ctl);
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 3px 10px;
+  background-image: none;
+  font-family: inherit;
+}
+
+.ui-dialog .ui-dialog-buttonpane button:hover:enabled {
+  background-color: var(--bg-raised-hover);
+  background-image: none;
+}
+
+.ui-widget-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 1;
+}
+
+/* Bootstrap 5 makes .row a flex container, which ignores the float-based
+ * label/input layout inside legacy dialog forms (same fallout as the
+ * .TabPanel.row patch in master_page.css). Keep dialog rows as block boxes. */
+.ui-dialog-content .row {
+  display: block;
+}
+
+/* BS5's .row > * also forces width:100% on the (inline-block) labels,
+ * pushing the floated input to a second line. Label only — a .row > *
+ * selector would out-specify the 60px input width in master_page.css. */
+.ui-dialog-content .row > label {
+  width: auto;
+}
+
+/* ===================== Light-side (plot card) controls ===================== */
+
+.plotContainer .btn-default,
+.plotTools .btn,
+.infoPanel .btn {
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: transparent;
+  --bs-btn-color: var(--card-muted);
+  --bs-btn-hover-bg: #f0f1f3;
+  --bs-btn-hover-border-color: var(--card-border);
+  --bs-btn-hover-color: var(--card-ink);
+  --bs-btn-active-bg: #f0f1f3;
+  --bs-btn-active-border-color: var(--card-border);
+  --bs-btn-active-color: var(--card-ink);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: transparent;
+  --bs-btn-disabled-color: var(--card-muted);
+}
+
+.plotTools .btnWarn {
+  --bs-btn-color: var(--warn);
+  --bs-btn-hover-color: var(--warn);
+  --bs-btn-active-color: var(--warn);
+}
+
+/* the plot canvas owns the card's TOP corners (the toolbar sits below it);
+ * .plot has overflow:hidden so this clips the Plotly svg cleanly */
+.plotContainer .plot {
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+
+/* ===================== Waiting dialog ===================== */
+
+.waitingDialog {
+  padding-top: 15%;
+  overflow-y: visible;
+}
+
+.waitingDialog .modal-content {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-body);
+}
+
+.waitingDialog .waitingDialogClose {
+  /* modal-content is a flex column; float is ignored — use flex alignment */
+  align-self: flex-end;
+  margin: 6px 8px 0;
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+}
+
+.waitingDialog .waitingDialogClose:hover {
+  color: var(--text-primary);
+}
+
+.waitingDialog .modal-header {
+  border-bottom: none;
+  padding: 14px 16px 4px;
+}
+
+.waitingDialog .modal-header h3 {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.waitingDialog .progress {
+  margin-bottom: 0;
+  height: 8px;
+  background-color: var(--bg-raised);
+  border-radius: 4px;
+}
+
+.waitingDialog .progress-bar {
+  width: 100%;
+  background-color: var(--accent);
+}
+
+/* Bootstrap 3 contextual progress classes still used by showError()/setProgress() */
+.progress-bar-warning {
+  background-color: var(--warn) !important;
+}
+
+.progress-bar-success {
+  background-color: var(--success) !important;
+}
+
+/* ===================== Logger ===================== */
+
+#loggerContainer {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  z-index: 9999;
+}
+
+#loggerTab {
+  width: 44px;
+  box-sizing: border-box;
+  overflow: hidden;
+  font: 600 10px var(--font-ui);
+  letter-spacing: 1px;
+  color: var(--text-body);
+  position: absolute;
+  left: 20px;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: rgba(13, 14, 17, 0.95);
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  cursor: pointer;
+}
+
+#loggerTab:hover {
+  color: #ffffff;
+}
+
+#logger {
+  font: 11px var(--font-mono);
+  box-sizing: border-box;
+  color: var(--text-body);
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  bottom: 0;
+  margin: 0;
+  padding: 8px 10px;
+  background: rgba(13, 14, 17, 0.95);
+  border-top: 1px solid var(--border);
+}
+
+#logger .loggerTime {
+  color: var(--text-faint);
+  float: left;
+}
+
+#logger .loggerMsg {
+  word-wrap: break-word;
+  margin-left: 6em;
+}
+
+#logger .loggerRow {
+  width: 97%;
+}
+
+/* ===================== Settings tab ===================== */
+
+.TabPanel.Settings .settingsRow {
+  margin: 24px;
+}
+
+/* scoped: the blanket .btn padding rule in master_page.css loads later and
+ * would tie-and-win against a bare single-class selector */
+.TabPanel.Settings .btnClearCache {
+  padding-right: 10px;
+  padding-left: 10px;
+  margin-top: 14px;
+}

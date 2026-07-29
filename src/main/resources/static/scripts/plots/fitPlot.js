@@ -32,9 +32,8 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
       }
       return; //Comes from request abort call.
     }
-
     log("onPlotDataReceived passed data!, plot" + currentObj.id);
-    data = JSON.parse(data);
+    data = JSON.parse(JSON.stringify(data));
 
     if (!isNull(data)) {
       if (isNull(data.error)) {
@@ -105,7 +104,7 @@ function FitPlot(id, plotConfig, getModelsFn, getDataFromServerFn, getModelsData
     currentObj.currentModelsRequest = null;
 
     log("onModelsDataReceived passed data!, plot" + currentObj.id);
-    data = JSON.parse(data);
+    data = JSON.parse(JSON.stringify(data));
 
     if (data != null && currentObj.data != null) {
       if (isNull(currentObj.modelsData)) {

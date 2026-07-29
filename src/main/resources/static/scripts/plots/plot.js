@@ -37,13 +37,13 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
                   '</div>' +
                   '<div id="' + this.plotId + '" class="plot"></div>' +
                   '<div class="plotTools">' +
-                    '<button class="btn btn-default btnHidePlot" data-toggle="tooltip" title="Hide plot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnFullScreen" data-toggle="tooltip" title="Maximize/Minimize">' +
+                    '<button class="btn btn-default btnHidePlot" data-bs-toggle="tooltip" title="Hide plot"><i class="fa fa-eye-slash" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnFullScreen" data-bs-toggle="tooltip" title="Maximize/Minimize">' +
                       '<i class="fa ' + ((this.cssClass.indexOf("full") > -1) ? 'fa-compress' : 'fa-arrows-alt') + '" aria-hidden="true"></i>' +
                     '</button>' +
-                    '<button class="btn btn-default btnLoad" data-toggle="tooltip" title="Load external data"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnSave" data-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
-                    '<button class="btn btn-default btnStyle" data-toggle="tooltip" title="Plot style"><i class="fa fa-paint-brush" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnLoad" data-bs-toggle="tooltip" title="Load external data"><i class="fa fa-folder-open-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnSave" data-bs-toggle="tooltip" title="Save or Export"><i class="fa fa-floppy-o" aria-hidden="true"></i></button>' +
+                    '<button class="btn btn-default btnStyle" data-bs-toggle="tooltip" title="Plot style"><i class="fa fa-paint-brush" aria-hidden="true"></i></button>' +
                   '</div>' +
                   '<div class="hoverinfo"></div>' +
                 '</div>');
@@ -53,14 +53,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
  }
 
  if (!isNull(toolbar)) {
-   this.btnShow = $('<button class="btn btn-default btnShow" plotId="' + this.id + '" data-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
+   this.btnShow = $('<button class="btn btn-default btnShow" plotId="' + this.id + '" data-bs-toggle="tooltip" title="Show plot"><i class="fa fa-eye" aria-hidden="true"></i></button>');
    this.btnShow.click(function(event){
       if (currentObj.btnShow.hasClass("plotHidden")) {
         currentObj.show();
-        gaTracker.sendEvent("Plots", "Show", currentObj.getTitle());
       } else {
         currentObj.hide();
-        gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
       }
    });
    this.btnShow.html('<i class="fa fa-eye" aria-hidden="true"></i> ' + this.getTitle());
@@ -69,7 +67,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    this.btnHide = this.$html.find(".btnHidePlot");
    this.btnHide.click(function(event){
       currentObj.hide();
-      gaTracker.sendEvent("Plots", "Hide", currentObj.getTitle());
    });
  } else {
    this.$html.find(".btnHidePlot").remove();
@@ -124,19 +121,16 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       buttons: {
         'Save as PNG': function() {
            currentObj.saveAsPNG();
-           gaTracker.sendEvent("Plots", "saveAsPNG", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as PDF': function() {
           currentObj.saveAsPDF();
-          gaTracker.sendEvent("Plots", "saveAsPDF", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         },
         'Save as CSV': function() {
           currentObj.saveAsCSV();
-          gaTracker.sendEvent("Plots", "saveAsCSV", currentObj.getTitle());
            $(this).dialog('close');
            saveDialog.remove();
         }
@@ -152,7 +146,6 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
       buttons: {
         'Load CSV File': function() {
            currentObj.loadCSVFile();
-           gaTracker.sendEvent("Plots", "loadCSVFile", currentObj.getTitle());
            $(this).dialog('close');
            loadDialog.remove();
         },
@@ -169,17 +162,15 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
 
  this.btnStyle.click(function( event ) {
    currentObj.sendPlotEvent('on_style_click', {});
-   gaTracker.sendEvent("Plots", "styleClick", currentObj.getTitle());
  });
 
  if (switchable) {
    //If switchable adds Switch button to plot
-   this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
+   this.btnSwitch = $('<button class="btn btn-default btnSwitch" data-bs-toggle="tooltip" title="Switch axes"><i class="fa fa-retweet" aria-hidden="true"></i></button>');
    this.$html.find(".plotTools").append(this.btnSwitch);
    this.btnSwitch.click(function(event){
       currentObj.isSwitched = !currentObj.isSwitched;
       currentObj.refreshData();
-      gaTracker.sendEvent("Plots", "switchAxes", currentObj.getTitle());
    });
  }
 
@@ -275,11 +266,12 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
      }
      return; //Comes from request abort call.
    }
+   log(JSON.stringify(data))
 
    log("onPlotDataReceived passed data!, plot" + currentObj.id);
 
    currentObj.currentRequest = null;
-   data = JSON.parse(data);
+   data = JSON.parse(JSON.stringify(data));
 
    if (!isNull(data)) {
      if (isNull(data.error)) {
@@ -518,8 +510,14 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
        plotlyConfig.data.push(getCrossLine ([this.minX, this.minX], [this.minY, this.maxY]));
        plotlyConfig.data.push(getCrossLine ([this.minX, this.maxX], [this.minY, this.minY]));
 
-       //Creates the plot
-       Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       //Creates the plot with migration support
+       if (typeof plotlyNewPlot === 'function') {
+         // Use migration helper if available
+         plotlyNewPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       } else {
+         // Fallback to direct Plotly call
+         Plotly.newPlot(this.plotId, plotlyConfig.data, plotlyConfig.layout);
+       }
 
        this.plotElem = this.$html.find(".plot")[0];
 
@@ -568,7 +566,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
            height: $(currentObj.plotElem).height()
          };
 
-         Plotly.relayout(currentObj.plotId, size);
+         if (typeof safePlotlyCall === 'function') {
+           safePlotlyCall('relayout', currentObj.plotId, size);
+         } else {
+           Plotly.relayout(currentObj.plotId, size);
+         }
        }
      } catch (ex) {
        log("Resize plot " + currentObj.id + " error: " + ex);
@@ -878,12 +880,20 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
    var update = { x: [[x, x], [this.minX, this.maxX]],
                   y: [[this.minY, this.maxY], [y, y]],
                   visible: true };
-   Plotly.restyle(this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
+   if (typeof safePlotlyCall === 'function') {
+     safePlotlyCall('restyle', this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
+   } else {
+     Plotly.restyle(this.plotElem, update, [this.tracesCount, this.tracesCount + 1]);
+   }
   }
 
   this.hideCrosses = function (){
    // hide two crosshair traces
-   Plotly.restyle(this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
+   if (typeof safePlotlyCall === 'function') {
+     safePlotlyCall('restyle', this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
+   } else {
+     Plotly.restyle(this.plotElem, { visible: false }, [this.tracesCount, this.tracesCount + 1]);
+   }
   }
 
   this.showAddAnnotationDialog = function (x, y){
@@ -901,13 +911,11 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
         'Add label': function() {
            var labelText = $('#dialog_' + currentObj.id).find('input[name="labelText"]').val();
            currentObj.addAnnotation(labelText, x, y);
-           gaTracker.sendEvent("Plots", "addAnnotation", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Clear all': function() {
            currentObj.annotations = [];
            currentObj.redrawDiffered();
-           gaTracker.sendEvent("Plots", "clearAnnotations", currentObj.getTitle());
            $(this).dialog('close');
         },
         'Cancel': function() {
@@ -1212,7 +1220,7 @@ function Plot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlotRea
   this.getStyleJQElem = function () {
       var $style = $('<div class="plotStyle marginTop">' +
                       '<div class="floatingContainer">' +
-                        '<button class="btn button btnClear" data-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
+                        '<button class="btn button btnClear" data-bs-toggle="tooltip" title="Clear style"><i class="fa fa-eraser" aria-hidden="true"></i></button>' +
                       '</div>' +
                     '</div>');
 

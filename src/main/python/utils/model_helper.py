@@ -1,9 +1,9 @@
-import utils.dave_logger as logging
-from astropy.modeling.models import Const1D, Gaussian1D, Lorentz1D
-from astropy.modeling.powerlaws import PowerLaw1D, BrokenPowerLaw1D
-from stingray.modeling import ParameterEstimation, PSDLogLikelihood
 import scipy.stats
+from astropy.modeling.models import Const1D, Gaussian1D, Lorentz1D
+from astropy.modeling.powerlaws import BrokenPowerLaw1D, PowerLaw1D
+from stingray.modeling import ParameterEstimation, PSDLogLikelihood
 
+import utils.dave_logger as logging
 
 
 # get_astropy_model:
@@ -15,22 +15,24 @@ def get_astropy_model(model):
     astropy_model = None
 
     if model["type"] == "Const":
-         astropy_model = Const1D(model["amplitude"])
+        astropy_model = Const1D(model["amplitude"])
 
     elif model["type"] == "Gaussian":
-         astropy_model = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
+        astropy_model = Gaussian1D(model["amplitude"], model["mean"], model["stddev"])
 
     elif model["type"] == "Lorentz":
-         astropy_model = Lorentz1D(model["amplitude"], model["x_0"], model["fwhm"])
+        astropy_model = Lorentz1D(model["amplitude"], model["x_0"], model["fwhm"])
 
     elif model["type"] == "PowerLaw":
-         astropy_model = PowerLaw1D(model["amplitude"], model["x_0"], model["alpha"])
+        astropy_model = PowerLaw1D(model["amplitude"], model["x_0"], model["alpha"])
 
     elif model["type"] == "BrokenPowerLaw":
-         astropy_model = BrokenPowerLaw1D(model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"])
+        astropy_model = BrokenPowerLaw1D(
+            model["amplitude"], model["x_break"], model["alpha_1"], model["alpha_2"]
+        )
 
     if astropy_model:
-         astropy_model = fix_parameters_to_astropy_model(astropy_model, model)
+        astropy_model = fix_parameters_to_astropy_model(astropy_model, model)
 
     return astropy_model
 
@@ -59,9 +61,9 @@ def get_starting_params_from_model(model, params):
     for param in params:
         if "fixed" in model:
             if param not in model["fixed"]:
-                starting_pars.extend([model[param]]);
+                starting_pars.extend([model[param]])
         else:
-            starting_pars.extend([model[param]]);
+            starting_pars.extend([model[param]])
     return starting_pars
 
 
@@ -76,21 +78,29 @@ def get_astropy_model_from_dave_models(models):
     starting_pars = []
 
     for i in range(len(models)):
-
         model = models[i]
         model_obj = get_astropy_model(model)
         if model_obj:
-
             if model["type"] == "Const":
-                 starting_pars.extend(get_starting_params_from_model(model, ["amplitude"]))
+                starting_pars.extend(get_starting_params_from_model(model, ["amplitude"]))
             elif model["type"] == "Gaussian":
-                 starting_pars.extend(get_starting_params_from_model(model, ["amplitude", "mean", "stddev"]))
+                starting_pars.extend(
+                    get_starting_params_from_model(model, ["amplitude", "mean", "stddev"])
+                )
             elif model["type"] == "Lorentz":
-                 starting_pars.extend(get_starting_params_from_model(model, ["amplitude", "x_0", "fwhm"]))
+                starting_pars.extend(
+                    get_starting_params_from_model(model, ["amplitude", "x_0", "fwhm"])
+                )
             elif model["type"] == "PowerLaw":
-                 starting_pars.extend(get_starting_params_from_model(model, ["amplitude", "x_0", "alpha"]))
+                starting_pars.extend(
+                    get_starting_params_from_model(model, ["amplitude", "x_0", "alpha"])
+                )
             elif model["type"] == "BrokenPowerLaw":
-                 starting_pars.extend(get_starting_params_from_model(model, ["amplitude", "x_break", "alpha_1", "alpha_2"]))
+                starting_pars.extend(
+                    get_starting_params_from_model(
+                        model, ["amplitude", "x_break", "alpha_1", "alpha_2"]
+                    )
+                )
 
             if not fit_model:
                 fit_model = model_obj
@@ -109,7 +119,7 @@ def get_astropy_model_from_dave_models(models):
 # @param: mean: initial guess for mean parameter of the Gaussian
 # @param: stddev: initial guess for stddev parameter of the Gaussian
 #
-def fit_data_with_gaussian(x_values, y_values, amplitude=1., mean=0, stddev=1.):
+def fit_data_with_gaussian(x_values, y_values, amplitude=1.0, mean=0, stddev=1.0):
     g_init = Gaussian1D(amplitude, mean, stddev)
     lpost = PSDLogLikelihood(x_values, y_values, g_init)
     parest = ParameterEstimation()
@@ -133,8 +143,7 @@ def get_astropy_priors(dave_priors):
     for i in range(num_models):
         model_params = dave_priors[i]
 
-        for paramName in model_params.keys():
-
+        for paramName in model_params:
             if num_models > 1:
                 prior_key = str(paramName) + "_" + str(i)
             else:
@@ -145,26 +154,53 @@ def get_astropy_priors(dave_priors):
             if "type" in model_param:
                 if model_param["type"] == "uniform":
                     if ("min" in model_param) and ("max" in model_param):
-                        priors[prior_key] = lambda value, min=float(model_param["min"]), max=float(model_param["max"]): ((min <= value) & (value <= max))
+                        priors[prior_key] = lambda value, min=float(model_param["min"]), max=float(
+                            model_param["max"]
+                        ): ((min <= value) & (value <= max))
                     else:
-                        logging.warn("get_astropy_priors: Wrong uniform prior parameters, prior_key: " + prior_key)
+                        logging.warn(
+                            "get_astropy_priors: Wrong uniform prior parameters, prior_key: "
+                            + prior_key
+                        )
 
                 elif model_param["type"] == "normal":
                     if ("mean" in model_param) and ("sigma" in model_param):
-                        priors[prior_key] = lambda value, mean=float(model_param["mean"]), sigma=float(model_param["sigma"]): scipy.stats.norm(mean, sigma).pdf(value)
+                        priors[prior_key] = lambda value, mean=float(
+                            model_param["mean"]
+                        ), sigma=float(model_param["sigma"]): scipy.stats.norm(mean, sigma).pdf(
+                            value
+                        )
                     else:
-                        logging.warn("get_astropy_priors: Wrong normal prior parameters, prior_key: " + prior_key)
+                        logging.warn(
+                            "get_astropy_priors: Wrong normal prior parameters, prior_key: "
+                            + prior_key
+                        )
 
                 elif model_param["type"] == "lognormal":
                     if ("mean" in model_param) and ("sigma" in model_param):
-                        priors[prior_key] = lambda value, mean=float(model_param["mean"]), sigma=float(model_param["sigma"]): scipy.stats.lognorm(mean, sigma).pdf(value)
+                        priors[prior_key] = lambda value, mean=float(
+                            model_param["mean"]
+                        ), sigma=float(model_param["sigma"]): scipy.stats.lognorm(mean, sigma).pdf(
+                            value
+                        )
                     else:
-                        logging.warn("get_astropy_priors: Wrong lognormal prior parameters, prior_key: " + prior_key)
+                        logging.warn(
+                            "get_astropy_priors: Wrong lognormal prior parameters, prior_key: "
+                            + prior_key
+                        )
 
                 else:
-                    logging.warn("get_astropy_priors: Unknown prior 'type', prior_key: " + prior_key + ", type: " + model_param["type"])
+                    logging.warn(
+                        "get_astropy_priors: Unknown prior 'type', prior_key: "
+                        + prior_key
+                        + ", type: "
+                        + model_param["type"]
+                    )
             else:
-                logging.warn("get_astropy_priors: can't find 'type' key on dave_priors, prior_key: " + prior_key)
+                logging.warn(
+                    "get_astropy_priors: can't find 'type' key on dave_priors, prior_key: "
+                    + prior_key
+                )
 
     return priors
 
@@ -179,10 +215,10 @@ def get_astropy_priors(dave_priors):
 # @param: stddev: initial guess for stddev parameter of the Gaussian
 #
 def fit_data_with_lorentz_and_const(x_values, y_values):
-    amplitude=5.
-    x_0=1
-    fwhm=0.5
-    const=5.
+    amplitude = 5.0
+    x_0 = 1
+    fwhm = 0.5
+    const = 5.0
     g_init = Lorentz1D(amplitude, x_0, fwhm)
     g_init += Const1D(const)
     lpost = PSDLogLikelihood(x_values, y_values, g_init)

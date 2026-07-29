@@ -1,0 +1,25 @@
+{
+  "name": "dave",
+  "description": "Data Analysis for Variable Events",
+  "author": "Timelab Technologies Ltd.",
+  "version": "2.0.0-electron12",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/StingraySoftware/dave",
+  "main": "main.js",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build-linux": "electron-packager . DAVEApp --platform=linux --arch=x64 --prune=true --icon ../../resources/static/img/icon/512x512.png --overwrite --out ../../../../build",
+    "build-darwin": "electron-packager . DAVEApp --platform=darwin --arch=x64 --prune=true --icon ../../resources/static/img/icon.icns --overwrite --out ../../../../build"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "electron-log": "^4.4.8"
+  },
+  "devDependencies": {
+    "electron": "^12.2.3",
+    "@electron/remote": "^1.2.1"
+  }
+}

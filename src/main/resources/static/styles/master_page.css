@@ -1,63 +1,74 @@
+/* NOTE: this stylesheet depends on the design tokens defined in dave.css,
+   which master_page.html links immediately before it. Any page using these
+   rules must link dave.css first. */
 
 @font-face {
   font-family: Archangelsk;
   src: url("../fonts/Archangelsk.ttf");
 }
 
-html,body,.container {
+html, body {
   height: 100%;
   width: 100%;
   margin: 0;
 }
 
+/* The app shell fills the viewport below the 44px navbar. Scoped to
+ * .daveContainer so the navbar's own .container keeps normal sizing. */
+.daveContainer.container {
+  height: calc(100% - var(--navbar-h));
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-app);
+}
+
 body {
-  min-width: 1090px;
+  min-width: 1000px;
 }
 
 h2 {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 h3 {
-  font-size: 1.2em;
+  font-size: 12.5px;
 }
 
 .navbar-static-top {
-  font-family: Arial;
-  background-color: #222;
+  font-family: var(--font-ui);
+  background-color: var(--bg-navbar);
   margin-bottom: 0px;
 }
 
 .navbar .navbar-brand {
   font-family: Archangelsk;
-  width: 90px;
-  color: #FE3200;
-  font-size: 24px;
+  color: var(--brand);
+  font-size: 20px;
+  letter-spacing: 1px;
+  padding: 0 12px 0 4px;
+}
+
+/* macOS Electron (titleBarStyle: hiddenInset) overlays the traffic-light window
+   controls on the top-left; inset the brand so the DAVE logo clears them.
+   Scoped to .electron-mac so the browser, Windows and Linux are unaffected. */
+.electron-mac .navbar .navbar-brand {
+  margin-left: 80px;
 }
 
 .side-nav {
-  font-family: Arial;
-  font-size: 0.92em;
-  width: 90px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  width: 100%;
 }
 
 .side-nav a {
-  color: #9d9d9d;
-}
-
-.side-nav li.active {
-  background-color: #000;
-}
-
-#navbar .navbar-left {
-  width: 85%;
+  color: var(--text-muted);
 }
 
 ul#right-navbar {
     margin-right: 0px;
-}
-ul#right-navbar li {
-    width: 28px;
 }
 
 .closeTabPanel {
@@ -67,7 +78,7 @@ ul#right-navbar li {
 }
 
 .closeIcon {
-  opacity: 0.1;
+  opacity: 0.3;
   cursor: pointer;
 }
 
@@ -102,6 +113,20 @@ ul#right-navbar li {
   height: 100%;
 }
 
+/* Bootstrap 5 makes .row display:flex, which collapses DAVE's legacy
+   float-based, full-height tab layout (the .container:before height hack plus
+   float:left;height:100% panels). Keep the tab-panel row as a block box so the
+   float layout continues to work. Scoped to .TabPanel so the Bootstrap grid
+   still applies elsewhere (e.g. the settings two-column .row). */
+.daveContainer .TabPanel.row
+{
+  display: block;
+  margin: 0;
+  /* Bootstrap 5 row gutters pad .row > * children; the full-bleed app shell
+   * must reach the window edges. */
+  --bs-gutter-x: 0;
+}
+
 .wfSelectorContainer, .toolPanelContainer, .outputPanelContainer, .height_100
 {
   float: left;
@@ -109,7 +134,7 @@ ul#right-navbar li {
   height: 100%;
   max-height: 100% !important;
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .wfSelectorContainer
@@ -119,30 +144,41 @@ ul#right-navbar li {
 
 .toolPanelContainer
 {
-  padding-top: 14px;
-  background-color: rgb(47, 47, 47);
-  color: #9d9d9d;
+  padding: 14px 12px;
+  background-color: var(--bg-panel);
+  color: var(--text-body);
 }
 
 .toolPanelContainer input[type="text"] {
-  background-color: #4a4a4a;
-  border: 1px solid #222;
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-primary);
+  height: 24px;
+  padding: 0 6px;
+  font-variant-numeric: tabular-nums;
   margin-left: 8px;
+}
+
+.toolPanelContainer input[type="text"]:disabled {
+  opacity: 0.5;
 }
 
 .outputPanelContainer
 {
   margin: 0;
-  padding: 0;
-  padding-left: 15px;
-  padding-bottom: 60px;
-  background-color: #ffffff;
-  min-width: 720px;
+  padding: 12px 14px 60px;
+  background-color: var(--canvas);
+  /* rail (90px) + tool panel (col-3 = 25%) + this = exactly 100%;
+   * the old col-8 (66.7%) left a dead strip on the right. */
+  width: calc(75% - 90px);
+  min-width: 0;
+  scrollbar-gutter: stable;
 }
 
 .daveContainer .columnDivider
 {
-  border-right: 1px solid black;
+  border-right: 1px solid var(--border-subtle);
 }
 
 .infoPanel
@@ -150,13 +186,17 @@ ul#right-navbar li {
   float:left;
   width: 98%;
   height: 305px;
-  border: 1px solid #afafaf;
+  background-color: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  color: var(--card-ink);
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
   padding: 12px;
   padding-top: 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .infoPanel .property {
@@ -172,12 +212,12 @@ ul#right-navbar li {
 
 .infoPanel .posteriorTable {
   width: 80%;
-  border: 1px solid lightgrey;
+  border: 1px solid var(--card-border);
 }
 
 .posteriorTable td {
   padding: 6px;
-  border: 1px solid lightgrey;
+  border: 1px solid var(--card-border);
 }
 
 .infoPanel img {
@@ -200,7 +240,7 @@ ul#right-navbar li {
 
 .property .comment {
   width: 48%;
-  color: #999999;
+  color: var(--card-muted);
   vertical-align: top;
 }
 
@@ -209,7 +249,10 @@ ul#right-navbar li {
   position: relative;
   float:left;
   width: 48%;
-  border: 1px solid #afafaf;
+  background-color: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   margin: 0;
   margin-top: 12px;
   margin-right: 12px;
@@ -218,17 +261,18 @@ ul#right-navbar li {
 
 .plotSelected, .plotSelected.plotHover
 {
-  border: 1px solid #ff0000 !important;
+  border: 1px solid var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent), 0 1px 8px rgba(255, 72, 40, 0.18);
 }
 
 .btnSelect.plotSelected {
-    background-color: rgba(253, 0, 0, 0.08) !important;
-    color: #8a4f01 !important;
+    background-color: var(--accent-tint) !important;
+    color: var(--accent) !important;
 }
 
 .plotHover
 {
-  border: 1px solid #222222 !important;
+  border: 1px solid var(--card-border-hover) !important;
 }
 
 .plotContainer .plot{
@@ -237,8 +281,8 @@ ul#right-navbar li {
 }
 
 .plot .modebar {
-    background: rgba(255, 255, 255, 1.0) !important;
-    border: lightgrey 1px solid !important;
+    background: transparent !important;
+    border: none !important;
     padding: 4px !important;
 }
 
@@ -248,7 +292,8 @@ ul#right-navbar li {
   margin-right: 6px;
   margin-top: 0px;
   float: left;
-  font-size: 0.7em;
+  font-size: 10.5px;
+  color: var(--card-muted);
   max-width: 55%;
   max-height: 24px;
   overflow: hidden;
@@ -286,7 +331,8 @@ ul#right-navbar li {
   top: 0;
   left: 0;
   z-index: 10;
-  background-color: rgba(255, 255, 255, 0.71);
+  border-radius: var(--radius-card);
+  background-color: rgba(255, 255, 255, 0.75);
 }
 
 .loadingGif {
@@ -338,8 +384,8 @@ ul#right-navbar li {
 }
 
 .sliderSelector .ui-slider-horizontal {
-  background-color: #6a6a6a;
-  border: 1px solid #222;
+  background-color: var(--border);
+  border: none;
 }
 
 .sliderSelector .selectorFrom, .sliderSelector .selectorTo {
@@ -353,7 +399,7 @@ ul#right-navbar li {
 }
 
 .sliderSelector input::-webkit-input-placeholder {
-  color: #6e6e6e;
+  color: var(--text-faint);
 }
 
 .sliderSelector .selectorSlider {
@@ -370,15 +416,14 @@ ul#right-navbar li {
   margin-top: 8px;
   padding-left: 12px;
   padding-right: 12px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
 }
 
 .btn {
   margin-right: 2px;
   margin-bottom: 2px;
-  padding: 4px;
-  padding-top: 1px;
-  padding-bottom: 1px;
+  padding: 3px 8px;
 }
 
 .btnWarn {
@@ -407,8 +452,14 @@ ul#right-navbar li {
 }
 
 .fileSelector .fileName {
-  margin-right: 10px;
-  color: #ececec;
+  display: block;
+  margin: 4px 0 8px;
+  padding: 3px 8px;
+  background-color: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-primary);
+  word-break: break-all;
 }
 
 .fileSelector .btnChange {
@@ -416,26 +467,28 @@ ul#right-navbar li {
 }
 
 .InfoText {
-  color: #2e6da4;
+  color: var(--info);
   font-size: 0.85em;
 }
 
 .btnRefreshFloating {
   position: fixed;
   right: 16px;
-  top: 60px;
+  top: 56px;
   z-index: 1020;
-  width: 120px;
-  height: 40px;
-  font-size: 1.4em;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 .Section h3 {
   cursor: pointer;
 }
 
-.HlSection>h3 {
-  color: #ff7d1b;
+/* must out-specify the .toolPanelContainer .Section > h3 label rule in dave.css */
+.toolPanelContainer .HlSection > h3 {
+  color: var(--accent-hover);
 }
 
 .Section>.sectionContainer, .plotFilenames {
@@ -455,7 +508,7 @@ ul#right-navbar li {
 .analyzePanel .sectionContainer .btn, .dialogContainer .btn {
   display: block;
   background: none;
-  color: #d4a34a;
+  color: var(--text-body);
   border: none;
   box-shadow: none;
   text-shadow: none;
@@ -469,15 +522,15 @@ ul#right-navbar li {
 }
 
 .analyzePanel .sectionContainer .btn:hover, .dialogContainer .btn:hover, .BulkAnalisysSection:hover {
-  color: #ffcf78 !important;
+  color: var(--accent-hover) !important;
 }
 
 .analyzePanel .sectionContainer .btn.plotHidden, .toolPanelContainer .Section.Disabled h3, .plotFilenames .btn.plotHidden {
-  color: gray;
+  color: var(--text-faint);
 }
 
 .analyzePanel .sectionContainer .btn.ExtraButton {
-  color: #d47d47;
+  color: var(--text-muted);
 }
 
 .analyzePanel .sectionContainer .btn.ExtraButton.periodogramBtn {
@@ -525,7 +578,7 @@ ul#right-navbar li {
 }
 
 .paramContainer .fixed {
-  color: #121212;
+  color: var(--text-faint);
 }
 
 .paramContainer .estimation, .paramContainer .error {
@@ -677,14 +730,15 @@ input.wrongValue {
 
 .TabPanel.Settings h2
 {
-  color: rgb(245, 243, 243);
-  font-size: 1.5em;
+  color: var(--text-primary);
+  font-size: 16px;
   margin-top: 0px;
 }
 
 .TabPanel.Settings h3
 {
-  color: #e68f4d;
+  color: var(--text-primary);
+  font-weight: 600;
   clear: both;
   margin-top: 0px;
 }
@@ -715,10 +769,6 @@ input.wrongValue {
     font-size: 1.1em;
 }
 
-.BayesianParEst .Section h3 {
-    font-size: 18px;
-}
-
 .BayesianParEst div {
     margin-left: 12px;
 }
@@ -737,23 +787,23 @@ input.wrongValue {
 
 .rangeBoxSpan {
   font-size:0.8em;
-  color:#777777;
+  color: var(--text-muted);
 }
 
 .LogDebug, .LogServerDebug {
-  color: #AAAAAA;
+  color: var(--text-muted);
 }
 
 .LogInfo, .LogServerInfo {
-  color: #007fff;
+  color: var(--info);
 }
 
 .LogWarn, .LogServerWarn, .Orange {
-  color: #ff7d1b;
+  color: var(--warn);
 }
 
 .LogError, .LogServerError {
-  color: #FF0000;
+  color: var(--danger);
 }
 
 .settingsContainer {
@@ -761,7 +811,7 @@ input.wrongValue {
 }
 
 .serverLogLevel h3, .defaultChannelColumn h3 {
-  color: #9d9d9d !important;
+  color: var(--text-muted) !important;
 }
 
 .smallTextStyle h3 {

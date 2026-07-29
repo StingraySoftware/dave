@@ -1,11 +1,11 @@
-import utils.dave_logger as logging
-import utils.file_utils as FileUtils
-import utils.dave_reader as DaveReader
-import utils.filters_helper as FltHelper
-import utils.exception_helper as ExHelper
-from hendrics.lcurve import main as MPlcurve
-from hendrics.fspec import main as MPfspec
 from hendrics.io import HEN_FILE_EXTENSION
+from hendrics.lcurve import main as MPlcurve
+
+import utils.dave_logger as logging
+import utils.dave_reader as DaveReader
+import utils.exception_helper as ExHelper
+import utils.file_utils as FileUtils
+import utils.filters_helper as FltHelper
 from config import CONFIG
 
 
@@ -20,10 +20,11 @@ def get_intermediate_file(filepath, target):
             filename = FileUtils.get_intermediate_filename(target, filepath, HEN_FILE_EXTENSION)
             if DaveReader.save_to_intermediate_file(stingray_object, filename):
                 return filename
-    except:
-        logging.error(ExHelper.getException('get_intermediate_file'))
+    except Exception:
+        logging.error(ExHelper.getException("get_intermediate_file"))
 
     return None
+
 
 # bulk_analisys: Executes the bulk analisys over the files
 #
@@ -32,14 +33,12 @@ def get_intermediate_file(filepath, target):
 #
 def bulk_analisys(filenames, plot_configs, outdir):
     try:
-
-        results = dict()
+        results = {}
         results["outdir"] = outdir
         results["plot_configs"] = []
 
         # For each plot config do a bulk analisys
         for plot_config in plot_configs:
-
             plot_config_outdir = "/".join([outdir, plot_config["id"]])
 
             dt = plot_config["dt"]
@@ -48,15 +47,14 @@ def bulk_analisys(filenames, plot_configs, outdir):
 
             if "class" in plot_config:
                 if plot_config["class"] == "LcPlot":
+                    args = ["--outdir", plot_config_outdir]
+                    args.extend(["--bintime", str(dt)])
 
-                    args = ['--outdir', plot_config_outdir]
-                    args.extend(['--bintime', str(dt)])
-
-                    args = add_filter_to_args(args, filters, CONFIG.TIME_COLUMN, '--safe-interval')
-                    args = add_filter_to_args(args, filters, "PI", '--pi-interval')
-                    args = add_filter_to_args(args, filters, "E", '--e-interval')
-                    #args = add_filter_to_args(args, filters, "PHA", '--pha-interval')
-                    #args = add_filter_to_args(args, filters, "RATE", '--rate-interval')
+                    args = add_filter_to_args(args, filters, CONFIG.TIME_COLUMN, "--safe-interval")
+                    args = add_filter_to_args(args, filters, "PI", "--pi-interval")
+                    args = add_filter_to_args(args, filters, "E", "--e-interval")
+                    # args = add_filter_to_args(args, filters, "PHA", '--pha-interval')
+                    # args = add_filter_to_args(args, filters, "RATE", '--rate-interval')
 
                     args.extend(filenames)
 
@@ -64,14 +62,14 @@ def bulk_analisys(filenames, plot_configs, outdir):
 
                     MPlcurve(args)
 
-                    push_plotconfig_results(results["plot_configs"], plot_config["id"], plot_config_outdir)
-
+                    push_plotconfig_results(
+                        results["plot_configs"], plot_config["id"], plot_config_outdir
+                    )
 
                 elif plot_config["class"] == "PDSPlot":
-
                     logging.error("PDSPlot not supported yet, still work in progress!!")
 
-                    ''' TO MANY QUESTIONS OPENED FOR IMPLEMENT PDS ON BULK ANALYSIS
+                    """ TO MANY QUESTIONS OPENED FOR IMPLEMENT PDS ON BULK ANALYSIS
                     args = ['--outdir', plot_config_outdir]
 
                     args.extend(['--kind', "PDS"])
@@ -88,7 +86,7 @@ def bulk_analisys(filenames, plot_configs, outdir):
                     MPfspec(args)
 
                     push_plotconfig_results(results["plot_configs"], plot_config["id"], plot_config_outdir)
-                    '''
+                    """
 
                 else:
                     logging.error("PlotConfig.class not supported!!")
@@ -97,18 +95,19 @@ def bulk_analisys(filenames, plot_configs, outdir):
 
         return results
 
-    except:
-        logging.error(ExHelper.getException('bulk_analisys'))
+    except Exception:
+        logging.error(ExHelper.getException("bulk_analisys"))
         return None
 
 
-def push_plotconfig_results (plot_configs, plot_id, outdir):
-    plot_config_results = dict()
+def push_plotconfig_results(plot_configs, plot_id, outdir):
+    plot_config_results = {}
     plot_config_results["plotId"] = plot_id
     plot_config_results["filenames"] = FileUtils.get_files_in_dir(outdir)
     plot_configs.extend([plot_config_results])
 
-def add_filter_to_args (args, filters, column, arg_param):
+
+def add_filter_to_args(args, filters, column, arg_param):
     the_filter = FltHelper.get_named_filter(filters, column)
     if the_filter:
         args.extend([arg_param, str(the_filter["from"]), str(the_filter["to"])])

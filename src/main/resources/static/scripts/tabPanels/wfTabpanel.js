@@ -241,7 +241,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onSrcSchemaChanged = function ( schema, params ) {
-    log("onSrcSchemaChanged:" + schema);
+    log("onSrcSchemaChanged: " + JSON.stringify(schema).substring(0, 100) + "...");
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("SRC", schema, params);
     } else {
@@ -251,7 +251,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onBckSchemaChanged = function ( schema, params ) {
-    log("onBckDatasetChanged:" + schema);
+    log("onBckDatasetChanged: " + JSON.stringify(schema).substring(0, 100) + "...");
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("BCK", schema, params);
     } else {
@@ -261,7 +261,7 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
   }
 
   this.onGtiSchemaChanged = function ( schema, params ) {
-    log("onGtiSchemaChanged:" + schema);
+    log("onGtiSchemaChanged: " + JSON.stringify(schema).substring(0, 100) + "...");
     if (!isNull(schema)){
       currentObj.onSchemaChangedWithKey("GTI", schema, params);
     } else {
@@ -333,7 +333,8 @@ function WfTabPanel (id, classSelector, navItemClass, service, navBarList, panel
       currentObj.projectConfig.setFiles(selectorKey, params.filenames, params.filename);
     }
 
-    var schema = JSON.parse(jsonSchema);
+    // Handle both string and object inputs (for backward compatibility)
+    var schema = (typeof jsonSchema === 'string') ? JSON.parse(jsonSchema) : jsonSchema;
     if (!isNull(schema) && isNull(schema.error)){
 
       currentObj.projectConfig.updateFile(selectorKey);

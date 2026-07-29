@@ -7,7 +7,6 @@ $(document).ready(function () {
   Logger.setMaxRows(CONFIG.MAX_LOGGER_ROWS);
   Logger.show();
   logInfo("App started!! ->" + CONFIG.DOMAIN_URL);
-  gaTracker.sendPage("MasterPage");
 
   window.onerror = function (errorMsg, url, lineNumber) {
       return uncaugthError(errorMsg + ", line: " + lineNumber);
@@ -22,23 +21,19 @@ $(document).ready(function () {
 
   $("#navbar").find(".addTabPanel").click(function () {
     addWfTabPanel($("#navbar").find("ul").first(), $(".daveContainer"));
-    gaTracker.sendEvent("MasterPage", "addTabPanel", "");
   });
 
   var rightNavbar = $("#right-navbar");
   rightNavbar.find(".loadWorkSpace").click(function () {
     onLoadWorkSpaceClicked();
-    gaTracker.sendEvent("MasterPage", "loadWorkSpace", "");
   });
 
   rightNavbar.find(".saveWorkSpace").click(function () {
     onSaveWorkSpaceClicked();
-    gaTracker.sendEvent("MasterPage", "saveWorkSpace", "");
   });
 
   rightNavbar.find(".showSettingsTab").click(function () {
     onSettingsClicked();
-    gaTracker.sendEvent("MasterPage", "showSettings", "");
   });
 
   $("#navbar").find(".addTabPanel").click();
@@ -239,7 +234,6 @@ function logError(errorMsg) {
         log(msg, "LogServerWarn");
       } else  {
         log(msg, "LogServerError");
-        gaTracker.sendEvent("Logger", "LogError", msg);
       }
     }
   }
@@ -284,7 +278,6 @@ function onServerMessageReceived (msg) {
     cssClass = "LogServerWarn";
   } else if (msgLower.startsWith("error:")){
     cssClass = "LogServerError";
-    gaTracker.sendEvent("Logger", "LogError", msg);
   }
   log("SERVER -> " + msg, cssClass);
 }

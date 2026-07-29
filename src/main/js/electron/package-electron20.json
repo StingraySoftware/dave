@@ -1,0 +1,63 @@
+{
+  "name": "dave",
+  "description": "Data Analysis for Variable Events",
+  "author": "Timelab Technologies Ltd.",
+  "version": "2.0.0-electron20",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/StingraySoftware/dave",
+  "main": "main.js",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build-linux": "electron-builder --linux",
+    "build-darwin": "electron-builder --mac",
+    "build-win": "electron-builder --win"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "electron-log": "^4.4.8",
+    "electron-updater": "^5.3.0"
+  },
+  "devDependencies": {
+    "electron": "^20.3.12",
+    "electron-builder": "^23.6.0"
+  },
+  "build": {
+    "appId": "com.stingray.dave",
+    "productName": "DAVE",
+    "directories": {
+      "output": "../../../../build"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "../../resources/static/img/icon/512x512.png",
+      "category": "Science"
+    },
+    "mac": {
+      "icon": "../../resources/static/img/icon.icns",
+      "category": "public.app-category.education"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "../../resources/static/img/icon.ico"
+    }
+  }
+}

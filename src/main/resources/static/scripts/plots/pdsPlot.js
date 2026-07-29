@@ -31,11 +31,10 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
   //If plot is pds adds Fits button to plot
   if (!isNull(plotConfig.styles.showFitBtn) && plotConfig.styles.showFitBtn){
-    this.btnFit = $('<button class="btn btn-default btnFit" data-toggle="tooltip" title="Fit plot"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
+    this.btnFit = $('<button class="btn btn-default btnFit" data-bs-toggle="tooltip" title="Fit plot"><i class="fa fa-line-chart" aria-hidden="true"></i></button>');
     this.$html.find(".plotTools").append(this.btnFit);
     this.btnFit.click(function(event){
       onFitPlotClicked(currentObj);
-      gaTracker.sendEvent("Plots", "FitPlotClicked", currentObj.getTitle());
     });
   }
 
@@ -379,8 +378,8 @@ function PDSPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
     plotlyConfig = this.prepareAxis(plotlyConfig);
 
     if (this.plotConfig.plotType == "X*Y") {
-      plotlyConfig.layout.yaxis.titlefont = $.extend(true, {}, plotlyConfig.layout.yaxis.titlefont); //Avoid change text size of all plots
-      plotlyConfig.layout.yaxis.titlefont.size *= 0.75;
+      plotlyConfig.layout.yaxis.title = $.extend(true, {}, plotlyConfig.layout.yaxis.title); //Avoid change text size of all plots
+      plotlyConfig.layout.yaxis.title.font.size *= 0.75;
     }
 
     return plotlyConfig;

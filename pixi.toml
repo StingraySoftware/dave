@@ -1,0 +1,121 @@
+[workspace]
+
+authors = ["kartikmandar <kartik4321mandar@gmail.com>"]
+channels = ["conda-forge"]
+name = "dave"
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+version = "2.0.0"
+
+[tasks]
+# Development tasks
+test = "python -m pytest tests/python/test -v"
+test-coverage = "python -m pytest tests/python/test --cov=src/main/python --cov-report=term-missing"
+server = "cd src/main/python && python server.py . . 5001"
+electron = "cd src/main/js/electron && npm start"
+
+# Frontend migration tasks
+electron-5 = "cd src/main/js/electron && cp package-electron5.json package.json && npm install && cp main-electron5.js main.js && npm start"
+electron-12 = "cd src/main/js/electron && cp package-electron12.json package.json && npm install && cp main-electron12.js main.js && cp preload-electron12.js preload.js && npm start"
+electron-20 = "cd src/main/js/electron && cp package-electron20.json package.json && npm install && cp main-electron20.js main.js && cp preload-electron20.js preload.js && npm start"
+electron-36 = "cd src/main/js/electron && npm install && npm start"
+
+# Build tasks (Electron Builder)
+build = "python build.py"
+build-linux = "python build.py --platform linux"
+build-macos = "python build.py --platform macos"
+build-windows = "python build.py --platform windows"
+
+# Legacy workflow compatibility commands
+dist = "python build.py --legacy"
+dist-linux = "python build.py --platform linux --legacy"
+dist-mac = "python build.py --platform macos --legacy"
+dist-win = "python build.py --platform windows --legacy"
+build-all = "python build.py --platform linux && python build.py --platform macos && python build.py --platform windows"
+build-clean = "python build.py --clean"
+
+# Build tasks (Electron Forge)
+build-forge = "python build.py --forge"
+build-forge-linux = "python build.py --platform linux --forge"
+build-forge-macos = "python build.py --platform macos --forge"
+build-forge-windows = "python build.py --platform windows --forge"
+
+# Development build (quick, no tests)
+build-dev = "python build.py --no-tests"
+build-forge-dev = "python build.py --forge --no-tests"
+
+# Distribution tasks (Electron Builder) - removed duplicates, see legacy compatibility commands above
+
+# Electron Forge tasks
+forge-start = "cd src/main/js/electron && npm run forge:start"
+forge-package = "cd src/main/js/electron && npm run forge:package"
+forge-make = "cd src/main/js/electron && npm run forge:make"
+forge-make-linux = "cd src/main/js/electron && npm run forge:make-linux"
+forge-make-mac = "cd src/main/js/electron && npm run forge:make-mac"
+forge-make-win = "cd src/main/js/electron && npm run forge:make-win"
+forge-publish = "cd src/main/js/electron && npm run forge:publish"
+
+# E2E testing
+test-e2e = "cd tests && npm test"
+test-e2e-install = "cd tests && npm install && npx playwright install"
+
+# Development mode with auto-reload
+dev = { cmd = "python -m watchdog.auto_restart --pattern='*.py' --recursive src/main/python -- python src/main/python/server.py", env = { FLASK_DEBUG = "1" } }
+
+# Frontend bundling tasks
+build-frontend = "python scripts/build-frontend.py"
+build-frontend-legacy = "python scripts/build-frontend.py --legacy"
+frontend-dev = "npm run dev"
+frontend-install = "npm install"
+frontend-clean = "rm -rf src/main/resources/static/dist"
+
+# Utility tasks
+install-node-deps = "cd src/main/js/electron && npm install"
+install-electron5 = "cd src/main/js/electron && cp package-electron5.json package.json && npm install"
+clean = "find . -type d -name '__pycache__' -exec rm -rf {} + || true"
+
+# Linting and formatting
+lint = "ruff check src/main/python tests/python"
+lint-fix = "ruff check --fix src/main/python tests/python"
+format = "ruff format src/main/python tests/python"
+format-check = "ruff format --check src/main/python tests/python"
+
+[dependencies]
+python = "3.13.*"
+flask = ">=3.1.1,<4"
+numpy = ">=2.2.6,<3"
+astropy = ">=7.0.2,<8"
+numba = ">=0.61.2,<0.66"
+pytest = ">=8.3.5,<9"
+gevent = ">=25.5.1,<27"
+scipy = ">=1.15.2,<2"
+matplotlib = ">=3.10.3,<4"
+ruff = ">=0.9.4,<1"
+pylru = ">=1.2.1,<2"
+netcdf4 = ">=1.7.1,<2"
+pytest-cov = ">=6.2.1,<7"
+
+[pypi-dependencies]
+stingray = ">=2.2.7, <3"
+hendrics = ">=8.1, <9"
+hypothesis = ">=6.131.28, <7"
+pillow = "*"
+watchdog = ">=6.0.0, <7"
+flask-cors = ">=6.0.0, <7"
+flask-session = ">=0.8.0, <0.9"
+python-magic = ">=0.4.27, <0.5"
+pylru = ">=1.2.1, <2"
+memory-profiler = ">=0.61.0, <1"
+psutil = ">=7.0.0, <8"
+
+# Platform-specific dependencies
+[target.linux-64.dependencies]
+libmagic = "*"
+
+[target.osx-64.dependencies]
+libmagic = "*"
+
+[target.osx-arm64.dependencies]
+libmagic = "*"
+
+[target.win-64.pypi-dependencies]
+python-magic-bin = ">=0.4.14, <0.5"

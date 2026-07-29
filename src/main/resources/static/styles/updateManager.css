@@ -1,0 +1,175 @@
+/**
+ * Update Manager styles for DAVE
+ */
+
+/* Update indicator in navbar */
+#update-indicator {
+  position: relative;
+}
+
+#update-indicator .update-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #d9534f;
+  color: #fff;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* Update dropdown */
+.update-dropdown {
+  width: 300px;
+  padding: 0;
+}
+
+.update-dropdown .update-status {
+  padding: 15px;
+}
+
+.update-dropdown .update-info h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.update-dropdown .status-text {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.update-dropdown .update-progress {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  height: 20px;
+}
+
+.update-dropdown .update-progress .progress-bar {
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.update-dropdown .progress-info {
+  margin: 5px 0;
+  color: #999;
+}
+
+/* Update notifications */
+.update-notification {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: #333;
+  color: #fff;
+  padding: 15px 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  z-index: 10000;
+  max-width: 300px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(320px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Update dialog enhancements */
+.modal-body .release-notes {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.modal-body .release-notes h5 {
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.modal-body .release-notes ul {
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+/* Update channel icons */
+#update-channel option[value="stable"]::before {
+  content: "✓ ";
+  color: #5cb85c;
+}
+
+#update-channel option[value="beta"]::before {
+  content: "⚡ ";
+  color: #f0ad4e;
+}
+
+#update-channel option[value="alpha"]::before {
+  content: "⚠ ";
+  color: #d9534f;
+}
+
+/* Update status icons */
+.update-status .fa-spinner {
+  color: #337ab7;
+}
+
+.update-status .fa-check {
+  color: #5cb85c;
+}
+
+.update-status .fa-check-circle {
+  color: #5cb85c;
+}
+
+.update-status .fa-download {
+  color: #f0ad4e;
+}
+
+/* Dark mode support */
+body.dark-mode .update-dropdown {
+  background: #2a2a2a;
+  color: #ddd;
+}
+
+body.dark-mode .update-dropdown .status-text {
+  color: #aaa;
+}
+
+body.dark-mode .update-notification {
+  background: #1a1a1a;
+  border: 1px solid #444;
+}
+
+body.dark-mode .modal-body .release-notes {
+  background: #2a2a2a;
+  color: #ddd;
+  border: 1px solid #444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .update-dropdown {
+    width: 250px;
+  }
+  
+  .update-notification {
+    left: 20px;
+    right: 20px;
+    max-width: none;
+  }
+}

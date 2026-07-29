@@ -1,5 +1,4 @@
-*~
-work*
+# .gitignore for Python and related environments
 build
 __pycache__
 flaskserver.log
@@ -9,3 +8,37 @@ flaskserver.log
 *.nc
 .cache
 .hypothesis
+
+# pixi environments
+.pixi
+*.egg-info
+
+# Test files
+.coverage
+temp_docs/
+test-results/
+playwright-report/
+screenshots/
+tests/playwright-report/
+!tests/screenshots/
+tests/screenshots/*
+!tests/screenshots/app-launch.png
+.DS_Store
+CLAUDE.md
+
+# Build outputs
+src/main/js/electron/out/
+dist/
+
+# Node.js dependencies
+node_modules/
+src/main/js/electron/node_modules/
+*.dmg
+*.zip
+*.deb
+*.rpm
+*.exe
+*.AppImage
+# Brainstorming companion artifacts
+.superpowers/
+docs/superpowers/

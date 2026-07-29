@@ -26,18 +26,18 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
   this.$container.html('<div class="aboutDaveDiv floatRight">' +
                           '<a href="#" class="btnAboutDave InfoText">About DAVE <i class="fa fa-info-circle" aria-hidden="true"></i></a>' +
                         '</div>' +
-                        '<div class="row" style="margin: 24px;">' +
+                        '<div class="row settingsRow">' +
                           '<h2>' +
                             'General Settings:' +
                           '</h2>' +
-                          '<div class="col-xs-6">' +
+                          '<div class="col-6">' +
                             '<h3>' +
                               'Main settings:' +
                             '</h3>' +
                             '<div class="settingsContainer mainSettings">' +
                             '</div>' +
                           '</div>' +
-                          '<div class="col-xs-6">' +
+                          '<div class="col-6">' +
                             '<h3>' +
                               'Power density spectrum settings:' +
                             '</h3>' +
@@ -141,7 +141,6 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
 
     showMsg("Telescops configuration", msg);
 
-    gaTracker.sendEvent("GeneralSettings", "btnTelescopConfig", currentObj.id);
   });
 
   $advSettings.append(getTextBox ("EVENTS_STRING_" + this.id, "inputEVENTS_STRING width80",
@@ -180,7 +179,7 @@ function SettingsTabPanel (id, classSelector, navItemClass, service, navBarList,
                                     },
                                     "smallTextStyle"));
 
-  var $btnClearCache = $('<button class="btn btn-default btnClearCache" style="padding-right: 10px; padding-left: 10px; margin-top: 14px;" data-toggle="tooltip" title="Clear server cache"><i class="fa fa-refresh" aria-hidden="true"></i> Clear server cache</button>');
+  var $btnClearCache = $('<button class="btn btn-default btnClearCache" data-bs-toggle="tooltip" title="Clear server cache"><i class="fa fa-refresh" aria-hidden="true"></i> Clear server cache</button>');
   $btnClearCache.click(function(event){
     theService.clear_cache(function (res) {
       logInfo("Server cache clean!");
@@ -209,5 +208,4 @@ function showAboutDialog() {
           "<p>© 2016 Timelab Technologies Ltd.</p>" +
           "<p style='float: right; font-size: 0.85em;'>DAVE Version: " + version + "</p>");
 
-  gaTracker.sendEvent("GeneralSettings", "btnAboutDave", "SettingsTabPanel");
 }

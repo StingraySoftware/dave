@@ -17,7 +17,7 @@ function get_plotdiv_xy(x_values, y_values, x_error_values, y_error_values, wti_
                 }
               ],
         layout : {
-                   title: !isNull(title) ? title : '',
+                   title: { text: !isNull(title) ? title : '' },
                    font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    hovermode: 'closest',
                    xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
@@ -49,7 +49,7 @@ function get_plotdiv_lightcurve(x_values, y_values, x_error_values, y_error_valu
                 }
               ],
         layout : {
-                   title: !isNull(title) ? title : '',
+                   title: { text: !isNull(title) ? title : '' },
                    font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    hovermode: 'closest',
                    xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
@@ -78,8 +78,10 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                             color : color_array,  // set color to an array/list of desired values
                             colorscale : 'Viridis', // choose a colorscale
                             colorbar : {
-                                      title : color_label,
-                                      font: plotDefaultConfig.DEFAULT_TITLE_FONT,
+                                      title : {
+                                        text : color_label,
+                                        font : plotDefaultConfig.DEFAULT_TITLE_FONT
+                                      },
                                       thickness : 20,
                                       len : 1
                                     },
@@ -88,7 +90,7 @@ function get_plotdiv_xyz(x_values, y_values, z_values, x_error_values, y_error_v
                 }
               ],
         layout : {
-                   title: !isNull(title) ? title : '',
+                   title: { text: !isNull(title) ? title : '' },
                    font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    margin: plotDefaultConfig.DEFAULT_MARGINS
                 }
@@ -137,8 +139,10 @@ function get_plotdiv_scatter_colored(x_values, y_values, color_array, x_label, y
                       color : color_array,  // set color to an array/list of desired values
                       colorscale : 'Viridis', // choose a colorscale
                       colorbar : {
-                                title : color_label,
-                                font: plotDefaultConfig.DEFAULT_TITLE_FONT,
+                                title : {
+                                  text : color_label,
+                                  font : plotDefaultConfig.DEFAULT_TITLE_FONT
+                                },
                                 thickness : 20,
                                 len : 1
                               },
@@ -162,7 +166,7 @@ function get_plotdiv_dynamical_spectrum(x_values, y_values, z_values, x_label, y
               }
             ],
       layout : {
-                 title: !isNull(title) ? title : '',
+                 title: { text: !isNull(title) ? title : '' },
                  font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                  hovermode: 'closest',
                  xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
@@ -204,7 +208,7 @@ function get_plotdiv_xyy(x_values, y0_values, y1_values,
                 }
               ],
         layout : {
-                   title: !isNull(title) ? title : '',
+                   title: { text: !isNull(title) ? title : '' },
                    font: plotDefaultConfig.DEFAULT_TITLE_FONT,
                    hovermode: 'closest',
                    xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
@@ -262,7 +266,7 @@ function getConfidenceShape (y_range, fillcolor, opacity) {
 
 function getDefaultLayout (title, x_label, y_label, plotDefaultConfig) {
   return {
-             title: !isNull(title) ? title : '',
+             title: { text: !isNull(title) ? title : '' },
              font: plotDefaultConfig.DEFAULT_TITLE_FONT,
              hovermode: 'closest',
              xaxis: getLabelConfig(x_label, plotDefaultConfig.DEFAULT_TITLE_FONT),
@@ -272,7 +276,8 @@ function getDefaultLayout (title, x_label, y_label, plotDefaultConfig) {
 }
 
 function getLabelConfig (label, titlefont){
-  return { title : label, titlefont : titlefont };
+  // Plotly 3.x removed titlefont and title-as-string; both live on the title object now
+  return { title : { text : label, font : titlefont } };
 }
 
 function getLine (xdata, ydata, color, width){

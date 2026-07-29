@@ -90,27 +90,27 @@ function AgnPlot(id, plotConfig, getDataFromServerFn, onFiltersChangedFn, onPlot
 
         plotlyConfig.layout = $.extend({}, lcPlotlyConfig.layout);
         plotlyConfig.layout.yaxis.domain = [0, 0.166];
-        plotlyConfig.layout.yaxis.title = currentObj.axisLabels[0];
+        plotlyConfig.layout.yaxis.title = { text: currentObj.axisLabels[0], font: plotDefaultConfig.DEFAULT_TITLE_FONT };
 
         plotlyConfig.layout.yaxis2 = $.extend({}, plotlyConfig.layout.yaxis);
         plotlyConfig.layout.yaxis2.domain = [0.166, 0.333];
-        plotlyConfig.layout.yaxis2.title = currentObj.axisLabels[1];
+        plotlyConfig.layout.yaxis2.title = { text: currentObj.axisLabels[1], font: plotDefaultConfig.DEFAULT_TITLE_FONT };
 
         plotlyConfig.layout.yaxis3 = $.extend({}, plotlyConfig.layout.yaxis);
         plotlyConfig.layout.yaxis3.domain = [0.333, 0.50];
-        plotlyConfig.layout.yaxis3.title = currentObj.axisLabels[2];
+        plotlyConfig.layout.yaxis3.title = { text: currentObj.axisLabels[2], font: plotDefaultConfig.DEFAULT_TITLE_FONT };
 
         plotlyConfig.layout.yaxis4 = $.extend({}, plotlyConfig.layout.yaxis);
         plotlyConfig.layout.yaxis4.domain = [0.50, 0.666];
-        plotlyConfig.layout.yaxis4.title = currentObj.axisLabels[3];
+        plotlyConfig.layout.yaxis4.title = { text: currentObj.axisLabels[3], font: plotDefaultConfig.DEFAULT_TITLE_FONT };
 
         plotlyConfig.layout.yaxis5 = $.extend({}, plotlyConfig.layout.yaxis);
         plotlyConfig.layout.yaxis5.domain = [0.666, 0.833];
-        plotlyConfig.layout.yaxis5.title = currentObj.axisLabels[4];
+        plotlyConfig.layout.yaxis5.title = { text: currentObj.axisLabels[4], font: plotDefaultConfig.DEFAULT_TITLE_FONT };
 
         plotlyConfig.layout.yaxis6 = $.extend({}, plotlyConfig.layout.yaxis);
         plotlyConfig.layout.yaxis6.domain = [0.833, 1];
-        plotlyConfig.layout.yaxis6.title = currentObj.axisLabels[5];
+        plotlyConfig.layout.yaxis6.title = { text: currentObj.axisLabels[5], font: plotDefaultConfig.DEFAULT_TITLE_FONT };
 
       }
 

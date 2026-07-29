@@ -1,34 +1,117 @@
-# DAVE
+# DAVE - Data Analysis of Variable Events
 
-DAVE stands for Data Analysis of Variable Events, which is a GUI built on top of
-the [Stingray library](https://github.com/StingraySoftware/stingray). It is
-intended to be used by astronomers for time-series analysis in general, and
-analysis of variable sources in particular.
+<div align="center">
+<img src="src/main/resources/static/img/icon.png" alt="DAVE Icon" width="200"/>
+</div>
 
-The goal is to enable scientific exploration of astronomical X-Ray
-observations and to analyse this data in a graphical environment.
+A modern desktop GUI application for astronomical X-ray timing analysis built on the Stingray library. DAVE provides an intuitive interface for analyzing variable X-ray sources with enterprise-grade performance and security.
 
+![Python](https://img.shields.io/badge/python-3.13-blue.svg)
+![Electron](https://img.shields.io/badge/electron-42.4.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-## Get Started
+## Quick Start
 
-* Clone the project `$ git clone https://github.com/StingraySoftware/dave`
-* Install a Python virtual env and a compatible version of node: `$ source setup/setup.bash`
-* Run the application for development: `$ setup/run_gui.bash`
-* Or run the build script for Linux_X64 `$ setup/build_linux-x64.bash` for getting the distributable at DAVE build folder.
+### Prerequisites
+- **Pixi Package Manager** ([install here](https://pixi.sh))
+### Installation
 
-You will see that there's plenty left to do!
+```bash
+# Clone the repository
+git clone https://github.com/StingraySoftware/dave.git
+cd dave
 
-NOTE: Mac OSX dependencies
-* At least Homebrew installed (http://brew.sh/) or MacPorts installed (https://www.macports.org)
-* If MacPorts will be used, you have two available options:
-* 1 - Install LibMagic by yourself running this MacPorts command `sudo /opt/local/bin/port install file` on the terminal and then launch DAVE running `DAVEApp.app/Contents/MacOS/DAVEApp`.
-* 2 - Launch DAVE as root running this command on the terminal: `sudo DAVEApp.app/Contents/MacOS/DAVEApp`
+# Switch to modernization branch (required)
+git checkout modernization-2025
 
+# Install Python environment and dependencies
+pixi install
 
-## Contribute
+# Install Node.js dependencies for Electron frontend
+pixi run install-node-deps
 
-Please talk to us! We use Slack to discuss the work. Use http://slack-invite.timelabtechnologies.com to self-invite yourself on the slack. Also, feel free to contact us at info@timelabtechnologies.com .
+# Verify installation
+pixi run test                    # Python tests
+pixi run test-e2e               # End-to-end tests (requires pixi run test-e2e-install first)
+```
 
-The recorded open issues for DAVE are in [JIRA](https://timelabdev.com/jira/projects/DAVE). More information about communication in the project can be found in [Confluence](https://timelabdev.com/wiki/display/DAVE/Source+code+and+communication).
+### Running the Application
 
-Fork and pull request away!
+```bash
+# Start the full application (recommended)
+pixi run electron
+
+# Alternative: Start components separately
+pixi run server          # Flask backend only
+# Then in another terminal:
+cd src/main/js/electron && npm start  # Electron frontend
+```
+
+## Architecture
+
+DAVE uses a hybrid client-server architecture:
+
+```
+┌─────────────────────────────────────────┐
+│           ELECTRON FRONTEND             │
+│    (Desktop Wrapper + Web UI)          │
+│                                         │
+│  ┌─────────────┐    ┌─────────────┐    │
+│  │   Main      │    │  Renderer   │    │
+│  │  Process    │◄──►│   Process   │    │
+│  │  (Node.js)  │    │ (Chromium)  │    │
+│  └─────────────┘    └─────────────┘    │
+└─────────────┬───────────────────────────┘
+              │ HTTP Requests (localhost:5001)
+              │
+┌─────────────▼───────────────────────────┐
+│           PYTHON BACKEND                │
+│         (Flask REST API)                │
+│                                         │
+│  ┌─────────────┐    ┌─────────────┐    │
+│  │   Flask     │    │  Scientific │    │
+│  │   Server    │◄──►│   Engine    │    │
+│  │  (Routes)   │    │ (Stingray)  │    │
+│  └─────────────┘    └─────────────┘    │
+└─────────────────────────────────────────┘
+```
+
+## Development Commands
+
+### Code Quality & Linting
+
+```bash
+# Python linting (uses ruff)
+pixi run lint                   # Check Python code for issues
+pixi run format                 # Auto-format Python code
+
+# Fix all linting issues before committing
+pixi run lint                   # Must show 0 errors before commit
+```
+
+### Building the Application
+
+```bash
+# Build for current platform (macOS/Linux/Windows)
+pixi run build                  # Full build with tests
+pixi run build --no-tests      # Skip tests during build
+
+# Build for specific platforms
+python build.py --platform linux --no-tests    # Linux build
+python build.py --platform windows --no-tests  # Windows build  
+python build.py --platform macos --no-tests    # macOS build
+
+# Use legacy Electron Builder instead of Forge
+python build.py --legacy --no-tests
+
+# Clean build artifacts
+python build.py --clean
+```
+
+### Build Output Locations
+
+After building, find your packages at:
+- **macOS**: `src/main/js/electron/out/make/DAVE.dmg`
+- **Linux**: `src/main/js/electron/out/make/deb/` and `src/main/js/electron/out/make/rpm/`
+- **Windows**: `src/main/js/electron/out/make/squirrel.windows/`
+

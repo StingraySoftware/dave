@@ -4,44 +4,45 @@
 #
 # Make sure your gevent version is >= 1.0
 import gevent
-from gevent.wsgi import WSGIServer
-from gevent.queue import Queue
 from flask import Response
+from gevent.pywsgi import WSGIServer
+from gevent.queue import Queue
 
 subscriptions = []
 
 
 # SSE "protocol" is described here: http://mzl.la/UPFyxY
-class ServerSentEvent(object):
-
+class ServerSentEvent:
     def __init__(self, data):
         self.data = data
         self.event = None
         self.id = None
-        self.desc_map = {
-            self.data: "data",
-            self.event: "event",
-            self.id: "id"
-        }
+        self.desc_map = {self.data: "data", self.event: "event", self.id: "id"}
 
     def encode(self):
         if not self.data:
             return ""
-        lines = ["%s: %s" % (v, k)
-                 for k, v in self.desc_map.items() if k]
+        lines = [f"{v}: {k}" for k, v in self.desc_map.items() if k]
 
-        return "%s\n\n" % "\n".join(lines)
+        return "{}\n\n".format("\n".join(lines))
 
 
 def start(server_port, app):
     server = WSGIServer(("", server_port), app)
     try:
+        print(f"Starting server on port {server_port}")
         server.serve_forever()
     except KeyboardInterrupt:
+        print("Server interrupted by KeyboardInterrupt")
         pass
+    except Exception as e:
+        print(f"Server error: {e}")
+        raise
     finally:
+        print("Cleaning up server...")
         # Clean-up server (close socket, etc.)
         server.close()
+        print("Server cleanup completed")
 
 
 def subscribe():
@@ -64,4 +65,5 @@ def publish(message):
         for sub in subscriptions[:]:
             sub.put(message)
 
-    gevent.spawn(notify(message))
+    gevent.spawn(notify, message)
+    return ""
