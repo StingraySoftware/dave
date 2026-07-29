@@ -1386,7 +1386,7 @@ def get_rms_spectrum(
                                             if not gti:
                                                 gti = lc.gti
 
-                                            if segm_size > lc.tseg:
+                                            if segm_size is not None and segm_size > lc.tseg:
                                                 segm_size = lc.tseg
                                                 logging.warn(
                                                     "get_rms_spectrum: range: "
@@ -3019,7 +3019,7 @@ def get_white_noise_offset(event_arr, gti, dt, pds_type, segm_size, df):
             if not gti:
                 gti = lc.gti
 
-            if segm_size > lc.tseg:
+            if segm_size is not None and segm_size > lc.tseg:
                 segm_size = lc.tseg
                 logging.warn(
                     "get_white_noise_offset: segmsize bigger than lc.duration, lc.duration applied instead."
