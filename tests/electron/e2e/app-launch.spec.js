@@ -81,20 +81,20 @@ test.describe('DAVE Application Launch', () => {
     await electronApp.launch();
     
     // Check window properties
-    const bounds = await electronApp.evaluate(() => {
-      const win = require('electron').remote.getCurrentWindow();
-      return win.getBounds();
-    }).catch(() => {
-      // Fallback for Electron 36 without remote module
-      return electronApp.app.evaluate((electron) => {
-        const win = electron.BrowserWindow.getAllWindows()[0];
-        return win.getBounds();
-      });
+    const { bounds, workArea } = await electronApp.app.evaluate((electron) => {
+      const win = electron.BrowserWindow.getAllWindows()[0];
+      return {
+        bounds: win.getBounds(),
+        workArea: electron.screen.getPrimaryDisplay().workArea
+      };
     });
-    
-    // Window should have reasonable size
-    expect(bounds.width).toBeGreaterThanOrEqual(1000);
-    expect(bounds.height).toBeGreaterThanOrEqual(700);
+
+    // The app requests 1280x800, but macOS clamps new windows to the
+    // screen's visible frame and CI runners can have small displays, so
+    // expect the requested size or the work area, whichever is smaller.
+    const TOLERANCE = 10;
+    expect(bounds.width).toBeGreaterThanOrEqual(Math.min(1280, workArea.width) - TOLERANCE);
+    expect(bounds.height).toBeGreaterThanOrEqual(Math.min(800, workArea.height) - TOLERANCE);
   });
 
   test('should load required JavaScript libraries', async () => {
