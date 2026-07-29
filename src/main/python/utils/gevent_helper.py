@@ -65,4 +65,5 @@ def publish(message):
         for sub in subscriptions[:]:
             sub.put(message)
 
-    gevent.spawn(notify(message))
+    gevent.spawn(notify, message)
+    return ""
