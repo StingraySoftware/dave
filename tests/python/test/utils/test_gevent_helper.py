@@ -76,6 +76,20 @@ def test_publish_reaches_every_subscriber():
     assert GeHelper.subscriptions == []
 
 
+def test_subscribe_stream_consumed_from_the_main_greenlet():
+    """The SSE generator can be driven from the main greenlet with the
+    publisher spawned: the publisher only runs once the consumer blocks on
+    the queue, so ordering is deterministic. (Also keeps the yield path in
+    a greenlet coverage.py traces.)"""
+    generator = GeHelper.subscribe().response
+    publisher = gevent.spawn(GeHelper.publish, "from-main")
+    frame = next(generator)
+    assert frame == "data: from-main\n\n"
+    publisher.join(timeout=5)
+    generator.close()
+    assert GeHelper.subscriptions == []
+
+
 def test_publish_without_subscribers_is_a_safe_noop():
     """Publishing with nobody listening must not fail."""
     assert GeHelper.publish("into the void") == ""

@@ -474,6 +474,32 @@ def test_save_file_rejects_invalid_upload(tmp_path):
     assert FileUtils.save_file(str(tmp_path / "uploads"), upload) == ""
 
 
+def test_save_file_creates_target_directory_and_saves(tmp_path):
+    """A missing uploads directory is created before the file is written."""
+    from io import BytesIO
+
+    from werkzeug.datastructures import FileStorage
+
+    target = tmp_path / "fresh-uploads"
+    upload = FileStorage(stream=BytesIO(b"1.0 2.0\n"), filename="new_data.txt")
+    destination = FileUtils.save_file(str(target), upload)
+    assert destination.endswith("new_data.txt")
+    assert os.path.isfile(destination)
+
+
+def test_save_file_rejects_filename_without_valid_destination(tmp_path):
+    """A filename that survives validation but resolves outside the target
+    (path traversal in the raw name) has no valid destination."""
+    from io import BytesIO
+
+    from werkzeug.datastructures import FileStorage
+
+    target = tmp_path / "uploads"
+    target.mkdir()
+    upload = FileStorage(stream=BytesIO(b"data"), filename="../escape.evt")
+    assert FileUtils.save_file(str(target), upload) == ""
+
+
 class _MagicDouble:
     """Stands in for libmagic, whose runtime behavior differs per machine
     (this dev box has no magic database, Windows CI has no libmagic at all).
