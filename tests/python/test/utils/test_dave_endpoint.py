@@ -126,6 +126,68 @@ def test_upload_reports_partial_success_with_warnings(client):
     assert len(payload["warnings"]) == 1
 
 
+def test_upload_rejects_entry_without_filename(client):
+    """A multipart entry with an empty filename cannot be processed."""
+    response = client.post(
+        "/upload",
+        data={"file": (BytesIO(b"x"), "")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert "No filename provided" in response.get_json()["error"]
+
+
+def test_upload_rejects_saved_file_with_unsupported_content(client, monkeypatch):
+    """A file that saves fine but fails content validation is refused.
+
+    libmagic is replaced with a canned 'data' answer so the content check
+    fails deterministically on every platform (the extension fallback would
+    otherwise accept any .evt file)."""
+    import utils.file_utils as FileUtils
+
+    class _OpaqueMagic:
+        @staticmethod
+        def from_file(_destination):
+            return "data"
+
+    monkeypatch.setattr(FileUtils, "MAGIC_AVAILABLE", True)
+    monkeypatch.setattr(FileUtils, "magic", _OpaqueMagic, raising=False)
+    response = client.post(
+        "/upload",
+        data={"file": (BytesIO(b"\x00\x01garbage"), "fake_events.evt")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert "File format not supported" in response.get_json()["error"]
+
+
+def test_upload_reports_unexpected_processing_failure(client, monkeypatch):
+    """An unexpected exception while handling one file is caught and turned
+    into a per-file error message. file_exist is not under test here; it is
+    made to fail to exercise upload's own exception handling."""
+    import utils.file_utils as FileUtils
+
+    def explode(_target, _filename):
+        raise RuntimeError("disk exploded")
+
+    monkeypatch.setattr(FileUtils, "file_exist", explode)
+    response = client.post(
+        "/upload",
+        data={"file": (BytesIO(b"1.0 0.5\n"), "boom.txt")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert "disk exploded" in response.get_json()["error"]
+
+
+def test_get_destination_rejects_existing_but_invalid_file(client, uploads):
+    """A staged file with an unsupported format resolves to no destination
+    when it is not a cache key either."""
+    (uploads / "garbage.bin").write_bytes(b"\xff\xfe\x00\x01")
+    response = client.get("/get_dataset_schema", query_string={"filename": "garbage.bin"})
+    assert response.status_code == 400
+
+
 def test_upload_of_already_present_file_reuses_it(client):
     """Re-uploading a filename already in the uploads dir is accepted as-is."""
     response = client.post(
@@ -1366,8 +1428,9 @@ def test_fit_powerspectrum_route_accepts_priors_and_sampling(client):
     assert response.status_code == 200
 
 
-def test_fit_lomb_scargle_route_accepts_priors(client):
-    """The Lomb-Scargle fit route forwards optional priors."""
+def test_fit_lomb_scargle_route_accepts_priors_and_sampling(client):
+    """The Lomb-Scargle fit route forwards optional priors and sampling
+    parameters."""
     response = client.post(
         "/get_fit_lomb_scargle_result",
         json={
@@ -1383,6 +1446,13 @@ def test_fit_lomb_scargle_route_accepts_priors(client):
             "samples_per_peak": 2,
             "models": [{"type": "Const", "amplitude": 0.05}],
             "priors": [{"amplitude": {"type": "uniform", "min": 0.0, "max": 1.0}}],
+            "sampling_params": {
+                "nwalkers": 8,
+                "niter": 10,
+                "burnin": 5,
+                "threads": 1,
+                "nsamples": 10,
+            },
         },
     )
     assert response.status_code == 200

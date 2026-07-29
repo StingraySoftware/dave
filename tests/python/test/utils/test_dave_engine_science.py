@@ -541,6 +541,24 @@ def test_phaseogram_validation_errors():
     )
 
 
+def test_covariance_spectrum_with_malformed_reference_band(calibrated_events):
+    """A reference band the covariance computation cannot digest surfaces
+    as a common error instead of a crash."""
+    result = DaveEngine.get_covariance_spectrum(
+        calibrated_events, "", "", [], 16.0, "bogus", [2.0, 10.0], 2, -1
+    )
+    assert "error" in result
+
+
+def test_phase_lag_spectrum_with_malformed_freq_range(calibrated_events):
+    """A None freq_range fails after the PDS is built and lands in warnmsg."""
+    result = DaveEngine.get_phase_lag_spectrum(
+        calibrated_events, "", "", [], EVENTS_AXIS, 1.0, 1, 256.0, "leahy", "Avg", 0,
+        None, [-1, -1], 2,
+    )
+    assert result[3]["values"][0] != ""
+
+
 # ---------- BACKSCAL-scaled backgrounds ----------
 
 

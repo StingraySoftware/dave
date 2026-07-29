@@ -96,3 +96,22 @@ def test_unhashable_key_is_swallowed_by_error_handling():
     DsCache.add(["unhashable"], "value")
     assert DsCache.contains(["unhashable"]) is False
     assert DsCache.count() == 0
+
+
+def test_remove_with_prefix_survives_non_string_keys():
+    """A hashable non-string key breaks the startswith probe; the failure is
+    logged and the cache left as-is instead of raising."""
+    DsCache.add(("tuple", "key"), 1)
+    DsCache.add("FILTERED_a", 2)
+    DsCache.remove_with_prefix("FILTERED")
+    assert DsCache.contains(("tuple", "key")) is True
+    assert DsCache.contains("FILTERED_a") is True  # sweep aborted, nothing removed
+
+
+def test_get_and_remove_swallow_lookup_failures(monkeypatch):
+    """If the underlying store fails between the contains check and the
+    lookup, get returns None and remove returns False. The race cannot be
+    produced with the real LRU, so contains is forced to say yes."""
+    monkeypatch.setattr(DsCache, "contains", lambda key: True)
+    assert DsCache.get("never-stored") is None
+    assert DsCache.remove("never-stored") is False

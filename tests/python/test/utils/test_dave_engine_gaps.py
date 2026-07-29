@@ -642,3 +642,150 @@ def test_common_error_and_warn_payloads():
     """common_error wraps the message; common_warn adds the @WARN@ marker."""
     assert DaveEngine.common_error("boom") == {"error": "boom"}
     assert DaveEngine.common_warn("careful") == {"error": "@WARN@careful"}
+
+
+# ---------- second-pass branch coverage ----------
+
+
+def test_apply_rmf_with_non_rmf_file_returns_empty_list(rmf_file):
+    """A second file without an EBOUNDS table cannot calibrate anything."""
+    assert (
+        DaveEngine.apply_rmf_file_to_dataset(
+            _resource("test.evt"), _resource("Test_Input_2.lc"), "PHA"
+        )
+        == []
+    )
+
+
+def test_pds_warns_when_lightcurve_file_overrides_dt():
+    """A PDS on a 1 s-binned lightcurve with dt=16 keeps the file binning.
+
+    The Avg type is used because the file carries several GTIs, which a
+    single (non-averaged) power spectrum refuses.
+    """
+    result = DaveEngine.get_power_density_spectrum(
+        _resource("Test_Input_2.lc"), "", "", [], EVENTS_AXIS, 16.0, 4, 512.0, "leahy", "Avg"
+    )
+    assert result[3]["values"][0] == "@WARN@Overriden Bin Size: 1.0"
+
+
+def test_dynamical_spectrum_without_segment_size_reports_failure():
+    """segment_size 0 means no segmentation, which the dynamical spectrum
+    cannot work with: the failure lands in warnmsg."""
+    result = DaveEngine.get_dynamical_spectrum(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 16.0, 1, 0, "leahy", [-1, 1]
+    )
+    assert len(result[0]["values"]) == 0
+    assert result[4]["values"][0] != ""
+
+
+def test_dynamical_spectrum_rebins_frequencies_with_df():
+    """df > 0 coarsens the dynamical spectrum's frequency grid."""
+    fine = DaveEngine.get_dynamical_spectrum(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 1.0, 8, 128.0, "leahy", [-1, 1], 0
+    )
+    coarse = DaveEngine.get_dynamical_spectrum(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 1.0, 8, 128.0, "leahy", [-1, 1], 0.05
+    )
+    assert 0 < len(coarse[0]["values"]) < len(fine[0]["values"])
+
+
+def test_dynamical_spectrum_on_lightcurve_file_warns_dt_override():
+    """The dynamical spectrum reports the overridden bin size for lc files."""
+    result = DaveEngine.get_dynamical_spectrum(
+        _resource("Test_Input_2.lc"), "", "", [], EVENTS_AXIS, 16.0, 8, 1024.0, "leahy", [-1, 1]
+    )
+    assert result[4]["values"][0].startswith("@WARN@Overriden Bin Size")
+
+
+def test_joined_lightcurves_with_malformed_filters_reports_error():
+    """A None filter list explodes inside the engine and is reported."""
+    assert "error" in DaveEngine.get_joined_lightcurves(
+        _resource("test.evt"), _resource("test.evt"), "", "", None, EVENTS_AXIS, 16.0
+    )
+
+
+def test_lomb_scargle_with_malformed_freq_range_reports_error():
+    """A None freq_range fails inside the computation and lands in warnmsg."""
+    result = DaveEngine.get_lomb_scargle_results(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 16.0, None, 1, "standard", 2
+    )
+    assert result[3]["values"][0] != ""
+
+    fit_result = DaveEngine.get_fit_lomb_scargle_result(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 16.0, None, 1, "standard", 2,
+        [{"type": "Const", "amplitude": 1.0}],
+    )
+    assert "error" in fit_result
+
+
+def test_pulse_search_with_malformed_freq_range_reports_error():
+    """A None freq_range cannot build the frequency grid."""
+    assert "error" in DaveEngine.get_pulse_search(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 16.0, None, "z_n_search", 5, 1, 16, 5000
+    )
+
+
+def test_phaseogram_with_malformed_frequency_reports_error():
+    """A None pulse frequency fails the folding and is reported."""
+    assert "error" in DaveEngine.get_phaseogram(
+        _resource("test.evt"), "", "", [], EVENTS_AXIS, 16.0, None, 8, 4, 0.0, 0.0, None
+    )
+
+
+def test_get_filtered_dataset_with_non_gti_filter_file_returns_none(rmf_file):
+    """A gti_destination whose dataset carries no GTI table cannot filter."""
+    assert DaveEngine.get_filtered_dataset(_resource("test.evt"), [], rmf_file) is None
+
+
+def test_four_color_division_with_unreadable_source_reports_error():
+    """The four-color path fails cleanly when the source cannot be read."""
+    def color(column):
+        return {
+            "table": "EVENTS",
+            "column": column,
+            "from": 0,
+            "to": 9999,
+            "source": "ColorSelector",
+            "replaceColumn": "PHA",
+        }
+
+    result = DaveEngine.get_divided_lightcurves_from_colors(
+        MISSING, "", "", [color(f"Color{i}") for i in range(1, 5)], EVENTS_AXIS, 1.0
+    )
+    assert "error" in result
+
+
+def test_divided_lightcurve_ds_ignores_wrong_type_background():
+    """An events file offered as background for a lightcurve division is
+    logged and skipped; the division itself still succeeds."""
+    cache_key = DaveEngine.get_divided_lightcurve_ds(
+        _resource("Test_Input_2.lc"), _resource("Test_Input_2.lc"), _resource("test.evt"), ""
+    )
+    assert cache_key != ""
+    ratio_ds = DsCache.get(cache_key)
+    assert all(value == 1.0 for value in ratio_ds.tables["RATE"].columns["RATE"].values)
+
+
+def test_events_background_subtraction_applies_backscale_ratio(tmp_path):
+    """Events datasets with BACKSCAL headers scale the background by the
+    src/bck ratio before subtraction: identical data with ratio 2 nets to
+    exactly -1x the raw count rate."""
+    from astropy.io import fits
+
+    source = str(tmp_path / "src_backscal.evt")
+    background = str(tmp_path / "bck_backscal.evt")
+    for path, backscal in ((source, 2), (background, 1)):
+        with fits.open(_resource("test.evt")) as hdulist:
+            hdulist["EVENTS"].header["BACKSCAL"] = backscal
+            hdulist.writeto(path)
+
+    plain = DaveEngine.get_lightcurve(
+        source, "", "", [], EVENTS_AXIS, 16.0, NO_BASELINE, NO_BASELINE, None
+    )
+    subtracted = DaveEngine.get_lightcurve(
+        source, background, "", [], EVENTS_AXIS, 16.0, NO_BASELINE, NO_BASELINE, None
+    )
+    raw = np.array(plain[1]["values"])
+    net = np.array(subtracted[1]["values"])
+    assert net == pytest.approx(-raw, rel=1e-6)

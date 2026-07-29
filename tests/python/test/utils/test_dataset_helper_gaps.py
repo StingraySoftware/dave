@@ -46,9 +46,12 @@ def test_eventlist_uses_pi_when_pha_is_missing():
 
 
 def test_eventlist_falls_back_to_zero_pha_without_pi():
-    """test.evt has PHA already; strip it and PI to hit the zeros fallback."""
+    """With neither PHA nor PI available the synthetic PHA column is all
+    zeros (the PI-copy attempt fails and the zeros fallback kicks in)."""
     dataset = _events_dataset("test.evt", TEST_RESOURCES).clone()
     del dataset.tables["EVENTS"].columns["PHA"]
+    if "PI" in dataset.tables["EVENTS"].columns:
+        del dataset.tables["EVENTS"].columns["PI"]
     events = DsHelper.get_eventlist_from_evt_dataset(dataset)
     assert len(events.time) > 0
     assert not np.any(events.pi)
@@ -80,6 +83,16 @@ def test_lightcurve_from_lc_dataset_accepts_gti_override():
 def test_lightcurve_from_non_lc_dataset_is_none():
     """An events dataset cannot be converted to a lightcurve directly."""
     assert DsHelper.get_lightcurve_from_lc_dataset(_events_dataset()) is None
+
+
+def test_lightcurve_from_lc_dataset_without_any_gtis():
+    """With no override and an empty GTI table the Lightcurve is built
+    without explicit GTIs (stingray derives a default one)."""
+    dataset = _lc_dataset().clone()
+    dataset.tables["GTI"] = DsHelper.get_empty_gti_table()
+    lightcurve = DsHelper.get_lightcurve_from_lc_dataset(dataset)
+    assert lightcurve is not None
+    assert len(lightcurve.gti) == 1  # stingray's derived full-span GTI
 
 
 # ---------- predicates ----------
@@ -373,3 +386,25 @@ def test_update_dataset_filtering_by_gti_clamps_partial_overlaps():
     times = np.array(hdu_table.columns["TIME"].values)
     assert times.min() >= 45.0
     assert times.max() <= 60.0
+
+
+def test_update_dataset_filtering_by_gti_skips_gtis_without_events():
+    """A GTI falling between two events contributes no rows at all."""
+    hdu_table = DataSet.get_hdu_type_dataset("DS", ["TIME"], "EVENTS").tables["EVENTS"]
+    gti_table = DsHelper.get_empty_gti_table()
+    ev_list = np.arange(0.0, 100.0, 1.0)
+
+    DsHelper.update_dataset_filtering_by_gti(
+        hdu_table,
+        gti_table,
+        ev_list,
+        [],
+        {},
+        {},
+        gti_start=[40.2],
+        gti_end=[40.3],
+        additional_columns=[],
+    )
+
+    assert gti_table.columns["START"].values == []
+    assert hdu_table.columns["TIME"].values == []
