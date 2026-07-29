@@ -40,13 +40,17 @@ def test_default_converts_and_clamps_numpy_integers():
 
 
 def test_default_converts_and_clamps_numpy_floats():
-    """Numpy float scalars become Python floats, clamped at +/-BIG_NUMBER."""
+    """Numpy float scalars become Python floats, clamped at +/-BIG_NUMBER.
+
+    np.float32 is used because np.float64 subclasses Python float and is
+    already handled by the plain-float branch.
+    """
     encoder = NPEncoder()
-    result = encoder.default(np.float64(2.25))
+    result = encoder.default(np.float32(2.25))
     assert result == 2.25
     assert isinstance(result, float) and not isinstance(result, np.floating)
-    assert encoder.default(np.float64(CONFIG.BIG_NUMBER) * 2) == CONFIG.BIG_NUMBER
-    assert encoder.default(np.float64(-CONFIG.BIG_NUMBER) * 2) == -CONFIG.BIG_NUMBER
+    assert encoder.default(np.float32(CONFIG.BIG_NUMBER) * 2) == CONFIG.BIG_NUMBER
+    assert encoder.default(np.float32(-CONFIG.BIG_NUMBER) * 2) == -CONFIG.BIG_NUMBER
 
 
 def test_default_keeps_only_real_part_of_complex_values():

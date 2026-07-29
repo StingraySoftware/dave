@@ -83,6 +83,18 @@ def test_http_error_handler_outside_app_context_swallows_failure():
     assert server.http_error_handler(ValueError("boom")) is None
 
 
+def test_ready_reports_not_ready_when_uploads_dir_cannot_be_created(client, monkeypatch):
+    """A failure preparing the uploads directory yields a 503 not-ready."""
+
+    def refuse(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(os, "makedirs", refuse)
+    response = client.get("/ready")
+    assert response.status_code == 503
+    assert response.get_json()["status"] == "not ready"
+
+
 # ---------- config / cache routes ----------
 
 

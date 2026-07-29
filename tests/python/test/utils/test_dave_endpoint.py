@@ -1277,6 +1277,140 @@ def test_analysis_routes_reject_unknown_gti_file(client, route):
     assert "gti data" in response.get_json()["error"]
 
 
+CROSS_SPECTRUM_SLOTS = [
+    ("filename1", "source data 1"),
+    ("bck_filename1", "backgrund data 1"),
+    ("gti_filename1", "gti data 1"),
+    ("filename2", "source data 2"),
+    ("bck_filename2", "backgrund data 2"),
+    ("gti_filename2", "gti data 2"),
+]
+
+
+@pytest.mark.parametrize(("slot", "expected"), CROSS_SPECTRUM_SLOTS)
+def test_cross_spectrum_validates_every_filename_slot(client, slot, expected):
+    """The cross-spectrum route validates all six filename slots."""
+    payload = {
+        "filename1": "test.evt",
+        "bck_filename1": "",
+        "gti_filename1": "",
+        "filters1": [],
+        "axis1": EVENTS_AXIS,
+        "dt1": 16.0,
+        "filename2": "test.evt",
+        "bck_filename2": "",
+        "gti_filename2": "",
+        "filters2": [],
+        "axis2": EVENTS_AXIS,
+        "dt2": 16.0,
+        "nsegm": 1,
+        "segment_size": 0,
+        "norm": "leahy",
+        "type": "Sng",
+    }
+    payload[slot] = "ghost.evt"
+    response = client.post("/get_cross_spectrum", json=payload)
+    assert response.status_code == 400
+    assert expected in response.get_json()["error"]
+
+
+def test_upload_rejects_valid_extension_with_invalid_content(client):
+    """A .evt upload whose content is not FITS/ASCII is refused after save."""
+    response = client.post(
+        "/upload",
+        data={"file": (BytesIO(b"\xff\xfe\x00\x01\x80\x81"), "binary_garbage.bin")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert "All uploads failed" in response.get_json()["error"]
+
+
+def test_append_file_rejects_invalid_next_file_content(client, uploads):
+    """A staged nextfile with unreadable content is rejected."""
+    (uploads / "garbage.bin").write_bytes(b"\xff\xfe\x00\x01")
+    response = client.post(
+        "/append_file_to_dataset", json={"filename": "test.evt", "nextfile": "garbage.bin"}
+    )
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Invalid next file"
+
+
+def test_fit_powerspectrum_route_accepts_priors_and_sampling(client):
+    """The route forwards optional priors and sampling parameters to the
+    engine (the Bayesian branch itself is asserted in the engine tests)."""
+    response = client.post(
+        "/get_fit_powerspectrum_result",
+        json={
+            "filename": "test.evt",
+            "bck_filename": "",
+            "gti_filename": "",
+            "filters": [],
+            "axis": EVENTS_AXIS,
+            "dt": 16.0,
+            "nsegm": 1,
+            "segment_size": 0,
+            "norm": "leahy",
+            "type": "Sng",
+            "df": 0,
+            "models": [{"type": "Const", "amplitude": 2.0}],
+            "priors": [{"amplitude": {"type": "uniform", "min": 0.1, "max": 10.0}}],
+            "sampling_params": {
+                "nwalkers": 8,
+                "niter": 10,
+                "burnin": 5,
+                "threads": 1,
+                "nsamples": 10,
+            },
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_fit_lomb_scargle_route_accepts_priors(client):
+    """The Lomb-Scargle fit route forwards optional priors."""
+    response = client.post(
+        "/get_fit_lomb_scargle_result",
+        json={
+            "filename": "test.evt",
+            "bck_filename": "",
+            "gti_filename": "",
+            "filters": [],
+            "axis": EVENTS_AXIS,
+            "dt": 16.0,
+            "freq_range": [0.001, 0.03],
+            "nyquist_factor": 1,
+            "ls_norm": "standard",
+            "samples_per_peak": 2,
+            "models": [{"type": "Const", "amplitude": 0.05}],
+            "priors": [{"amplitude": {"type": "uniform", "min": 0.0, "max": 1.0}}],
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_phaseogram_route_accepts_binary_parameters(client):
+    """The phaseogram route forwards optional binary orbit parameters."""
+    response = client.post(
+        "/get_phaseogram",
+        json={
+            "filename": "test.evt",
+            "bck_filename": "",
+            "gti_filename": "",
+            "filters": [],
+            "axis": EVENTS_AXIS,
+            "dt": 16.0,
+            "f": 0.15,
+            "nph": 8,
+            "nt": 4,
+            "fdot": 0.0,
+            "fddot": 0.0,
+            "binary_params": [500.0, 0.5, 100.0],
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.get_json()[3]["values"]) == 16
+
+
 LC_PAIR_ROUTES = {
     "/get_joined_lightcurves": {
         "lc0_filename": "LC0",

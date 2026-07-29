@@ -472,3 +472,65 @@ def test_save_file_rejects_invalid_upload(tmp_path):
 
     upload = FileStorage(stream=BytesIO(b"data"), filename="virus.exe")
     assert FileUtils.save_file(str(tmp_path / "uploads"), upload) == ""
+
+
+class _MagicDouble:
+    """Stands in for libmagic, whose runtime behavior differs per machine
+    (this dev box has no magic database, Windows CI has no libmagic at all).
+    Returning canned type strings lets the magic-successful branches be
+    exercised deterministically everywhere."""
+
+    def __init__(self, answer):
+        self.answer = answer
+
+    def from_file(self, _destination):
+        return self.answer
+
+
+@pytest.mark.parametrize(
+    ("magic_answer", "filename", "expected"),
+    [
+        ("ASCII text", "Test_Input_1.txt", True),
+        ("FITS image data", "test.evt", True),
+        ("gzip compressed data", "test.evt", True),
+        ("data", "Test_Input_2_lc.nc", True),  # opaque data allowed for .p/.nc
+        ("data", "test.evt", False),  # opaque data refused otherwise
+        ("PNG image data", "test.evt", False),
+    ],
+)
+def test_is_valid_file_interprets_magic_answers(monkeypatch, magic_answer, filename, expected):
+    """is_valid_file accepts exactly ASCII/FITS/gzip magic types, plus
+    opaque 'data' for intermediate-file extensions."""
+    monkeypatch.setattr(FileUtils, "MAGIC_AVAILABLE", True)
+    monkeypatch.setattr(FileUtils, "magic", _MagicDouble(magic_answer), raising=False)
+    assert FileUtils.is_valid_file(_resource(filename)) is expected
+
+
+def test_get_file_dataset_uses_magic_type_when_available(monkeypatch):
+    """When libmagic answers successfully its type string drives dispatch."""
+    monkeypatch.setattr(DaveReader, "MAGIC_AVAILABLE", True)
+    monkeypatch.setattr(
+        DaveReader, "magic", _MagicDouble("FITS image data, 8-bit"), raising=False
+    )
+    dataset, _ = DaveReader.get_file_dataset(_resource("test.evt"))
+    assert dataset is not None
+    assert "EVENTS" in dataset.tables
+
+
+def test_get_stingray_object_uses_magic_type_when_available(monkeypatch):
+    """get_stingray_object honors a successful magic answer the same way."""
+    monkeypatch.setattr(DaveReader, "MAGIC_AVAILABLE", True)
+    monkeypatch.setattr(
+        DaveReader, "magic", _MagicDouble("FITS image data, 8-bit"), raising=False
+    )
+    events = DaveReader.get_stingray_object(_resource("test.evt"))
+    assert isinstance(events, EventList)
+
+
+def test_get_destination_accepts_absolute_path_on_posix():
+    """On local-server mode an existing absolute path is passed through
+    (this branch is keyed on a leading '/', so it is POSIX-only)."""
+    if os.name == "nt":
+        pytest.skip("absolute-path branch is keyed on POSIX '/' prefixes")
+    absolute = os.path.abspath(_resource("test.evt"))
+    assert FileUtils.get_destination("/ignored-target", absolute) == absolute
