@@ -86,7 +86,22 @@ def is_valid_file(destination):
                 # Fall through to extension-based fallback
 
         # Fallback to file extension checking (magic unavailable or errored)
-        valid_extensions = [".txt", ".dat", ".lc", ".evt", ".fits", ".fit", ".gz", ".p", ".nc"]
+        valid_extensions = [
+            ".txt",
+            ".dat",
+            ".lc",
+            ".evt",
+            ".fits",
+            ".fit",
+            ".fts",
+            ".gz",
+            ".p",
+            ".nc",
+            ".rmf",
+            ".arf",
+            ".pha",
+            ".rsp",
+        ]
         if file_extension in valid_extensions:
             return True
 
