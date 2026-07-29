@@ -20,7 +20,9 @@ test-results/
 playwright-report/
 screenshots/
 tests/playwright-report/
-tests/screenshots/
+!tests/screenshots/
+tests/screenshots/*
+!tests/screenshots/app-launch.png
 .DS_Store
 CLAUDE.md
 
