@@ -1176,9 +1176,9 @@ def get_phase_lag_spectrum(
                             warnmsg = ["@WARN@Overriden Bin Size: " + str(lc.dt)]
 
                         # Preapares the eventlist with energies and gtis
+                        # (ncounts is a derived read-only property in modern Stingray)
                         event_list = EventList()
                         event_list.time = np.array(events_table.columns[CONFIG.TIME_COLUMN].values)
-                        event_list.ncounts = len(event_list.time)
                         event_list.gti = gti
                         event_list.energy = np.array(events_table.columns["E"].values)
 
