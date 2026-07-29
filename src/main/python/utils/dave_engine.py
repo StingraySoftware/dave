@@ -2377,9 +2377,10 @@ def get_phaseogram(
         )
         phaseogr = np.transpose(phaseogr)
 
-        # Calculates the profile plot data
+        # Calculates the profile plot data. After the transpose the matrix is
+        # (time bins, phase bins), so the pulse profile folds over axis 0.
         mean_phases = (phases[:-1] + phases[1:]) / 2
-        profile = np.sum(phaseogr, axis=1)
+        profile = np.sum(phaseogr, axis=0)
         mean_profile = np.mean(profile)
         if np.all(mean_phases < 1.5):
             mean_phases = np.concatenate((mean_phases, mean_phases + 1))
