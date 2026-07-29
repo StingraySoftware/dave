@@ -38,7 +38,13 @@ def test_sanitize_path_allows_nested_subdirectories(tmp_path):
 
 
 def test_sanitize_path_handles_unresolvable_input():
-    """Inputs that blow up path resolution (embedded NUL) return None."""
+    """Inputs that blow up path resolution (embedded NUL) return None.
+
+    POSIX-only: Windows pathlib resolves a NUL-embedded name without
+    raising, so this failure mode does not exist there.
+    """
+    if os.name == "nt":
+        pytest.skip("Windows pathlib tolerates NUL in path components")
     assert Security.sanitize_path("bad\x00name", "/tmp") is None
 
 
