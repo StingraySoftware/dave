@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import numpy as np
 from astropy.io import fits
@@ -71,6 +72,54 @@ def get_file_type_from_extension(destination):
                 return "data"
 
     return "data"
+
+
+def load_events_and_gtis_with_mission_fallback(
+    destination, additional_columns=None, gtistring=CONFIG.GTI_STRING, hduname="EVENTS", column=None
+):
+    """Read events and GTIs, tolerating files without mission keywords.
+
+    Modern Stingray requires TELESCOP/INSTRUME to identify the mission. Files
+    that lack them are still valid DAVE inputs, so on that specific failure
+    retry once against a temporary copy carrying dummy keywords.
+    """
+    if column is None:
+        column = CONFIG.TIME_COLUMN
+
+    try:
+        return load_events_and_gtis(
+            destination,
+            additional_columns=additional_columns,
+            gtistring=gtistring,
+            hduname=hduname,
+            column=column,
+        )
+    except (KeyError, AttributeError) as e:
+        if "TELESCOP" not in str(e) and "'NoneType' object has no attribute 'lower'" not in str(e):
+            raise
+
+        logging.warn("TELESCOP/INSTRUME keyword missing, adding dummy values")
+        temp_hdulist = fits.open(destination)
+        if "TELESCOP" not in temp_hdulist[0].header:
+            temp_hdulist[0].header["TELESCOP"] = "UNKNOWN"
+        if "INSTRUME" not in temp_hdulist[0].header:
+            temp_hdulist[0].header["INSTRUME"] = "UNKNOWN"
+
+        with tempfile.NamedTemporaryFile(suffix=".fits", delete=False) as tmp:
+            temp_filename = tmp.name
+            temp_hdulist.writeto(temp_filename, overwrite=True)
+        temp_hdulist.close()
+
+        try:
+            return load_events_and_gtis(
+                temp_filename,
+                additional_columns=additional_columns,
+                gtistring=gtistring,
+                hduname=hduname,
+                column=column,
+            )
+        finally:
+            os.unlink(temp_filename)
 
 
 def get_cache_key_for_destination(destination, time_offset):
@@ -295,45 +344,13 @@ def get_events_fits_dataset_with_stingray(
 
     # Reads fits data
     logging.debug("Reading Events Fits columns's data")
-    try:
-        fits_data = load_events_and_gtis(
-            destination,
-            additional_columns=additional_columns,
-            gtistring=gtistring,
-            hduname=hduname,
-            column=column,
-        )
-    except (KeyError, AttributeError) as e:
-        if "TELESCOP" in str(e) or "'NoneType' object has no attribute 'lower'" in str(e):
-            # Modern Stingray requires TELESCOP/INSTRUME keywords, add dummy ones if missing
-            logging.warn("TELESCOP/INSTRUME keyword missing, adding dummy values")
-            temp_hdulist = fits.open(destination)
-            if "TELESCOP" not in temp_hdulist[0].header:
-                temp_hdulist[0].header["TELESCOP"] = "UNKNOWN"
-            if "INSTRUME" not in temp_hdulist[0].header:
-                temp_hdulist[0].header["INSTRUME"] = "UNKNOWN"
-            # Save to temp file
-            import tempfile
-
-            with tempfile.NamedTemporaryFile(suffix=".fits", delete=False) as tmp:
-                temp_filename = tmp.name
-                temp_hdulist.writeto(temp_filename, overwrite=True)
-            temp_hdulist.close()
-            # Try again with modified file
-            try:
-                fits_data = load_events_and_gtis(
-                    temp_filename,
-                    additional_columns=additional_columns,
-                    gtistring=gtistring,
-                    hduname=hduname,
-                    column=column,
-                )
-            finally:
-                import os
-
-                os.unlink(temp_filename)
-        else:
-            raise
+    fits_data = load_events_and_gtis_with_mission_fallback(
+        destination,
+        additional_columns=additional_columns,
+        gtistring=gtistring,
+        hduname=hduname,
+        column=column,
+    )
 
     fits_data, events_start_time = substract_tstart_from_events(fits_data, time_offset)
 
@@ -549,6 +566,27 @@ def get_header(hdulist, hduname):
     return header, header_comments
 
 
+def get_eventlist_from_fits_data(fits_data):
+    """Build a Stingray EventList from what load_events_and_gtis returned."""
+    from stingray.events import EventList
+
+    event_list = EventList(
+        np.asarray(fits_data.ev_list),
+        gti=fits_data.gti_list if getattr(fits_data, "gti_list", None) is not None else None,
+        mjdref=getattr(fits_data, "mjdref", 0),
+    )
+
+    pi_list = getattr(fits_data, "pi_list", None)
+    if pi_list is not None and len(pi_list) == len(event_list.time):
+        event_list.pi = np.asarray(pi_list)
+
+    energy_list = getattr(fits_data, "energy_list", None)
+    if energy_list is not None and len(energy_list) == len(event_list.time):
+        event_list.energy = np.asarray(energy_list)
+
+    return event_list
+
+
 def get_stingray_object(destination, time_offset=0):
     if not destination:
         return None
@@ -572,14 +610,15 @@ def get_stingray_object(destination, time_offset=0):
 
         if "EVENTS" in hdulist:
             # If EVENTS extension found, consider the Fits as EVENTS Fits
-            fits_data = load_events_and_gtis(
+            fits_data = load_events_and_gtis_with_mission_fallback(
                 destination,
                 additional_columns=["PI", "PHA"],
                 gtistring=CONFIG.GTI_STRING,
                 hduname="EVENTS",
                 column=CONFIG.TIME_COLUMN,
             )
-            return substract_tstart_from_events(fits_data, time_offset)
+            fits_data, _ = substract_tstart_from_events(fits_data, time_offset)
+            return get_eventlist_from_fits_data(fits_data)
 
         elif "RATE" in hdulist:
             # If RATE extension found, consider the Fits as LIGHTCURVE Fits
@@ -592,7 +631,7 @@ def get_stingray_object(destination, time_offset=0):
                 ratehdu=1,
                 fracexp_limit=CONFIG.FRACEXP_LIMIT,
             )[0]
-            return substract_tstart_from_lcurve(load_lcurve(outfile), time_offset)
+            return load_lcurve(outfile)
 
         else:
             logging.error("Unsupported FITS type!")
