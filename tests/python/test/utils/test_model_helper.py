@@ -190,8 +190,11 @@ def test_fit_data_with_gaussian_moves_towards_true_peak():
 
     PSDLogLikelihood models y as exponentially-distributed periodogram powers,
     so parameter recovery is approximate; we assert the optimizer converged
-    near the true mean (2.0) starting from an offset guess.
+    near the true mean (2.0) starting from an offset guess. Stingray's
+    ParameterEstimation jitters its start point via numpy's global RNG, so the
+    seed is pinned for a deterministic optimization path.
     """
+    np.random.seed(0)  # noqa: NPY002 -- stingray uses the legacy global RNG internally
     x_values = np.linspace(0.5, 4.0, 60)
     y_values = Gaussian1D(6.0, 2.0, 0.5)(x_values) + 0.1
     amplitude, mean, stddev = ModelHelper.fit_data_with_gaussian(
@@ -206,8 +209,11 @@ def test_fit_data_with_lorentz_and_const_recovers_white_noise_level():
 
     Provenance: Leahy-normalized powers of Poisson noise follow an exponential
     distribution with mean 2, which is exactly what get_white_noise_offset
-    relies on; the fitted constant must land near 2.
+    relies on; the fitted constant must land near 2. Stingray's
+    ParameterEstimation jitters its start point via numpy's global RNG
+    (unseeded runs can even diverge), so the seed is pinned.
     """
+    np.random.seed(0)  # noqa: NPY002 -- stingray uses the legacy global RNG internally
     rng = np.random.default_rng(42)
     x_values = np.linspace(0.05, 10.0, 400)
     y_values = rng.exponential(2.0, size=x_values.size)
